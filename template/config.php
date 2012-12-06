@@ -107,6 +107,6 @@
 	
 	$importLogging                 = true;
 	
-	$NAS_CONTROL                   = true;
+	$NAS_CONTROL                   = false;
 	$NAS_IP                        = null;
 ?>
