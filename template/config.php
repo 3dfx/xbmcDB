@@ -1,11 +1,14 @@
 <?php
+	$DB_PATH = '/public';
 	$db_name = fetchDbName();
 	function fetchDbName() {
 		if (!isset($_SESSION)) { session_start(); }
 		if (isset($_SESSION['dbName']) && !empty($_SESSION['dbName'])) { return $_SESSION['dbName']; }
 		
+		$dir = isset($GLOBALS['DB_PATH']) ? $GLOBALS['DB_PATH'] : '/public';
+		
 		$ver = array();
-		$d = dir("/public");
+		$d = dir($dir);
 		$counter = 0;
 		while (false !== ($entry = $d->read())) {
 			if ($entry == '.' || $entry == '..') { continue; }
@@ -18,7 +21,7 @@
 		$d->close();
 		
 		rsort($ver);
-		$_SESSION['dbName'] = 'sqlite:/public/'.$ver[0][1];
+		$_SESSION['dbName'] = 'sqlite:'.$dir.'/'.$ver[0][1];
 		return $_SESSION['dbName'];
 	}
 	
