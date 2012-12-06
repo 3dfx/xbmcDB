@@ -31,7 +31,53 @@
 			$HOMENETWORK = true;
 		}
 	}
+	
+	$COUNTRY_MAP =	array(
+				"DE" => array(
+						"GER" => "Deutsch",
+						"GMH" => "Deutsch",
+						"DEU" => "Deutsch",
 
+						"ENG" => "Englisch",
+
+						"TUR" => "T&uuml;rkce",
+
+						"FRE" => "Franz&ouml;sisch",
+
+						"ITA" => "Italienisch",
+						"SPA" => "Spanisch",
+						"POR" => "Portugiesisch",
+
+						"JPN" => "Japanisch",
+						"CHI" => "Chinesisch",
+						"KOR" => "Koreanisch",
+
+						"POL" => "Polnisch"
+					),
+				
+				"EN" => array(
+						"GER" => "German",
+						"GMH" => "German",
+						"DEU" => "German",
+
+						"ENG" => "English",
+
+						"TUR" => "Turkish",
+
+						"FRE" => "French",
+
+						"ITA" => "Italian",
+						"SPA" => "Spanish",
+						"POR" => "Portuguese",
+
+						"JPN" => "Japanese",
+						"CHI" => "Chinese",
+						"KOR" => "Korean",
+
+						"POL" => "Polish"
+					)
+			);
+	
 	$SHOW_NEW_VALUES = array(10, 30, 60, 90, 120, 150, 180);
 	$DEFAULT_NEW_ADDED = 30;
 ?>

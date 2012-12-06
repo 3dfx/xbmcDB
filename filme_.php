@@ -956,11 +956,11 @@ function createTable() {
 			echo "\t";
 			echo '<tr><th class="th0"> </th>';
 			echo '<th class="th4"><input type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this, '.$admin.'); return true;"><a style="font-weight:bold;" href="?sort=">Title</a>'.$titleInfo.'</th>';
-			echo '<th class="th0"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr' || $sort=='jahra') ? 'color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').'">Jahr</a></th>';
+			echo '<th class="th0"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr' || $sort=='jahra') ? 'color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').'">Year</a></th>';
 			echo '<th class="th1"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? 'color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').'">Rating</a></th>';
-			echo '<th class="th2">Artist</th>';
+			echo '<th class="th2">Actor</th>';
 			echo '<th class="th2">Genre</th>';
-			echo '<th class="th2">Regie</th>';
+			echo '<th class="th2">Director</th>';
 			echo '<th class="th5"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').'">Size</a></th></tr>';
 			echo "\r\n";
 

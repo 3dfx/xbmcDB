@@ -226,7 +226,7 @@ function postEditor() {
 		$dateAdded = $GLOBALS['dateAdded'];
 		$rating = $GLOBALS['rating'];
 
-		echo '<td style="padding-left:5px;">Jahr:</td>';
+		echo '<td style="padding-left:5px;">Year:</td>';
 		echo '<td><input type="text" id="jahr" class="key inputbox" style="width:75px;" value="'.$jahr.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
 		echo '<tr>';
@@ -234,16 +234,16 @@ function postEditor() {
 		echo '<td><input type="text" id="rating" class="key inputbox" style="width:75px;" value="'.$rating.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
 		echo '<tr>';
-		echo '<td style="padding-left:5px;">Hinzugef&uuml;gt:</td>';
+		echo '<td style="padding-left:5px;">Date added:</td>';
 		echo '<td><input type="text" id="dateAdded" class="key inputbox" style="width:275px;" value="'.$dateAdded.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
 		echo '<tr>';
-		echo '<td style="padding-left:5px;">Datei:</td>';
+		echo '<td style="padding-left:5px;">Filename:</td>';
 		echo '<td><input type="text" id="filename" class="key inputbox" style="width:275px;" value="'.$filename.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
 		echo '<tr>';
 	}
-	echo '<td style="padding-left:5px;">Name:</td>';
+	echo '<td style="padding-left:5px;">Title:</td>';
 	echo '<td><input type="text" id="title" class="key inputbox" style="width:275px;" value="'.$title.'" onfocus="this.select();" onclick="this.select();" /></td>';
 	echo '</tr>';
 	echo "\r\n";

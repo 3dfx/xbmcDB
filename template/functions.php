@@ -996,20 +996,20 @@ function moveUploadedFile($prefix, $fileType) {
 
 		// Validate the uploaded file
 		if($_FILES['thefile']['size'] === 0 || empty($_FILES['thefile']['tmp_name'])) {
-			$_SESSION[$prefix.'Error'] = "<p>Keine Datei ausgewählt.</p>\r\n";
+			$_SESSION[$prefix.'Error'] = "<p>No file chosen!.</p>\r\n";
 			return;
 
 		} else if($_FILES['thefile']['size'] > 10485760) {
-			$_SESSION[$prefix.'Error'] = "<p>Datei ist zu gross.</p>\r\n";
+			$_SESSION[$prefix.'Error'] = "<p>Filesize exceeds limit.</p>\r\n";
 			return;
 
 		} else if($_FILES['thefile']['type'] != $fileType) {
-			$_SESSION[$prefix.'Error'] = $_FILES['thefile']['type']."<p>Falscher Typ, Datei ist keine ".($prefix == 'vcf' ? 'VCF' : 'Excel')."-Datei!</p>\r\n";
+			$_SESSION[$prefix.'Error'] = $_FILES['thefile']['type']."<p>Wrong filetype, File ist not a ".(strtolower($prefix) == 'vcf' ? 'VCF' : 'Excel')."-File!</p>\r\n";
 			return;
 
 		} else if($_FILES['thefile']['error'] !== UPLOAD_ERR_OK) {
 			// There was a PHP error
-			$_SESSION[$prefix.'Error'] = "<p>Fehler beim hochladen.</p>\r\n";
+			$_SESSION[$prefix.'Error'] = "<p>Error while uploading.</p>\r\n";
 			return;
 
 		} else { // OK - do the rest of the file handling here
@@ -1019,7 +1019,7 @@ function moveUploadedFile($prefix, $fileType) {
 			if (move_uploaded_file($_FILES['thefile']['tmp_name'], $target_path)) {
 				#echo "The file ".basename( $_FILES['thefile']['name'])." has been uploaded!<br/>";
 			} else {
-				$_SESSION[$prefix.'Error'] = "Es ist ein Fehler beim hochladen aufgetreten, bitte erneut versuchen!<br/>";
+				$_SESSION[$prefix.'Error'] = "An error occurred while uploading the file, please try again!<br/>";
 				return;
 			}
 
@@ -1164,25 +1164,32 @@ function formatToDeNotation($str) {
 }
 
 function postEditLanguage($str) {
-	if ($str == 'GER') { $str = makeLangLink($str, 'GER', 'DEU', 'deu', 'Deutsch'); }
-	if ($str == 'GMH') { $str = makeLangLink($str, 'GMH', 'DEU', 'deu', 'Deutsch'); }
-	if ($str == 'DEU') { $str = makeLangLink($str, 'DEU', 'DEU', 'deu', 'Deutsch'); }
+	$COUNTRY_MAP = isset($GLOBALS['COUNTRY_MAP']) ? $GLOBALS['COUNTRY_MAP'] : null;
+	if (empty($COUNTRY_MAP)) { return $str; }
+	
+	$LANG = isset($GLOBALS['LANG']) ? $GLOBALS['LANG'] : 'EN';
+	$chosenMap = $COUNTRY_MAP[$LANG];
+	if (empty($chosenMap)) { return $str; }
+	
+	if ($str == 'GER') { $str = makeLangLink($str, 'GER', 'DEU', 'deu', $chosenMap[$str]); }
+	if ($str == 'GMH') { $str = makeLangLink($str, 'GMH', 'DEU', 'deu', $chosenMap[$str]); }
+	if ($str == 'DEU') { $str = makeLangLink($str, 'DEU', 'DEU', 'deu', $chosenMap[$str]); }
 
-	if ($str == 'ENG') { $str = makeLangLink($str, 'ENG', 'ENG', 'eng', 'Englisch'); }
+	if ($str == 'ENG') { $str = makeLangLink($str, 'ENG', 'ENG', 'eng', $chosenMap[$str]); }
 
-	if ($str == 'TUR') { $str = makeLangLink($str, 'TUR', 'TUR', 'tur', 'T&uuml;rkce'); }
+	if ($str == 'TUR') { $str = makeLangLink($str, 'TUR', 'TUR', 'tur', $chosenMap[$str]); }
 
-	if ($str == 'FRE') { $str = makeLangLink($str, 'FRE', 'FRE', 'fre', 'Franz&ouml;sisch'); }
+	if ($str == 'FRE') { $str = makeLangLink($str, 'FRE', 'FRE', 'fre', $chosenMap[$str]); }
 
-	if ($str == 'ITA') { $str = makeLangLink($str, 'ITA', 'ITA', 'ita', 'Italienisch'); }
-	if ($str == 'SPA') { $str = makeLangLink($str, 'SPA', 'SPA', 'ita', 'Spanisch'); }
-	if ($str == 'POR') { $str = makeLangLink($str, 'POR', 'POR', 'ita', 'Portugiesisch'); }
+	if ($str == 'ITA') { $str = makeLangLink($str, 'ITA', 'ITA', 'ita', $chosenMap[$str]); }
+	if ($str == 'SPA') { $str = makeLangLink($str, 'SPA', 'SPA', 'ita', $chosenMap[$str]); }
+	if ($str == 'POR') { $str = makeLangLink($str, 'POR', 'POR', 'ita', $chosenMap[$str]); }
 
-	if ($str == 'JPN') { $str = makeLangLink($str, 'JPN', 'JPN', 'jpn', 'Japanisch'); }
-	if ($str == 'CHI') { $str = makeLangLink($str, 'CHI', 'CHI', 'jpn', 'Chinesisch'); }
-	if ($str == 'KOR') { $str = makeLangLink($str, 'KOR', 'KOR', 'jpn', 'Koreanisch'); }
+	if ($str == 'JPN') { $str = makeLangLink($str, 'JPN', 'JPN', 'jpn', $chosenMap[$str]); }
+	if ($str == 'CHI') { $str = makeLangLink($str, 'CHI', 'CHI', 'jpn', $chosenMap[$str]); }
+	if ($str == 'KOR') { $str = makeLangLink($str, 'KOR', 'KOR', 'jpn', $chosenMap[$str]); }
 
-	if ($str == 'POL') { $str = str_replace('POL', '<span title="Polska">POL</span>', $str); }
+	if ($str == 'POL') { $str = str_replace('POL', '<span title="'.$chosenMap[$str].'">POL</span>', $str); }
 	
 	return $str;
 }

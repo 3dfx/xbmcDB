@@ -411,7 +411,7 @@
 			echo '<table cellspacing="0" class="streaminfo">';
 			echo "\r\n";
 			echo '<tr>';
-			echo '<th>L&auml;nge</th><th>Rating</th><th>Stimmen</th><th>Jahr</th><th class="streaminfoGenreTH">Genre</th>';
+			echo '<th>Duration</th><th>Rating</th><th>Votes</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
 			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th><th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
 			echo '</tr>';
 			echo "\r\n";
@@ -595,7 +595,7 @@
 			echo '<table cellspacing="0" class="artists">';
 			echo "\r\n";
 			echo '<tr><th colspan="2">';
-			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Schauspieler</span>';
+			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
 			echo '</th></tr>';
 			echo '<tr class="abstand"><td colspan="2"></td></tr>';
 			echo "\r\n";
