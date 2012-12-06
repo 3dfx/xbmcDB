@@ -13,14 +13,6 @@
 	if ($admin) {
 		$closeFrame = 0;
 		if (isset($_GET['closeFrame'])) { $closeFrame = trim($_GET['closeFrame']); }
-
-/*
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="class.css" />
-	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.js"></script>
-	<script type="text/javascript" src="https://raw.github.com/makeusabrew/bootbox/v2.4.2/bootbox.min.js"></script>
-*/
 ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="class.css" />

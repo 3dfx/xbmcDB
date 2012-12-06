@@ -22,7 +22,6 @@
 	$dbh = null;
 	
 	$idSet = -1;
-	//if (isset($_GET['idSet'])) { $idSet = trim($_GET['idSet']); }
 	error_reporting(E_ALL);
 	try {
 		$db_name = $GLOBALS['db_name'];
@@ -80,11 +79,8 @@ function postSet($idSet, $id, $name) {
 <?php
 	if ($closeFrame) {
 ?>
-			//$("form").submit(function() {
-			//	$.post($("form").attr('action'), $("form").serializeArray());
 			parent.parent.$.fancybox.close();
 			return false;
-			//});
 <?php
 	}
 ?>

@@ -12,14 +12,12 @@
 	if ($id == null || $id <= 0) { die('No id given!'); }
 
 	$SQL =  $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
-//echo '<pre>'.$SQL.'</pre>';
 
 	$title = '';
 	$epDesc = '';
 	$path = '';
 	$coverP = '';
 	$filename = '';
-	//$premiered = '';
 	$lastPlayed = '';
 	$playCount = 0;
 	$epRating = '';
@@ -79,7 +77,6 @@
 			$epDesc = trim($row['epDesc']);
 			$path = $row['path'];
 			$filename = $row['filename'];
-			//$premiered = $row['premiered'];
 			$lastPlayed = $row['lastPlayed'];
 			$playCount = $row['playCount'];
 			$epRating = $row['epRating'];
@@ -110,7 +107,6 @@
 			// READ MEDIAFIRE GENERATED THUMBS FROM SOURCE
 			$thumb = mapSambaDirs($path).substr($filename, 0, strlen($filename)-3).'tbn';
 			$smb = (substr($thumb, 0, 6) == 'smb://');
-			//$thumbsUp = !$smb && file_exists($thumb);
 
 			if (!$smb && file_exists($thumb)) {
 				$thumbImg = base64_encode_image($thumb);
@@ -139,7 +135,6 @@
 	}
 	
 	echo '<table id="epDescription" class="film" style="border-top:0px; width:350px; padding:0px; margin:0px; z-index:1;">';
-	//border-right:0px; 
 	echo '<tr class="showDesc">';
 	echo '<td colspan="3" style="padding:20px 25px; white-space:pre-line;">';
 	echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;"><div><u><i><b>Title:</b></i></u></div><span>'.$title.' [ S'.$season.'.E'.$episode.' ]</span>';
@@ -176,7 +171,6 @@
 		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span style="float:right; text-align:right;">'.$airDate.'</span></div>';
 	}
 	
-	//echo '<div><span><u><i><b>Air date:</b></i></u></span><span style="float:right; text-align:right;">'.$premiered.'</span></div>';
 	if ($admin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
 			echo '<div><span><u><i><b>Watched:</b></i></u></span><span style="float:right; text-align:right;">'.substr($lastPlayed, 0, 10).'</span></div>';
@@ -185,50 +179,8 @@
 		echo '<div style="padding-top:15px; padding-bottom:15px;"><span><u><i><b>Size:</b></i></u></span><span style="float:right; text-align:right;">'.$fsize.'</span></div>';
 		
 		echo '<div style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />'.$path.$filename.'</div>';
-		//max-width:250px; 
 	}
 	echo '</td>';
 	echo '</tr>';
-
-/*	
-	if (!empty($width) && !empty($height)) {
-		echo '<tr>';
-		echo '<td style="padding:5px 25px;">';
-		echo '<u><i><b>Video:</b></i></u> ';
-		echo '</td>';
-		echo '<td'.(empty($ar) ? ' colspan="2"' : '').' style="padding:5px 0px;">';
-		echo (!empty($vCodec) ? $vCodec.'<br/>' : '').$width.'x'.$height;
-		echo '</td>';
-		if (!empty($ar)) {
-			echo '<td style="padding:5px 0px;">';
-			echo $ar;
-			echo '</td>';
-		}
-		echo '</tr>';
-	}
-	
-	$max = max(max(count($aCodec), count($aChannels), count($genre)), 1);
-	for ($g = 0; $g < $max; $g++) {
-		if (empty($aCodec[$g]) && empty($aChannels[$g])) {
-			continue;
-		}
-		
-		echo '<tr>';
-		echo '<td style="padding:5px 25px;"><u><i><b>Audio #'.($g+1).':</b></i></u> </td>';
-		if ($g < count($aCodec)) {
-			echo '<td style="padding:5px 0px;">';
-			echo postEditCodec($aCodec[$g]);
-			echo '</td>';
-		}
-
-		if ($g < count($aChannels)) {
-			echo '<td style="padding:5px 0px;">';
-			echo postEditChannels($aChannels[$g]);
-			echo '</td>';
-		}
-		echo '</tr>';
-	}
-*/	
-
 	echo '</table>';
 ?>

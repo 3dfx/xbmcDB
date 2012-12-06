@@ -13,20 +13,6 @@
 <head>
 	<title>XBMC Database</title>
 	<link rel="shortcut icon" href="favicon.ico" />
-<?php /*
-	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./class.css" />
-	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
-	<script type="text/javascript" src="./template/js/highlight.js"></script>
-	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
-	<script type="text/javascript" src="./template/js/myfancy.js"></script>
-	<script type="text/javascript" src="./template/js/customSelect.jquery.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
-	<script type="text/javascript" src="https://raw.github.com/makeusabrew/bootbox/v2.4.2/bootbox.min.js"></script>
-*/ ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/highlight.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
@@ -498,8 +484,6 @@ function createTable() {
 			$unseenCriteria = '';
 		}
 		
-#echo '-'.$_country.'_<br/>';
-		
 		$SQL =  "SELECT DISTINCT A.idFile, A.c05, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, M.dateAdded as dateAdded, ".
 			"A.idFile, A.idMovie, ".
 			"M.value as dateValue, ".
@@ -511,7 +495,6 @@ function createTable() {
 			(isset($filter, $_which) && ($_which == 'regie') ? ", directorlinkmovie D" : '').
 			(isset($filter, $_which) && ($_which == 'genre') ? ", genrelinkmovie G" : '').
 			" \nWHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
-			//"B.idFile = F.idFile AND ";
 			
 		if (!empty($sort)) {
 			     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY A.c07 DESC";      }
@@ -598,8 +581,6 @@ function createTable() {
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$existArtTable = existsArtTable($dbh);
 		
-		#$result = $dbh->query($SQL);
-		#foreach($result as $row) {
 		$result = fetchMovies($dbh, $SQL, $sessionKey);
 		for($rCnt = 0; $rCnt < count($result); $rCnt++) {
 			$row = $result[$rCnt];
@@ -625,12 +606,6 @@ function createTable() {
 			$fnam      = $path.$filename;
 			$cover     = '';
 			
-			#$SQLmap    = "SELECT dateAdded FROM filemap WHERE strFilename = '$filename';";
-			#$res2      = $dbh->query($SQLmap);
-			#$row2      = $res2->fetch();
-			#$found     = $row2['dateAdded'];
-			
-			#if (empty($found)) {
 			if  (empty($dateAdded)) {
 				$creation = getCreation($fnam);
 				logc( $creation );
@@ -648,30 +623,7 @@ function createTable() {
 					echo $e->getMessage();
 				}
 			}
-			/*
-			} else {
-				if ($found != $dateAdded) {
-					$dbh->exec("UPDATE files SET dateAdded = '$found' WHERE idFile = $idFile;");
-				}
-			*/
-			#}
-			
-			/*if (!empty($thumb)) {
-				$temp = explode('"', $thumb);
-				if (sizeof($temp) > 1) {
-					$cover = $temp[1];
-					if ($gallerymode && !$thumbsize) {
-						$cover = str_replace('mid', 'thumb', $cover);
-					}
-				} else {
-					$taglen = strlen("<thumb>");
-					$cover = substr($thumb, $taglen, strlen($thumb)-(2*$taglen)-1);
-				}
-			}*/
-			
-			// thumb from local-cache
-			//$crc = thumbnailHash($fnam);
-			
+
 			if ($USECACHE && $gallerymode) {
 				if (file_exists(getCoverThumb($fnam, $cover, false))) {
 					$cover = getCoverThumb($fnam, $cover, false);
@@ -733,8 +685,6 @@ function createTable() {
 
 			} else {
 				
-				//$zeilen[$zeile][$zeilenSpalte++] = echo "\t".'<tr class="searchFlag">';
-
 				$zeilen[$zeile][$zeilenSpalte++] = $filmname;
 #counter
 				$spalTmp = '<td class="countTD">';
@@ -1001,12 +951,6 @@ function createTable() {
 					$percUnseen = round($moviesUnseen / $moviesTotal * 100, 0).'%';
 					$percSeen = round($moviesSeen / $moviesTotal * 100, 0).'%';
 				}
-
-				#$titleInfo  = '<span class="watchedInfoT">total: '.$moviesTotal.'</span>';
-				#$titleInfo .= '<span class="watchedInfoSpan">|</span>';
-				#$titleInfo .= '<span class="watchedInfoU">unseen: '.$moviesUnseen.' ['.$percUnseen.']'.'</span>';
-				#$titleInfo .= '<span class="watchedInfoSpan">|</span>';
-				#$titleInfo .= '<span class="watchedInfoS">seen: '.$moviesSeen.' ['.$percSeen.'] </span>';
 			}
 
 			echo "\t";

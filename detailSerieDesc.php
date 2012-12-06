@@ -15,7 +15,6 @@
 	});
 </script>
 <?php
-//	include_once "auth.php";
 	include_once "check.php";
 
 	include_once "template/functions.php";
@@ -34,7 +33,6 @@
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 	
 	echo '<table class="film" style="width:350px; padding:0px; margin:0px; z-index:1;">';
-	//border-right:0px; 
 	echo '<tr class="showDesc">';
 	echo '<td colspan="3" style="padding:25px 25px; text-align:justify; white-space:pre-line;">';
 	if (!empty($idTvdb) && $idTvdb != -1) {

@@ -114,28 +114,12 @@
 		$result2 = $dbh->query($sql2);
 		$result2_ = $dbh->query($sql2);
 		
-		/*
-		$sql3 = "select strVideoCodec, fVideoAspect, iVideoWidth, iVideoHeight, strAudioCodec, iAudioChannels, strAudioLanguage FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL) AND idFile = ".$idFile.";";
-		$result3 = $dbh->query($sql3);
-		*/
 		$idFile = $row['idFile'];
 		$result3 = getStreamDetails($idFile);
-#echo '<pre style="white-space:no-wrap;">'.$sql3.'</pre>';
 
   		$fanart = '';
   		$cover = '';
   		$cover_big = '';
-  		/*
-  		$thumb = $row['thumb'];
-		if (!empty($thumb)) {
-			$temp = explode('"', $thumb);
-			if (sizeof($temp) > 1) {
-				$cover = $temp[1];
-			}
-
-			$cover_big = str_replace('mid', 'original', $cover);
-		}
-		*/
 
 		// thumb from local-cache
 		$USECACHE = isset($GLOBALS['USECACHE']) ? $GLOBALS['USECACHE'] : true;
@@ -198,11 +182,9 @@
 						$fanart = getFanart($url, $url, true);
 						$fanartExists = true;
 					}
-					// -- end ayar	
 				}
 			}
 		}
-		// ----
 
 		$inhalt = "";
 		$idMovie = $row['idMovie'];
@@ -544,7 +526,6 @@
 				$admin = (isset($_SESSION['angemeldet']) && $_SESSION['angemeldet'] == true) ? 1 : 0;
 				if ($admin) {
 					$href = '<a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id.'">'.$href.'</a>';
-					//($isSet ? '&idSet='.$idSet : '').
 				}
 
 				echo '<span class="filename lefto">'.$href.'</span>';
@@ -580,7 +561,6 @@
 				if (!empty($url)) {
 					$actorimg = getActorThumb($url, $url, true);
 				}
-				// -- end ayar		
 			}
 			
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';

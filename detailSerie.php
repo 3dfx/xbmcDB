@@ -14,11 +14,10 @@
         die();
 	}
 
-	$SQL =  $GLOBALS['SerienSQL']; //.' AND V.idShow = '.$id.';';
+	$SQL =  $GLOBALS['SerienSQL'];
 	$serien = fetchSerien($SQL, null);
 
 	echo '<table id="serieTable" class="film" style="width:350px; padding:0px; z-index:1;">';
-	//border-left:0px; 
 	echo "\r\n";
 	$serie = $serien->getSerie($id);
 	postSerie($serie);
@@ -69,7 +68,6 @@ function postSerie($serie) {
 
 		postStaffel($staffel);
 	}
-	//echo "\r\n";
 }
 
 function postStaffel($staffel) {
@@ -88,7 +86,6 @@ function postStaffel($staffel) {
 	$spanId = 'iD'.$idShow.'.S'.$sNum;
 	echo '<tr class="seasonTR">';
 	echo '<td style="padding:0 0 0 10px;"><A HREF="#" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></A>Season '.$sNum.'</td>';
-	//echo '<td>Season '.$sNum.'</td>';
 	echo '<td class="righto" style="padding-right:2px;">'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
 	echo '<td class="righto" style="padding-left:10px;">'.$staffel->getRating().'</td>';
@@ -112,20 +109,9 @@ function postStaffel($staffel) {
 		$epNum = $epi->getEpNum();
 		if ($epNum < 10) { $epNum = '0'.$epNum; }
 		
-		/*
-		$idFile = $epi->getIdFile();
-		$filesize = $epi->getFilesize();
-		$path = mapSambaDirs($epi->getPath());
-		$filename = $epi->getFilename();
-		$idEpisode = $epi->getIdEpisode();
-		$idTvdb = $epi->getIdTvdb();
-		$fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
-		*/
-		
 		$idEpisode = $epi->getIdEpisode();
 		$idTvdb = $epi->getIdTvdb();
 		$epTitle = $epi->getName();
-		#if (strlen($epTitle) >= 23) { $epTitle = substr($epTitle, 0, 20).'...'; }
 		$hover = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
 		
 		echo '<tr class="epTR" id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" href="./detailEpisode.php?id='.$idEpisode.'" style="display:none; cursor:default;" onclick="loadEpDetails(this, '.$idEpisode.');">';

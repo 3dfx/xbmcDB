@@ -80,11 +80,8 @@
 <?php
 	if ($closeFrame) {
 ?>
-			//$("form").submit(function() {
-			//	$.post($("form").attr('action'), $("form").serializeArray());
 			parent.$.fancybox.close();
 			return false;
-			//});
 <?php
 	}
 ?>

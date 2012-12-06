@@ -117,6 +117,7 @@
 			##
 			 #############################
 
+			//TODO: check compatibility eden => frodo!
 /*
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
 			$result = $dbh->query($GETID_SQL);
@@ -202,8 +203,6 @@
 				$dbh->exec("UPDATE files SET dateAdded = '".$dateAdded."' WHERE idFile = ".$idFile.";");
 				clearMovieCache();
 				$_SESSION['overrideFetch'] = 1;
-				
-				//echo "UPDATE filemap SET dateAdded = '".$dateAdded."', value = ".$dateValue.$params." WHERE idFile = ".$idFile.";";
 			}
 			//return;
 		}
@@ -218,23 +217,6 @@
 			$_SESSION['overrideFetch'] = 1;
 		}
 		
-		/*
-		if ($act == 'linkUpdate' && $id != -1 && $idMovie != -1) {
-			$SQL = 'UPDATE setlinkmovie SET idSet='.$id.' WHERE idMovie = '.$idMovie.';';
-			$_SESSION['overrideFetch'] = 1;
-		}
-
-		if ($act == 'linkInsert' && $id != -1 && $idMovie != -1) {
-			$SQL = 'INSERT INTO setlinkmovie VALUES('.$id.', '.$idMovie.');';
-			$_SESSION['overrideFetch'] = 1;
-		}
-		
-		if ($act == 'linkDelete' && $idMovie != -1) {
-			$SQL = 'DELETE FROM setlinkmovie WHERE idMovie = '.$idMovie.';';
-			$_SESSION['overrideFetch'] = 1;
-		}
-		*/
-		
 		if ($act == 'setname' && $id != -1 && !empty($name)) {
 			$name = str_replace('_AND_', '&', $name);
 			$SQL = 'UPDATE sets SET strSet="'.$name.'" WHERE idSet = '.$id.';';
@@ -247,16 +229,10 @@
 			/*** make it or break it ***/
 			error_reporting(E_ALL);
 			try {
-				//$SQL = "SELECT P.strPath AS path, F.strFilename AS file FROM path AS P, files AS F, movie AS M WHERE M.idFile = F.idFile AND P.idPath = F.idPath AND M.idMovie = ".$idMovie.";";
-				
 				$db_name = $GLOBALS['db_name'];
 				$dbh = new PDO($db_name);
 				$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				$dbh->beginTransaction();
-				
-				#$res = $dbh->query("SELECT url FROM art WHERE media_type = 'movie' AND type = 'poster' AND media_id = ".$idMovie.";");
-				#$row = $res->fetch();
-				#$url = $row['url'];
 				
 				$dbh->exec("UPDATE art SET url = (SELECT url FROM art WHERE media_id = ".$idMovie." AND media_type = 'movie' AND type = 'poster') WHERE media_id = ".$id." AND media_type = 'set' AND type = 'poster';");
 				$dbh->exec("UPDATE art SET url = (SELECT url FROM art WHERE media_id = ".$idMovie." AND media_type = 'movie' AND type = 'fanart') WHERE media_id = ".$id." AND media_type = 'set' AND type = 'fanart';");
@@ -370,9 +346,6 @@
 
 		} else if ($act == 'setmovieinfo') {
 			header('Location: '.($path == '/' ? '' : $path).'/nameEditor.php?change=movie&idMovie='.$idMovie.'&closeFrame=1');
-
-//		} else if ($act == 'setgenreinfo') {
-//			header('Location: '.($path == '/' ? '' : $path).'/nameEditor.php?change=genre&idMovie='.$idMovie.'&closeFrame=1');
 
 		} else {
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');

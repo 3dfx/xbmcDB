@@ -51,16 +51,6 @@
 			   $logedInAs = 'GUEST';
 			   $redirect = true;
 			}
-
-			// Weiterleitung zur geschützten Startseite
-			/*if ($_SERVER['SERVER_PROTOCOL'] == 'HTTP/1.1') {
-				if (php_sapi_name() == 'cgi') {
-					header('Status: 303 See Other');
-
-				} else {
-					header('HTTP/1.1 303 See Other');
-				}
-			}*/
 		}
 
 		logLogin();
@@ -68,8 +58,6 @@
 	}
 
 function logedInSoRedirect() {
-	//header('Location: '.($path == '/' ? '' : $path).'/index.php');
-	//redirectPage();
 	$path = dirname($_SERVER['PHP_SELF']);
 	header('Location: '.getHostnamee().($path == '/' ? '' : $path));
 	exit;
@@ -136,7 +124,6 @@ function logLogin() {
 			function animateNav() {
 				var animTime = 500;
 				if ($.browser.mozilla) { animTime = 250; }
-				//$('#navLogin').animate({ "top": "0%" }, 500, function() { $("#navLogin").css({ "top" : "0px" }); });
 				$('#navLogin').animate({ "top": "0%" }, animTime, function() { return true; });
 			}
 		</script>

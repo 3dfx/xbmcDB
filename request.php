@@ -11,8 +11,7 @@
 	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED']) ? $GLOBALS['COPYASSCRIPT_ENABLED'] : false;
 	$scriptCopyTo = isset($GLOBALS['COPYASSCRIPT_COPY_TO']) ? $GLOBALS['COPYASSCRIPT_COPY_TO'] : '/media/usb/Filme/';
 	$copyAsScript = isset($_POST['copyAsScript']) ? $_POST['copyAsScript'] : 0;
-	//$admin = isset($_POST['admin']) ? $_POST['admin'] : 0;
-
+	
 	$filenames = "";
 	try {
 		$dbh = new PDO($db_name);
@@ -49,7 +48,7 @@
 					}
 					$filenames .= 'cp ';
 					$filenames .= $formattedName;
-					$filenames .= ' '.$scriptCopyTo.' '; //' /media/usb/Filme/ ';
+					$filenames .= ' '.$scriptCopyTo.' ';
 					$filenames .= '<br>';
 					$oldPath = $path;
 

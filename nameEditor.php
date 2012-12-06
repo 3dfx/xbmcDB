@@ -14,8 +14,6 @@
 		if (isset($_GET['idMovie'])) { $idMovie = trim($_GET['idMovie']); }
 
 		$idGenre = -1;
-		//if (isset($_GET['idGenre'])) { $idGenre = trim($_GET['idGenre']); }
-
 		if ($idMovie == -1 && $idGenre == -1) { return; }
 
 		$change = '';
@@ -48,11 +46,8 @@
 <?php
 	if ($closeFrame) {
 ?>
-			//$("form").submit(function() {
-			//	$.post($("form").attr('action'), $("form").serializeArray());
 			parent.$.fancybox.close();
 			return false;
-			//});
 <?php
 	}
 ?>
@@ -158,7 +153,6 @@ if (empty($change) || $change == 'movie') {
 		}
 <?php
 }
-	//$jScriptFunc = ($change == 'movie' ? 'setMovieInfos' : 'setGenreInfos');
 ?>
 	</script>
 <?php } ?>

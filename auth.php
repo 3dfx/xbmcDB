@@ -5,7 +5,6 @@
 	
 	startSession();
 	setSessionParams(true);
-	//if (!isAdmin() && !isGast()) {
 	if (!isLogedIn()) {
 		$path = dirname($_SERVER['PHP_SELF']);
 		include './login.php';

@@ -1,15 +1,4 @@
 <?php
-/*
-	$SerienSQL =  "SELECT tvshow.idShow as idShow, tvshow.c00 as serie, episode.idEpisode as idEpisode, episode.c12 as season, episode.c13 as episode, ".
-			" episode.idFile as idFile, episode.c00 as epName, files.strFilename as filename, path.strPath as path \n".
-			"FROM episode, tvshow, tvshowlinkepisode, tvshowlinkpath, path, files \n".
-			"WHERE tvshow.idShow = tvshowlinkepisode.idShow AND ".
-			" tvshow.idShow = tvshowlinkpath.idShow AND ".
-			" files.idPath = path.idPath AND ".
-			" tvshowlinkepisode.idEpisode = episode.idEpisode AND ".
-			" files.idFile = episode.idFile;";
-*/
-
 	$SerienSQL =	"SELECT V.*, ".
 					"V.c00 as epName, ".
 					"V.c01 as epDesc, ".
@@ -34,7 +23,7 @@
 	
 	function fetchSerien($SQL, $id) {
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-//$overrideFetch = true;
+		#$overrideFetch = true;
 		
 		if ($SQL == null) { $SQL = $GLOBALS['SerienSQL'].';'; }
 		if ($id == null) { $id = ''; }
@@ -69,24 +58,23 @@
 
 			$result = $dbh->query($SQL);
 			foreach($result as $row) {
-				$idFile = $row['idFile'];
-				$idShow = $row['idShow'];
-				$idEpisode = $row['idEpisode'];
-				$idPath = $row['idPath'];
-				$airDate = $row['airDate'];
-
+				$idFile     = $row['idFile'];
+				$idShow     = $row['idShow'];
+				$idEpisode  = $row['idEpisode'];
+				$idPath     = $row['idPath'];
+				$airDate    = $row['airDate'];
 				$serienname = $row['serie'];
-				$epName = $row['epName'];
-				$epDesc = ''; //$row['epDesc'];
-				$showDesc = $row['showDesc'];
-				$season = $row['season'];
-				$idTvdb = $row['idTvdb'];
-				$rating = $row['epRating'];
-				$playcount = $row['playCount'];
+				$epName     = $row['epName'];
+				$epDesc     = '';
+				$showDesc   = $row['showDesc'];
+				$season     = $row['season'];
+				$idTvdb     = $row['idTvdb'];
+				$rating     = $row['epRating'];
+				$playcount  = $row['playCount'];
 				$episodeNum = $row['episode'];
-				$filename = $row['filename'];
-				$path = $row['path'];
-				$filesize = $row['filesize']; //(isset($filesizes[$idFile]) ? $filesizes[$idFile] : 0);
+				$filename   = $row['filename'];
+				$path       = $row['path'];
+				$filesize   = $row['filesize'];
 
 				$ep = new Episode($episodeNum, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $epName, $epDesc, $rating, $serienname, $airDate, $playcount, $filename, $path, $filesize);
 				if (is_object($serien) && is_object($ep)) {
@@ -285,7 +273,6 @@
 			if ($this->ratingEps == 0) { return 0.0; }
 			
 			$rating = doubleval($this->rating / $this->ratingEps);
-			#$this->rating = $rating;
 			return $rating;
 		}
 		
@@ -583,7 +570,6 @@
 		}
 
 		public function getSerie($idShow) {
-#print_r( $this->serien );
 			$res = null;
 			foreach($this->serien as $serie) {
 				if ($serie->getIdShow() == $idShow) {
@@ -592,18 +578,9 @@
 				}
 			}
 			return $res;
-			
-			/*
-			$res = null;
-			if (isset($this->serien[$idShow])) {
-				$res = $this->serien[$idShow];
-			}
-			return $res;
-			*/
 		}
 
 		public function getSerieIdByIdTvdb($idTvdb) {
-#print_r( $this->tvdbIds );
 			$res = -1;
 			if (isset($this->tvdbIds[$idTvdb])) {
 				$res = $this->tvdbIds[$idTvdb];

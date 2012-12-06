@@ -6,8 +6,6 @@
 	include_once "template/functions.php";
 	include_once "globals.php";
 	include_once "_SERIEN.php";
-	
-	//redirectPage(null, false);
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
@@ -35,8 +33,6 @@
 
 	$maself = $_SERVER['PHP_SELF'];
 	postNavBar($maself == '/index.php');
-	
-	//if (existsShowLinkTable() == false) { return; }
 
 	echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">';
 	echo "\r\n";
@@ -65,7 +61,6 @@ function fillTable() {
 	echo '<div style="position:relative; top:0px; left:0px; border:0px; padding:10px; padding-top:25px; text-align:center;"><img class="innerCoverImg" src="'.getRandomBanner().'" style="height:54px;" /></div>';
 	echo '</td></tr>';
 	echo "\r\n";
-	//echo '<tr><td colspan="5" style="padding:10px 25px; text-align:right;">'.$serien->getSerienCount().' Serien</td></tr>';
 	postSerien($serien);
 	echo "\t".'</table>';
 	echo "\r\n";
