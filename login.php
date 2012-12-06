@@ -8,10 +8,6 @@
 	$hostname = $_SERVER['HTTP_HOST'];
 	$path = dirname($_SERVER['PHP_SELF']);
 	
-	/*if (!allowedRequest()) {
-		exit;
-	}*/
-	
 	startSession();
 	if (isLogedIn()) { logedInSoRedirect(); }
 
@@ -32,25 +28,25 @@
  		$login_passwort = $GLOBALS['login_passwort'];
  		
 		// Benutzername und Passwort werden überprüft
-		if (($input_username == $login_username && $input_passwort == $login_passwort) ||
-		  ($input_username == $gast_username && $input_passwort == $gast_passwort) ||
-		  $gast_username == '' && $gast_passwort == '') {
+		if (!empty($login_username) && !empty($login_passwort) &&
+		    $input_username == $login_username && $input_passwort == $login_passwort) {
+		    
+			$_SESSION['angemeldet'] = true;
+			unset($_SESSION['gast']);
 
-			if ($input_username == $login_username) {
-			   $_SESSION['angemeldet'] = true;
-			   unset($_SESSION['gast']);
+			$logedInAs = 'ADMiN';
+			$asAdmin = true;
+			$redirect = true;
+		}
+		
+		if (!empty($gast_username) && !empty($gast_passwort) ||
+		    $input_username == $gast_username && $input_passwort == $gast_passwort) {
+		    
+			$_SESSION['gast'] = true;
+			unset($_SESSION['angemeldet']);
 
-			   $logedInAs = 'ADMiN';
-			   $asAdmin = true;
-			   $redirect = true;
-
-			} else {
-			   $_SESSION['gast'] = true;
-			   unset($_SESSION['angemeldet']);
-
-			   $logedInAs = 'GUEST';
-			   $redirect = true;
-			}
+			$logedInAs = 'GUEST';
+			$redirect = true;
 		}
 
 		logLogin();

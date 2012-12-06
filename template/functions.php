@@ -1040,6 +1040,7 @@ function isGast() {
 }
 
 function checkOpenGuest() {
+#deactivated
 	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
 	$gast_username = $GLOBALS['gast_username'];
 	$gast_passwort = $GLOBALS['gast_passwort'];
