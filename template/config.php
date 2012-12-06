@@ -58,11 +58,11 @@
 						array("", "all languages"),
 						array("deu", "german"),
 						array("eng", "english"),
-						array("tur", "t&uuml;rk&#231;e"),
+						array("tur", "turkish"),
 						array("fre", "french"),
 						array("ita", "latino (ITA / SPA / POR)"),
 						array("jpn", "asia (JPN / CHI / KOR)"),
-						array("und", "undefiniert")
+						array("und", "undefined")
 					);
 	
 	$TAG_MAP                       = array(
