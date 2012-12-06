@@ -209,7 +209,7 @@ function _format_bytes($a_bytes) {
 }
 
 function filesize_n($path) {
-        $size = -1; #@filesize($path);
+        $size = -1;
         if ($size < 0 ){
             ob_start();
             system('ls -al "'.$path.'" | awk \'BEGIN {FS=" "}{print $5}\'');
@@ -238,13 +238,6 @@ function existsArtTable($dbh) {
 	}
 	
 	$_SESSION['existsArtTable'] = true;
-	return true;
-}
-
-function existsShowLinkTable($dbh) {
-	$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='table' and name='tvshowlinkepisode';");
-	$row = $res->fetch();
-	if ($row['name'] == null) { return false; }
 	return true;
 }
 
@@ -320,7 +313,6 @@ function fetchPaths() {
 			$dbh->commit();
 
 		} catch(PDOException $e) {
-			//$dbh->rollBack();
 			echo $e->getMessage();
 		}
 		
@@ -340,9 +332,7 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 			$fnam = $path.$filename;
 			$fsize = getFilesize($fnam);
 		}
-
-		//echo $fsize." is returned! <br>";
-		//if ($fsize == null || $fsize == '' || $fsize == '0') { return 0; }
+		
 		if (empty($fsize)) { return 0; }
 		
 		try {
@@ -446,7 +436,6 @@ function base64_encode_image($imagefile) {
 		$imgbinary = fread(fopen($filename, "r"), filesize($filename));
 	} else {
 		return null;
-		//die ('Invalid image type, jpg, gif, and png is only allowed');
 	}
 	
 	return 'data:image/'.$filetype.';base64,'.base64_encode($imgbinary);
@@ -594,23 +583,14 @@ function generateImg($SRC, $DST, $orSRC, $w, $h) {
 function getTvShowThumb($file) {
 	$pic = false;
 	$crc = thumbnailHash($file);
-	#$cachedimg = "./img/Thumbnails/Video/".substr($crc, 0, 1)."/".$crc.".tbn";
 	$cachedimg = "./img/Thumbnails/".substr($crc, 0, 1)."/".$crc.".jpg";
 	
 	return file_exists($cachedimg) ? $cachedimg : null;
-	
-	//$resizedfile = "./img/actors/actor_".$crc.".jpg";
-	//return generateImg($cachedimg, $resizedfile, null, null, 200);
 }
 
 function getActorThumb($actor, $URL, $newmode) {
 	$crc = ( $newmode ? thumbnailHash($actor) : thumbnailHash('actor'.$actor) );
 	$cachedimg = "./img/Thumbnails/".substr($crc, 0, 1)."/".$crc.".jpg";
-	
-	/*if (!$newmode) {
-		$crc = thumbnailHash("actor".$actor);
-		$cachedimg = "./img/Thumbnails/Video/".substr($crc, 0, 1)."/".$crc.".tbn";
-	}*/
 	
 	$resizedfile = "./img/actors/actor_".$crc.".jpg";
 	return generateImg($cachedimg, $resizedfile, null, null, 200);
@@ -637,11 +617,12 @@ function getCover($SRC, $orSRC, $cacheDir, $subDir, $subName, $w, $h, $newmode) 
 	#$pic = false;
 	$crc = thumbnailHash($SRC);
 	$cachedimg = '';
-	/*if ($newmode == true) {
-	  $cachedimg = "./img/Thumbnails/".substr($crc, 0, 1)."/".$crc.".jpg";
+	if ($newmode) {
+		$cachedimg = "./img/Thumbnails/".substr($crc, 0, 1)."/".$crc.".jpg";
 	} else {
-	  $cachedimg = "./img/Thumbnails/Video/".substr($crc, 0, 1)."/".$crc.".tbn";
-	}*/
+		$cachedimg = "./img/Thumbnails/Video/".substr($crc, 0, 1)."/".$crc.".tbn";
+	}
+	
 	$cachedimg = './img/Thumbnails/'.($cacheDir != null ? $cacheDir : '').($cacheDir == null ? substr($crc, 0, 1) : '').'/'.$crc.'.jpg';
 	#logc('cached: '.$cachedimg);
 	
@@ -661,10 +642,6 @@ function getCover($SRC, $orSRC, $cacheDir, $subDir, $subName, $w, $h, $newmode) 
 }
 
 function getCoverThumb($SRC, $orSRC, $newmode) {
-	#echo '____ '.$SRC;
-	#echo ' --- '.$orSRC;
-	#echo '<br/>';
-
 	return getCover($SRC, $orSRC, null, 'thumbs', 'thumb', null, 138, $newmode);
 }
 
@@ -677,7 +654,6 @@ function getCoverBig($SRC, $orSRC, $newmode) {
 }
 
 function getFanart($SRC, $orSRC, $newmode) {
-	#logc('getFanart: '.$SRC.' '.$orSRC);
 	return getCover($SRC, $orSRC, 'Fanart', 'fanart', 'fanart', null, 720, $newmode);
 }
 
@@ -912,13 +888,11 @@ function postNavBar($isMain) {
 		echo '</li>';
 	} //$isMain
 	
-	//if (existsShowLinkTable()) {
 	$isTvshow = isset($_SESSION['show']) && $_SESSION['show'] == 'serien' ? true : false;
 	echo '<li class="divider-vertical"'.($isMain ? ' onmouseover="closeNavs();"' : '').'></li>';
 	echo '<li'.($isTvshow ? ' class="active"' : '').' style="font-weight:bold;">';
 	echo '<a href="?show=serien"'.($isMain ? ' onmouseover="closeNavs();" onclick="return checkForCheck();"' : '').($isTvshow ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">tv-shows</a>';
 	echo '</li>';
-	//}
 	
 	echo '</ul>';
 	
@@ -1057,77 +1031,6 @@ function moveUploadedFile($prefix, $fileType) {
 	}
 }
 
-/*
-function redirectPage_or($subPage = '', $isLogin = false) {
-	$path = dirname($_SERVER['PHP_SELF']);
-	$hostname = getHostnamee().$path.$subPage;
-	
-	if ( isset($_GET['show']) ) {
-		$_SESSION['show'] = $_GET['show'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['ref']) ) {
-		$_SESSION['reffer'] = $_GET['ref'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['mode']) ) {
-		unset($_SESSION['newmode']);
-		$_SESSION['mode'] = $_GET['mode'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['unseen']) ) {
-		unset($_SESSION['newmode']);
-		$_SESSION['unseen'] = $_GET['unseen'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['newmode']) ) {
-		$_SESSION['newmode'] = $_GET['newmode'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['country']) ) {
-		$_SESSION['country'] = $_GET['country'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['gallerymode']) ) {
-		$_SESSION['gallerymode'] = $_GET['gallerymode'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['which']) ) {
-		$_SESSION['which'] = $_GET['which'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['name']) ) {
-		$_SESSION['name'] = $_GET['name'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['just']) ) {
-		$_SESSION['just'] = $_GET['just'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_POST['newAddedCount']) ) {
-		$_SESSION['newAddedCount'] = $_POST['newAddedCount'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ( isset($_GET['newAddedCount']) ) {
-		$_SESSION['newAddedCount'] = $_GET['newAddedCount'];
-		if (!$isLogin) { header('Location:'.$hostname); }
-	}
-
-	if ($isLogin) { header('Location:'.$hostname); }
-}
-*/
-
 function isAdmin() {
 	return (isset($_SESSION['angemeldet']) && $_SESSION['angemeldet'] == true) ? 1 : 0;
 }
@@ -1184,8 +1087,6 @@ function logRefferer($reffer) {
 			$reffer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 		}
 		
-		//if ($reffer == "") { $reffer = $hostname; }
-
 		$datei = "./logs/reffer.php";
 
 		$datum = strftime("%d.%m.%Y");
@@ -1221,23 +1122,23 @@ function getShowInfo($getShowId) {
 	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY']) ? $GLOBALS['TVDB_API_KEY'] : null;
 	if ($TVDB_API_KEY == null) { return array(); }
 	
+	$lang = isset($GLOBALS['TVDB_LANGUAGE']) ? $GLOBALS['TVDB_LANGUAGE'] : 'en';
+	
 	$rss_0 = new rss_php;
-	$rss_0->load('http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$getShowId.'/all/en.xml');
+	$rss_0->load('http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$getShowId.'/all/'.$lang.'.xml');
 	$items = $rss_0->getItems();
 
 	$episodes = array();
 	$count = 1;
 	foreach($items as $index => $item0) {
 		foreach($item0 as $jndex => $item) {
-//print_r( $item );
-//echo '<br/><br/>';
 			if (!isset($item0['Episode:'.$count])) { break; }
 			$item = $item0['Episode:'.$count];
-
+			
 			$s = $item['SeasonNumber'];
 			$e = $item['EpisodeNumber'];
 			$id = $item['id'];
-//echo 'S'.$s.'E'.$e.': '.$id.'<br/>';
+			
 			$episodes[$s][$e] = $item;
 			$count++;
 		}
@@ -1252,18 +1153,9 @@ function getEpisodeInfo($episodes, $getSeason, $getEpisode) {
 	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY']) ? $GLOBALS['TVDB_API_KEY'] : null;
 	if ($TVDB_API_KEY == null) { return null; }
 	
-	//$episodes = getShowInfo($getShowId);
 	if ($episodes == null) { return null; }
 	
 	return $episodes[$getSeason][$getEpisode];
-	
-/*
-	$rss = new rss_php;
-	$rss->load('xml.nfo');
-	$rss->load('http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/episodes/'.$episodes[$getSeason][$getEpisode]['id'].'/en.xml');
-	$items = $rss->getItems();
-	return $items['Data']['Episode:0'];
-*/
 }
 
 function formatToDeNotation($str) {
@@ -1291,28 +1183,7 @@ function postEditLanguage($str) {
 	if ($str == 'KOR') { $str = makeLangLink($str, 'KOR', 'KOR', 'jpn', 'Koreanisch'); }
 
 	if ($str == 'POL') { $str = str_replace('POL', '<span title="Polska">POL</span>', $str); }
-
-/*
-	$str = str_replace('GMH', '<span title="Deutsch">DEU</span>', $str);
-	$str = str_replace('GER', '<span title="Deutsch">DEU</span>', $str);
-	$str = str_replace('DEU', '<span title="Deutsch">DEU</span>', $str);
-
-	$str = str_replace('ENG', '<span title="Englisch">ENG</span>', $str);
-
-	$str = str_replace('TUR', '<span title="T&uuml;rkce">TUR</span>', $str);
-
-	$str = str_replace('FRE', '<span title="Franz&ouml;sisch">FRE</span>', $str);
-
-	$str = str_replace('ITA', '<span title="Italienisch">ITA</span>', $str);
-	$str = str_replace('SPA', '<span title="Spanisch">SPA</span>', $str);
-	$str = str_replace('POR', '<span title="Portugiesisch">POR</span>', $str);
-
-	$str = str_replace('JPN', '<span title="Japanisch">JPN</span>', $str);
-	$str = str_replace('CHI', '<span title="Chinesisch">CHI</span>', $str);
-	$str = str_replace('KOR', '<span title="Koreanisch">KOR</span>', $str);
-
-	$str = str_replace('POL', '<span title="Polska">POL</span>', $str);
-*/
+	
 	return $str;
 }
 
