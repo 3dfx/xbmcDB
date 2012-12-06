@@ -103,5 +103,10 @@
 	
 	$GIB_AS_GB                     = true;
 	
+	$TVDB_LANGUAGE                 = 'en'; // 'de';
+	
 	$importLogging                 = true;
+	
+	$NAS_CONTROL                   = true;
+	$NAS_IP                        = null;
 ?>
