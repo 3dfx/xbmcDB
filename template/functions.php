@@ -1,32 +1,11 @@
 <?php
 include_once "globals.php";
 include_once "template/config.php";
-include_once "template/blacklist.php";
 include_once "template/SimpleImage.php";
 require_once "rss_php.php";
 
 function startSession() { if (!isset($_SESSION)) { session_start(); } }
-
-function allowedRequest() {
-	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
-	$HOMENETWORK = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
-	if ($LOCALHOST || $HOMENETWORK) {
-		return true;
-	}
-	
-	$ip = $_SERVER['REMOTE_ADDR'];
-	$host = gethostbyaddr($ip);
-	
-	$BLACKLIST = isset($GLOBALS['BLACKLIST']) ? $GLOBALS['BLACKLIST'] : array();
-	
-	for ($b = 0; $b < count($BLACKLIST); $b++) {
-		$item = $BLACKLIST[$b];
-		if (!empty($item[0]) && substr_count($ip, $item[0])) { return false; }
-		if (!empty($item[1]) && substr_count($host, $item[1])) { return false; }
-	}
-
-	return true;
-}
+function allowedRequest() { return true; }
 
 function execSQL($SQL) {
 	/*** make it or break it ***/
@@ -36,7 +15,10 @@ function execSQL($SQL) {
 		$dbh = new PDO($db_name);
 		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$dbh->beginTransaction();
-
+		
+		#$stmt = $dbh->prepare("SELECT user FROM users WHERE (user=:user)");
+		#$stmt->bindValue(':user', $user);
+		
 		$dbh->exec($SQL);
 		$dbh->commit();
 
@@ -285,9 +267,9 @@ function fetchPaths() {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? $_SESSION['overrideFetch'] : false;
 
 	$SQL = "SELECT idPath, strPath FROM path WHERE strPath like '%".$TVSHOWDIR."%' ORDER BY strPath ASC;";
-	$paths = array();
 	
-	if (isset($_SESSION['paths']) && $overrideFetch == 0) {
+	$paths = array();
+	if (isset($_SESSION['paths']) && !$overrideFetch) {
 		$paths = unserialize($_SESSION['paths']);
 
 	} else {
@@ -300,8 +282,9 @@ function fetchPaths() {
 			$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			
 			$dbh->beginTransaction();
-
+			
 			$result = $dbh->query($SQL);
+			
 			$index = 0;
 			foreach($result as $row) {
 				$paths[$index][0] = $row['idPath'];
@@ -1045,7 +1028,7 @@ function checkOpenGuest() {
 	$gast_username = $GLOBALS['gast_username'];
 	$gast_passwort = $GLOBALS['gast_passwort'];
 
-	if ($LOCALHOST || empty($gast_username) && empty($gast_passwort)) {
+	if ($LOCALHOST || empty($gast_username) && empty($gast_passwort) && !isAdmin()) {
 		$_SESSION['gast'] = true;
 		return 1;
 	}
