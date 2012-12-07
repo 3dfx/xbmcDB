@@ -311,6 +311,7 @@ function postPaths() {
 
 function postPathsJS() {
 	$paths = fetchPaths();
+
 	echo 'var paths = new Array(';
 	for ($i = 0; $i < count($paths); $i++) {
 		$id = $paths[$i][0];

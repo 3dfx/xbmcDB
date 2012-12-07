@@ -39,7 +39,7 @@
 			$redirect = true;
 		}
 		
-		if (!empty($gast_username) && !empty($gast_passwort) ||
+		if (!empty($gast_username) && !empty($gast_passwort) &&
 		    $input_username == $gast_username && $input_passwort == $gast_passwort) {
 		    
 			$_SESSION['gast'] = true;
