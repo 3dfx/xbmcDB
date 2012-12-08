@@ -232,15 +232,39 @@
 				$db_name = $GLOBALS['db_name'];
 				$dbh = new PDO($db_name);
 				$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+				
+				$res = $dbh->query("SELECT url,type FROM art WHERE media_type = 'movie' AND media_id = '".$idMovie."';");
+				$poster  = '';
+				$fanart  = '';
+				foreach($res as $row) {
+					$type = $row['type'];
+					$url = $row['url'];
+					if (!empty($url)) {
+						if (
+						    $type == 'poster' ||
+						   ($type == 'thumb' && empty($poster))
+						   ) {
+							$poster = $url;
+						}
+						if ($type == 'fanart') {
+							$fanart = $url;
+						}
+					}
+				}
+				
 				$dbh->beginTransaction();
 				
-				$dbh->exec("UPDATE art SET url = (SELECT url FROM art WHERE media_id = ".$idMovie." AND media_type = 'movie' AND type = 'poster') WHERE media_id = ".$id." AND media_type = 'set' AND type = 'poster';");
-				$dbh->exec("UPDATE art SET url = (SELECT url FROM art WHERE media_id = ".$idMovie." AND media_type = 'movie' AND type = 'fanart') WHERE media_id = ".$id." AND media_type = 'set' AND type = 'fanart';");
+				$dbh->exec("REPLACE INTO art (media_id, media_type, type, url) VALUES ('".$id."', 'set', 'poster', '".$poster."');");
+				$dbh->exec("REPLACE INTO art (media_id, media_type, type, url) VALUES ('".$id."', 'set', 'fanart', '".$fanart."');");
+				
+				#$dbh->exec("UPDATE art SET url = (SELECT url FROM art WHERE media_id = ".$idMovie." AND media_type = 'movie' AND type = 'poster') WHERE media_id = ".$id." AND media_type = 'set' AND type = 'poster';");
+				#$dbh->exec("UPDATE art SET url = (SELECT url FROM art WHERE media_id = ".$idMovie." AND media_type = 'movie' AND type = 'fanart') WHERE media_id = ".$id." AND media_type = 'set' AND type = 'fanart';");
 				$dbh->commit();
 
 			} catch(PDOException $e) {
 				$dbh->rollBack();
 				echo $e->getMessage();
+				exit;
 			}
 			echo 'Setcover was set!<br/>';
 			exit;
