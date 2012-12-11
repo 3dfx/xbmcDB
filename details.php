@@ -506,7 +506,7 @@
 			
 			echo '<tr class="abstand"><td colspan="10"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
-			echo '<span class="filename lefto">'.$filename.'</span>';
+			echo '<span class="filename lefto">'.encodeString($filename).'</span>';
 			echo '<span class="filesize righto" title="'.formatToDeNotation($size).'">'.$size1.'</span>';
 			echo '</td></tr>';
 			echo "\r\n";

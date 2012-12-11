@@ -688,13 +688,13 @@ function createTable() {
 				$zeilen[$zeile][$zeilenSpalte++] = $filmname;
 #counter
 				$spalTmp = '<td class="countTD">';
-				if ($COVER_OVER_TITLE && $cover != null) {
+				if ($COVER_OVER_TITLE && !empty($cover)) {
 					$spalTmp .= '<a class="fancyimage1" href="'.$cover.'" title="'.$filmname.'">';
 				}
 
 				$spalTmp .= '_C0UNTER_';
 
-				if ($COVER_OVER_TITLE && $cover != null) {
+				if ($COVER_OVER_TITLE && !empty($cover)) {
 					$spalTmp .= '</a>';
 				}
 
