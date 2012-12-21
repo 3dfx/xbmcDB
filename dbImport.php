@@ -15,7 +15,7 @@ require_once 'template/export/PHPExcel/IOFactory.php';
 	<link rel="shortcut icon" href="favicon.ico" />
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/customSelect.jquery.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.js"></script>
+	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />

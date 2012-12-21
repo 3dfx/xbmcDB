@@ -27,6 +27,7 @@ a, a:hover {
 	-webkit-transition: all .2s linear;
 	-moz-transition: all .2s linear;
 	transition: all .2s linear;
+	line-height: 35px;
 }
 
 .search-close {

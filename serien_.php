@@ -18,7 +18,7 @@
 	<!--
 	<script type="text/javascript" src="./template/js/customSelect.jquery.js"></script>
 	-->
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.js"></script>
+	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<script type="text/javascript" src="./template/js/serien.js"></script>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
