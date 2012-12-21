@@ -75,9 +75,6 @@ a, a:hover {
 	background:#FAFAFA;
 }
 
-.seasonTR { height:20px; }
-.epTR { height:20px; }
-
 table.film {
 	zzfont-family: Verdana, Arial;
 	font-weight: normal;
@@ -621,10 +618,6 @@ input[type=checkbox] {
 	display:none;
 }
 
-#epDescription {
-	position:relative;
-}
-
 table.login {
 	font:14px Verdana;
 	font-weight: normal;
@@ -792,4 +785,20 @@ a.showlink {
 	padding:5px 5px;
 	height:14px;
 	float:left;
+}
+
+.seasonTR {
+	height:20px;
+}
+
+.epTR {
+	height:20px;
+}
+
+#tvBanner {
+	cursor:pointer;
+}
+
+#epDescription {
+	position:relative;
 }
