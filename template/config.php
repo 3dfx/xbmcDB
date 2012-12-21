@@ -43,6 +43,10 @@
 						#,array($SMB, $SMB_USIP)
 						#,array($SMB_USIP, "/mnt/")
 					);
+					
+	$DIRMAP_IMG                    = array(
+						array("/mnt/media/Serien", "./img/Serien")
+					);
 	*/
 	
 	//$TVSHOWDIR                     = 'media/Serien/';
