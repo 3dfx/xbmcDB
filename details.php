@@ -15,7 +15,7 @@
 
 		for ($j = $spalte; $j < count($res); $j++) {
 			$val = $res[$j];
-			if ($val != null) {
+			if (!empty($val)) {
 				break;
 			}
 
@@ -93,7 +93,7 @@
 	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
 
 	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
-	if ($id == null || trim($id) == '') { die('<br/>no param!<br/>'); }
+	if (empty($id)) { die('<br/>no param!<br/>'); }
 
 	$idFile = 0;
 
@@ -108,7 +108,7 @@
 		$result = $dbh->query($sql);	
 		$row = $result->fetch();
 
-		if ($row == null) { die('not found...'); }
+		if (empty($row)) { die('not found...'); }
 
 		$sql2 = "select B.strActor, A.strRole, A.idActor, B.strThumb as actorimage from actorlinkmovie A, actors B where A.idActor = B.idActor and A.idMovie = '$id'";
 		$result2 = $dbh->query($sql2);
@@ -207,7 +207,7 @@
 		}
 
 
-		if ($cover != null) {
+		if (!empty($cover)) {
 			echo "\r\n";
 			echo '<div class="coverDiv">';
 			echo '<div class="innerCoverDiv">';
@@ -239,7 +239,7 @@
 		echo '</div>';
 		echo "\r\n";
 
-		if ($inhalt != null) {
+		if (!empty($inhalt)) {
 			$MAXLEN = isset($GLOBALS['MAXMOVIEINFOLEN']) ? $GLOBALS['MAXMOVIEINFOLEN'] : 1000;
 			$tmp_inhalt = $inhalt;
 			if (strlen($tmp_inhalt) > $MAXLEN) {
@@ -260,7 +260,7 @@
 				echo $inhalt;
 				echo '</span>';
 
-			} else if ($spProtect || ($spProtect && $admin && ($watched == null || $watched == 0))) {
+			} else if ($spProtect || ($spProtect && $admin && (empty($watched)))) {
 				echo '<div id="spoiler" style="padding-top:15px; color:red; cursor:pointer;" onclick="spoilIt(); return false;"><u><i><b>spoil it!</b></i></u></div>';
 				echo '<span id="movieDescription" style="display:none;">';
 				echo $inhalt;
@@ -295,7 +295,7 @@
 			$orTitle = $row['c16'];
 			$run = 1;
 		}
-		if ($row['c11'] != null) {
+		if (!empty($row['c11'])) {
 			$minutes = $row['c11'];
 			$hours = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
 			$minutes = $minutes.'\'';
@@ -306,12 +306,13 @@
 			$stimmen = $row['c04'];
 			$run = 1;
 		}
-		if ($row['c14'] != null) {
+		if (!empty($row['c14'])) {
 			$genre = explode(" / ", $row['c14']);
 			$run = 1;
 		}
 
-		if ($size != '' && $size > 0) {
+		#if ($size != '' && $size > 0) {
+		if (!empty($size)) {
 			$size1 = _format_bytes($size);
 		}
 
@@ -326,22 +327,22 @@
 			}
 
 			$tmp = $row3['iVideoWidth'];
-			if ($tmp != null) { $width = $tmp; }
+			if (!empty($tmp)) { $width = $tmp; }
 
 			$tmp = $row3['iVideoHeight'];
-			if ($tmp != null) { $height = $tmp; }
+			if (!empty($tmp)) { $height = $tmp; }
 
 			$tmp = $row3['strVideoCodec'];
-			if ($tmp != null) { $vCodec = strtoupper($tmp); }
+			if (!empty($tmp)) { $vCodec = strtoupper($tmp); }
 
 			$tmp = $row3['strAudioCodec'];
-			if ($tmp != null) { $aCodec[count($aCodec)] = strtoupper($tmp); }
+			if (!empty($tmp)) { $aCodec[count($aCodec)] = strtoupper($tmp); }
 
 			$tmp = $row3['iAudioChannels'];
-			if ($tmp != null) { $aChannels[count($aChannels)] = $tmp; }
+			if (!empty($tmp)) { $aChannels[count($aChannels)] = $tmp; }
 
 			$tmp = $row3['strAudioLanguage'];
-			if ($tmp != null) { $aLang[count($aLang)] = strtoupper($tmp); }
+			if (!empty($tmp)) { $aLang[count($aLang)] = strtoupper($tmp); }
 
 			$run++;
 		}

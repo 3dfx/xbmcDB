@@ -25,8 +25,8 @@
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 		#$overrideFetch = true;
 		
-		if ($SQL == null) { $SQL = $GLOBALS['SerienSQL'].';'; }
-		if ($id == null) { $id = ''; }
+		if (empty($SQL)) { $SQL = $GLOBALS['SerienSQL'].';'; }
+		if (empty($id)) { $id = ''; }
 		$SSerien = null;
 		
 		if (isset($_SESSION['SSerien'.$id]) && $overrideFetch == 0) {
@@ -457,7 +457,7 @@
 			$res = null;
 			foreach($this->staffeln as $staffel) {
 				$episode = $staffel->findEpisode($idEpisode);
-				if ($episode != null) {
+				if (!empty($episode)) {
 					$res = $episode;
 					break;
 				}
@@ -487,7 +487,7 @@
 				return;
 			}
 
-			if ($this->serienname == null) {
+			if (empty($this->serienname)) {
 				$this->serienname = $episode->getSerienname();
 			}
 
@@ -509,7 +509,7 @@
 				$this->idTvdb = $episode->getIdTvdb();
 			}
 
-			if ($this->desc == null) {
+			if (empty($this->desc)) {
 				$this->desc = $showDesc;
 			}
 			
@@ -597,7 +597,7 @@
 			$this->tvdbIds[$idTvdb] = $idShow;
 
 			$serie = $this->getSerie($idShow);
-			if ($serie == null) {
+			if (empty($serie)) {
 				$serie = $this->addSerie($idShow, $serienname);
 			}
 			$serie->addEpisode($episode, $showDesc);

@@ -40,7 +40,7 @@
 	$stream = getStreamDetails($id);
 	foreach($stream as $stRow) {
 		$tmp = $stRow['fVideoAspect'];
-		if ($tmp != null) {
+		if (!empty($tmp)) {
 			if ($tmp != '') {
 				$tmp  = round($tmp, 2);
 				$tmp .= (strlen($tmp) < 4 ? '0' : '').':1';
@@ -49,19 +49,19 @@
 		}
 
 		$tmp = $stRow['iVideoWidth'];
-		if ($tmp != null) { $width = $tmp; }
+		if (!empty($tmp)) { $width = $tmp; }
 
 		$tmp = $stRow['iVideoHeight'];
-		if ($tmp != null) { $height = $tmp; }
+		if (!empty($tmp)) { $height = $tmp; }
 
 		$tmp = $stRow['strVideoCodec'];
-		if ($tmp != null) { $vCodec = strtoupper($tmp); }
+		if (!empty($tmp)) { $vCodec = strtoupper($tmp); }
 
 		$tmp = $stRow['strAudioCodec'];
-		if ($tmp != null) { $aCodec[count($aCodec)] = strtoupper($tmp); }
+		if (!empty($tmp)) { $aCodec[count($aCodec)] = strtoupper($tmp); }
 
 		$tmp = $stRow['iAudioChannels'];
-		if ($tmp != null) { $aChannels[count($aChannels)] = $tmp; }
+		if (!empty($tmp)) { $aChannels[count($aChannels)] = $tmp; }
 	}
 	
 	try {
@@ -105,9 +105,10 @@
 		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
 		if ($fromSrc && empty($thumbImg)) {
 			// READ MEDIAFIRE GENERATED THUMBS FROM SOURCE
-			$thumb = mapSambaDirs($path).substr($filename, 0, strlen($filename)-3).'tbn';
+			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
+			$thumb = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
 			$smb = (substr($thumb, 0, 6) == 'smb://');
-
+			
 			if (!$smb && file_exists($thumb)) {
 				$thumbImg = base64_encode_image($thumb);
 			}

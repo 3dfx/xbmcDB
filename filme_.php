@@ -751,7 +751,7 @@ function createTable() {
 				$rating = substr($rating, 0, substr($rating, 2, 1) == '.' ? 4 : 3);
 				
 				$spalTmp = '<td class="ratingTD '.($rating > 0 ? 'righto' : 'centro').'">';
-				if ($imdbId != null) {
+				if (!empty($imdbId)) {
 					$spalTmp .= '<a class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
 				} else {
 					$spalTmp .= '<a class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';

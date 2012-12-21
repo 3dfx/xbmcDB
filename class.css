@@ -574,6 +574,7 @@ input[type=checkbox] {
 
 .artitabbox {
 	position:relative;
+	float:left;
 	color:black;
 	zzfont:12px Verdana, Arial;
 	font-size: 12px;
