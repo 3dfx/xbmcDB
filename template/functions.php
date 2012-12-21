@@ -438,22 +438,30 @@ function thumbnailHash($input) {
 			}
 		}
 	}
+	
+	$val0 = sprintf("%u",$crc);
+	$val  = '';
+	
 	//Formatting the output in a 8 character hex
 	if ($crc>=0){
 		//positive results will hash properly without any issues
-		return sprintf("%08s",sprintf("%x",sprintf("%u",$crc)));
+		$val = sprintf("%x",$val0);
 	} else {
 		/*
 		 * negative values will need to be properly converted to
 		 * unsigned integers before the value can be determined.
 		 */
-		return sprintf("%08s", gmp_strval(gmp_init(sprintf("%u",$crc)),16));
-		//return sprintf("%08s", strval(gmp_init(sprintf("%u",$crc)),16));
+		$val = gmp_strval(gmp_init($val0),16);
 	}
+	
+	return sprintf("%08s", $val);
 }
 
-function mapSambaDirs($path) {
-	$DIRMAP = isset($GLOBALS['DIRMAP']) ? $GLOBALS['DIRMAP'] : array();
+function mapSambaDirs($path, $DIRMAP = null) {
+	if (empty($DIRMAP)) {
+		$DIRMAP = isset($GLOBALS['DIRMAP']) ? $GLOBALS['DIRMAP'] : array();
+	}
+	
 	for ($d = 0; $d < count($DIRMAP); $d++) {
 		$src = trim($DIRMAP[$d][0]);
 		$mnt = trim($DIRMAP[$d][1]);
@@ -676,7 +684,7 @@ function postNavBar($isMain) {
 	$unsetMode = '&mode=';
 	$unsetCountry = '&country=';
 	
-	$bs211 = ' padding-top:7px; height:18px;';
+	$bs211 = ' padding-top:7px; height:18px !important;';
 	
 	echo '<div class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;">';
 	echo '<div class="navbar-inner" style="height:30px;">';
@@ -686,8 +694,8 @@ function postNavBar($isMain) {
 	
 	echo '<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a>';
 	echo '<div class="nav-collapse">';
-	echo '<ul class="nav">';
-	echo '<li class="divider-vertical"></li>';
+	echo '<ul class="nav" style="padding-top:2px;">';
+	echo '<li class="divider-vertical" style="height:36px;"></li>';
 	echo '<li'.($isMain ? ' class="active"' : '').'>';
 	echo '<a href="?show=filme&mode=1&unseen=3&newmode=0&gallerymode=0'.$unsetWhichParam.$unsetMode.$unsetCountry.'"'.($isMain ? ' onmouseover="closeNavs();" onclick="return checkForCheck();" class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
 	echo '</li>';
@@ -872,15 +880,15 @@ function postNavBar($isMain) {
 	} //$isMain
 	
 	$isTvshow = isset($_SESSION['show']) && $_SESSION['show'] == 'serien' ? true : false;
-	echo '<li class="divider-vertical"'.($isMain ? ' onmouseover="closeNavs();"' : '').'></li>';
+	echo '<li class="divider-vertical" style="height:36px;"'.($isMain ? ' onmouseover="closeNavs();"' : '').'></li>';
 	echo '<li'.($isTvshow ? ' class="active"' : '').' style="font-weight:bold;">';
 	echo '<a href="?show=serien"'.($isMain ? ' onmouseover="closeNavs();" onclick="return checkForCheck();"' : '').($isTvshow ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">tv-shows</a>';
 	echo '</li>';
 	
 	echo '</ul>';
 	
-	echo '<ul class="nav pull-right">';
-	echo '<li class="divider-vertical"'.($admin ? ' onmouseover="closeNavs();"' : '').'></li>';
+	echo '<ul class="nav pull-right" style="padding-top:2px;">';
+	echo '<li class="divider-vertical" style="height:36px;"'.($admin ? ' onmouseover="closeNavs();"' : '').'></li>';
 	$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
 	if ($admin) {
 		echo '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin<b class="caret"></b></a>';
