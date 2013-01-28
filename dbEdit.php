@@ -117,14 +117,12 @@
 			##
 			 #############################
 
-			//TODO: check compatibility eden => frodo!
-/*
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
 			$result = $dbh->query($GETID_SQL);
 			$row = $result->fetch();
 			$lastId = $row['idFile'];
 			$idFile = $lastId + 1;
-
+			
 			$SQLfile = "INSERT INTO files(idFile,idPath,strFilename) VALUES([idFile],[idPath],'[FILENAME]');";
 			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
 			$SQLfile = str_replace('[idPath]', $idPath, $SQLfile);
@@ -142,7 +140,9 @@
 			$title = str_replace("'", "''", $title);
 			$desc  = str_replace("'", "''", $desc);
 			
-			$SQLepi = "INSERT INTO episode VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,[RATING],'[GUEST_AUTOR]',[AIRED],NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL);";
+			$SQLepi = "INSERT INTO episode ".
+				   "VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,[RATING],'[GUEST_AUTOR]',[AIRED],NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL,[idShow]);";
+			
 			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
 			$SQLepi = str_replace('[idFile]', $idFile, $SQLepi);
 			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
@@ -155,22 +155,18 @@
 			$SQLepi = str_replace('[EPISODE]', $showEpi[1], $SQLepi);
 			$SQLepi = str_replace('[FULLFILENAME]', $strPath.$file, $SQLepi);
 			$SQLepi = str_replace('[idPath]', $idPath, $SQLepi);
+			$SQLepi = str_replace('[idShow]', $idShow, $SQLepi);
 			$dbh->exec($SQLepi);
 		
+			/*
+			//table in eden, no more in frodo!
 			$SQLlink = "INSERT INTO tvshowlinkepisode VALUES([idShow],[idEpisode]);";
 			$SQLlink = str_replace('[idShow]', $idShow, $SQLlink);
 			$SQLlink = str_replace('[idEpisode]', $idEpisode, $SQLlink);
 			$dbh->exec($SQLlink);
+			*/
 
-			#echo $SQLfile.'<br/><br/>';
-			#echo $SQLepi.'<br/><br/>';
-			#echo $SQLlink.'<br/><br/>';
-			
 			$_SESSION['overrideFetch'] = 1;
-
-			#print_r( $_POST );
-			#exit;
-*/
 		}
 		
 		if ($act == 'setmovieinfo' && $idMovie != -1 && $idFile != -1) {
