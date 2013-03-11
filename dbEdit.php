@@ -122,27 +122,27 @@
 			$row = $result->fetch();
 			$lastId = $row['idFile'];
 			$idFile = $lastId + 1;
-			
+
 			$SQLfile = "INSERT INTO files(idFile,idPath,strFilename) VALUES([idFile],[idPath],'[FILENAME]');";
 			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
 			$SQLfile = str_replace('[idPath]', $idPath, $SQLfile);
 			$SQLfile = str_replace('[FILENAME]', $file, $SQLfile);
 			$dbh->exec($SQLfile);
-			
+
 			$GETID_SQL = 'SELECT idEpisode FROM episode ORDER BY idEpisode DESC LIMIT 0, 1;';
 			$result = $dbh->query($GETID_SQL);
 			$row = $result->fetch();
 			$lastId = $row['idEpisode'];
 			$idEpisode = $lastId + 1;
-			
+
 			$showEpi = explode('-', $showEpi);
-			
+
 			$title = str_replace("'", "''", $title);
 			$desc  = str_replace("'", "''", $desc);
-			
+
 			$SQLepi = "INSERT INTO episode ".
 				   "VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,[RATING],'[GUEST_AUTOR]',[AIRED],NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL,[idShow]);";
-			
+
 			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
 			$SQLepi = str_replace('[idFile]', $idFile, $SQLepi);
 			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
@@ -157,7 +157,7 @@
 			$SQLepi = str_replace('[idPath]', $idPath, $SQLepi);
 			$SQLepi = str_replace('[idShow]', $idShow, $SQLepi);
 			$dbh->exec($SQLepi);
-		
+
 			/*
 			//table in eden, no more in frodo!
 			$SQLlink = "INSERT INTO tvshowlinkepisode VALUES([idShow],[idEpisode]);";

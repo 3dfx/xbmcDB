@@ -74,7 +74,7 @@
 		$result = $dbh->query($SQL);
 		foreach($result as $row) {
 			$title = $row['epName'];
-			$epDesc = trim($row['epDesc']);
+			$epDesc = encodeString(trim($row['epDesc']));
 			$path = $row['path'];
 			$filename = $row['filename'];
 			$lastPlayed = $row['lastPlayed'];
@@ -101,6 +101,8 @@
 	
 	$thumbImg = null;
 	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS']) ? $GLOBALS['TVSHOW_THUMBS'] : false;
+	$ENCODE = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
+	
 	if ($thumbsUp) {
 		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
 		if ($fromSrc && empty($thumbImg)) {
@@ -109,13 +111,14 @@
 			$thumb = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
 			$smb = (substr($thumb, 0, 6) == 'smb://');
 			
-			if (!$smb && file_exists($thumb)) {
+			if (!$smb && file_exists($thumb) && $ENCODE) {
 				$thumbImg = base64_encode_image($thumb);
 			}
-			
-		} else {
+		}
+		
+		if (empty($thumbImg)) {
 			$img = getTvShowThumb($coverP.$filename);
-			$thumbImg = base64_encode_image($img);
+			$thumbImg = $ENCODE ? base64_encode_image($img) : $img;
 
 			if (empty($thumbImg) && $existArtTable) {
 				$res2 = $dbh->query("SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';");
@@ -125,7 +128,7 @@
 				if (!empty($url)) {
 					$img = getTvShowThumb($url);
 					#logc( $img );
-					if (file_exists($img)) {
+					if (file_exists($img) && $ENCODE) {
 						$thumbImg = base64_encode_image($img);
 					}
 
@@ -156,7 +159,7 @@
 			echo $tmp;
 
 		} else if ($admin && empty($playCount)) {
-			echo '<div id="spoiler" style="padding-bottom:15px;" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red;">spoil it!</span></div>';
+			echo '<div id="epSpoiler" style="padding-bottom:15px;" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red;">spoil it!</span></div>';
 			echo '<span id="epDescr" style="display:none;">';
 			echo $tmp;
 			echo '</span>';

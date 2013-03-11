@@ -103,13 +103,31 @@
 function postSets() {
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
-
+	
 	try {
 		$db_name = $GLOBALS['db_name'];
 		$dbh = new PDO($db_name);
 		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-		$SQL_SETS = 'select * from sets;';
+		
+		/*
+		$SQL_SETLINK = 'SELECT S.idSet, S.strSet, M.c00 AS filmname, M.idMovie AS idMovie FROM movie M, sets S WHERE M.idSet = S.idSet ORDER BY S.strSet, M.c00;';
+		$result = $dbh->query($SQL_SETLINK);
+		$lastSet = -1;
+		foreach($result as $entry) {
+			$idSet    = $entry['idSet'];
+			$strSet   = $entry['strSet'];
+			$idMovie  = $entry['idMovie'];
+			$filmname = $entry['filmname'];
+			
+			if ($idSet != $lastSet) {
+				postSet($idSet, $strSet);
+			}
+			postSetMovie($idSet, $idMovie, $filmname);
+			$lastSet = $idSet;
+		}
+		*/
+		
+		$SQL_SETS = 'SELECT * FROM sets ORDER BY strSet;';
 		$result = $dbh->query($SQL_SETS);
 		$sets = array();
 		$s = 0;
@@ -118,34 +136,33 @@ function postSets() {
 			$sets[$s]['strSet'] = $row['strSet'];
 			$s++;
 		}
-
-		$SQL_SETLINK = 'SELECT S.idSet, S.strSet, M.c00 AS filmname, M.idMovie AS idMovie FROM movie M, sets S WHERE M.idSet = S.idSet ORDER BY S.strSet;';
+		
+		$SQL_SETLINK = 'SELECT S.idSet, S.strSet, M.c00 AS filmname, M.idMovie AS idMovie FROM movie M, sets S WHERE M.idSet = S.idSet ORDER BY S.strSet, M.c00;';
 		$result = $dbh->query($SQL_SETLINK);
 		$movies = array();
 		$i = 0;
 		foreach($result as $row) {
-			$movies[$i]['idSet'] = $row['idSet'];
-			$movies[$i]['idMovie'] = $row['idMovie'];
-			$movies[$i]['strSet'] = $row['strSet'];
+			$movies[$i]['idSet']    = $row['idSet'];
+			$movies[$i]['idMovie']  = $row['idMovie'];
+			$movies[$i]['strSet']   = $row['strSet'];
 			$movies[$i]['filmname'] = $row['filmname'];
 			$i++;
 		}
-
+		
 		foreach($sets as $entry) {
 			$idSet = $entry['idSet'];
 			$strSet = $entry['strSet'];
 			postSet($idSet, $strSet);
-
+			
 			foreach($movies as $movie) {
 				if ($movie['idSet'] != $idSet) {
 					continue;
 				}
-
+				
 				postSetMovie($movie['idSet'], $movie['idMovie'], $movie['filmname']);
 			}
 		}
-
-
+		
 	} catch(PDOException $e) {
 		echo $e->getMessage();
 	}

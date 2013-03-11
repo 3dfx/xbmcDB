@@ -8,8 +8,6 @@
 	include_once "globals.php";
 	include_once "_FILME.php";
 ?>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
 <head>
 	<title>XBMC Database</title>
 	<link rel="shortcut icon" href="favicon.ico" />
@@ -21,6 +19,7 @@
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./class.css" />
@@ -327,8 +326,6 @@
 		echo "\r\n";
 	}
 ?>
-</body>
-</html>
 
 <?php
 /*          FUNCTIONS          */
@@ -579,6 +576,7 @@ function createTable() {
 		
 		$EXCLUDEDIRS = isset($GLOBALS['EXCLUDEDIRS']) ? $GLOBALS['EXCLUDEDIRS'] : array();
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
+		$ENCODE = isset($GLOBALS['ENCODE_IMAGES']) ? $GLOBALS['ENCODE_IMAGES'] : true;
 		$existArtTable = existsArtTable($dbh);
 		
 		$result = fetchMovies($dbh, $SQL, $sessionKey);
@@ -608,7 +606,7 @@ function createTable() {
 			
 			if  (empty($dateAdded)) {
 				$creation = getCreation($fnam);
-				logc( $creation );
+				#logc( $creation );
 				if (empty($creation)) {
 					$creation = '2001-01-01 12:00:00';
 				}
@@ -926,6 +924,7 @@ function createTable() {
 				echo '<td class="galleryTD">';
 				echo $zeilen[$t][1];
 				$covImg = (!empty($zeilen[$t][3]) ? $zeilen[$t][3] : './img/nothumb.png');
+				if ($ENCODE) { $covImg = base64_encode_image($covImg); }
 				echo '<div class="galleryCover" style="background:url('.$covImg.') #FFFFFF no-repeat;" title="'.$zeilen[$t][0].'">';
 				if ($admin && $zeilen[$t][2] >= 1) {
 					echo '<span class="gallerySpan"><img src="img/check.png" class="galleryImage"></span>';

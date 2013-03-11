@@ -8,8 +8,7 @@ require_once 'template/export/myExcelFunks.php';
 #require_once 'template/export/PHPExcel.php';
 require_once 'template/export/PHPExcel/IOFactory.php';
 ?>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
+
 <head>
 	<title>xbmcDB - Datenbank Import</title>
 	<link rel="shortcut icon" href="favicon.ico" />
@@ -65,5 +64,3 @@ require_once 'template/export/PHPExcel/IOFactory.php';
 	}
 ?>
 	</div>
-</body>
-</html>

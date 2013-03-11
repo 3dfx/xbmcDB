@@ -26,13 +26,26 @@
 		redirectPage('', true);
 		return;
 	}
-	
+?>	
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<html>
+
+<?php
+	if ($show == null) { $show = 'filme'; }
 	if ($show != null && $show == 'logout') { include "./logout.php"; }
 	else if ($show != null && $show == 'export') { include "./dbExport.php"; }
 	else if ($show != null && $show == 'import') { include "./dbImport.php"; }
 	else if ($show != null && $show == 'details' && $idShow != null) { include "./details.php"; }
 	else if ($show != null && $show == 'serien') { include "./serien_.php"; }
-	else if ($show == null || $show == 'filme') { include "./filme_.php"; }
+	else if ($show == 'filme') { include "./filme_.php"; }
 	
-	if (isAdmin() && ($show == 'filme' || $show == 'serien')) { echo '<div style="top:40px; right:5px; position:absolute;">'.round(microtime(true)-$start, 2).'s</div>'; }
+	adminInfo($start, $show);
 ?>
+
+</body>
+<?php
+	logc( 'Page generated in: '.round(microtime(true)-$start, 2).'s', true );
+	adminInfoJS();
+?>
+</html>

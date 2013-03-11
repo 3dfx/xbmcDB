@@ -7,8 +7,7 @@ include_once 'template/functions.php';
 require_once 'template/export/myExcelFunks.php';
 require_once 'template/export/PHPExcel.php';
 ?>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
+
 <head>
 	<title>xbmcDB - Datenbank Export</title>
 	<link rel="shortcut icon" href="favicon.ico" />
@@ -94,5 +93,3 @@ function printSelecta($tables) {
 }
 ?>
 	</div>
-</body>
-</html>

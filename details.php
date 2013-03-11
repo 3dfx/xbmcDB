@@ -30,8 +30,6 @@
 	}
 ?>
 
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
 <head>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
@@ -91,7 +89,8 @@
 	$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
 	$FILMINFOSEARCH = $GLOBALS['FILMINFOSEARCH'];
 	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
-
+	$ENCODE = isset($GLOBALS['ENCODE_IMAGES']) ? $GLOBALS['ENCODE_IMAGES'] : false;
+	
 	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
 	if (empty($id)) { die('<br/>no param!<br/>'); }
 
@@ -195,19 +194,22 @@
 ?>
 <body>
 <?php
-	
 		$pos1 = strpos($filename, '.3D.');
 		if ( $pos1 == true) {
 			$titel .= ' (3D)';
 		}
-	
+		
 		if ($DETAILFANART && $fanartExists) {
+			if ($ENCODE) { $fanart = base64_encode_image($fanart); }
 			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>';
 			echo "\r\n";
 		}
-
-
+		
 		if (!empty($cover)) {
+			if ($ENCODE) {
+				$cover = base64_encode_image($cover);
+				$cover_big = base64_encode_image($cover_big);
+			}
 			echo "\r\n";
 			echo '<div class="coverDiv">';
 			echo '<div class="innerCoverDiv">';
@@ -288,6 +290,7 @@
 		$aCodec    = array();
 		$aChannels = array();
 		$aLang     = array();
+		$sLang     = array();
 		$res       = array();
 		$run       = 0;
 
@@ -296,7 +299,8 @@
 			$run = 1;
 		}
 		if (!empty($row['c11'])) {
-			$minutes = $row['c11'];
+			$secs = $row['c11'];
+			$minutes = floor($secs/60);
 			$hours = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
 			$minutes = $minutes.'\'';
 			$run = 1;
@@ -343,10 +347,13 @@
 
 			$tmp = $row3['strAudioLanguage'];
 			if (!empty($tmp)) { $aLang[count($aLang)] = strtoupper($tmp); }
-
+			
+			$tmp = $row3['strSubtitleLanguage'];
+			if (!empty($tmp)) { $sLang[count($sLang)] = strtoupper($tmp); }
+			
 			$run++;
 		}
-
+		
 		$sqlG = "select * from genre";
 		$resultG = $dbh->query($sqlG);
 		$idGenre = array();
@@ -358,9 +365,9 @@
 
 			$idGenre[$str] = $rowG['idGenre'];
 		}
-
-		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($genre)), 1);
-		$spalten = 10;
+		
+		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre)), 1);
+		$spalten = 11;
 		for ($g = 0; $g < $max; $g++) {
 			for ($x = 0; $x < $spalten; $x++) {
 				$res[$g][$x] = null;
@@ -393,8 +400,12 @@
 			if ($g < count($aChannels)) {
 				$res[$g][9] = postEditChannels($aChannels[$g]);
 			}
+			
+			if ($g < count($sLang)) {
+				$res[$g][10] = postEditLanguage($sLang[$g], false);
+			}
 		}
-
+		
 		$res[0][0] = $hours;
 		$res[0][1] = $rating;
 		$res[0][2] = $stimmen;
@@ -403,17 +414,23 @@
 			$res[0][5] = $width.'x'.$height;
 		}
 		$res[0][6] = $vCodec;
-
+		
 		$res[1][0] = $minutes;
 		$res[1][5] = $ar;
-
+		
 		if ($run > 0) {
 			echo '<div class="stream">';
 			echo '<table cellspacing="0" class="streaminfo">';
 			echo "\r\n";
 			echo '<tr>';
 			echo '<th>Duration</th><th>Rating</th><th>Votes</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
-			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th><th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
+			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th>';
+			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
+			if (!empty($sLang)) {
+				echo '<th class="streaminfoLasTD">Sub</th>';
+			} else {
+				$spalten--;
+			}
 			echo '</tr>';
 			echo "\r\n";
 			echo '<tr class="abstand"><td colspan="10"></td></tr>';
@@ -421,8 +438,9 @@
 
 			$zeilen = 0;
 			$hiddenGenres = count($genre)-2;
+			$hiddenSubs = count($sLang)-2;
 			for ($i = 0; $i < $max; $i++) {
-				echo '<tr'.($i >= 2 && $hiddenGenres > 1 ? ' name="genres" style="display:none;"' : '').'>';
+				echo '<tr'.($i >= 2 && ($hiddenGenres > 1 || $hiddenSubs > 1) ? ' name="genres" style="display:none;"' : '').'>';
 				$emptyGenreFilled = false;
 				for ($j = 0; $j < count($res[$i]); $j++) {
 					$val = $res[$i][$j];
@@ -481,6 +499,10 @@
 							break;
 
 						case 9:
+							echo ' class="'.(empty($sLang) ? 'streaminfoLasTD' : 'streaminfoAV').'"';
+							break;
+							
+						case 10:
 							echo ' class="streaminfoLasTD"';
 							break;
 					}
@@ -491,14 +513,32 @@
 				echo '</tr>';
 				$zeilen++;
 			}
-
-			if ($zeilen > 2 && $hiddenGenres > 1) {
-				echo '<tr id="genreDots"><td colspan="4"></td><td class="streaminfoGenre lefto">';
-				echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
-				echo '</td><td colspan="5"></td></tr>';
-				echo "\r\n";
+			
+			if ($zeilen > 2 && ($hiddenGenres >= 1 || $hiddenSubs >= 1)) {
+				if ($hiddenGenres > 1) {
+					echo '<tr id="genreDots"><td colspan="4"></td><td class="streaminfoGenre lefto">';
+					echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
+					echo '</td>';
+					echo '<td colspan="'.($hiddenSubs >= 1 ? 5 : 4).'"></td>';
+					if ($hiddenSubs >= 1) {
+						echo '<td><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
+					}
+					echo '</tr>';
+					echo "\r\n";
+					
+				} else if ($hiddenSubs > 1) {
+					echo '<tr id="genreDots"><td colspan="4"></td><td class="streaminfoGenre lefto">';
+					if ($hiddenGenres >= 1) {
+						echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
+					}
+					echo '</td>';
+					echo '<td colspan="5"></td>';
+					echo '<td><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
+					echo '</tr>';
+					echo "\r\n";
+				}
 			}
-
+			
 			$smb = (substr($filename, 0, 6) == 'smb://');
 			$stacked = (substr($filename, 0, 8) == 'stack://');
 			if ($smb || $stacked) {
@@ -623,5 +663,3 @@
 
 	unset($_SESSION['show']);
 ?>
-</body>
-</html>

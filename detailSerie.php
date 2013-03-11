@@ -111,7 +111,8 @@ function postStaffel($staffel) {
 		
 		$idEpisode = $epi->getIdEpisode();
 		$idTvdb = $epi->getIdTvdb();
-		$epTitle = $epi->getName();
+		$epTitle = encodeString($epi->getName());
+		#$epTitle = $epi->getName();
 		$hover = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
 		
 		echo '<tr class="epTR" id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" href="./detailEpisode.php?id='.$idEpisode.'" style="display:none; cursor:default;" onclick="loadEpDetails(this, '.$idEpisode.');">';

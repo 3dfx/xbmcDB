@@ -7,8 +7,7 @@
 	include_once "globals.php";
 	include_once "_SERIEN.php";
 ?>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
+
 <head>
 	<title>XBMC Database</title>
 	<link rel="shortcut icon" href="favicon.ico" />
@@ -22,6 +21,7 @@
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<script type="text/javascript" src="./template/js/serien.js"></script>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="./class.css" />
@@ -43,8 +43,6 @@
 <div id="showDesc" style="border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px;"></div>
 <div id="showInfo" style="border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px;"></div>
 <div id="showEpDesc" style="border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px;"></div>
-</body>
-</html>
 
 <?php
 function fillTable() {
