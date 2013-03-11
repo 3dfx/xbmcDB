@@ -83,7 +83,7 @@ function getTableNames() {
 }
 
 function getStreamDetails($idFile) {
-	$sql = "SELECT strVideoCodec, fVideoAspect, iVideoWidth, iVideoHeight, strAudioCodec, iAudioChannels, strAudioLanguage FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL) AND idFile = ".$idFile.";";
+	$sql = "SELECT strVideoCodec, fVideoAspect, iVideoWidth, iVideoHeight, strAudioCodec, iAudioChannels, strAudioLanguage, strSubtitleLanguage FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL) AND idFile = ".$idFile.";";
 	return fetchFromDB($sql);
 }
 
@@ -935,9 +935,8 @@ function postNavBar($isMain) {
 	return;
 }
 
-function logc($val) { if (isAdmin()) { echo '<script type="text/javascript">console.log( \''.$val.'\' );</script>'; } }
-function pre($val)  { if (isAdmin()) { echo '<pre>'.$val.'</pre>'; } }
-
+function logc($val, $noadmin = false) { if (isAdmin() || $noadmin) { echo '<script type="text/javascript">console.log( \''.$val.'\' );</script>'."\r\n"; } }
+function pre($val, $noadmin = false)  { if (isAdmin() || $noadmin) { echo '<pre>'.$val.'</pre>'."\r\n"; } }
 
 function redirectPage($subPage = null, $redirect = false) {
 	$path = dirname($_SERVER['PHP_SELF']);
@@ -977,6 +976,84 @@ function setSessionParams($isAuth = false) {
 	}
 	
 	//unset($_GET, $_POST);
+}
+
+function adminInfo($start, $show) {
+	$adminInfo = isset($GLOBALS['ADMIN_INFO']) ? $GLOBALS['ADMIN_INFO'] : true;
+	if (isAdmin() && $adminInfo && ($show == 'filme' || $show == 'serien')) {
+		echo '<div class="bs-docs" id="adminInfo" style="top:60px; right:5px; position:absolute; text-align:right; padding:10px 10px 14px;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
+		
+		#hdparm
+		#/-*
+		#unset($output);
+		#exec('/sbin/hpLog', $output);
+		#print_r( $output );
+		$filename = './myScripts/hdparm.log';
+		if (file_exists($filename)) {
+			$log = file($filename);
+			for ($i = 0; $i < count($log); $i++) {
+				$line = explode(',',$log[$i]);
+				$label = trim($line[0]);
+				$state = trim($line[1]);
+				$tCol = $state == 'standby' ? ' label-important' :  ' label-success';
+				echo '<span id="hdp'.$i.'" style="cursor:default; display:none; padding:5px 8px; margin-bottom:5px;" class="label'.$tCol.' cursor:pointer;">'.$label.'</span><br id="brr'.$i.'" style="display:none;" />';
+			}
+		}
+		#*/
+		#hdparm
+
+		#cpu temp
+		unset($output);
+		exec('sensors | sed -ne "s/Physical\ id\ 0: \+[-+]\([0-9]\+\).*/\1/p"', $output);
+		if (!empty($output)) {
+			$output = $output[0];
+			$tCol = ' label-success';
+			if ($output >= 30) { $tCol = ''; }
+			if ($output >= 40) { $tCol = ' label-warning'; }
+			if ($output >= 50) { $tCol = ' label-important'; }
+			echo '<span id="spTemp" style="cursor:default; display:none; padding:5px 8px;" class="label'.$tCol.' cursor:pointer;">'.$output.'&deg;C</span>';
+		}
+		#cpu temp
+		
+		#time
+		$end = round(microtime(true)-$start, 2);
+		$eCol = '';
+		if ($end >= 1) { $eCol = ' label-important'; }
+		if ($end <= 0.1) { $eCol = ' label-success'; }
+		echo '<span id="spTime" style="cursor:default; display:none; padding:5px 8px; margin-left:5px;" class="label'.$eCol.'">'.$end.'s</span>';
+		#time
+		
+		
+		echo '</div>';
+	}
+}
+
+function adminInfoJS() {
+	$adminInfo = isset($GLOBALS['ADMIN_INFO']) ? $GLOBALS['ADMIN_INFO'] : true;
+	if (isAdmin() && $adminInfo) {
+		echo '<script type="text/javascript">'."\r\n";
+		echo "$(document).ready(function() {\r\n";
+		echo "\tvar info = document.getElementById('adminInfo');\r\n";
+		echo "\tif (info != null) { $('.bs-docs').addClass('info'); }\r\n";
+		echo "});\r\n";
+		echo "\r\n";
+		#echo "var show = false;";
+		echo "function hideAdminInfo(show) {\r\n";
+		#echo "\tshow = !show;\r\n";
+		$filename = './myScripts/hdparm.log';
+		if (file_exists($filename)) {
+			$log = file($filename);
+			for ($i = 0; $i < count($log); $i++) {
+				echo "\t$( '#hdp".$i."' ).toggle(show);\r\n";
+				echo "\t$( '#brr".$i."' ).toggle(show);\r\n";
+			}
+		}
+		echo "\t$( '#spTime' ).toggle(show);\r\n";
+		echo "\t$( '#spTemp' ).toggle(show);\r\n";
+		echo "\t$( '#adminInfo.bs-docs' ).css('padding', show ? '35px 10px 14px' : '10px 10px 14px');\r\n";
+		echo "}\r\n";
+		echo '</script>'."\r\n";
+	}
 }
 
 function moveUploadedFile($prefix, $fileType) {
@@ -1155,7 +1232,7 @@ function formatToDeNotation($str) {
 	return substr($res, 0, strlen($res)-4);
 }
 
-function postEditLanguage($str) {
+function postEditLanguage($str, $buildLink = true) {
 	$COUNTRY_MAP = isset($GLOBALS['COUNTRY_MAP']) ? $GLOBALS['COUNTRY_MAP'] : null;
 	if (empty($COUNTRY_MAP)) { return $str; }
 	
@@ -1163,32 +1240,32 @@ function postEditLanguage($str) {
 	$chosenMap = $COUNTRY_MAP[$LANG];
 	if (empty($chosenMap)) { return $str; }
 	
-	if ($str == 'GER') { $str = makeLangLink($str, 'GER', 'DEU', 'deu', $chosenMap[$str]); }
-	if ($str == 'GMH') { $str = makeLangLink($str, 'GMH', 'DEU', 'deu', $chosenMap[$str]); }
-	if ($str == 'DEU') { $str = makeLangLink($str, 'DEU', 'DEU', 'deu', $chosenMap[$str]); }
-
-	if ($str == 'ENG') { $str = makeLangLink($str, 'ENG', 'ENG', 'eng', $chosenMap[$str]); }
-
-	if ($str == 'TUR') { $str = makeLangLink($str, 'TUR', 'TUR', 'tur', $chosenMap[$str]); }
-
-	if ($str == 'FRE') { $str = makeLangLink($str, 'FRE', 'FRE', 'fre', $chosenMap[$str]); }
-
-	if ($str == 'ITA') { $str = makeLangLink($str, 'ITA', 'ITA', 'ita', $chosenMap[$str]); }
-	if ($str == 'SPA') { $str = makeLangLink($str, 'SPA', 'SPA', 'ita', $chosenMap[$str]); }
-	if ($str == 'POR') { $str = makeLangLink($str, 'POR', 'POR', 'ita', $chosenMap[$str]); }
-
-	if ($str == 'JPN') { $str = makeLangLink($str, 'JPN', 'JPN', 'jpn', $chosenMap[$str]); }
-	if ($str == 'CHI') { $str = makeLangLink($str, 'CHI', 'CHI', 'jpn', $chosenMap[$str]); }
-	if ($str == 'KOR') { $str = makeLangLink($str, 'KOR', 'KOR', 'jpn', $chosenMap[$str]); }
-
+	if ($str == 'GER') { $str = makeLangLink($str, 'GER', 'DEU', 'deu', $chosenMap[$str], $buildLink); }
+	if ($str == 'GMH') { $str = makeLangLink($str, 'GMH', 'DEU', 'deu', $chosenMap[$str], $buildLink); }
+	if ($str == 'DEU') { $str = makeLangLink($str, 'DEU', 'DEU', 'deu', $chosenMap[$str], $buildLink); }
+	
+	if ($str == 'ENG') { $str = makeLangLink($str, 'ENG', 'ENG', 'eng', $chosenMap[$str], $buildLink); }
+	
+	if ($str == 'TUR') { $str = makeLangLink($str, 'TUR', 'TUR', 'tur', $chosenMap[$str], $buildLink); }
+	
+	if ($str == 'FRE') { $str = makeLangLink($str, 'FRE', 'FRE', 'fre', $chosenMap[$str], $buildLink); }
+	
+	if ($str == 'ITA') { $str = makeLangLink($str, 'ITA', 'ITA', 'ita', $chosenMap[$str], $buildLink); }
+	if ($str == 'SPA') { $str = makeLangLink($str, 'SPA', 'SPA', 'ita', $chosenMap[$str], $buildLink); }
+	if ($str == 'POR') { $str = makeLangLink($str, 'POR', 'POR', 'ita', $chosenMap[$str], $buildLink); }
+	
+	if ($str == 'JPN') { $str = makeLangLink($str, 'JPN', 'JPN', 'jpn', $chosenMap[$str], $buildLink); }
+	if ($str == 'CHI') { $str = makeLangLink($str, 'CHI', 'CHI', 'jpn', $chosenMap[$str], $buildLink); }
+	if ($str == 'KOR') { $str = makeLangLink($str, 'KOR', 'KOR', 'jpn', $chosenMap[$str], $buildLink); }
+	
 	if ($str == 'POL') { $str = str_replace('POL', '<span title="'.$chosenMap[$str].'">POL</span>', $str); }
 	
 	return $str;
 }
 
-function makeLangLink($strSource, $strToReplace, $strReplaceToken, $strFilter, $strTitle) {
+function makeLangLink($strSource, $strToReplace, $strReplaceToken, $strFilter, $strTitle, $buildLink = true) {
 	$url = '?show=filme&mode=2&newmode=0&unseen=3&which=&just=&country=';
-	return str_replace($strToReplace, '<span title="'.$strTitle.'"><a href="'.$url.$strFilter.'" target="_parent" class="detailLink">'.$strReplaceToken.'</a></span>', $strSource);
+	return str_replace($strToReplace, '<span title="'.$strTitle.'">'.($buildLink ? '<a href="'.$url.$strFilter.'" target="_parent" class="detailLink">' : '').$strReplaceToken.($buildLink ? '</a>' : '').'</span>', $strSource);
 }
 
 function postEditCodec($str) {
@@ -1208,6 +1285,9 @@ function postEditChannels($str) {
 }
 
 function encodeString($text) {
+	$text = str_replace("''", "'", $text);
+	#return htmlspecialchars($text, ENT_QUOTES);
+
 	$text = str_replace ("ä", "&auml;", $text);
 	$text = str_replace ("Ä", "&Auml;", $text);
 	$text = str_replace ("ö", "&ouml;", $text);
@@ -1218,10 +1298,14 @@ function encodeString($text) {
 	$text = str_replace ("Ü", "&Uuml;", $text);
 	$text = str_replace ("Ã", "&Uuml;", $text);
 	$text = str_replace ("ß", "&szlig;", $text);
+	$text = str_replace("'", "&#039;", $text);
 	return $text;
 }
 
 function decodeString($text) {
+	$text = str_replace("&#039;", "'", $text);
+	#return htmlspecialchars_decode($text, ENT_QUOTES);
+
 	$text = str_replace ("&auml;", "ä", $text);
 	$text = str_replace ("&Auml;", "Ä", $text);
 	$text = str_replace ("&ouml;", "ö", $text);
