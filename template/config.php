@@ -25,10 +25,11 @@
 		return $_SESSION['dbName'];
 	}
 	
-	$gast_username                 = '';
-	$gast_passwort                 = '';
 	$login_username                = '';
 	$login_passwort                = '';
+	$gast_users                    = array(
+//						'' => ''
+					);
 	$REFF                          = 'USER.dyndns.org';
 	
 	/*

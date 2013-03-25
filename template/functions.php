@@ -1110,10 +1110,9 @@ function isGast() {
 function checkOpenGuest() {
 #deactivated
 	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
-	$gast_username = $GLOBALS['gast_username'];
-	$gast_passwort = $GLOBALS['gast_passwort'];
-
-	if ($LOCALHOST || empty($gast_username) && empty($gast_passwort) && !isAdmin()) {
+	$gast_users = $GLOBALS['gast_users'];
+	
+	if ($LOCALHOST || size($gast_users) == 0 && !isAdmin()) {
 		$_SESSION['gast'] = true;
 		return 1;
 	}

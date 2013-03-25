@@ -10,45 +10,45 @@
 	
 	startSession();
 	if (isLogedIn()) { logedInSoRedirect(); }
-
+	
 	$reffer = (isset($_SESSION['reffer']) ? $_SESSION['reffer'] : null);
 	if ($reffer == null) { $reffer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null; }
 	logRefferer($reffer);
 	
 	$logedInAs = 'FAiL';
-	$redirect = false;
-	$asAdmin = false;
+	$redirect  = false;
+	$asAdmin   = false;
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-		$input_username = (isset($_POST['username']) ? $_POST['username'] : '');
-		$input_passwort = (isset($_POST['passwort']) ? $_POST['passwort'] : '');
-
-		$gast_username = $GLOBALS['gast_username'];
- 		$gast_passwort = $GLOBALS['gast_passwort'];
- 		$login_username = $GLOBALS['login_username'];
- 		$login_passwort = $GLOBALS['login_passwort'];
- 		
-		// Benutzername und Passwort werden überprüft
-		if (!empty($login_username) && !empty($login_passwort) &&
-		    $input_username == $login_username && $input_passwort == $login_passwort) {
-		    
-			$_SESSION['angemeldet'] = true;
-			unset($_SESSION['gast']);
-
-			$logedInAs = 'ADMiN';
-			$asAdmin = true;
-			$redirect = true;
+		$input_username = (isset($_POST['username']) ? $_POST['username'] : null);
+		$input_passwort = (isset($_POST['passwort']) ? $_POST['passwort'] : null);
+		
+		if (!(empty($input_username) || empty($input_passwort))) {
+			$login_username = $GLOBALS['login_username'];
+			$login_passwort = $GLOBALS['login_passwort'];
+			$gast_users     = $GLOBALS['gast_users'];
+			
+			// Benutzername und Passwort werden überprüft
+			if ($input_username == $login_username && $input_passwort == $login_passwort) {
+				
+				$asAdmin   = true;
+				$redirect  = true;
+				$logedInAs = 'ADMiN';
+				
+				$_SESSION['user'] = $logedInAs;
+				$_SESSION['angemeldet'] = true;
+				unset($_SESSION['gast']);
+				
+			} else if (isset($gast_users[$input_username]) && $input_passwort == $gast_users[$input_username]) {
+				
+				$redirect  = true;
+				$logedInAs = 'GUEST';
+				
+				$_SESSION['user'] = $input_username;
+				$_SESSION['gast'] = true;
+				unset($_SESSION['angemeldet']);
+			}
 		}
 		
-		if (!empty($gast_username) && !empty($gast_passwort) &&
-		    $input_username == $gast_username && $input_passwort == $gast_passwort) {
-		    
-			$_SESSION['gast'] = true;
-			unset($_SESSION['angemeldet']);
-
-			$logedInAs = 'GUEST';
-			$redirect = true;
-		}
-
 		logLogin();
 		if ($redirect) { logedInSoRedirect(); }
 	}
@@ -63,40 +63,40 @@ function logLogin() {
 	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
 	$HOMENETWORK = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
 	$asAdmin = $GLOBALS['asAdmin'];
-
+	
 	if (!($LOCALHOST || $HOMENETWORK)) {
-		$ip = $_SERVER['REMOTE_ADDR'];
-		$host = gethostbyaddr($ip);
 		$hostname = $_SERVER['HTTP_HOST'];
-
-		$logedInAs = $GLOBALS['logedInAs'];
-		$username = $GLOBALS['input_username'];
- 		$passwort = $GLOBALS['input_passwort'];
+		$ip       = $_SERVER['REMOTE_ADDR'];
+		$host     = gethostbyaddr($ip);
+		
+		$logedInAs      = $GLOBALS['logedInAs'];
+		$username       = $GLOBALS['input_username'];
+ 		$passwort       = $GLOBALS['input_passwort'];
  		$login_passwort = $GLOBALS['login_passwort'];
-
+		
 		$datei = "./logs/loginLog.php";
-
+		
 		$datum = strftime("%d.%m.%Y");
-		$time = strftime("%X");
+		$time  = strftime("%X");
 		$logPass = $passwort;
 		if ($asAdmin || $passwort == $login_passwort) {
 			$logPass = '****';
 		}
 		
 		$input = $datum."|".$time."|".$ip."|".$host."|".$hostname."|".$logedInAs."|".$username."|".$logPass."\n";
-
+		
 		$fp = fopen($datei, "r");
 		while(!feof($fp)) {
 			$eintraege = fgets($fp, 1000);
 			$input .= $eintraege;
 		}
 		fclose($fp);
-
+		
 		$input = str_replace('<? /*', '', $input);
 		$input = str_replace('*/ ?>', '', $input);
 		$input = str_replace("\n\n", "\n", $input);
 		$input = '<? /*'."\n".$input.'*/ ?>';
-
+		
 		$fp = fopen($datei, "w+");
 		fputs($fp, $input);
 		fclose($fp);
@@ -118,8 +118,8 @@ function logLogin() {
 		<script type="text/javascript">
 			$(document).ready(function() { $('#username').focus(); });
 			function animateNav() {
-				var animTime = 500;
-				if ($.browser.mozilla) { animTime = 250; }
+				var animTime = 250;
+				//if ($.browser.mozilla) { animTime = 250; }
 				$('#navLogin').animate({ "top": "0%" }, animTime, function() { return true; });
 			}
 		</script>

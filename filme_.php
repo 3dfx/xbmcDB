@@ -41,7 +41,10 @@
 			$('td').css('cursor', state);
 			$('a').css('cursor', state);
 		}
-		
+<?php
+if (isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true) {
+?>
+
 		$(document).keydown(function(event) {
 			if(event.keyCode == '70') {
 				event.preventDefault();
@@ -49,6 +52,9 @@
 				$('#searchDBfor').focus();
 			}
 		});
+<?php
+}
+?>
 
 		function openNav(objId) {
 			closeNavs();
@@ -153,6 +159,28 @@
 				data: "contentpage="+"&ids=" + ids + "&copyAsScript=" + asscript + "&admin="+admin,
 				success: function(data){
 					$("#result").html(data);
+				}
+			});
+		}
+		
+		function orderStuff(admin) {
+			var resBox = document.getElementById('result');
+			if (resBox == null) { return; }
+
+			var copyAsScript = document.getElementById('copyAsScript');
+			var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
+			
+			document.getElement
+			$.ajax({
+				type: "POST",
+				url: "request.php",
+				data: "contentpage="+"&ids=" + ids + "&copyAsScript=" + asscript + "&admin="+admin + "&forOrder=1",
+				success: function(data) {
+					if (data == 'success') {
+						alert('Saved selection!');
+					} else {
+						alert('Error saving!');
+					}
 				}
 			});
 		}
@@ -311,13 +339,15 @@
 	echo "\r\n";
 	echo '</div>';
 
-	if (!$admin || $COPYASSCRIPT_ENABLED) {
-		if ($COPYASSCRIPT_ENABLED && $gallerymode != 1) {
+	if ($COPYASSCRIPT_ENABLED || !$admin) {
+		if ($gallerymode != 1) {
 			echo "\r\n";
-			echo '<div class="lefto" style="padding-left:15px; z-order=1; height:25px;">';
-			if (!$admin) {
-				echo "\t<input type='checkbox' id='copyAsScript' onClick='doRequest($admin); return true;' style='float:left;'><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
+			echo '<div class="lefto" style="padding-left:15px; z-order=1; height:60px;">';
+			if ($COPYASSCRIPT_ENABLED && !$admin) {
+				echo "\t<input type='checkbox' id='copyAsScript' onClick='doRequest($admin); return true;' style='float:left;'/><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
+				echo "<br/>";
 			}
+			echo "\t<input type='button' name='orderBtn' id='orderBtn' onclick='orderStuff($admin); return true;' value='save'/>";
 			echo "</div>";
 		}
 
