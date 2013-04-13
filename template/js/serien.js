@@ -213,7 +213,7 @@ function moveDivEpDesc(resizeOffset) {
 	var divWidth = '351px';
 	if ($.browser.mozilla) { divWidth = '352px'; }
 	if ($.browser.mozilla) { divLeft = divLeft-1; }
-	if ($.browser.webkit) { divLeft = divLeft+2; }
+	if ($.browser.webkit) { divLeft = divLeft+1; }
 	divLeft = divLeft + "px";
 
 	$("#showEpDesc").css({
@@ -300,7 +300,7 @@ function loadDesc_(obj) {
 	var left = $("tbody:first").position().left;
 	var divLeft = Math.floor(left + resizeOffset + xOffset - 351); // + "px";
 	if ($.browser.mozilla) { divLeft = divLeft-1; }
-	if ($.browser.webkit) { divLeft = divLeft+2; }
+	if ($.browser.webkit) { divLeft = divLeft+1; }
 	divLeft = divLeft + "px";
 
 	$('#showDesc').load(
@@ -335,7 +335,7 @@ function moveDivL(resizeOffset) {
 
 	var divLeft = Math.floor(left + resizeOffset + xOffset); // + "px";
 	if ($.browser.mozilla) { divLeft = divLeft-1; }
-	if ($.browser.webkit) { divLeft = divLeft+2; }
+	if ($.browser.webkit) { divLeft = divLeft+1; }
 	divLeft = divLeft + "px";
 
 	$("#showDesc").css({

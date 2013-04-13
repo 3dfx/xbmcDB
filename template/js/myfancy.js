@@ -21,9 +21,9 @@ jQuery(document).ready(function() {
 		'overlayOpacity'		: 1,
 		'overlayColor'			: '#000',
 		'type'				: 'image',
-		'titlePosition' 		: 'over',
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'elastic',
+		'titlePosition' 		: 'over',
 		'titleFormat'       		: function(title, currentArray, currentIndex, currentOpts) {
 		  return '<span id="fancybox-title-over" style="text-align:center; font-weight:bold; font-size:20px; padding:5px;">' + title + '</span>';
 		},
@@ -48,6 +48,7 @@ jQuery(document).ready(function() {
 		'margin'			: 10,
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'none',
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 	
@@ -61,6 +62,7 @@ jQuery(document).ready(function() {
 		'margin'			: 10,
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'none',
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 	
@@ -93,6 +95,7 @@ jQuery(document).ready(function() {
 		'centerOnScroll'		: true,
 		'enableEscapeButton'		: true,
 		'scrolling'			: 'no',
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 
@@ -104,6 +107,7 @@ jQuery(document).ready(function() {
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'none',
 		'enableEscapeButton'		: true,
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 
@@ -119,6 +123,7 @@ jQuery(document).ready(function() {
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'none',
 		'enableEscapeButton'		: true,
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 
@@ -136,6 +141,7 @@ jQuery(document).ready(function() {
 		'centerOnScroll'		: true,
 		'enableEscapeButton'		: true,
 		'scrolling'			: 'auto',
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 
@@ -151,12 +157,13 @@ jQuery(document).ready(function() {
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'none',
 		'enableEscapeButton'		: true,
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 	
 	$(".fancy_movieEdit").fancybox({
 		'width'				: 380,
-		'height'			: 195,
+		'height'			: 215,
 		'overlayColor'			: '#000',
 		'overlayOpacity'		: 0.55,
 		'padding'			: 1,
@@ -167,6 +174,7 @@ jQuery(document).ready(function() {
 		'transitionOut'			: 'none',
 		'enableEscapeButton'		: true,
 		'type'				: 'iframe',
+		'titleShow'       		: false,
 		'borderBgs'			: false
 	});
 
@@ -184,6 +192,7 @@ jQuery(document).ready(function() {
 		'centerOnScroll'		: true,
 		'enableEscapeButton'		: true,
 		'scrolling'			: 'no',
+		'titleShow'       		: false,
 		'type'				: 'iframe'
 	});
 

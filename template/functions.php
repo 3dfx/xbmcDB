@@ -1,13 +1,13 @@
 <?php
-include_once "globals.php";
-include_once "template/config.php";
-include_once "template/SimpleImage.php";
-require_once "rss_php.php";
+include_once "./globals.php";
+include_once "./template/config.php";
+include_once "./template/SimpleImage.php";
+require_once "./rss_php.php";
 
 function startSession() { if (!isset($_SESSION)) { session_start(); } }
 function allowedRequest() { return true; }
 
-function execSQL($SQL) {
+function execSQL($SQL, $throw = true) {
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
 	try {
@@ -24,37 +24,62 @@ function execSQL($SQL) {
 
 	} catch(PDOException $e) {
 		$dbh->rollBack();
-		echo $e->getMessage();
+		if ($throw) {
+			echo $e->getMessage();
+		}
 	}
 
 	return;
 }
 
-function fetchFromDB_($dbh, $SQL) {
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
-	try {
-		return $dbh->query($SQL);
-
-	} catch(PDOException $e) {
-		echo $e->getMessage();
-	}
-
-	return null;
-}
-
-function fetchFromDB($SQL) {
+function singleSQL($SQL, $throw = true) {
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
 	try {
 		$db_name = $GLOBALS['db_name'];
 		$dbh = new PDO($db_name);
 		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		
+		return $dbh->querySingle($SQL);
 
+	} catch(PDOException $e) {
+		if ($throw) {
+			echo $e->getMessage();
+		}
+	}
+
+	return null;
+}
+
+function fetchFromDB_($dbh, $SQL, $throw = true) {
+	/*** make it or break it ***/
+	error_reporting(E_ALL);
+	try {
 		return $dbh->query($SQL);
 
 	} catch(PDOException $e) {
-		echo $e->getMessage();
+		if ($throw) {
+			echo $e->getMessage();
+		}
+	}
+
+	return null;
+}
+
+function fetchFromDB($SQL, $throw = true) {
+	/*** make it or break it ***/
+	error_reporting(E_ALL);
+	try {
+		$db_name = $GLOBALS['db_name'];
+		$dbh = new PDO($db_name);
+		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		
+		return $dbh->query($SQL);
+
+	} catch(PDOException $e) {
+		if ($throw) {
+			echo $e->getMessage();
+		}
 	}
 
 	return null;
@@ -200,42 +225,66 @@ function filesize_n($path) {
         return $size;
 }
 
-function checkMyEpisodeView($dbh) {
-	$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='view' and name='episodeviewMy';");
-	$row = $res->fetch();
-	if ($row['name'] == null) {
-		$dbh->exec("CREATE VIEW episodeviewMy as select episode.*,files.strFileName as strFileName,path.idPath as idPath,path.strPath as strPath,files.playCount as playCount,files.lastPlayed as lastPlayed,tvshow.c00 as strTitle,tvshow.c14 as strStudio,tvshow.idShow as idShow,tvshow.c05 as premiered, tvshow.c13 as mpaa, tvshow.c16 as strShowPath from tvshow join episode on episode.idShow=tvshow.idShow join files on files.idFile=episode.idFile join path on files.idPath=path.idPath;");
-	}
-}
-
 function existsArtTable($dbh) {
-	$exist = isset($_SESSION['existsArtTable']) ? $_SESSION['existsArtTable'] : false;
-	if ($exist) { return true; }
-	
-	$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='table' and name='art';");
-	$row = $res->fetch();
-	if ($row['name'] == null) {
-		unset( $_SESSION['existsArtTable'] );
-		return false;
-	}
-	
-	$_SESSION['existsArtTable'] = true;
-	return true;
+	return existsTable('art', 'table', $dbh);
 }
 
 function existsSetTable($dbh) {
-	$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='table' and name='sets';");
-	$row = $res->fetch();
-	if ($row['name'] == null) { return false; }
-	return true;
+	return existsTable('sets', 'table', $dbh);
 }
 
 function checkFileInfoTable($dbh) {
-	$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='table' and name='fileinfo';");
-	$row = $res->fetch();
-	if ($row['name'] == null) {
-		$dbh->exec("CREATE TABLE fileinfo (idFile INTEGER NOT NULL, filesize LONGINT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);");
+	$exist = existsTable('fileinfo', 'table', $dbh);
+	if (!$exist) { $dbh->exec("CREATE TABLE fileinfo (idFile INTEGER NOT NULL, filesize LONGINT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);"); }
+}
+
+function checkMyEpisodeView($dbh) {
+	$exist = existsTable('episodeviewMy', 'view', $dbh);
+	if (!$exist) { $dbh->exec("CREATE VIEW episodeviewMy as select episode.*,files.strFileName as strFileName,path.idPath as idPath,path.strPath as strPath,files.playCount as playCount,files.lastPlayed as lastPlayed,tvshow.c00 as strTitle,tvshow.c14 as strStudio,tvshow.idShow as idShow,tvshow.c05 as premiered, tvshow.c13 as mpaa, tvshow.c16 as strShowPath from tvshow join episode on episode.idShow=tvshow.idShow join files on files.idFile=episode.idFile join path on files.idPath=path.idPath;"); }
+}
+
+function existsOrdersTable($dbh = null) {
+	$exist = existsTable('orders', 'table', $dbh);
+	if (!$exist) {
+		$sql = "CREATE TABLE orders (strFilename text primary key, dateAdded text, user text, fresh integer);";
+		if (empty($dbh)) {
+			execSQL($sql, false);
+		} else {
+			try { $dbh->exec($sql); }
+			catch(PDOException $e) { $dbh->rollBack(); }
+		}
+		$exist = existsTable('orders', $dbh);
 	}
+	
+	return $exist;
+}
+
+function existsTable($tableName, $type = 'table', $dbh = null) {
+	/*** make it or break it ***/
+	if (empty($dbh)) {
+		error_reporting(E_ALL);
+	}
+	
+	try {
+		if (empty($dbh)) {
+			$db_name = $GLOBALS['db_name'];
+			$dbh = new PDO($db_name);
+			$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		}
+		
+		$exist = isset($_SESSION['existsTable'.$tableName]) ? $_SESSION['existsTable'.$tableName] : -1;
+		if ($exist !== -1) { return $exist; }
+		
+		$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='".$type."' and name='".$tableName."';");
+		$row = $res->fetch();
+		
+		$exist = !empty($row['name']);
+		$_SESSION['existsTable'.$tableName] = $exist;
+		return $exist;
+
+	} catch(PDOException $e) { }
+	
+	return false;
 }
 
 function checkFileMapTable($dbh) {
@@ -249,15 +298,14 @@ function checkFileMapTable($dbh) {
 				break;
 			}
 		}
-
+		
 		if (!$dateAddedFound) {
 			$dbh->exec("ALTER TABLE files ADD dateAdded text;");
 		}
 	}
 	
-	$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='table' AND name='filemap';");
-	$row = $res->fetch();
-	if ($row['name'] == null) {
+	$exist = existsTable('filemap', 'table', $dbh);
+	if (!$exist) {
 		$dbh->exec("CREATE TABLE filemap( idFile integer primary key, strFilename text, dateAdded text, value longint );");
 	}
 }
@@ -648,6 +696,12 @@ function getFanart($SRC, $orSRC, $newmode) {
 	return getCover($SRC, $orSRC, 'Fanart', 'fanart', 'fanart', null, 720, $newmode);
 }
 
+function getNewAddedCount() {
+	$newAddedCount = isset($GLOBALS['DEFAULT_NEW_ADDED']) ? $GLOBALS['DEFAULT_NEW_ADDED'] : 30;
+	$newAddedCount = isset($_SESSION['newAddedCount']) ? $_SESSION['newAddedCount'] : $newAddedCount;
+	return $newAddedCount;
+}
+
 function postNavBar($isMain) {
 	$admin = isAdmin();
 	$saferSearch = null;
@@ -662,7 +716,6 @@ function postNavBar($isMain) {
 	$gallerymode     = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
 	$dbSearch        = isset($_SESSION['dbSearch']) ? $_SESSION['dbSearch'] : null;
 	$unseen          = isset($_SESSION['unseen']) ? $_SESSION['unseen'] : 3;
-	$newAddedCount   = isset($_SESSION['newAddedCount']) ? $_SESSION['newAddedCount'] : 30;
 	$serienmode      = isset($_SESSION['serienmode']) ? $_SESSION['serienmode'] : 0;
 	
 	$which           = isset($_SESSION['which']) ? $_SESSION['which'] : '';
@@ -671,13 +724,13 @@ function postNavBar($isMain) {
 	
 	$INVERSE         = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
 	$SEARCH_ENABLED  = isset($GLOBALS['SEARCH_ENABLED']) ? $GLOBALS['SEARCH_ENABLED'] : true;
-	$NAS_CONTROL     = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
 	$CUTSENABLED     = isset($GLOBALS['CUTS_ENABLED']) ? $GLOBALS['CUTS_ENABLED'] : true;
 	$DREIDENABLED    = isset($GLOBALS['DREID_ENABLED']) ? $GLOBALS['DREID_ENABLED'] : true;
 	$CHOOSELANGUAGES = isset($GLOBALS['CHOOSELANGUAGES']) ? $GLOBALS['CHOOSELANGUAGES'] : false;
 	$countryLabel    = $CHOOSELANGUAGES ? 'language' : '';
+	$newAddedCount   = getNewAddedCount();
 	
-	if ($admin) { $newAddedCount = 30; }
+	#if ($admin) { $newAddedCount = 30; }
 	$dev = $admin;
 	
 	$unsetWhichParam = '&dbSearch=&which=&just=&sort=';
@@ -889,31 +942,42 @@ function postNavBar($isMain) {
 	
 	echo '<ul class="nav pull-right" style="padding-top:2px;">';
 	echo '<li class="divider-vertical" style="height:36px;"'.($admin ? ' onmouseover="closeNavs();"' : '').'></li>';
-	$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
+	
 	if ($admin) {
+		$msgs = checkNotifications();
+		$selected = '';
+		if ($msgs > 0) {
+			$selected = ' selectedItem';
+			echo '<span class="notification badge badge-important"><span style="margin:-2px;">'.$msgs.'</span></span>';
+		}
 		echo '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin<b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
 		
+		echo '<li>';
+		echo '<a class="fancy_sets'.$selected.'" href="orderViewer.php">Order Viewer</a>';
+		echo '</li>';
+		
+		$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
 		if ($USESETS) {
 			echo '<li>';
-			echo '<a class="fancy_sets" href="setEditor.php">sets</a>';
+			echo '<a class="fancy_sets" href="setEditor.php">Set Editor</a>';
 			echo '</li>';
-			echo '<li class="divider"></li>';
 		}
 		
-		echo '<li><a href="?show=export">DB-Export</a></li>';
-		echo '<li><a href="?show=import">DB-Import</a></li>';
-		echo '</li>';
-		
 		echo '<li class="divider"></li>';
-		
 		echo '<li>';
-		echo '<a class="fancy_logs" href="./loginPanel.php?which=2">login-log</a>';
+		echo '<a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a>';
 		echo '</li>';
 		echo '<li>';
-		echo '<a class="fancy_logs" href="./loginPanel.php?which=1">refferer-log</a>';
+		echo '<a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a>';
 		echo '</li>';
 		
+		#echo '<li class="divider"></li>';
+		#echo '<li><a href="?show=export">DB-Export</a></li>';
+		#echo '<li><a href="?show=import">DB-Import</a></li>';
+		#echo '</li>';
+		
+		$NAS_CONTROL     = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
 		if ($NAS_CONTROL) {
 			echo '<li class="divider"></li>';
 			echo '<li>';
@@ -935,12 +999,34 @@ function postNavBar($isMain) {
 	return;
 }
 
+function checkNotifications() {
+	if (existsOrdersTable()) {
+		$sql = "SELECT COUNT(fresh) AS count FROM orders WHERE fresh = 1;";
+		$res = fetchFromDB($sql);
+		if (empty($res)) { return 0; }
+		$row = $res->fetch();
+		return $row['count'];
+	}
+	
+	return 0;
+}
+
 function logc($val, $noadmin = false) { if (isAdmin() || $noadmin) { echo '<script type="text/javascript">console.log( \''.$val.'\' );</script>'."\r\n"; } }
 function pre($val, $noadmin = false)  { if (isAdmin() || $noadmin) { echo '<pre>'.$val.'</pre>'."\r\n"; } }
 
 function redirectPage($subPage = null, $redirect = false) {
 	$path = dirname($_SERVER['PHP_SELF']);
 	$hostname = getHostnamee().$path.($subPage != null ? $subPage : '');
+	
+	/* TODO
+	if (empty($_GET)) {
+	echo "noGET";
+	} else {
+	print_r( $_GET );
+	}
+	echo "<br/>".session_id();
+	exit;
+	*/
 
 	if (!empty($_GET) || !empty($_POST)) { setSessionParams(); }
 	if ($redirect) { header('Location:'.$hostname); }
@@ -950,23 +1036,23 @@ function redirectPage($subPage = null, $redirect = false) {
 function setSessionParams($isAuth = false) {
 	if (!isset($_SESSION)) { return; }
 		
-	if ( isset($_GET['mode']) ) { unset($_SESSION['newmode']); $_SESSION['mode'] = $_GET['mode']; }
-	if ( isset($_GET['unseen']) ) { unset($_SESSION['newmode']); $_SESSION['unseen'] = $_GET['unseen']; }
-	if ( isset($_GET['show']) ) { $_SESSION['show'] = $_GET['show']; }
-	if ( isset($_GET['sort']) ) { $_SESSION['sort'] = $_GET['sort']; }
-	if ( isset($_GET['idShow']) ) { $_SESSION['idShow'] = $_GET['idShow']; }
-	if ( isset($_GET['ref']) ) { $_SESSION['reffer'] = $_GET['ref']; }
-	if ( isset($_GET['newmode']) ) { $_SESSION['newmode'] = $_GET['newmode']; }
-	if ( isset($_GET['country']) ) { $_SESSION['country'] = $_GET['country']; }
-	if ( isset($_GET['gallerymode']) ) { $_SESSION['gallerymode'] = $_GET['gallerymode']; }
-	if ( isset($_GET['which']) ) { $_SESSION['which'] = $_GET['which']; }
-	if ( isset($_GET['name']) ) { $_SESSION['name'] = $_GET['name']; }
-	if ( isset($_GET['just']) ) { $_SESSION['just'] = $_GET['just']; }
-	if ( isset($_GET['newAddedCount']) ) { $_SESSION['newAddedCount'] = $_GET['newAddedCount']; }
+	if ( isset($_GET['mode']) )           { unset($_SESSION['newmode']); $_SESSION['mode']   = $_GET['mode']; }
+	if ( isset($_GET['unseen']) )         { unset($_SESSION['newmode']); $_SESSION['unseen'] = $_GET['unseen']; }
+	if ( isset($_GET['show']) )           { $_SESSION['show']          = $_GET['show']; }
+	if ( isset($_GET['sort']) )           { $_SESSION['sort']          = $_GET['sort']; }
+	if ( isset($_GET['idShow']) )         { $_SESSION['idShow']        = $_GET['idShow']; }
+	if ( isset($_GET['ref']) )            { $_SESSION['reffer']        = $_GET['ref']; }
+	if ( isset($_GET['newmode']) )        { $_SESSION['newmode']       = $_GET['newmode']; }
+	if ( isset($_GET['country']) )        { $_SESSION['country']       = $_GET['country']; }
+	if ( isset($_GET['gallerymode']) )    { $_SESSION['gallerymode']   = $_GET['gallerymode']; }
+	if ( isset($_GET['which']) )          { $_SESSION['which']         = $_GET['which']; }
+	if ( isset($_GET['name']) )           { $_SESSION['name']          = $_GET['name']; }
+	if ( isset($_GET['just']) )           { $_SESSION['just']          = $_GET['just']; }
+	if ( isset($_GET['newAddedCount']) )  { $_SESSION['newAddedCount'] = $_GET['newAddedCount']; }
 	if ( isset($_POST['newAddedCount']) ) { $_SESSION['newAddedCount'] = $_POST['newAddedCount']; }
 
 	if (!$isAuth) {
-		unset( $_SESSION['submit'], $_SESSION['export'] );
+		unset( $_SESSION['submit'], $_SESSION['export'], $_SESSION['dbSearch'] );
 		
 		foreach ($_GET as $key => $value)   { $_SESSION[$key] = $value; }
 		foreach ($_POST as $key => $value)  { $_SESSION[$key] = $value; }
@@ -981,7 +1067,7 @@ function setSessionParams($isAuth = false) {
 function adminInfo($start, $show) {
 	$adminInfo = isset($GLOBALS['ADMIN_INFO']) ? $GLOBALS['ADMIN_INFO'] : true;
 	if (isAdmin() && $adminInfo && ($show == 'filme' || $show == 'serien')) {
-		echo '<div class="bs-docs" id="adminInfo" style="top:60px; right:5px; position:absolute; text-align:right; padding:10px 10px 14px;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
+		echo '<div class="bs-docs" id="adminInfo" style="top:60px; right:25px; position:absolute; text-align:right; padding:10px 10px 14px;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
 		
 		#hdparm
 		#/-*
@@ -995,36 +1081,53 @@ function adminInfo($start, $show) {
 				$line = explode(',',$log[$i]);
 				$label = trim($line[0]);
 				$state = trim($line[1]);
-				$tCol = $state == 'standby' ? ' label-important' :  ' label-success';
-				echo '<span id="hdp'.$i.'" style="cursor:default; display:none; padding:5px 8px; margin-bottom:5px;" class="label'.$tCol.' cursor:pointer;">'.$label.'</span><br id="brr'.$i.'" style="display:none;" />';
+				
+				if (empty($label)) { continue; }
+				
+				$tCol = (empty($state) ? '' : ($state == 'standby' ? ' label-important' :  ' label-success') );
+				echo '<span id="hdp'.$i.'" style="cursor:default; display:none; padding:5px 8px; margin-left:5px; margin-bottom:5px;" class="label'.$tCol.'">'.$label.'</span>';
+				#echo '<br id="brr'.$i.'" style="display:none;" />';
 			}
+			echo '<br id="brr0" style="display:none;" />';
 		}
 		#*/
 		#hdparm
 
 		#cpu temp
 		unset($output);
-		exec('sensors | sed -ne "s/Physical\ id\ 0: \+[-+]\([0-9]\+\).*/\1/p"', $output);
-		if (!empty($output)) {
-			$output = $output[0];
-			$tCol = ' label-success';
-			if ($output >= 30) { $tCol = ''; }
-			if ($output >= 40) { $tCol = ' label-warning'; }
-			if ($output >= 50) { $tCol = ' label-important'; }
-			echo '<span id="spTemp" style="cursor:default; display:none; padding:5px 8px;" class="label'.$tCol.' cursor:pointer;">'.$output.'&deg;C</span>';
-		}
+		exec('sensors | sed -ne "s/Core\ 0: \+[-+]\([0-9]\+\).*/\1/p"', $output);
+		$cpu0 = getCPUdiv($output, 0);
+		unset($output);
+		exec('sensors | sed -ne "s/Core\ 1: \+[-+]\([0-9]\+\).*/\1/p"', $output);
+		$cpu1 = getCPUdiv($output, 1);
+		
+		echo $cpu0;
+		echo $cpu1;
+		echo '<br id="brr1" style="display:none;" />';
 		#cpu temp
 		
 		#time
 		$end = round(microtime(true)-$start, 2);
 		$eCol = '';
-		if ($end >= 1) { $eCol = ' label-important'; }
+		if ($end >= 1)   { $eCol = ' label-important'; }
 		if ($end <= 0.1) { $eCol = ' label-success'; }
-		echo '<span id="spTime" style="cursor:default; display:none; padding:5px 8px; margin-left:5px;" class="label'.$eCol.'">'.$end.'s</span>';
+		echo '<span id="spTime" style="cursor:default; display:none; padding:5px 8px; margin-top:5px;" class="label'.$eCol.'">'.$end.'s</span>';
 		#time
 		
 		
 		echo '</div>';
+	}
+}
+
+function getCPUdiv($output, $core) {
+	if (!empty($output)) {
+		$output = $output[0];
+		$tCol = ' label-success';
+		if ($output >= 30) { $tCol = ''; }
+		if ($output >= 40) { $tCol = ' label-warning'; }
+		if ($output >= 50) { $tCol = ' label-important'; }
+		$href = file_exists('./myne/cpu.php') ? ' href="./myne/cpu.php"' : null;
+		return '<span id="spTemp'.$core.'"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-left:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_logs' : '').'" title="core '.$core.'">'.$output.'&deg;C</span>';
 	}
 }
 
@@ -1045,11 +1148,13 @@ function adminInfoJS() {
 			$log = file($filename);
 			for ($i = 0; $i < count($log); $i++) {
 				echo "\t$( '#hdp".$i."' ).toggle(show);\r\n";
-				echo "\t$( '#brr".$i."' ).toggle(show);\r\n";
 			}
 		}
+		echo "\tif ($( '#brr0' ) != null) { $( '#brr0' ).toggle(show); }\r\n";
+		echo "\tif ($( '#brr1' ) != null) { $( '#brr1' ).toggle(show); }\r\n";
 		echo "\t$( '#spTime' ).toggle(show);\r\n";
-		echo "\t$( '#spTemp' ).toggle(show);\r\n";
+		echo "\t$( '#spTemp0' ).toggle(show);\r\n";
+		echo "\t$( '#spTemp1' ).toggle(show);\r\n";
 		echo "\t$( '#adminInfo.bs-docs' ).css('padding', show ? '35px 10px 14px' : '10px 10px 14px');\r\n";
 		echo "}\r\n";
 		echo '</script>'."\r\n";
@@ -1107,20 +1212,20 @@ function isGast() {
 	return (isset($_SESSION['gast']) && $_SESSION['gast'] == true) ? 1 : 0;
 }
 
+function isLogedIn() {
+	checkOpenGuest();
+	return (isAdmin() || isGast() ? 1 : 0);
+}
+
 function checkOpenGuest() {
 #deactivated
 	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
 	$gast_users = $GLOBALS['gast_users'];
 	
-	if ($LOCALHOST || size($gast_users) == 0 && !isAdmin()) {
+	if ($LOCALHOST || count($gast_users) == 0 && !isAdmin()) {
 		$_SESSION['gast'] = true;
 		return 1;
 	}
-}
-
-function isLogedIn() {
-	checkOpenGuest();
-	return (isAdmin() || isGast() ? 1 : 0);
 }
 
 function getHttPre() {
@@ -1138,12 +1243,12 @@ function logRefferer($reffer) {
 		return false;
 	}
 	
-	if ($reffer == null) { return false; }
+	//if (empty($reffer)) { return false; }
 	$exit = false;
 	
 	$_SESSION['refferLoged'] = true;
 	
-	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
+	$LOCALHOST   = isset($GLOBALS['LOCALHOST'])   ? $GLOBALS['LOCALHOST']   : false;
 	$HOMENETWORK = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
 
 	if (!($LOCALHOST || $HOMENETWORK)) {
@@ -1151,7 +1256,7 @@ function logRefferer($reffer) {
 		$host = gethostbyaddr($ip);
 
 		$hostname = $_SERVER['HTTP_HOST'];
-		if ($reffer != null) {
+		if (empty($reffer)) {
 			$reffer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 		}
 		
@@ -1229,6 +1334,10 @@ function getEpisodeInfo($episodes, $getSeason, $getEpisode) {
 function formatToDeNotation($str) {
 	$res = number_format($str, 3, ',', '.');
 	return substr($res, 0, strlen($res)-4);
+}
+
+function is3d($filename) {
+	return strpos(strtoupper($filename), '.3D.') >= 1 || strpos(strtoupper($filename), '(3D)') >= 1;
 }
 
 function postEditLanguage($str, $buildLink = true) {
