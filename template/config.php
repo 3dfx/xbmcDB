@@ -86,6 +86,7 @@
 					);
 	
 	$ELEMSINROW                    = 7; //values: 13, 11, 9, 7, 5 or 3
+	$DEFAULT_NEW_ADDED             = 30;
 	
 	$USECACHE                      = true;
 	$TVSHOW_THUMBS                 = true;
