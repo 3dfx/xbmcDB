@@ -111,7 +111,7 @@ function postStaffel($staffel) {
 		
 		$idEpisode = $epi->getIdEpisode();
 		$idTvdb = $epi->getIdTvdb();
-		$epTitle = encodeString($epi->getName());
+		$epTitle = $epi->getName();
 		#$epTitle = $epi->getName();
 		$hover = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
 		

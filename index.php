@@ -1,6 +1,6 @@
 <?php
 	header('Content-Type: text/html');
-	
+
 	include_once "auth.php";
 	include_once "template/config.php";
 	include_once "template/functions.php";
@@ -11,14 +11,14 @@
 	if ( isAdmin() && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST) ) {
 		$what = isset($_POST['aktion']) ? $_POST['aktion'] : null;
 		$checkFilme = isset($_POST['checkFilme']) ? $_POST['checkFilme'] : null;
-
+		
 		if (!empty($what) && !empty($checkFilme)) {
 			setSeenDelMovie($what, $checkFilme);
 			unset($_POST);
 		}
 	} // post
 	
-	$show = isset($_SESSION['show']) ? $_SESSION['show'] : null;
+	$show   = isset($_SESSION['show'])   ? $_SESSION['show']   : null;
 	$idShow = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
 	$reffer = isset($_SESSION['reffer']) ? $_SESSION['reffer'] : null;
 	
@@ -32,12 +32,12 @@
 <html>
 
 <?php
-	if ($show == null) { $show = 'filme'; }
-	if ($show != null && $show == 'logout') { include "./logout.php"; }
-	else if ($show != null && $show == 'export') { include "./dbExport.php"; }
-	else if ($show != null && $show == 'import') { include "./dbImport.php"; }
-	else if ($show != null && $show == 'details' && $idShow != null) { include "./details.php"; }
-	else if ($show != null && $show == 'serien') { include "./serien_.php"; }
+	if (empty($show)) { $show = 'filme'; }
+	if (!empty($show) && $show == 'logout') { include "./logout.php"; }
+	else if (!empty($show) && $show == 'export') { include "./dbExport.php"; }
+	else if (!empty($show) && $show == 'import') { include "./dbImport.php"; }
+	else if (!empty($show) && $show == 'details' && !empty($idShow)) { include "./details.php"; }
+	else if (!empty($show) && $show == 'serien') { include "./serien_.php"; }
 	else if ($show == 'filme') { include "./filme_.php"; }
 	
 	adminInfo($start, $show);

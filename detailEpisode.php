@@ -74,7 +74,7 @@
 		$result = $dbh->query($SQL);
 		foreach($result as $row) {
 			$title = $row['epName'];
-			$epDesc = encodeString(trim($row['epDesc']));
+			$epDesc = trim($row['epDesc']);
 			$path = $row['path'];
 			$filename = $row['filename'];
 			$lastPlayed = $row['lastPlayed'];

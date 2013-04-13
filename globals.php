@@ -79,5 +79,4 @@
 			);
 	
 	$SHOW_NEW_VALUES = array(10, 30, 60, 90, 120, 150, 180);
-	$DEFAULT_NEW_ADDED = 30;
 ?>

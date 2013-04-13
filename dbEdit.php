@@ -34,6 +34,7 @@
 	$airdate      = '';
 	$rating       = '';
 	$desc         = '';
+	$genre        = '';
 	
 	if (isset($_GET['act']))          { $act        = trim(SQLite3::escapeString($_GET['act']));          }
 	if (isset($_GET['id']))           { $id         = trim(SQLite3::escapeString($_GET['id']));           }
@@ -46,6 +47,7 @@
 	if (isset($_GET['dateAdded']))    { $dateAdded  = trim(SQLite3::escapeString($_GET['dateAdded']));    }
 	if (isset($_GET['rating']))       { $rating     = trim(SQLite3::escapeString($_GET['rating']));       }
 	if (isset($_GET['filename']))     { $file       = trim(SQLite3::escapeString($_GET['filename']));     }
+	if (isset($_GET['genre']))        { $genre      = trim(SQLite3::escapeString($_GET['genre']));        }
 
 	if (isset($_POST['idFile']))      { $idFile     = trim(SQLite3::escapeString($_POST['idFile']));      }
 	if (isset($_POST['idShow']))      { $idShow     = trim(SQLite3::escapeString($_POST['idShow']));      }
@@ -171,7 +173,7 @@
 		
 		if ($act == 'setmovieinfo' && $idMovie != -1 && $idFile != -1) {
 			$params = null;
-			if (!empty($title) || !empty($jahr) || !empty($rating)) {
+			if (!empty($title) || !empty($jahr) || !empty($rating) || !empty($genre)) {
 				$title  = str_replace('_AND_', '&', $title);
 				$rating = str_replace(',', '.', $rating);
 
@@ -179,6 +181,8 @@
 				$params .= (!empty($title) && !empty($jahr) ? ' AND ' : '');
 				$params .= (!empty($jahr) ? 'c07="'.$jahr.'"' : '');
 				$params .= (!empty($rating) ? 'c05="'.$rating.'"' : '');
+				$params .= (!empty($genre) ? 'c14="'.$genre.'"' : '');
+				
 				$dbh->exec('UPDATE movie SET '.$params.' WHERE idMovie = '.$idMovie.';');
 				clearMovieCache();
 				$_SESSION['overrideFetch'] = 1;
@@ -327,7 +331,7 @@
 		}
 
 		if ($act == 'addset' && !empty($name)) {
-			$GETID_SQL = 'select idSet from sets order by idSet desc limit 0, 1';
+			$GETID_SQL = 'SELECT idSet FROM sets ORDER BY idSet DESC LIMIT 0, 1';
 			$result = $dbh->query($GETID_SQL);
 			$row = $result->fetch();
 			$lastId = $row['idSet'];

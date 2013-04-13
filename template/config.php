@@ -30,7 +30,10 @@
 	$gast_users                    = array(
 //						'' => ''
 					);
-	$REFF                          = 'USER.dyndns.org';
+	$NO_LOG_FROM                   = array(
+//						'admin' => array('host1.com', 'host2.com')
+					);
+	$REFF                          = 'HOST.dyndns.org';
 	
 	/*
 	// Just needed if samba drive is mounted....

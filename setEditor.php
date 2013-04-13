@@ -1,6 +1,3 @@
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
-	<head>
 <?php
 	include_once "auth.php";
 	include_once "check.php";
@@ -8,11 +5,15 @@
 	include_once "template/functions.php";
 	include_once "template/config.php";
 	include_once "globals.php";
-
-	$admin = isAdmin();
-	if ($admin) {
-		$closeFrame = 0;
-		if (isset($_GET['closeFrame'])) { $closeFrame = trim($_GET['closeFrame']); }
+	
+	if (!isAdmin()) { exit; }
+?>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<html>
+	<head>
+	<title>Set Editor</title>
+<?php
+	$closeFrame = isset($_GET['closeFrame']) ? trim($_GET['closeFrame']) : 0;
 ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="class.css" />
@@ -23,63 +24,49 @@
 		}
 		
 		function setMoviesetCover(idSet, idMovie) {
-			if (idSet == null || idMovie == null) {
-				return;
-			}
-
+			if (idSet == null || idMovie == null) { return; }
+			
 			var frage = unescape("Set movie cover/fanart as set cover/fanart?");
 			var answer = confirm(frage);
-			if (!answer) {
-				return;
-			}
+			if (!answer) { return; }
 			
 			cursorBusy();
 			window.location.href='./dbEdit.php?act=setMoviesetCover&id=' + idSet + '&' + 'idMovie=' + idMovie;
 		}
-
+		
 		function setSetName(id, name) {
-			if (id == null || id == 0 || name == null ||  name == '') {
-				return;
-			}
-
+			if (id == null || id == 0 || name == null ||  name == '') { return; }
+			
 			var answer = prompt("Enter new Name", name);
-			if (answer == null || name == answer) {
-				return;
-			}
+			if (answer == null || name == answer) { return; }
 			
 			name = name.replace('&', '_AND_');
-
+			
 			cursorBusy();
 			window.location.href='./dbEdit.php?act=setname&id=' + id + '&' + 'name=' + answer;
 		}
-
+		
 		function addSet() {
 			var answer = $.trim( prompt("Enter Set Name") );
-			if (answer == null || answer == '') {
-				return;
-			}
-
+			if (answer == null || answer == '') { return; }
+			
 			cursorBusy();
 			window.location.href='./dbEdit.php?act=addset&name=' + answer;
 		}
-
+		
 		function deleteSet(id, name) {
-			if (id == null || id == 0) {
-				return;
-			}
-
-			var frage = unescape("Set '" + name + "' wirklich l%F6schen?");
+			if (id == null || id == 0) { return; }
+			
+			var frage = unescape("Delete set '" + name + "'?");
 			var answer = confirm(frage);
-			if (!answer) {
-				return;
-			}
-
+			if (!answer) { return; }
+			
 			cursorBusy();
 			window.location.href='./dbEdit.php?act=delete&id=' + id;
 		}
 		
 <?php
-	if ($closeFrame) {
+	if (!empty($closeFrame)) {
 ?>
 			parent.$.fancybox.close();
 			return false;
@@ -87,15 +74,13 @@
 	}
 ?>
 	</script>
-<?php } ?>
 	</head>
-	<body><?php if ($admin) { ?>
+	<body>
 	<table id="serieSet" class="film" style="width:350px; padding:0px; z-index:1;">
 		<tr><th class="righto">id</th><th colspan="2" style="padding-left:10px !important;">Setname</th></tr>
 <?php postSets(); ?>
 		<tr><td class="righto" colspan="3" style="cursor:pointer;" onclick="addSet(); return false;"><img src="./img/add.png"/ title="add"></td></tr>
 	</table>
-<?php } ?>
 	</body>
 </html>
 <?php

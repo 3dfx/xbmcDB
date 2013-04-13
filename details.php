@@ -564,9 +564,11 @@
 				$isSet = ($set != null && $set != '');
 
 				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>In keinem Set!</i>');
-				$admin = (isset($_SESSION['angemeldet']) && $_SESSION['angemeldet'] == true) ? 1 : 0;
-				if ($admin) {
-					$href = '<a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id.'">'.$href.'</a>';
+				if ($isSet) {
+					$href = '<a href="?show=filme&which=set&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
+				}
+				if (isAdmin()) {
+					$href .= ' <a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id.'"><img style="border:0px; height:9px;" src="img/edit-pen.png" title="change set" /></a>';
 				}
 
 				echo '<span class="filename lefto">'.$href.'</span>';

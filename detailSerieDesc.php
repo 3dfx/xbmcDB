@@ -27,7 +27,7 @@
 	$serien = fetchSerien($GLOBALS['SerienSQL'], null);
 	$serie = $serien->getSerie($id);
 	$idTvdb = $serie->getIdTvdb();
-	$desc = encodeString($serie->getDesc());
+	$desc = $serie->getDesc();
 	$banner = null;
 	$imgURL = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;

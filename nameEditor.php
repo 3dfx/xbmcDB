@@ -31,6 +31,7 @@
 			$idFile    = ($res == null ? -1 : $res[3]);
 			$dateAdded = ($res == null ? '' : $res[4]);
 			$rating    = ($res == null ? '' : $res[5]);
+			$genre     = ($res == null ? '' : $res[6]);
 		}
 ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
@@ -100,11 +101,12 @@ if (empty($change) || $change == 'movie') {
 		function setMovieInfos(btn) {
 			btn.blur();
 
-			var inTitle = document.getElementById('title');
-			var inJahr = document.getElementById('jahr');
-			var inFile = document.getElementById('filename');
+			var inTitle     = document.getElementById('title');
+			var inJahr      = document.getElementById('jahr');
+			var inFile      = document.getElementById('filename');
 			var inDateAdded = document.getElementById('dateAdded');
-			var inRating = document.getElementById('rating');
+			var inRating    = document.getElementById('rating');
+			var inGenre     = document.getElementById('genre');
 
 			if (inTitle == null || inJahr == null || inFile == null || inDateAdded == null || inRating == null) {
 				return;
@@ -115,6 +117,7 @@ if (empty($change) || $change == 'movie') {
 			var file      = $.trim(inFile.value);
 			var rating    = $.trim(inRating.value);
 			var dateAdded = $.trim(inDateAdded.value);
+			var genre     = $.trim(inGenre.value);
 
 <?php postOrValues(); ?>
 
@@ -141,7 +144,11 @@ if (empty($change) || $change == 'movie') {
 				href = href + '&rating=' + rating;
 				changes = true;
 			}
-
+			if (genre != orGenre && genre != '') {
+				href = href + '&genre=' + genre;
+				changes = true;
+			}
+			
 			if (!changes) {
 				alert('Nothing to change!');
 				return;
@@ -170,7 +177,7 @@ if (empty($change) || $change == 'movie') {
 function fetchInfos() {
 	$idMovie = $GLOBALS['idMovie'];
 	$idGenre = $GLOBALS['idGenre'];
-	$change = $GLOBALS['change'];
+	$change  = $GLOBALS['change'];
 
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
@@ -180,18 +187,19 @@ function fetchInfos() {
 		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 		if ($change == 'movie') {
-			$SQL = 'SELECT F.idFile, M.c00 as title, M.c05 as rating, M.c07 as jahr, F.strFilename as filename, FM.dateAdded as dateAdded '.
+			$SQL = 'SELECT F.idFile, M.c00 as title, M.c05 as rating, M.c07 as jahr, M.c14 as genre, F.strFilename as filename, FM.dateAdded as dateAdded '.
 			'FROM movie M, filemap FM, files F WHERE FM.idFile = F.idFile AND M.idFile = F.idFile AND M.idMovie = '.$idMovie.';';
 			$result = $dbh->query($SQL);
 			$res = array();
 			$i = 0;
 			foreach($result as $row) {
-				$res[0] = trim($row['title']);
-				$res[1] = trim($row['jahr']);
-				$res[2] = trim($row['filename']);
-				$res[3] = trim($row['idFile']);
-				$res[4] = trim($row['dateAdded']);
-				$res[5] = trim($row['rating']);
+				$res[] = trim($row['title']);
+				$res[] = trim($row['jahr']);
+				$res[] = trim($row['filename']);
+				$res[] = trim($row['idFile']);
+				$res[] = trim($row['dateAdded']);
+				$res[] = trim($row['rating']);
+				$res[] = trim($row['genre']);
 				$i++;
 			}
 
@@ -220,11 +228,12 @@ function postEditor() {
 
 	echo "\t\t".'<tr>';
 	if ($change == 'movie') {
-		$filename = $GLOBALS['filename'];
-		$jahr = $GLOBALS['jahr'];
-		$idFile = $GLOBALS['idFile'];
+		$filename  = $GLOBALS['filename'];
+		$jahr      = $GLOBALS['jahr'];
+		$idFile    = $GLOBALS['idFile'];
 		$dateAdded = $GLOBALS['dateAdded'];
-		$rating = $GLOBALS['rating'];
+		$rating    = $GLOBALS['rating'];
+		$genre     = $GLOBALS['genre'];
 
 		echo '<td style="padding-left:5px;">Year:</td>';
 		echo '<td><input type="text" id="jahr" class="key inputbox" style="width:75px;" value="'.$jahr.'" onfocus="this.select();" onclick="this.select();" /></td>';
@@ -236,6 +245,10 @@ function postEditor() {
 		echo '<tr>';
 		echo '<td style="padding-left:5px;">Date added:</td>';
 		echo '<td><input type="text" id="dateAdded" class="key inputbox" style="width:275px;" value="'.$dateAdded.'" onfocus="this.select();" onclick="this.select();" /></td>';
+		echo '</tr>';
+		echo '<tr>';
+		echo '<td style="padding-left:5px;">Genre:</td>';
+		echo '<td><input type="text" id="genre" class="key inputbox" style="width:275px;" value="'.$genre.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
 		echo '<tr>';
 		echo '<td style="padding-left:5px;">Filename:</td>';
@@ -251,9 +264,9 @@ function postEditor() {
 
 function postOrValues() {
 	$change = $GLOBALS['change'];
-	$title = $GLOBALS['title'];
-
-	echo "\t\t\t".'var orTitle = "'.$title.'";'."\r\n";
+	$title  = $GLOBALS['title'];
+	
+	echo "\t\t\t".'var orTitle     = \''.$title.'\';'."\r\n";
 	if ($change == 'movie') {
 		$filename  = $GLOBALS['filename'];
 		$jahr      = $GLOBALS['jahr'];
@@ -261,13 +274,15 @@ function postOrValues() {
 		$idMovie   = $GLOBALS['idMovie'];
 		$dateAdded = $GLOBALS['dateAdded'];
 		$rating    = $GLOBALS['rating'];
+		$genre     = $GLOBALS['genre'];
 
-		echo "\t\t\t".'var orJahr      = "'.$jahr.'";'."\r\n";
-		echo "\t\t\t".'var orRating    = "'.$rating.'";'."\r\n";
-		echo "\t\t\t".'var orFile      = "'.$filename.'";'."\r\n";
+		echo "\t\t\t".'var orJahr      = \''.$jahr.'\';'."\r\n";
+		echo "\t\t\t".'var orRating    = \''.$rating.'\';'."\r\n";
+		echo "\t\t\t".'var orFile      = \''.$filename.'\';'."\r\n";
 		echo "\t\t\t".'var idFile      = '.$idFile.';'."\r\n";
 		echo "\t\t\t".'var idMovie     = '.$idMovie.';'."\r\n";
 		echo "\t\t\t".'var orDateAdded = \''.$dateAdded.'\';'."\r\n";
+		echo "\t\t\t".'var orGenre     = \''.$genre.'\';'."\r\n";
 
 	} else if ($change == 'genre') {
 		$idGenre = $GLOBALS['idGenre'];
