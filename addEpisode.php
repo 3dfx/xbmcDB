@@ -70,12 +70,17 @@
 	<head>
 	<link rel="stylesheet" type="text/css" href="./class.css" />
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
+	<!-- <link rel="stylesheet" type="text/css" href="./template/js/bootstrap/select/select2.css" media="screen" /> -->
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.js"></script>
+	<!-- <script type="text/javascript" src="./template/js/bootstrap/select/select2.min.js"></script> -->
 	<script type="text/javascript" src="./template/js/customSelect.jquery.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function(){
 			$('.styled-select').customStyle();
+			//$('.styled-select').select2();
+			//$('.select2-search').hide();
+			
 			showEpInfos();
 <?php
 	if ($closeFrame) {

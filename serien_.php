@@ -9,8 +9,14 @@
 ?>
 
 <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>XBMC Database</title>
 	<link rel="shortcut icon" href="favicon.ico" />
+	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="./class.css" />
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
@@ -19,12 +25,19 @@
 	-->
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
+	<script type="text/javascript">
+<?php
+	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
+	$bindF      = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
+	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
+	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
+?>
+	</script>
 	<script type="text/javascript" src="./template/js/serien.js"></script>
-	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./class.css" />
+	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
+<?php if(isAdmin() && $xbmControl) { ?>
+	<script type="text/javascript" src="./template/js/xbmcJson.js"></script>
+<?php } ?>
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
@@ -40,9 +53,9 @@
 	echo '</div>';
 	echo "\r\n";
 ?>
-<div id="showDesc" style="border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px;"></div>
-<div id="showInfo" style="border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px;"></div>
-<div id="showEpDesc" style="border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px;"></div>
+<div id="showDesc" onmouseover="closeNavs();"></div>
+<div id="showInfo" onmouseover="closeNavs();"></div>
+<div id="showEpDesc" onmouseover="closeNavs();"></div>
 
 <?php
 function fillTable() {
@@ -52,11 +65,11 @@ function fillTable() {
 	$serien = fetchSerien($SQL, null);
 	$serien->sortSerien();
 
-	echo "\t".'<table id="showsTable" class="film" style="z-index:10; border:1px solid #69C; margin-bottom:15px;">';
+	echo "\t".'<table id="showsTable" class="film">';
 	echo "\r\n";
-	echo "\t\t".'<tr id="emptyTR" style="height:20px; border:1px solid #69C;"><td colspan="6" style="padding:0px;">';
-	echo '<div style="position:relative; right:110px; top:10px; text-align:right; float:right;">'.$serien->getSerienCount().' Serien ('._format_bytes($serien->getSize()).')</div>';
-	echo '<div style="position:relative; top:0px; left:0px; border:0px; padding:10px; padding-top:25px; text-align:center;"><img class="innerCoverImg" src="'.getRandomBanner().'" style="height:54px;" /></div>';
+	echo "\t\t".'<tr id="emptyTR"><td colspan="6" style="padding:0px;">';
+	echo '<div id="showsCount">'.$serien->getSerienCount().' tv-shows ('._format_bytes($serien->getSize()).')</div>';
+	echo '<div id="showBanner"><img class="innerCoverImg" src="'.getRandomBanner().'" style="height:54px;" /></div>';
 	echo '</td></tr>';
 	echo "\r\n";
 	postSerien($serien);
@@ -75,13 +88,13 @@ function postSerien($serien) {
 		$idShow = $serie->getIdShow();
 		$spanId = 'iDS'.$idShow;
 
-		echo "\t\t".'<tr class="showShowInfo" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" style="cursor:default; width:1px; white-space:nowrap; height:20px;">';
+		echo "\t\t".'<tr class="showShowInfo" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'">';
 
 		$strCounter = $counter;
 		if ($counter < 10) { $strCounter = '0'.$counter; }
-		echo '<td style="color:silver; padding:2px 4px;">'.$strCounter.'</td>';
-		echo '<td><span style="float:left;">'.$serie->getName().'</span><span style="color:silver; float:right; padding-left:10px;">'._format_bytes($serie->getSize()).'</span></td>';
-		echo '<td><span style="float:right; padding-left:10px;">'.$serie->getRating().'</span></td>';
+		echo '<td class="showShowInfo1">'.$strCounter.'</td>';
+		echo '<td><span style="float:left;">'.$serie->getName().'</span><span class="sInfoSize">'._format_bytes($serie->getSize()).'</span></td>';
+		echo '<td><span class="sInfoRating">'.$serie->getRating().'</span></td>';
 
 		$stCount = $serie->getStaffelCount();
 		$strCount = $stCount;
@@ -92,14 +105,14 @@ function postSerien($serien) {
 		echo '<td class="righto">';
 		if ($admin) {
 			echo '<a class="fancy_addEpisode" href="./addEpisode.php?idShow='.$idShow.'&idTvdb='.$serie->getIdTvdb().'">';
-			echo '<img src="./img/add.png" class="galleryImage" title="add Episode" style="width:9px !important; height:9px !important; z-index:50;" />';
+			echo '<img src="./img/add.png" class="galleryImage" title="add Episode" />';
 			echo '</a> ';
 			
 			if ($serie->isWatched() || $serie->isWatchedAny()) {
 				$img = './img/check'.($serie->isWatched() ? '' : 'B').'.png';
-				echo ' <img src="'.$img.'" class="galleryImage" title="'.($serie->isWatched() ? '' : 'partly ').'watched" style="width:9px !important; height:9px !important;" /> ';
+				echo ' <img src="'.$img.'" class="galleryImage" title="'.($serie->isWatched() ? '' : 'partly ').'watched" />';
 			} else {
-				echo ' <img src="./img/empty.png" class="galleryImage" style="width:9px !important; height:9px !important;" /> ';
+				echo ' <img src="./img/empty.png" class="galleryImage" />';
 			}
 		}
 		echo '</td>';
@@ -128,12 +141,17 @@ function fetchFilesizes() {
 }
 
 function getRandomBanner() {
-	$d = dir("./img/banners/");
-	$res = array();
-	while (false !== ($entry = $d->read())) { if ($entry == '..' || $entry == '.') {continue;} $res[] = $entry; }
-	$d->close();
+	$img = null;
+	if (empty($_SESSION['thumbs']['banner']['random'])) {
+		$d = dir("./img/banners/");
+		$res = array();
+		while (false !== ($entry = $d->read())) { if ($entry == '..' || $entry == '.') {continue;} $res[] = $entry; }
+		$d->close();
+
+		$img = './img/banners/'.$res[ rand(1, count($res)-1) ];
+		wrapItUp('banner', 'random', $img);
+	}
 	
-	$img = './img/banners/'.$res[ rand(1, count($res)-1) ];
-	return $img;
+	return getImageWrap($img, 'random', 'banner', 0);
 }
 ?>

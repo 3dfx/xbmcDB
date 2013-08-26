@@ -1,6 +1,6 @@
 <?php
 	include_once "check.php";
-
+	
 	include_once "template/functions.php";
 	include_once "template/config.php";
 	include_once "globals.php";
@@ -17,9 +17,9 @@
 	$forOrder            = isset($_POST['forOrder']) ? $_POST['forOrder'] : (isset($_GET['forOrder']) ? $_GET['forOrder'] : 0);
 	$username            = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 	
-	$sql = "SELECT c00, B.strFilename as filename, c.strPath as path, d.filesize from movie a, files b, path c, fileinfo d ".
-		"where idMovie in (".$ids.") and A.idFile = B.idFile and c.idPath = b.idPath and a.idFile = d.idFile ".
-		"order by filename";
+	$sql =  "SELECT c00 AS filmname, B.strFilename AS filename, c.strPath AS path, d.filesize FROM movie a, files b, path c, fileinfo d ".
+		"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".
+		"ORDER BY filename";
 	$res = fetchFromDB($sql, false);
 	if (empty($res)) {
 		echo $forOrder == 1 ? '-1' : null;
@@ -30,7 +30,7 @@
 		$exist = existsOrdersTable();
 		
 		//to prevent spamming, no minutes and seconds in filename!
-		$fname   = './orders/'.date('Ymd_').$username;
+		$fname   = './orders/'.date('Ymd_').$username.'.order';
 		$append  = file_exists($fname);
 		$content = doTheStuff($res, true);
 		
@@ -62,7 +62,8 @@
 		exit;
 	}
 	
-	echo encodeString(doTheStuff($res));
+	#echo encodeString(doTheStuff($res));
+	echo doTheStuff($res);
 ?>
 <?php
 	function doTheStuff($result, $forOrder = false, $append = false) {
@@ -73,30 +74,34 @@
 		$scriptCopyWin       = $GLOBALS['scriptCopyWin'];
 		
 		$oldPath   = '';
-		$filenames = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'."\r\n" : '';
+		$newLine   = "\n"; //$scriptCopyWin ? "\r\n" : "\n";
+		$names = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
 		$totalsize = 0;
 		foreach($result as $row) {
-			$path = $row['path'];
-			$filename = $row['filename'];
-			$size= $row['filesize'];
+			$path       = $row['path'];
+			$filename   = $row['filename'];
+			$filmname   = $row['filmname'];
+			$size       = $row['filesize'];
 			$totalsize += $size;
 			
-			$pos1 = strpos($filename, 'smb://');
-			$pos2 = strpos($filename, 'stack:');
+			$name = $forOrder ? decodeString(encodeString($filename)) : $filmname;
+			
+			$pos1 = strpos($name, 'smb://');
+			$pos2 = strpos($name, 'stack:');
 			if ($pos1 > -1 || $pos2 > -1) {
-				$filename = null;
+				$name = null;
 			}
 			
-			if (!empty($filename) && ($forOrder || !isAdmin())) {
+			if (!empty($name) && ($forOrder || !isAdmin())) {
 				if ($forOrder || ($copyAsScript && $copyAsScriptEnabled)) {
-					#$filenames .= getScriptString($path, $filenames, $formattedName);
+					#$names .= getScriptString($path, $names, $formattedName);
 					if (!empty($scriptCopyFrom)) {
 						$path = $scriptCopyFrom;
 					}
 					
-					$formattedName = $filename;
+					$formattedName = $name;
 					if (!$scriptCopyWin) {
-						$formattedName = str_replace(" ", "\ ", $filename);
+						$formattedName = str_replace(" ", "\ ", $formattedName);
 						$formattedName = str_replace("(", "\(", $formattedName);
 						$formattedName = str_replace(")", "\)", $formattedName);
 						$formattedName = str_replace("[", "\[", $formattedName);
@@ -106,42 +111,42 @@
 						$path = str_replace(' ', '\ ', $path);
 					}
 					
-					#if ($oldPath != $path) { $filenames .= 'cd '.$path."\r\n"; }
-					$filenames .= $scriptCopyWin ? 'copy ' : 'cp ';
-					$filenames .= ($scriptCopyWin ? '"' : '').$path.$formattedName.($scriptCopyWin ? '"' : '').' '.$scriptCopyTo.' ';
-					$filenames .= "\r\n";
+					#if ($oldPath != $path) { $names .= 'cd '.$path.$newLine; }
+					$names .= $scriptCopyWin ? 'copy ' : 'cp ';
+					$names .= ($scriptCopyWin ? '"' : '').$path.$formattedName.($scriptCopyWin ? '"' : '').' '.$scriptCopyTo.' ';
+					$names .= $newLine;
 					$oldPath = $path;
 					
 				} else {
-					$filenames .= $filename;
-					$filenames .= '<br>';
+					$names .= $name;
+					$names .= '<br>';
 				}
 			}
 		}
 		
 		if (!$forOrder) {
 			$s = _format_bytes($totalsize);
-			$filenames .= '<br><br>Total size: '.$s;
+			$names .= '<br><br>Total size: '.$s;
 		}
 		
-		return $filenames;
+		return $names;
 	}
 
-	function getScriptString($path, $filenames, $formattedName) {
+	function getScriptString($path, $names, $formattedName) {
 		$scriptCopyTo = $GLOBALS['scriptCopyTo'];
 		$oldPath = '';
 		
 		$path = mapSambaDirs($path);
 		$path = str_replace(' ', '\ ', $path);
 		if ($oldPath != $path) {
-			$filenames .= 'cd '.$path.'<br>';
+			$names .= 'cd '.$path.'<br>';
 		}
-		$filenames .= 'cp ';
-		$filenames .= $formattedName;
-		$filenames .= ' '.$scriptCopyTo.' ';
-		$filenames .= '<br>';
+		$names .= 'cp ';
+		$names .= $formattedName;
+		$names .= ' '.$scriptCopyTo.' ';
+		$names .= '<br>';
 		$oldPath = $path;
 		
-		return $filenames;
+		return $names;
 	}
 ?>

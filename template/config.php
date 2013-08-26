@@ -25,14 +25,14 @@
 		return $_SESSION['dbName'];
 	}
 	
-	$login_username                = '';
-	$login_passwort                = '';
-	$gast_users                    = array(
-//						'' => ''
+	$GAST_USERS                    = array(
+#						''   => ''
 					);
+	
 	$NO_LOG_FROM                   = array(
 //						'admin' => array('host1.com', 'host2.com')
 					);
+	
 	$REFF                          = 'HOST.dyndns.org';
 	
 	/*
@@ -54,35 +54,37 @@
 	*/
 	
 	//$TVSHOWDIR                     = 'media/Serien/';
+	$THUMBNAIL_DIR                 = './img/thumbs/';
 	
 	$NAVBAR_INVERSE                = false;
 	$LANGMAP                       = array(
-						"deu" => array("ger","gmh"),
-						"jpn" => array("chi","kor"),
-						"ita" => array("spa","por")
+						'deu' => array('ger','gmh'),
+						'jpn' => array('chi','kor'),
+						'ita' => array('spa','por')
 					);
-	
 	$COUNTRIES                     = array(
-						array("", "all languages"),
-						array("deu", "german"),
-						array("eng", "english"),
-						array("tur", "turkish"),
-						array("fre", "french"),
-						array("ita", "latino (ITA / SPA / POR)"),
-						array("jpn", "asia (JPN / CHI / KOR)"),
-						array("und", "undefined")
+						array('', 'all languages'),
+						array('deu', 'german'),
+						array('eng', 'english'),
+						array('tur', 't&uuml;rk&#231;e'),
+						array('fre', 'french'),
+						array('ita', 'latino (ITA / SPA / POR)'),
+						array('jpn', 'asia (JPN / CHI / KOR)'),
+						#array('ita', '<span style="float:left;">latino</span><span style="float:right;">&nbsp;(ITA / SPA / POR)</span>'),
+						#array('jpn', '<span style="float:left;">asia</span><span style="float:right;">&nbsp;(JPN / CHI / KOR)</span>'),
+						array('und', 'undefiniert')
 					);
 	
 	$TAG_MAP                       = array(
-						array(".3d." => " (3D)"),
-						array(".uncut." => " (uncut)"),
-						array(".unrated." => " (unrated)"),
-						array(".directors.cut." => " (directors cut)"),
-						array(".extended." => " (extended)"),
-						array("uncut" => " (uncut)"),
-						array("unrated" => " (unrated)"),
-						array("directors cut" => " (directors cut)"),
-						array("extended" => " (extended)")
+						array('.3d.' => ' (3D)'),
+						array('.uncut.' => ' (uncut)'),
+						array('.unrated.' => ' (unrated)'),
+						array('.directors.cut.' => ' (directors cut)'),
+						array('.extended.' => ' (extended)'),
+						array('uncut' => ' (uncut)'),
+						array('unrated' => ' (unrated)'),
+						array('directors cut' => ' (directors cut)'),
+						array('extended' => ' (extended)')
 					);
 	
 	$ELEMSINROW                    = 7; //values: 13, 11, 9, 7, 5 or 3
@@ -90,6 +92,10 @@
 	
 	$USECACHE                      = true;
 	$TVSHOW_THUMBS                 = true;
+	$TVSHOW_THUMBS_FROM_SRC        = true;
+	$ENCODE_IMAGES                 = false;
+	$ENCODE_IMAGES_TVSHOW          = false;
+	$IMAGE_DELIVERY                = 'wrapped'; // options: 'wrapped', 'encoded' or 'direct'
 	
 	$USESETS                       = true;
 	$LOCALHOST                     = false;
@@ -98,7 +104,10 @@
 	$DETAILFANARTHEIGHT            = 576;
 	
 	$COPYASSCRIPT_ENABLED          = false;
-	$COPYASSCRIPT_COPY_TO          = 'x:\\';
+	$COPYASSCRIPT_COPY_WIN         = true;
+	#$COPYASSCRIPT_COPY_TO          = '/media/Elements/movies';
+	$COPYASSCRIPT_COPY_TO          = 'D:\\';
+	$COPYASSCRIPT_COPY_FROM        = 'X:\\';
 	
 	$SEARCH_ENABLED                = true;
 	$CUTS_ENABLED                  = true;  // extended, directors, uncut / unrated
@@ -110,15 +119,30 @@
 	
 	$MAXMOVIEINFOLEN               = 300;
 	
-	$COVER_OVER_TITLE              = false;
+	$COVER_OVER_TITLE              = true;
 	$SHOW_TRAILER                  = false;
 	
 	$GIB_AS_GB                     = true;
 	
 	$TVDB_LANGUAGE                 = 'en'; // 'de';
+	$LANG                          = 'EN';
 	
 	$importLogging                 = true;
 	
+	$CPU_TEMPS                     = array(45,45,60);
+	$ADMIN_INFO                    = true;
 	$NAS_CONTROL                   = false;
 	$NAS_IP                        = null;
+	
+	$BIND_CTRL_F                   = true;
+	
+	//- sensitive Data -//
+	$LOGIN_USERNAME                = '';
+	$LOGIN_PASSWORT                = '';
+	$XBMCCONTROL_ENABLED           = false;
+	$JSON_USERNAME                 = 'xbmc';
+	$JSON_PASSWORT                 = 'admin';
+	$JSON_PORT                     = 8018;
+	$PRIVATE_FOLDER                = null;
+	//- sensitive Data -//
 ?>

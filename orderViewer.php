@@ -1,7 +1,6 @@
 <?php
-	include_once "auth.php";
-	include_once "check.php";
-
+	#include_once "auth.php";
+	#include_once "check.php";
 	include_once "template/functions.php";
 	include_once "template/config.php";
 	include_once "globals.php";
@@ -19,7 +18,8 @@
 	$deleteOrder = isset($_GET['deleteOrder']) ? trim($_GET['deleteOrder']) : 0;
 	
 	if (!empty($deleteOrder)) {
-		$fname = './orders/'.$orderName;
+		$dir   = './orders';
+		$fname = $dir.'/'.$orderName;
 		if (file_exists($fname)) {
 			unlink($fname);
 		}
@@ -86,8 +86,8 @@
 <?php if (!empty($orderName)) {
 	$exist = $GLOBALS['exist'];
 	echo "\r\n<b>".$orderName."</b>\r\n";
-	
-	$fname = './orders/'.$orderName;
+	$dir   = './orders';
+	$fname = $dir.'/'.$orderName;
 	$size  = filesize($fname);
 	if ($size > 0) {
 		$file = fopen($fname, 'r');
@@ -111,11 +111,10 @@
 /*	FUNCTIONS	*/
 function readOrders() {
 	$exist = $GLOBALS['exist'];
-	$dir = './orders';
 	
 	$freshs = array();
 	if ($exist) {
-		$sql = "SELECT strFilename, fresh FROM orders;";
+		$sql = "SELECT strFilename, fresh FROM orders ORDER BY strFilename;";
 		$res = fetchFromDB($sql);
 		foreach($res as $row) {
 			$fname = $row['strFilename'];
@@ -125,13 +124,20 @@ function readOrders() {
 	}
 	
 	$ver = array();
-	$d = dir($dir);
-	$counter = 0;
+	$dir = './orders';
+	$d   = dir($dir);
 	while (false !== ($entry = $d->read())) {
 		$entry = trim($entry);
 		if (empty($entry) || $entry == '.' || $entry == '..') { continue; }
-		
-		$fname = './orders/'.$entry;
+		$ver[] = $entry;
+	}
+	$d->close();
+	unset($d);
+	
+	arsort($ver); //rsort($ver);
+	$counter = 0;
+	foreach($ver as $entry) {
+		$fname = $dir.'/'.$entry;
 		$fresh = isset($freshs[$fname]) ? $freshs[$fname] : 0;
 		
 		if (!file_exists($fname)) { continue; }
@@ -141,7 +147,6 @@ function readOrders() {
 			$counter++;
 		}
 	}
-	$d->close();
 	
 	if (empty($counter)) {
 		echo "\t\t\t".'<tr>';
@@ -155,13 +160,13 @@ function postOrder($c, $name, $fname, $fresh) {
 	$elem  = explode('_', $name);
 	$date  = strtotime($elem[0]);
 	$date  = date('d.m.Y H:i', filectime($fname));
-	$user  = $elem[1];
+	$user  = str_replace('.order', '', $elem[1]);
 	$style = $fresh ? ' font-weight:bold;' : '';
 	echo "\t\t\t".'<tr'.$style.'>';
 	echo '<td onclick="readOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto">'.$c.'</td>';
 	echo '<td onclick="readOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.' padding-left:10px !important;">'.$user.'</td>';
 	echo '<td onclick="readOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto">'.$date.'</td>';
-	echo '<td onclick="dletOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto"><img src="./img/del.gif"/ title="delete"></td>';
+	echo '<td onclick="dletOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto"><img src="./img/del.png" style="height:16px; width:16px;" title="delete"></td>';
 	echo '</tr>';
 	echo "\r\n";
 }

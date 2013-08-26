@@ -7,27 +7,23 @@
 	$PERSONINFOSEARCH   = $IMDB."nm&q=";
 	$FILMINFOSEARCH     = $IMDB."tt&q=";
 
-	$COLUMNCOUNT        = 8;
+	$SHOW_NEW_VALUES    = array(10, 30, 60, 90, 120, 150, 180);
+	$COLUMNCOUNT        = 9;
 	
-	$client_ip = null;
-	if (!isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-		$client_ip = $_SERVER['REMOTE_ADDR'];
-	} else {
-	    $client_ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-	}
-
-	$LOCALHOST = false;
-	$HOMENETWORK = false;
-	if ($client_ip != null) {
+	$BLACKLIST_FILE     = './logs/blacklist.log';
+	
+	$LOCALHOST          = false;
+	$HOMENETWORK        = false;
+	$CLIENT_IP          = !isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['REMOTE_ADDR'] : $_SERVER['HTTP_X_FORWARDED_FOR'];
+	if ($CLIENT_IP != null) {
 		$local0 = "127.0.0";
 		$local1 = "192.168";
-		$check = substr($client_ip, 0, 7);
+		$check = substr($CLIENT_IP, 0, 7);
 		if ($check == $local0) {
 			$LOCALHOST = true;
 		}
-
-		if ($check == $local1) {
-			$USECACHE = true;
+		if ($check == $local0 || $check == $local1) {
+			$USECACHE    = true;
 			$HOMENETWORK = true;
 		}
 	}
@@ -77,6 +73,4 @@
 						"POL" => "Polish"
 					)
 			);
-	
-	$SHOW_NEW_VALUES = array(10, 30, 60, 90, 120, 150, 180);
 ?>

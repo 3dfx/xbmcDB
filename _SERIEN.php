@@ -1,25 +1,75 @@
 <?php
-	$SerienSQL =	"SELECT V.*, ".
-					"V.c00 as epName, ".
-					"V.c01 as epDesc, ".
-					"V.c03 as epRating, ".
-					"V.c05 as airDate, ".
-					"V.c12 as season, ".
-					"V.c13 as episode, ".
-					"V.strTitle as serie, ".
-					"V.idFile as idFile, ".
-					"V.strFilename as filename, ".
-					"V.strPath as path, ".
-					"T.c01 as showDesc, ".
-					"T.c12 as idTvdb, ".
-					"P.idPath as idPath, ".
-					"F.filesize as filesize ".
-					"FROM episodeview V".
-					", tvshow T ".
-					"LEFT JOIN fileinfo F on V.idFile = F.idFile ".
-					"LEFT JOIN files FS on V.idFile=FS.idFile ".
-					"LEFT JOIN path P on P.idPath=FS.idPath ".
-					"WHERE T.idSHow = V.idShow";
+	#$LastSerienSQL ="SELECT * FROM (SELECT idShow,idEpisode,strTitle,c12 AS season,c13 as episode,c00 AS title,playCount FROM episodeviewMy ORDER BY idEpisode DESC LIMIT 30) ORDER BY idShow";
+	#$LastSerienSQL ="SELECT V.idShow, V.idEpisode, V.strTitle, V.c12 AS season, V.c13 as episode, V.c00 AS title, V.playCount, T.c12 AS idTvdb FROM episodeviewMy V, tvshow T WHERE T.idSHow = V.idShow ORDER BY idEpisode DESC LIMIT 30";
+	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount FROM episodeviewMy V";
+	$LastSerienSQL   = $MenuSerienSQL." ORDER BY idEpisode DESC LIMIT 30";
+	$SearchSerienSQL = $MenuSerienSQL." WHERE lower(V.c01) LIKE '%[SEARCH]%' OR lower(V.c00) LIKE '%[SEARCH]%' ORDER BY V.strTitle ASC";
+	$SerienSQL       = "SELECT V.*, ".
+			   "V.c00 AS epName, ".
+			   "V.c01 AS epDesc, ".
+			   "V.c03 AS epRating, ".
+			   "V.c05 AS airDate, ".
+			   "V.c09 AS duration, ".
+			   "V.c12 AS season, ".
+			   "V.c13 AS episode, ".
+			   "V.strTitle AS serie, ".
+			   "V.idFile AS idFile, ".
+			   "V.strFilename AS filename, ".
+			   "V.strPath AS path, ".
+			   "T.c01 AS showDesc, ".
+			   "T.c12 AS idTvdb, ".
+			   "P.idPath AS idPath, ".
+			   "F.filesize AS filesize ".
+			   "FROM episodeview V".
+			   ", tvshow T ".
+			   "LEFT JOIN fileinfo F ON V.idFile = F.idFile ".
+			   "LEFT JOIN files FS ON V.idFile=FS.idFile ".
+			   "LEFT JOIN path P ON P.idPath=FS.idPath ".
+			   "WHERE T.idSHow = V.idShow";
+	
+	function fetchSearchSerien($search) {
+		$SQL = $GLOBALS['SearchSerienSQL'].';';
+		$SQL = str_replace('[SEARCH]', $search, $SQL);
+		return fetchSerienToArray($SQL, 'FSerien_'.$search);
+	}
+	
+	function fetchLastSerien() {
+		$SQL = $GLOBALS['LastSerienSQL'].';';
+		return fetchSerienToArray($SQL, 'LSerien');
+	}
+	
+	function fetchSerienToArray($SQL, $sessionKey) {
+		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+		#$overrideFetch = true;
+		
+		$result = array();
+		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0) {
+			$result = unserialize($_SESSION[$sessionKey]);
+
+		} else {
+			$dbh = getPDO();
+			try {
+				$sqlResult = $dbh->query($SQL);
+				foreach($sqlResult as $row) {
+					$result[$row['strTitle']][] = array(
+						'idShow'    => $row['idShow'],    'idEpisode' => $row['idEpisode'], 'serie'     => $row['strTitle'],
+						'title'     => $row['title'],     'season'    => $row['season'],    'episode'   => $row['episode'],
+						'playCount' => $row['playCount'], 'sCount'    => $row['sCount']
+						#, 'idTvdb' => $row['idTvdb']
+					);
+				}
+				
+				$_SESSION[$sessionKey] = serialize($result);
+				unset( $_SESSION['overrideFetch'] );
+				
+			} catch(PDOException $e) {
+				echo $e->getMessage();
+				exit;
+			}
+		}
+		
+		return $result;
+	}
 	
 	function fetchSerien($SQL, $id) {
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
@@ -48,11 +98,8 @@
 		error_reporting(E_ALL);
 
 		$serien = new Serien();
+		$dbh = getPDO();
 		try {
-			$db_name = $GLOBALS['db_name'];
-			$dbh = new PDO($db_name);
-			$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			
 			$dbh->beginTransaction();
 			checkMyEpisodeView($dbh);
 
@@ -65,6 +112,7 @@
 				$airDate    = $row['airDate'];
 				$serienname = $row['serie'];
 				$epName     = $row['epName'];
+				$duration   = $row['duration'];
 				$epDesc     = '';
 				$showDesc   = $row['showDesc'];
 				$season     = $row['season'];
@@ -75,8 +123,8 @@
 				$filename   = $row['filename'];
 				$path       = $row['path'];
 				$filesize   = $row['filesize'];
-
-				$ep = new Episode($episodeNum, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $epName, $epDesc, $rating, $serienname, $airDate, $playcount, $filename, $path, $filesize);
+				
+				$ep = new Episode($episodeNum, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $path, $filesize);
 				if (is_object($serien) && is_object($ep)) {
 					$serien->addEpisode($ep, $showDesc);
 				}
@@ -103,6 +151,7 @@
 		private $idPath;
 		private $episode;
 		private $season;
+		private $duration;
 		private $playcount;
 		private $serienname;
 		private $filename;
@@ -111,7 +160,7 @@
 		private $filesize;
 		private $size;
 
-		public function Episode($episode, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $epName, $epDesc, $rating, $serienname, $airDate, $playcount, $filename, $path, $filesize) {
+		public function Episode($episode, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $path, $filesize) {
 			$pr = strtolower(substr($serienname, 0, 4));
 			$pronoms = array('the ', 'der ', 'die ', 'das ');
 			for ($prs = 0; $prs < count($pronoms); $prs++) {
@@ -131,6 +180,7 @@
 			$this->name = $epName;
 			$this->desc = $epDesc;
 			$this->serienname = $serienname;
+			$this->duration = $duration;
 			$this->playcount = $playcount;
 			$this->filename = $filename;
 			$this->path = $path;
@@ -190,6 +240,10 @@
 
 		public function getAirDate() {
 			return $this->airDate;
+		}
+		
+		public function getDuration() {
+			return $this->duration;
 		}
 
 		public function getPath() {

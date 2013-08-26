@@ -21,8 +21,8 @@
 	include_once "template/config.php";
 	include_once "_SERIEN.php";
 
-	$id = $_GET['id'];
-	if (empty($id) || $id < 0) { die('No id given!'); }
+	$id = isset($_GET['id']) ? $_GET['id'] : null;
+	if (empty($id) || $id < 0) { return; }
 
 	$serien = fetchSerien($GLOBALS['SerienSQL'], null);
 	$serie = $serien->getSerie($id);
@@ -32,23 +32,18 @@
 	$imgURL = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 	
-	echo '<table class="film" style="width:350px; padding:0px; margin:0px; z-index:1;">';
+	echo '<table class="film tableDesc">';
 	echo '<tr class="showDesc">';
-	echo '<td colspan="3" style="padding:25px 25px; text-align:justify; white-space:pre-line;">';
+	echo '<td class="showDescTD">';
 	if (!empty($idTvdb) && $idTvdb != -1) {
-		if ($USECACHE) {
-			$imgFile = './img/banners/'.$idTvdb.'.jpg';
-			if (loadImage($imgURL, $imgFile) == -1) { $imgFile = null; }
-		}
-		
-		$banner = !empty($imgFile) ? $imgFile : $imgURL;
-		#echo '<a class="openImdb" style="width:300px !important; height:55px !important;" href="'.$tvdbURL.'">';
-		echo '<img id="tvBanner" class="innerCoverImg" style="width:300px;" src="'.$banner.'" href="'.$tvdbURL.'" />';
-		#echo '<div style="background:url('.$imgFile.') transparent no-repeat; width:300px; height:55px;"></div>';
-		#echo '</a>';
+		$imgFile = './img/banners/'.$idTvdb.'.jpg';
+		if (loadImage($imgURL, $imgFile) == -1) { $imgFile = null; }
+		wrapItUp('banner', $idTvdb, $imgFile);
+		$banner = empty($imgFile) ? $imgURL : getImageWrap($imgFile, $idTvdb, 'banner', 0);
+		echo '<img id="tvBanner" class="innerCoverImg" src="'.$banner.'" href="'.$tvdbURL.'" />';
 	}
 
-	echo '<div style="margin-top:15px;">'.$desc.'</div>';
+	echo '<div class="descDiv">'.$desc.'</div>';
 	echo '</td>';
 	echo '</tr>';
 	echo '</table>';

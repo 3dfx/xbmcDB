@@ -7,12 +7,8 @@
 	include_once "_SERIEN.php";
 
 	$admin = (isset($_SESSION['angemeldet']) && $_SESSION['angemeldet'] == true) ? 1 : 0;
-
-	$id = $_GET['id'];
-	if ($id == null || $id == 0) {
-		echo 'No id given!';
-        die();
-	}
+	$id = isset($_GET['id']) ? $_GET['id'] : null;
+	if (empty($id) || $id < 0) { return; }
 
 	$SQL =  $GLOBALS['SerienSQL'];
 	$serien = fetchSerien($SQL, null);
@@ -42,8 +38,8 @@ function postSerie($serie) {
 	$allEpsCount = $serie->getAllEpisodeCount();
 	if ($allEpsCount < 10) { $allEpsCount = '0'.$allEpsCount; }
 
-	echo '<tr id="descTR" style="height:20px; cursor:default;">';
-	echo '<th style="padding:0px 0px 0px 25px;">'.$stCount.' Season'.($stCount > 1 ? 's' : '').'</th>';
+	echo '<tr id="descTR">';
+	echo '<th class="descTRd1">'.$stCount.' Season'.($stCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
 	echo '<th class="lefto"> Episode'.($allEpsCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto">'.$serie->getRating().'</th>';
@@ -52,9 +48,9 @@ function postSerie($serie) {
 	if ($admin) {
 		if ($serie->isWatched() || $serie->isWatchedAny()) {
 			$img = './img/check'.($serie->isWatched() ? '' : 'B').'.png';
-			echo ' <img src="'.$img.'" class="galleryImage" title="'.($serie->isWatched() ? '' : 'partly ').'watched" style="width:9px !important; height:9px !important;" />';
+			echo ' <img src="'.$img.'" class="galleryImage" title="'.($serie->isWatched() ? '' : 'partly ').'watched" />';
 		} else {
-			echo ' <img src="./img/empty.png" class="galleryImage" style="width:9px !important; height:9px !important;" /> ';
+			echo ' <img src="./img/empty.png" class="galleryImage" /> ';
 		}
 	}
 	echo '</th>';
@@ -85,24 +81,25 @@ function postStaffel($staffel) {
 	$idShow = $staffel->getIdShow();
 	$spanId = 'iD'.$idShow.'.S'.$sNum;
 	echo '<tr class="seasonTR">';
-	echo '<td style="padding:0 0 0 10px;"><A HREF="#" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></A>Season '.$sNum.'</td>';
-	echo '<td class="righto" style="padding-right:2px;">'.$strAllEps.'</td>';
+	echo '<td class="seasonTRd1"><A HREF="#" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></A>Season '.$sNum.'</td>';
+	echo '<td class="seasonTRd2 righto">'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
-	echo '<td class="righto" style="padding-left:10px;">'.$staffel->getRating().'</td>';
-	echo '<td class="righto" style="color:silver;">'._format_bytes($staffel->getSize()).'</td>';
+	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
+	echo '<td class="righto vSpan">'._format_bytes($staffel->getSize()).'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($admin) {
 		if ($staffel->isWatched() || $staffel->isWatchedAny()) {
 			$img = './img/check'.($staffel->isWatched() ? '' : 'B').'.png';
-			echo ' <img src="'.$img.'" class="galleryImage" title="'.($staffel->isWatched() ? '' : 'partly ').'watched" style="width:9px !important; height:9px !important;" />';
+			echo ' <img src="'.$img.'" class="galleryImage" title="'.($staffel->isWatched() ? '' : 'partly ').'watched" />';
 		} else {
-			echo ' <img src="./img/empty.png" class="galleryImage" style="width:9px !important; height:9px !important;" /> ';
+			echo ' <img src="./img/empty.png" class="galleryImage" /> ';
 		}
 	}
 	echo '</td>';
 	echo '</tr>';
 	echo "\r\n";
 	
+	$xbmcRunning = xbmcRunning();
 	foreach ($staffel->getEpisoden() as $epi) {
 		if (!is_object($epi)) { continue; }
 
@@ -111,18 +108,23 @@ function postStaffel($staffel) {
 		
 		$idEpisode = $epi->getIdEpisode();
 		$idTvdb = $epi->getIdTvdb();
-		$epTitle = $epi->getName();
+		$epTitle = trimDoubles($epi->getName());
 		#$epTitle = $epi->getName();
 		$hover = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
+
+		$path = $epi->getPath();
+		$filename = $epi->getFilename();
+		$playItem = isAdmin() && $xbmcRunning && !empty($path) && !empty($filename) ? '<a class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'._format_bytes($epi->getSize()).'</a>' : '<span class="showPlayItem">'._format_bytes($epi->getSize()).'</span>';
 		
-		echo '<tr class="epTR" id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" href="./detailEpisode.php?id='.$idEpisode.'" style="display:none; cursor:default;" onclick="loadEpDetails(this, '.$idEpisode.');">';
-		echo '<td colspan="3" style="padding:0px 0px 0px 25px; max-width:180px; overflow:hidden;"'.$hover.'><span style="color:silver;">'.$epNum.'  </span>'.$epTitle.'</td>';
-		echo '<td class="righto" style="padding-left:10px;">'.$epi->getRating().'</td>';
-		echo '<td class="righto" style="padding-left:10px;"><span style="color:silver;">'._format_bytes($epi->getSize()).'</span></td>';
+		echo '<tr class="epTR" id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" href="./detailEpisode.php?id='.$idEpisode.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
+		echo '<td class="epTRd1" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.'  </span><span class="searchField">'.$epTitle.'</span></td>';
+		echo '<td class="righto padTD">'.$epi->getRating().'</td>';
+		#echo '<td class="righto padTD"><span class="vSpan'.(!empty($playItem) ? ' cursor:pointer;' : '').'"'.$playItem.'>'._format_bytes($epi->getSize()).'</span></td>';
+		echo '<td class="righto padTD">'.$playItem.'</td>';
 		echo '<td class="righto">';
 		if ($admin) {
 			echo '<a class="fancy_addEpisode" href="./addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'">';
-			echo '<img src="./img/add.png" class="galleryImage" title="edit Episode" style="width:9px !important; height:9px !important; z-index:50;" />';
+			echo '<img src="./img/add.png" class="galleryImage" title="edit Episode" />';
 			echo '</a> ';
 		}
 		echo '</td>';
@@ -130,12 +132,12 @@ function postStaffel($staffel) {
 		if ($admin) {
 			if ($epi->isWatched()) {
 				echo '<a class="fancy_movieEdit" href="./dbEdit.php?act=setUnseen&idFile='.$epi->getIdFile().'">';
-				echo '<img src="./img/check.png" class="galleryImage" title="watched" style="width:9px !important; height:9px !important;" /> ';
+				echo '<img src="./img/check.png" class="galleryImage" title="watched" /> ';
 				echo '</a>';
 
 			} else {
 				echo '<a class="fancy_movieEdit" href="./dbEdit.php?act=setSeen&idFile='.$epi->getIdFile().'">';
-				echo '<img src="./img/checkR.png" class="galleryImage" title="set watched" style="width:9px !important; height:9px !important;" /> ';
+				echo '<img src="./img/checkR.png" class="galleryImage" title="set watched" /> ';
 				echo '</a>';
 			}
 		}

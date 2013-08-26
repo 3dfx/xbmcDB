@@ -179,13 +179,8 @@ function fetchInfos() {
 	$idGenre = $GLOBALS['idGenre'];
 	$change  = $GLOBALS['change'];
 
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
+	$dbh = getPDO();
 	try {
-		$db_name = $GLOBALS['db_name'];
-		$dbh = new PDO($db_name);
-		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
 		if ($change == 'movie') {
 			$SQL = 'SELECT F.idFile, M.c00 as title, M.c05 as rating, M.c07 as jahr, M.c14 as genre, F.strFilename as filename, FM.dateAdded as dateAdded '.
 			'FROM movie M, filemap FM, files F WHERE FM.idFile = F.idFile AND M.idFile = F.idFile AND M.idMovie = '.$idMovie.';';

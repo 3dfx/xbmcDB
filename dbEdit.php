@@ -64,8 +64,8 @@
 	if (isset($_POST['rating']))      { $rating     = trim(SQLite3::escapeString($_POST['rating']));      }
 	if (isset($_POST['desc']))        { $desc       = trim(SQLite3::escapeString($_POST['desc']));        }
 	
+	$dbh = getPDO();
 	try {
-		$dbh = new PDO($db_name);
 		$dbh->beginTransaction();
 		$SQL = '';
 
@@ -74,31 +74,33 @@
 //				$dbh->exec('UPDATE genre set strGenre="'.$title.'" where idGenre = '.$idGenre.';');
 //			}
 //		}
-
+		
 		if ($act == 'setUnseen' && $idFile != -1) {
 			$dbh->exec("UPDATE files SET playCount=0 WHERE idFile = ".$idFile.";");
-			clearMovieCache();
+			clearMediaCache();
 			$_SESSION['overrideFetch'] = 1;
 		
 		} else if ($act == 'setSeen' && $idFile != -1) {
 			$dbh->exec("UPDATE files SET playCount=1 WHERE idFile = ".$idFile.";");
-			clearMovieCache();
+			clearMediaCache();
 			$_SESSION['overrideFetch'] = 1;
 			
-		} else if ($act == 'updateEpisode' && $idEpisode != -1 && $idPath != -1 && $idFile != -1 && !empty($file)) {
+		} else if ($act == 'updateEpisode' && $idEpisode != -1 && $idPath != -1 && $idFile != -1 && !empty($file) && !empty($strPath)) {
 			$title = str_replace("'", "''", $title);
 			$desc  = str_replace("'", "''", $desc);
+			#$added = date("Y-m-d H:i:s", time());
 			
 			#CREATE TABLE episode ( idEpisode integer primary key, idFile integer,c00 text,c01 text,c02 text,c03 text,c04 text,c05 text,c06 text,c07 text,c08 text,c09 text,c10 text,c11 text,c12 varchar(24),c13 varchar(24),c14 text,c15 text,c16 text,c17 varchar(24),c18 text,c19 text,c20 text,c21 text,c22 text,c23 text);
 			#"UPDATE episode VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,[RATING],'[GUEST_AUTOR]',[AIRED],NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL);";
-			
+			#$SQLfile = "UPDATE files SET idPath=[idPath],strFilename='[FILENAME]',dateAdded='[ADDED]' WHERE idFile=[idFile];";
+
 			$SQLfile = "UPDATE files SET idPath=[idPath],strFilename='[FILENAME]' WHERE idFile=[idFile];";
 			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
 			$SQLfile = str_replace('[idPath]', $idPath, $SQLfile);
 			$SQLfile = str_replace('[FILENAME]', $file, $SQLfile);
 			$dbh->exec($SQLfile);
 			
-			$SQLepi = "UPDATE episode SET c00='[TITLE]',c01='[DESC]',c03='[RATING]',c04='[GUEST_AUTOR]',c05='[AIRED]',c10='[REGIE]' WHERE idEpisode=[idEpisode];";
+			$SQLepi = "UPDATE episode SET c00='[TITLE]',c01='[DESC]',c03='[RATING]',c04='[GUEST_AUTOR]',c05='[AIRED]',c10='[REGIE]',c18='[FILENAME]' WHERE idEpisode=[idEpisode];";
 			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
 			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
 			$SQLepi = str_replace('[DESC]', $desc, $SQLepi);
@@ -106,11 +108,16 @@
 			$SQLepi = str_replace('[GUEST_AUTOR]', $gast_autor, $SQLepi);
 			$SQLepi = str_replace('[AIRED]', $airdate, $SQLepi);
 			$SQLepi = str_replace('[REGIE]', $regie, $SQLepi);
-			
-			$_SESSION['overrideFetch'] = 1;
+			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
 			$dbh->exec($SQLepi);
 			
-		} else if ($act == 'addEpisode' && $idShow != -1 && $idTvdb != -1 && $idPath != -1 && !empty($file)) {
+			$SQLfile = "DELETE FROM fileinfo WHERE idFile=[idFile];";
+			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
+			$dbh->exec($SQLfile);
+			
+			$_SESSION['overrideFetch'] = 1;
+			
+		} else if ($act == 'addEpisode' && $idShow != -1 && $idTvdb != -1 && $idPath != -1 && !empty($file) && !empty($strPath)) {
 			 ##################################
 			##
 			## INSERT INTO files VALUES([idFile],[idPath],'[FILENAME]',NULL,NULL);
@@ -118,33 +125,35 @@
 			## INSERT INTO tvshowlinkepisode VALUES([idShow],[idEpisode]);
 			##
 			 #############################
-
+			
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
-			$result = $dbh->query($GETID_SQL);
-			$row = $result->fetch();
-			$lastId = $row['idFile'];
-			$idFile = $lastId + 1;
-
-			$SQLfile = "INSERT INTO files(idFile,idPath,strFilename) VALUES([idFile],[idPath],'[FILENAME]');";
+			$result    = $dbh->query($GETID_SQL);
+			$row       = $result->fetch();
+			$lastId    = $row['idFile'];
+			$idFile    = $lastId + 1;
+			$added     = date("Y-m-d H:i:s", time());
+			
+			$SQLfile = "INSERT INTO files(idFile,idPath,strFilename,dateAdded) VALUES([idFile],[idPath],'[FILENAME]','[ADDED]');";
 			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
 			$SQLfile = str_replace('[idPath]', $idPath, $SQLfile);
 			$SQLfile = str_replace('[FILENAME]', $file, $SQLfile);
+			$SQLfile = str_replace('[ADDED]', $added, $SQLfile);
 			$dbh->exec($SQLfile);
-
+			
 			$GETID_SQL = 'SELECT idEpisode FROM episode ORDER BY idEpisode DESC LIMIT 0, 1;';
 			$result = $dbh->query($GETID_SQL);
 			$row = $result->fetch();
 			$lastId = $row['idEpisode'];
 			$idEpisode = $lastId + 1;
-
+			
 			$showEpi = explode('-', $showEpi);
-
+			
 			$title = str_replace("'", "''", $title);
 			$desc  = str_replace("'", "''", $desc);
-
+			
 			$SQLepi = "INSERT INTO episode ".
 				   "VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,[RATING],'[GUEST_AUTOR]',[AIRED],NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL,[idShow]);";
-
+			
 			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
 			$SQLepi = str_replace('[idFile]', $idFile, $SQLepi);
 			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
@@ -184,7 +193,7 @@
 				$params .= (!empty($genre) ? 'c14="'.$genre.'"' : '');
 				
 				$dbh->exec('UPDATE movie SET '.$params.' WHERE idMovie = '.$idMovie.';');
-				clearMovieCache();
+				clearMediaCache();
 				$_SESSION['overrideFetch'] = 1;
 			}
 			
@@ -192,7 +201,7 @@
 			if (!empty($file)) {
 				$params = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile = '.$idFile.';');
-				clearMovieCache();
+				clearMediaCache();
 				$_SESSION['overrideFetch'] = 1;
 			}
 			
@@ -201,7 +210,7 @@
 				if (!empty($params)) { $params .= ', '.$params; }
 				$dbh->exec("UPDATE filemap SET dateAdded = '".$dateAdded."', value = ".$dateValue.$params." WHERE idFile = ".$idFile.";");
 				$dbh->exec("UPDATE files SET dateAdded = '".$dateAdded."' WHERE idFile = ".$idFile.";");
-				clearMovieCache();
+				clearMediaCache();
 				$_SESSION['overrideFetch'] = 1;
 			}
 			//return;
@@ -225,14 +234,8 @@
 		
 		if ($act == 'setMoviesetCover' && $id != -1 && $idMovie != -1) {
 			$url = '';
-
-			/*** make it or break it ***/
-			error_reporting(E_ALL);
+			$dbh = getPDO();
 			try {
-				$db_name = $GLOBALS['db_name'];
-				$dbh = new PDO($db_name);
-				$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-				
 				$res = $dbh->query("SELECT url,type FROM art WHERE media_type = 'movie' AND media_id = '".$idMovie."';");
 				$poster  = '';
 				$fanart  = '';

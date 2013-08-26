@@ -1,12 +1,10 @@
 <?php
 	include_once "template/functions.php";
-	
 	startSession();
 	if (isset($_SESSION)) {
-		unset($_SESSION['gast']);
-		unset($_SESSION['angemeldet']);
+		storeSession();
+		$dhb = getPDO();
 		session_destroy();
 	}
-
 	redirectPage('', true);
 ?>

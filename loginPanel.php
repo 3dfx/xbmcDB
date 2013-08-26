@@ -1,6 +1,6 @@
 <?php
-	include_once "auth.php";
-	include_once "check.php";
+	#include_once "auth.php";
+	#include_once "check.php";
 	include_once "template/functions.php";
 	
 	if (!isAdmin()) { exit; }
@@ -16,16 +16,19 @@
 		}
 	}
 ?>
-
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html><head><title><?php echo $title; ?></title><head><body !oncontextmenu="return false" ondragstart="return false">
-<link type="text/css" rel="stylesheet" href="./class.css">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title><?php echo $title; ?></title>
+	<link type="text/css" rel="stylesheet" href="./class.css">
+</head>
+<body !oncontextmenu="return false" ondragstart="return false">
 <?php
-	$datei = file($file);
+	$datei  = file($file);
 	$linien = sizeof($datei);
 	$x = 0;
 	
-	echo "<table class='film' style='margin-top:15px;'>\n";
+	echo "<table class='film' style='margin-top:15px;'>\r\n";
 	echo "<tr>";
 	echo "<th colspan='".($which == 1 ? 6 : 8)."' style='padding:5px 5px;'>".$title."</th>";
 	echo "</tr>";
@@ -43,7 +46,7 @@
 		echo "<th style='padding:2px 10px;'>Username</th>";
 		echo "<th style='padding:2px 10px;'>Password</th>";
 	}
-	echo "</tr>";
+	echo "</tr>\r\n";
 	
 	if ($linien > 0) {
 		for ($i = 1; $i < $linien-1; $i++) {
@@ -92,15 +95,16 @@
 				
 				if ($which == 2) {
 					echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[5])."</td>";
-					echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[6])."</td>";
-					echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[7])."</td>";
+					echo "<td class='maxWidth30' style='padding:2px 10px;".$color."'>".trim($eintraege[6])."</td>";
+					echo "<td class='maxWidth30' style='padding:2px 10px;".$color."'>".trim($eintraege[7])."</td>";
 				}
-				echo "</TR>";
+				echo "</tr>\r\n";
 				
 				if (++$x >= 20) { break; }
 			}
 		}
 	}
-	echo "</table>\n";
+	echo "</table>\r\n";
 ?>
-</body></html>
+</body>
+</html>

@@ -14,8 +14,8 @@
 		}
 
 		for ($j = $spalte; $j < count($res); $j++) {
-			$val = $res[$j];
-			if (!empty($val)) {
+			$val = trim($res[$j]);
+			if ($val != null || $val != '') {
 				break;
 			}
 
@@ -27,6 +27,60 @@
 		}
 
 		return $colspan;
+	}
+	
+	function getCovers($fnam, $cover, $idMovie) {
+		$existArtTable = $GLOBALS['existArtTable'];
+		
+		$res = array();
+		if (file_exists(getCoverMid($fnam, $cover, false))) {
+			$res[0] = getCoverMid($fnam, $cover, false); //cover
+			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
+
+		} else if ($existArtTable) {
+			$dbh = getPDO();
+			$res2 = $dbh->query("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
+			foreach($res2 as $row2) {
+				$type = $row2['type'];
+				$url  = $row2['url'];
+				if (!empty($url)) {
+					$res[0] = getCoverMid($url, $url, true); //cover
+					$res[1] = getCoverBig($url, $url, true); //cover_big
+					if ($type == 'poster') { break; }
+				}
+			}
+		}
+
+		return $res;
+	}
+	
+	function getFanartCover($fnam, $idMovie) {
+		$existArtTable = $GLOBALS['existArtTable'];
+		
+		$crc = thumbnailHash($fnam);
+		$fanart = "./img/Thumbnails/Fanart/".$crc.".jpg";
+		
+		$fanartExists = file_exists($fanart);
+		if ($fanartExists) {
+			$ftime = '';
+			try {
+				$ftime = filemtime ($fanart);
+			} catch (Exception $e) { }
+
+			$fanartThumb = "./img/fanart/".$crc."-fanart_".$ftime.".jpg";
+			return getFanart0($fanart, $fanartThumb);
+			
+		} else if ($existArtTable) {
+			$dbh = getPDO();
+			$res2 = $dbh->query("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '".$idMovie."';");
+			$row2 = $res2->fetch();
+			$url = $row2['url'];
+			if (!empty($url)) {
+				return getFanart($url, $url, true);
+			}
+		}
+		
+		return null;
 	}
 ?>
 
@@ -96,9 +150,8 @@
 
 	$idFile = 0;
 
+	$dbh = getPDO();
 	try {
-		error_reporting(E_ALL);
-		$dbh = new PDO($db_name);
 		$existArtTable = existsArtTable($dbh);
 		
 		$sql = "SELECT c00, c01, c02, idMovie, c07 as jahr, c08 as thumb, c09 as imdbId, B.strFilename as filename, A.c19 as trailer, c04, c05, c11, c14, c16, ".
@@ -109,97 +162,52 @@
 
 		if (empty($row)) { die('not found...'); }
 
-		$sql2 = "select B.strActor, A.strRole, A.idActor, B.strThumb as actorimage from actorlinkmovie A, actors B where A.idActor = B.idActor and A.idMovie = '$id'";
-		$result2 = $dbh->query($sql2);
-		$result2_ = $dbh->query($sql2);
+		$sql2      = "select B.strActor, A.strRole, A.idActor, B.strThumb as actorimage from actorlinkmovie A, actors B where A.idActor = B.idActor and A.idMovie = '$id'";
+		$result2   = $dbh->query($sql2);
+		$result2_  = $dbh->query($sql2);
 		
-		$idFile = $row['idFile'];
-		$result3 = getStreamDetails($idFile);
+		$idFile    = $row['idFile'];
+		$result3   = getStreamDetails($idFile);
 
-  		$fanart = '';
-  		$cover = '';
-  		$cover_big = '';
-
-		// thumb from local-cache
-		$USECACHE = isset($GLOBALS['USECACHE']) ? $GLOBALS['USECACHE'] : true;
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
-		$size = $row['filesize'];
-		$path = $row["path"];
-		$idMovie = $row["idMovie"];
-		$filename = $row['filename'];
-		$watched = $row['playCount'];
-		$fnam = $path.$filename;
+		$size         = $row['filesize'];
+		$idMovie      = $row["idMovie"];
+		$path         = $row["path"];
+		$filename     = $row['filename'];
+		$watched      = $row['playCount'];
+		$fnam         = $path.$filename;
+		$idMovie      = $row['idMovie'];
+		$titel        = trim($row['c00']);
+		$orTitel      = trim($row['c16']);
+		$jahr         = $row['jahr'];
+		#$inhalt       = '';
+		$inhalt       = $row['c01'];
 
+  		$fanart    = '';
+  		$covers    = getCovers($fnam, '', $idMovie);
+  		$cover     = getImageWrap($covers[0], $idMovie, 'movie', 1); //'./getImg.php?size=1&movie='.$idMovie;
+  		$cover_big = getImageWrap($covers[1], $idMovie, 'movie', 2); //'./getImg.php?size=2&movie='.$idMovie;
+		
 		$fanartExists = false;
-		if ($USECACHE) {
-			if (file_exists(getCoverMid($fnam, $cover, false))) {
-				$cover_big = getCoverBig($fnam, $cover, false);
-				$cover = getCoverMid($fnam, $cover, false);
-				
-			} else if ($existArtTable) {
-				#echo "idMovie: ".$idMovie."...<br>";
-				$res2 = $dbh->query("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
-				#$row2 = $res2->fetch();
-				foreach($res2 as $row2) {
-					$type = $row2['type'];
-					$url = $row2['url'];
-					if (!empty($url)) {
-						#logc( thumbnailHash($url) );
-						#logc( "Hash: ".$hash );
-						#logc( 'getCover: '.$url );
-						$cover_big = getCoverBig($url, $url, true);
-						$cover = getCoverMid($url, $url, true);
-						if ($type == 'poster') { break; }
-					}
-				}
-			}
-
-			if ($DETAILFANART) {
-				$crc = thumbnailHash($fnam);
-				#$fanart = "./img/Thumbnails/Video/Fanart/".$crc.".tbn";
-				$fanart = "./img/Thumbnails/Fanart/".$crc.".jpg";
-				#logc('orFanart: '.$fanart);
-				
-				$fanartExists = file_exists($fanart);
-				#logc( $fanartExists ? 'exist' : 'notExist' );
-				if ($fanartExists) {
-					$ftime = '';
-					try {
-						$ftime = filemtime ($fanart);
-					} catch (Exception $e) { }
-
-					$fanartThumb = "./img/fanart/".$crc."-fanart_".$ftime.".jpg";
-					$fanart = getFanart0($fanart, $fanartThumb);
-				} else if ($existArtTable) {
-					// ayar
-					$res2 = $dbh->query("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '$idMovie';");
-					$row2 = $res2->fetch();
-					$url = $row2['url'];
-					#logc('url: '.$url);
-					if (!empty($url)) {
-						#$fanart = getCoverBig($url, $url, true);
-						$fanart = getFanart($url, $url, true);
-						$fanartExists = true;
-					}
-				}
-			}
+		if ($DETAILFANART) {
+			$fanart = getFanartCover($fnam, $idMovie);
+			$fanartExists = !empty($fanart);
+			
+			#$_SESSION['thumbs']['fanart'][$idMovie] = $fanart;
+			wrapItUp('fanart', $idMovie, $fanart);
 		}
-
-		$inhalt = "";
-		$idMovie = $row['idMovie'];
-		$titel = trim($row['c00']);
-		$orTitel = trim($row['c16']);
-		$jahr = $row['jahr'];
-		$inhalt .= $row['c01'];
 ?>
 <body>
 <?php
+		$admin = isAdmin();
+		$fanart = getImageWrap($fanart, $idMovie, 'fanart', 0);
+		
 		$pos1 = strpos($filename, '.3D.');
 		if ( $pos1 == true) {
 			$titel .= ' (3D)';
 		}
 		
-		if ($DETAILFANART && $fanartExists) {
+		if ($DETAILFANART && $fanartExists || true) {
 			if ($ENCODE) { $fanart = base64_encode_image($fanart); }
 			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>';
 			echo "\r\n";
@@ -255,7 +263,6 @@
 			}
 			
 			$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
-			$admin = isAdmin();
 
 			if (!$spProtect || ($admin && $watched >= 1)) {
 				echo '<span id="movieDescription">';
@@ -547,7 +554,7 @@
 			
 			echo '<tr class="abstand"><td colspan="10"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
-			echo '<span class="filename lefto">'.encodeString($filename).'</span>';
+			echo '<span class="filename lefto"'.($admin ? ' title="'.$path.'"' : '').'>'.encodeString($filename).'</span>';
 			echo '<span class="filesize righto" title="'.formatToDeNotation($size).'">'.$size1.'</span>';
 			echo '</td></tr>';
 			echo "\r\n";
@@ -567,7 +574,7 @@
 				if ($isSet) {
 					$href = '<a href="?show=filme&which=set&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
 				}
-				if (isAdmin()) {
+				if ($admin) {
 					$href .= ' <a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id.'"><img style="border:0px; height:9px;" src="img/edit-pen.png" title="change set" /></a>';
 				}
 
@@ -606,12 +613,16 @@
 				}
 			}
 			
+			#$_SESSION['thumbs']['actor'][$idActor] = $actorimg;
+			wrapItUp('actor', $idActor, $actorimg);
+			
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
 			$schauspTblOut[$actors] .= '<td class="art">';
 			$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$artist.'">[i] </a>';
 			$schauspTblOut[$actors] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
 			if (file_exists($actorimg)) {
-				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.$actorimg.'" title="'.$artist.'"';
+				#$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.$actorimg.'" title="'.$artist.'"';
+				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
 			} else {
 				 $schauspTblOut[$actors] .= 'title="filter"';
 			}
@@ -663,5 +674,5 @@
 		echo $e->getMessage();
 	}
 
-	unset($_SESSION['show']);
+	unset( $_SESSION['show'], $_SESSION['idShow'] );
 ?>

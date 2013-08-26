@@ -9,11 +9,32 @@ body 	{
 	padding:10px;
 	font-family: 'Lucida Grande', 'Verdana', 'Arial';
 	font-size: 13px;
+	
+	scrollbar-face-color      : ddd;
+	scrollbar-arrow-color     : ddd;
+	scrollbar-track-color     : background-color:transparent;
+	scrollbar-shadow-color    : eee;
+	scrollbar-highlight-color : white;
+	scrollbar-3dlight-color   : aaa;
+	scrollbar-darkshadow-Color: 666;
 }
+
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track-piece{background-color:transparent}
+::-webkit-scrollbar-thumb{background:#ddd}
 
 a, a:hover {
 	color: #000000;
 	text-decoration: none;
+}
+
+.notification {
+	position:absolute;
+	float:right;
+	right:70px;
+	top:25px;
+	width:6px;
+	z-index:1;
 }
 
 .navBarBrand {
@@ -68,6 +89,7 @@ a, a:hover {
 	padding-top:60px;
 	text-align:center;
 	clear:both;
+	height:auto;
 }
 
 .optTD {
@@ -77,7 +99,6 @@ a, a:hover {
 }
 
 table.film {
-	zzfont-family: Verdana, Arial;
 	font-weight: normal;
 	font-size: 11px;
 	color: #404040;
@@ -95,7 +116,6 @@ table.film td.servHd {
 	border-bottom:2px solid #6699CC;
 	background-color: #BEC8D1;
 	text-align: left;
-	zzfont-family: Verdana, Arial;
 	font-weight: bold;
 	font-size: 11px;
 	color: #404040;
@@ -110,12 +130,10 @@ table.film th {
 table.film td {
 	height:17px;
 	border-bottom:1px dotted #6699CC;
-	zzfont-family: Verdana, Arial;
 	font-weight: normal;
 	font-size: 11px;
 	color: #404040;
 	background-color: white;
-	zz_text-align: left;
 	padding-right:10px;
 	white-space:nowrap;
 }
@@ -126,7 +144,6 @@ table.film td {
 	/*color:#ffffff;
 	background:#b3b06c;*/
 	color:black;
-	zzfont:Verdana, Arial;
 	font-size: 12px;
 	text-decoration:none;
 	display:block;
@@ -146,7 +163,6 @@ table.film td {
 	width:200px;
 	color:black;
 	border: 1px solid #333333;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	border:1px solid black;
 	padding:10px;
@@ -156,7 +172,6 @@ table.film td {
 	/*color:#ffffff;
 	background:#b3b06c;*/
 	color:black;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	text-decoration:none;
 	display:block;
@@ -176,7 +191,6 @@ table.film td {
 	width:100px;
 	color:black;
 	border: 1px solid #333333;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	border:1px solid black;
 	padding:10px;
@@ -191,6 +205,8 @@ table.film td {
 .countTD {
 	padding-left:10px;
 	text-align:right;
+	color:black !important;
+	font-size:12px !important;
 }
 
 .titleTD {
@@ -238,7 +254,6 @@ table.film td {
 .newAddedTH {
 	padding-right:7px !important;
 	padding-bottom:4px !important;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 }
 
@@ -269,11 +284,11 @@ span.customStyleSelectBox.changed {
 }
 
 .styled-select {
-	position:absolute; opacity:0; font-size:10px !important; height:18px !important; width:55px !important;
+	position:absolute; font-size:10px !important; height:18px !important; width:55px !important;
 }
 
 .styled-select2 {
-	position:absolute; opacity:0; font-size:10px !important; height:18px !important; width:130px !important;
+	position:absolute; font-size:10px !important; height:18px !important; width:160px !important;
 }
 
 .okButton {
@@ -284,7 +299,6 @@ span.customStyleSelectBox.changed {
 	border:1px solid #dcdcdc;
 	display:inline-block;
 	color:#777777;
-	zzfont-family:Verdana;
 	font-size:12px;
 	font-weight:bold;
 	padding:2px 15px;
@@ -347,20 +361,22 @@ span.customStyleSelectBox.changed {
 
 #f1 { position:fixed; top:15px; left:530px; width:150px; height:150px; background-color:#afa; }
 
-a {	color:black; text-decoration:none; font-size: 12px; zzfont:12px Verdana, Arial;}
+a {	color:black; text-decoration:none; font-size: 12px; }
 
 .title {
 	color:#000;
 }
 
 table.artists td.art {
-	padding-right:35px;
+	padding-right:0px;
 	vertical-align:top;
-	width:1%;
+	max-width:145px;
+	overflow-x:hidden;
 }
 
 table.artists td.role {
 	color:black;
+	padding-left:15px;
 }
 
 table.artists td {
@@ -373,7 +389,6 @@ table.artists td {
 }
 
 .artists tr {
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 }
 
@@ -442,14 +457,13 @@ table.streaminfo th, table.streaminfo td {
 }
 
 .streaminfo tr {
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 }
 
 .filename {
 	float:left;
 	padding-right:15px;
-	max-width:450px;
+	max-width:500px;
 	overflow-x:hidden;
 }
 
@@ -468,7 +482,6 @@ input[type=checkbox] {
 	float:left;
 	margin-right:10px;
 	margin-top:3px;
-	zzpadding-bottom:250px;
 	width:260px;
 	z-index:10;
 	position:absolute;
@@ -514,7 +527,6 @@ input[type=checkbox] {
 	width: 500px;
 	padding: 15px;
 	display:none;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	position:absolute;
 }
@@ -524,16 +536,13 @@ input[type=checkbox] {
 	margin-right:25px;
 	left:275px;
 	top:15px;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	position:absolute;
 	text-align:justify;
-	zzwidth:600px;
 	z-index:10;
 }
 
 .originalTitle {
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 }
 
@@ -554,7 +563,6 @@ input[type=checkbox] {
 	padding-bottom:13px;
 	padding-right:15px;
 	width:40%;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	color:dimgray;
 	z-index:10;
@@ -563,6 +571,11 @@ input[type=checkbox] {
 #movieDescription {
 	position:relative;
 	top:15px;
+	width:980px;
+}
+
+#spoiler {
+	width:980px;
 }
 
 .moreDots {
@@ -574,10 +587,9 @@ input[type=checkbox] {
 	position:relative;
 	float:left;
 	color:black;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	top:22px;
-	width:315px;
+	width:260px;
 	overflow-x:hidden;
 	margin-top:10px;
 }
@@ -611,12 +623,10 @@ input[type=checkbox] {
 .selectedfield {
 	color:black;
 	padding-top: 20px;
-	padding-left: 15px;
+	padding-left: 0px;
 	padding-bottom: 35px;
-	zzfont:12px Verdana, Arial;
 	font-size: 12px;
 	position:absolute;
-	display:none;
 }
 
 table.login {
@@ -627,7 +637,6 @@ table.login {
 .fancyimage1 {
 	cursor:pointer;
 }
-
 
 .fancy_iframe2 {
 	cursor:pointer;
@@ -680,8 +689,23 @@ table.gallery {
 	background:#ffffff no-repeat;
 }
 
+.galleryCoverHref1 {
+	width:100%;
+	height:100%;
+	position:relative;
+}
+
+.galleryCoverHref2 {
+	width:23px;
+	height:117px;
+	position:relative;
+	top:-117px;
+	left:70px;
+	margin:0px;
+}
+
 .galleryTD {
-	padding:10px;
+	padding:9px;
 	border:0px;
 }
 
@@ -700,15 +724,73 @@ table.gallery {
 }
 
 .gallerySpan {
+	cursor:default;
 	position:relative;
 	right:-75px;
-	bottom:-115px;
+	top:-140px;
+	width:32px;
+	height:183px;
+	vertical-align:bottom;
+	#display:table-cell;
+	z-index:1;
 }
 
-.galleryImage {
+.check10 {
+	width:10px;
+	height:10px;
 	border:0px;
+	position:relative;
+	left:-1px;
+	bottom:2px;
+}
+
+.icon10 {
+	width:10px;
+	height:10px;
+	border:0px;
+}
+
+.icon24 {
+	width:24px;
+	height:24px;
+	bottom:8px;
+	border:0px;
+}
+
+.icon32 {
 	width:32px;
 	height:32px;
+	border:0px;
+}
+
+.gallery1st {
+	position:absolute;
+	border:0px;
+	left:4px;
+	top:0px;
+}
+
+.gallery2nd {
+	position:absolute;
+	border:0px;
+	bottom:32px;
+}
+
+.gallery3d {
+	position:relative;
+	top:-2px;
+	left:-88px;
+}
+
+.galleryPlay {
+	position:relative;
+	top:0px;
+	left:-5px;
+	cursor:pointer;
+}
+
+.galleryPlay2nd {
+	top:-24px;
 }
 
 .galleryCheckSpan {
@@ -754,7 +836,6 @@ a.showlink {
 .inputbox {
 	background-color: #F2F5FA;
 	color:            #6DA0E7;
-	zzfont-family:      Verdana, Arial;
 	font-size:        12px;
 	font-style:       normal;
 	padding:          0px;
@@ -788,18 +869,56 @@ a.showlink {
 	float:left;
 }
 
-.seasonTR {
-	height:20px;
+.mnuIcon    { position:relative; top:-24px; right:0px; width:24px; height:0px; }
+#showDesc   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
+#showInfo   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
+#showEpDesc { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
+#showsTable { z-index:10; border:1px solid #69C; margin-bottom:15px; }
+#emptyTR    { height:20px; border:1px solid #69C; }
+#showsCount { position:relative; right:120px; top:12px; text-align:right; float:right; }
+#showBanner { position:relative; top:0px; left:0px; border:0px; padding:10px; padding-top:25px; text-align:center; }
+
+.showShowInfo  { cursor:default; width:1px; white-space:nowrap; height:20px; }
+.showShowInfo1 { color:silver; padding:2px 4px; }
+.sInfoSize     { color:silver; float:right; padding-left:10px; }
+.sInfoRating   { float:right; padding-left:10px; }
+.galleryImage  { width:16px !important; height:16px !important; z-index:50; }
+
+.tableDesc  { width:350px; padding:0px; margin:0px; z-index:1; }
+#tvBanner   { cursor:pointer; width:300px; }
+.showDescTD { padding:25px 25px; text-align:justify; white-space:pre-line !important; }
+.descDiv    { width:300px; margin-top:15px; }
+
+#descTR       { cursor:default; height:20px; }
+.descTRd1     { padding:0px 0px 0px 25px; }
+.seasonTR     { cursor:default; height:20px; }
+.seasonTRd1   { padding:0 0 0 10px; }
+.seasonTRd2   { padding-right:2px; }
+.epTR         { cursor:default; height:20px; }
+.epTRd1       { padding:0px 0px 0px 25px; max-width:180px; overflow:hidden; }
+.padTD        { padding-left:10px; }
+.vSpan        { color:silver; }
+.showPlayItem,
+.showPlayItem:active,
+.showPlayItem:hover { color:silver; font-size:11px; }
+
+#epDescription { position:relative; border-top:0px; width:350px; padding:0px; margin:0px; z-index:1; }
+.showDescTD2   { padding:20px 25px; white-space:pre-line !important; }
+.epCheckSpan   { float:right; position:relative; top:-6px; width:24px; height:24px; }
+.thumbCheck    { width:24px !important; height:24px !important; }
+.thumbDiv      { position:relative; top:-8px; padding-bottom:10px; }
+.thumbImg      { width:298px; border-radius:3px; -webkit-border-radius:3px; }
+.epDesc        { padding-bottom:15px; text-align:justify; white-space:pre-line !important; }
+.flalright     { float:right; text-align:right; }
+.flalleft      { float:left; text-align:left; }
+.padbot15      { padding-bottom:15px; }
+.padtop15      { padding-top:15px; }
+.nOverflow     { overflow-x:hidden; white-space:nowrap !important; }
+
+#adminInfo { top:60px; right:25px; position:absolute; text-align:right; padding:10px 10px 14px; }
+
+.maxWidth30 {
+	max-width: 30px;
+	overflow-x: hidden;
 }
 
-.epTR {
-	height:20px;
-}
-
-#tvBanner {
-	cursor:pointer;
-}
-
-#epDescription {
-	position:relative;
-}

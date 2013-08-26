@@ -5,6 +5,7 @@
 	include_once "template/functions.php";
 	include_once "template/config.php";
 	include_once "_SERIEN.php";
+	header("Content-Type: text/html; charset=UTF-8");
 
 	$admin = isAdmin();
 
@@ -13,31 +14,66 @@
 
 	$SQL =  $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
 
-	$title = '';
-	$epDesc = '';
-	$path = '';
-	$coverP = '';
-	$filename = '';
+	$idFile     = 0;
+	$title      = '';
+	$epDesc     = '';
+	$path       = '';
+	$coverP     = '';
+	$filename   = '';
 	$lastPlayed = '';
-	$playCount = 0;
-	$epRating = '';
-	$season = '';
-	$episode = '';
-	$idFile = 0;
-	$airDate = '';
-	$filesize = 0;
-	$fsize = 0;
-	
-	$ar        = '';
-	$width     = '';
-	$height    = '';
-	$vCodec    = '';
-	$aCodec    = array();
-	$aChannels = array();
+	$playCount  = 0;
+	$epRating   = '';
+	$season     = '';
+	$episode    = '';
+	$airDate    = '';
+	#$duration   = 0;
+	$filesize   = 0;
+	$fsize      = 0;
 	
 	$existArtTable = false;
+	$dbh = getPDO();
+	try {
+		$existArtTable = existsArtTable($dbh);
+		
+		$result = $dbh->query($SQL);
+		foreach($result as $row) {
+			$idFile     = $row['idFile'];
+			$title      = trimDoubles(trim($row['epName']));
+			$epDesc     = trimDoubles(trim($row['epDesc']));
+			$path       = $row['path'];
+			$filename   = $row['filename'];
+			$lastPlayed = $row['lastPlayed'];
+			$playCount  = $row['playCount'];
+			$epRating   = $row['epRating'];
+			$season     = $row['season'];
+			$episode    = $row['episode'];
+			$airDate    = $row['airDate'];
+			#$duration   = $row['duration'];
+			$filesize   = $row['filesize'];
+		}
+
+		$coverP = $path;
+		
+		if ($season  < 10) { $season  = '0'.$season;  }
+		if ($episode < 10) { $episode = '0'.$episode; }
+		
+		$path = mapSambaDirs($path);
+		$fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
+
+	} catch(PDOException $e) {
+		echo $e->getMessage();
+	}
+
+	$duration   = 0;
+	$ar         = '';
+	$width      = '';
+	$height     = '';
+	$vCodec     = '';
+	$aCodec     = array();
+	$aChannels  = array();
+	$aLang      = array();
 	
-	$stream = getStreamDetails($id);
+	$stream = getStreamDetails($idFile);
 	foreach($stream as $stRow) {
 		$tmp = $stRow['fVideoAspect'];
 		if (!empty($tmp)) {
@@ -53,6 +89,9 @@
 
 		$tmp = $stRow['iVideoHeight'];
 		if (!empty($tmp)) { $height = $tmp; }
+		
+		$tmp = $stRow['iVideoDuration'];
+		if (!empty($tmp)) { $duration = $tmp; }
 
 		$tmp = $stRow['strVideoCodec'];
 		if (!empty($tmp)) { $vCodec = strtoupper($tmp); }
@@ -62,104 +101,81 @@
 
 		$tmp = $stRow['iAudioChannels'];
 		if (!empty($tmp)) { $aChannels[count($aChannels)] = $tmp; }
+		
+		$tmp = $stRow['strAudioLanguage'];
+		if (!empty($tmp)) { $aLang[count($aLang)] = $tmp; }
 	}
 	
-	try {
-		$db_name = $GLOBALS['db_name'];
-		$dbh = new PDO($db_name);
-		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		
-		$existArtTable = existsArtTable($dbh);
-		
-		$result = $dbh->query($SQL);
-		foreach($result as $row) {
-			$title = $row['epName'];
-			$epDesc = trim($row['epDesc']);
-			$path = $row['path'];
-			$filename = $row['filename'];
-			$lastPlayed = $row['lastPlayed'];
-			$playCount = $row['playCount'];
-			$epRating = $row['epRating'];
-			$season = $row['season'];
-			$episode = $row['episode'];
-			$airDate = $row['airDate'];
-			$idFile = $row['idFile'];
-			$filesize = $row['filesize'];
-		}
-
-		$coverP = $path;
-		
-		if ($season < 10) { $season = '0'.$season; }
-		if ($episode < 10) { $episode = '0'.$episode; }
-		
-		$path = mapSambaDirs($path);
-		$fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
-
-	} catch(PDOException $e) {
-		echo $e->getMessage();
-	}
-	
-	$thumbImg = null;
+	$thumbImg   = null;
+	$sessionImg = null;
 	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS']) ? $GLOBALS['TVSHOW_THUMBS'] : false;
-	$ENCODE = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
+	$ENCODE   = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
 	
 	if ($thumbsUp) {
 		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
-		if ($fromSrc && empty($thumbImg)) {
-			// READ MEDIAFIRE GENERATED THUMBS FROM SOURCE
+		if ($fromSrc && empty($sessionImg)) {
+			// READ EMBER GENERATED THUMBS FROM SOURCE
 			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
-			$thumb = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
-			$smb = (substr($thumb, 0, 6) == 'smb://');
+			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
+			$smb = (substr($sessionImg, 0, 6) == 'smb://');
 			
-			if (!$smb && file_exists($thumb) && $ENCODE) {
-				$thumbImg = base64_encode_image($thumb);
+			if (file_exists($sessionImg)) {
+				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encode' : null);
+				#$thumbImg = base64_encode_image($thumb);
 			}
 		}
 		
-		if (empty($thumbImg)) {
-			$img = getTvShowThumb($coverP.$filename);
-			$thumbImg = $ENCODE ? base64_encode_image($img) : $img;
+		if (empty($sessionImg)) {
+			$sessionImg = getTvShowThumb($coverP.$filename);
+			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
+			#$thumbImg = $ENCODE ? base64_encode_image($img) : $img;
 
-			if (empty($thumbImg) && $existArtTable) {
+			if (empty($sessionImg) && $existArtTable) {
 				$res2 = $dbh->query("SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';");
 				$row2 = $res2->fetch();
 				$url = $row2['url'];
 				#logc( $id.' - '.$url );
 				if (!empty($url)) {
-					$img = getTvShowThumb($url);
-					#logc( $img );
-					if (file_exists($img) && $ENCODE) {
-						$thumbImg = base64_encode_image($img);
+					$sessionImg = getTvShowThumb($url);
+					#logc( $sessionImg );
+					if (file_exists($img)) {
+						$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
+						#$thumbImg = base64_encode_image($img);
 					}
 
 				}
 			}
 		}
-
+		
+		#$_SESSION['thumbs']['file'][$idFile] = $sessionImg;
+		wrapItUp('file', $idFile, $sessionImg);
 	}
 	
-	echo '<table id="epDescription" class="film" style="border-top:0px; width:350px; padding:0px; margin:0px; z-index:1;">';
+	echo '<table id="epDescription" class="film">';
 	echo '<tr class="showDesc">';
-	echo '<td colspan="3" style="padding:20px 25px; white-space:pre-line;">';
+	echo '<td class="showDescTD2">';
+	echo '<div style="width:300px;">';
 	echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;"><div><u><i><b>Title:</b></i></u></div><span>'.$title.' [ S'.$season.'.E'.$episode.' ]</span>';
+	echo '<span class="epCheckSpan">';
 	if ($admin && $playCount > 0) {
-		echo '<span style="float:right;"><img src="./img/check.png" class="galleryImage" title="watched" style="width:9px !important; height:9px !important;" /></span>';
+		echo '<img src="./img/check.png" class="galleryImage thumbCheck" title="watched" />';
 	}
+	echo '</span>';
 	echo '</div>';
 	
 	if (!empty($thumbImg)) {
-		echo '<div style="padding-bottom:15px;"><img src="'.$thumbImg.'" style="width:298px;" /></div>';
+		echo '<div class="thumbDiv"><img class="thumbImg" src="'.$thumbImg.'" /></div>';
 	}
 	
-	if ($epDesc != null && $epDesc != '') {
+	if (!empty($epDesc)) {
 		$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
 		
-		$tmp = '<div style="padding-bottom:15px; text-align:justify;"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
+		$tmp = '<div class="epDesc"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
 		if (!$spProtect || !$admin || !empty($playCount)) {
 			echo $tmp;
 
 		} else if ($admin && empty($playCount)) {
-			echo '<div id="epSpoiler" style="padding-bottom:15px;" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red;">spoil it!</span></div>';
+			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red; cursor:pointer;">spoil it!</span></div>';
 			echo '<span id="epDescr" style="display:none;">';
 			echo $tmp;
 			echo '</span>';
@@ -168,23 +184,50 @@
 
 	$rating = substr($epRating, 0, 3);
 	if ($rating != '0.0') {
-		echo '<div'.($admin ? ' style="padding-bottom:15px;"' : '').'><span><u><i><b>Rating:</b></i></u></span><span style="float:right; text-align:right;">'.$rating.'</span></div>';
+		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><u><i><b>Rating:</b></i></u></span><span class="flalright">'.$rating.'</span></div>';
+	}
+
+	if (!empty($duration)) {
+		$duration = round($duration / 60, 0);
+		echo '<div class="padbot15"><span><u><i><b>Duration:</b></i></u></span><span class="flalright">'.$duration.' min</span></div>';
 	}
 	
 	if (!empty($airDate)) {
-		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span style="float:right; text-align:right;">'.$airDate.'</span></div>';
+		$airDate = date('Y-m-d \(D\)', strtotime($airDate));
+		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright">'.$airDate.'</span></div>';
 	}
 	
 	if ($admin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
-			echo '<div><span><u><i><b>Watched:</b></i></u></span><span style="float:right; text-align:right;">'.substr($lastPlayed, 0, 10).'</span></div>';
+			$lastPlayed = substr($lastPlayed, 0, 10);
+			$lastPlayed = date('Y-m-d \(D\)', strtotime($lastPlayed));
+			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright">'.$lastPlayed.'</span></div>';
 		}
-		
-		echo '<div style="padding-top:15px; padding-bottom:15px;"><span><u><i><b>Size:</b></i></u></span><span style="float:right; text-align:right;">'.$fsize.'</span></div>';
-		
-		echo '<div style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />'.$path.$filename.'</div>';
 	}
-	echo '</td>';
+	
+	echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
+	
+	if ($admin) {
+		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />'.encodeString($path.$filename).'</div>';
+	}
+	
+	if (!empty($aCodec)) {
+		$codecs = '';
+		$countyMap = getCountyMap();
+		for($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditCodec($aCodec[$i]).getLanguage($countyMap, $aLang, $i).($i < count($aCodec)-1 ? ' | ' : ''); }
+		echo '<div class="padtop15" style="overflow-x:hidden;"><span><u><i><b>Audio Channels:</b></i></u></span><span class="flalright">'.count($aCodec).' ['.$codecs.']</span></div>';
+	}
+	echo '</div></td>';
 	echo '</tr>';
 	echo '</table>';
+	
+//- FUNCTIONS -//
+function getLanguage($countyMap, $aLang, $i) {
+	return isValidLang($countyMap, $aLang, $i) ? ' - '.postEditLanguage(strtoupper($aLang[$i]), false) : '';
+}
+	
+function isValidLang($countyMap, $aLang, $i) {
+	return isset($aLang[$i]) && isset($countyMap[strtoupper($aLang[$i])]);
+}
+//- FUNCTIONS -//
 ?>

@@ -22,12 +22,8 @@
 	$dbh = null;
 	
 	$idSet = -1;
-	error_reporting(E_ALL);
+	$dbh = getPDO();
 	try {
-		$db_name = $GLOBALS['db_name'];
-		$dbh = new PDO($db_name);
-		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
 		$idMovie = $GLOBALS['idMovie'];
 		$SQL_SET = 'SELECT idSet FROM movie WHERE idMovie = '.$idMovie.';';
 
@@ -43,15 +39,8 @@
 function postSets() {
 	$idSet = $GLOBALS['idSet'];
 	
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
-	
+	$dbh = getPDO();
 	try {
-		$db_name = $GLOBALS['db_name'];
-		$dbh = $GLOBALS['dbh'];
-		if ($dbh == null) { $dbh = new PDO($db_name); }
-		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
 		$SQL_SETS = 'SELECT * FROM sets ORDER BY strSet;';
 		$result = $dbh->query($SQL_SETS);
 		$sets = array();

@@ -1,7 +1,6 @@
 <?php
-	include_once "auth.php";
-	include_once "check.php";
-
+	#include_once "auth.php";
+	#include_once "check.php";
 	include_once "template/functions.php";
 	include_once "template/config.php";
 	include_once "globals.php";
@@ -77,23 +76,17 @@
 	</head>
 	<body>
 	<table id="serieSet" class="film" style="width:350px; padding:0px; z-index:1;">
-		<tr><th class="righto">id</th><th colspan="2" style="padding-left:10px !important;">Setname</th></tr>
+		<tr><th class="righto" style="padding:0 0 0 15px;">id</th><th colspan="2" style="padding-left:10px !important;">Setname</th></tr>
 <?php postSets(); ?>
-		<tr><td class="righto" colspan="3" style="cursor:pointer;" onclick="addSet(); return false;"><img src="./img/add.png"/ title="add"></td></tr>
+		<tr><td class="righto" colspan="3" style="cursor:pointer;" onclick="addSet(); return false;"><img src="./img/add.png" style="height:24px; width:24px;" title="add set"></td></tr>
 	</table>
 	</body>
 </html>
 <?php
 /*	FUNCTIONS	*/
 function postSets() {
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
-	
+	$dbh = getPDO();
 	try {
-		$db_name = $GLOBALS['db_name'];
-		$dbh = new PDO($db_name);
-		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		
 		/*
 		$SQL_SETLINK = 'SELECT S.idSet, S.strSet, M.c00 AS filmname, M.idMovie AS idMovie FROM movie M, sets S WHERE M.idSet = S.idSet ORDER BY S.strSet, M.c00;';
 		$result = $dbh->query($SQL_SETLINK);
@@ -157,7 +150,7 @@ function postSetMovie($idSet, $idMovie, $name) {
 	echo "\t\t".'<tr>';
 	echo '<td></td>';
 	echo '<td style="padding-left:25px !important; font-size:10px;">'.$name.'</td>';
-	echo '<td class="righto" style="cursor:pointer;" onclick="setMoviesetCover('.$idSet.', '.$idMovie.'); return false;"><img src="./img/add.png"/ title="set Cover and Fanart"></td>';
+	echo '<td class="righto" style="cursor:pointer;" onclick="setMoviesetCover('.$idSet.', '.$idMovie.'); return false;"><img src="./img/apply.png" style="height:16px; width:16px;" title="apply cover/fanart of movie"></td>';
 	echo '</tr>';
 	echo "\r\n";
 }
@@ -167,7 +160,7 @@ function postSet($id, $name) {
 	echo '<td class="righto" style="padding-right:0px !important;">'.$id.'</td>';
 	$jsName = str_replace("'", "\'", $name);
 	echo '<td style="cursor:pointer; padding-left:10px !important;" onclick="setSetName(\''.$id.'\', \''.$jsName.'\'); return false;">'.$name.'</td>';
-	echo '<td class="righto" style="cursor:pointer;" onclick="deleteSet(\''.$id.'\', \''.$jsName.'\'); return false;"><img src="./img/del.gif"/ title="delete"></td>';
+	echo '<td class="righto" style="cursor:pointer;" onclick="deleteSet(\''.$id.'\', \''.$jsName.'\'); return false;"><img src="./img/del.png" style="height:18px; width:18px;" title="delete"></td>';
 	echo '</tr>';
 	echo "\r\n";
 }

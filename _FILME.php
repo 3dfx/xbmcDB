@@ -1,13 +1,9 @@
 <?php
 	include_once "template/functions.php";
 	function fetchMovies($dbh, $SQL, $sessionKey) {
-		#if (isAdmin()) { echo '<pre>'.$sessionKey.'</pre>'; }
-		#if (isAdmin()) { foreach ($_SESSION as $key => $value) { echo $key.'<br/>'; } }
-		
-		$res = array();
-		//$overrideFetch = isset($_SESSION['overrideFetch']) ? $_SESSION['overrideFetch'] : 0;
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 		
+		$res = array();
 		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0) {
 			$res = unserialize($_SESSION[$sessionKey]);
 			
@@ -15,12 +11,11 @@
 			$result = fetchFromDB_($dbh, $SQL);
 			$count = 0;
 			foreach($result as $row) {
-				$res[$count]['idMovie']   = $row['idMovie'];
+				$res[$count]['idFile']    = $row['idFile'];
 				$res[$count]['idMovie']   = $row['idMovie'];
 				$res[$count]['c00']       = $row['c00'];
 				$res[$count]['playCount'] = $row['playCount'];
 				$res[$count]['thumb']     = $row['thumb'];
-				$res[$count]['idFile']    = $row['idFile'];
 				$res[$count]['filename']  = $row['filename'];
 				$res[$count]['dateAdded'] = $row['dateAdded'];
 				$res[$count]["path"]      = $row["path"];
@@ -35,12 +30,9 @@
 				$count++;
 			}
 			
-			#echo '<pre>'.$SQL.'</pre>';
-			
 			$_SESSION[$sessionKey] = serialize($res);
 			unset( $_SESSION['overrideFetch'] );
 		}
-		
 		return $res;
 	}
 ?>

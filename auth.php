@@ -5,9 +5,9 @@
 	
 //	$gast_username = $GLOBALS['gast_username'];
 //	$gast_passwort = $GLOBALS['gast_passwort'];
-	$gast_users     = $GLOBALS['gast_users'];
-	$login_username = $GLOBALS['login_username'];
-	$login_passwort = $GLOBALS['login_passwort'];
+	$gast_users     = $GLOBALS['GAST_USERS'];
+	$login_username = $GLOBALS['LOGIN_USERNAME'];
+	$login_passwort = $GLOBALS['LOGIN_PASSWORT'];
 
 	if (empty($login_username) || empty($login_passwort) ||
 	    empty($gast_users)  || count($gast_users) == 0) {
