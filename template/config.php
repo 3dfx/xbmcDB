@@ -129,8 +129,6 @@
 	
 	$importLogging                 = true;
 	
-	$CPU_TEMPS                     = array(45,45,60);
-	$ADMIN_INFO                    = true;
 	$NAS_CONTROL                   = false;
 	$NAS_IP                        = null;
 	
