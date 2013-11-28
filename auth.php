@@ -3,17 +3,14 @@
 	include_once "./template/functions.php";
 	include_once "globals.php";
 	
-//	$gast_username = $GLOBALS['gast_username'];
-//	$gast_passwort = $GLOBALS['gast_passwort'];
-	$gast_users     = $GLOBALS['GAST_USERS'];
-	$login_username = $GLOBALS['LOGIN_USERNAME'];
-	$login_passwort = $GLOBALS['LOGIN_PASSWORT'];
+	$gast_users     = isset($GLOBALS['GAST_USERS'])     ? $GLOBALS['GAST_USERS']     : array();
+	$login_username = isset($GLOBALS['LOGIN_USERNAME']) ? $GLOBALS['LOGIN_USERNAME'] : null;
+	$login_passwort = isset($GLOBALS['LOGIN_PASSWORT']) ? $GLOBALS['LOGIN_PASSWORT'] : null;
 
 	if (empty($login_username) || empty($login_passwort) ||
 	    empty($gast_users)  || count($gast_users) == 0) {
-//	    empty($gast_username)  || empty($gast_passwort)) {
-
-	    die('<pre>admin/user is missing!</pre>');
+		
+		die('<pre>admin/user is missing!</pre>');
 	}
 	
 	startSession();

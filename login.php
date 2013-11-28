@@ -27,14 +27,14 @@
 		$input_passwort = isset($_POST['passwort']) ? urldecode(trim($_POST['passwort'])) : null;
 		
 		if (!(empty($input_username) || empty($input_passwort))) {
-			$login_username = $GLOBALS['LOGIN_USERNAME'];
-			$login_passwort = $GLOBALS['LOGIN_PASSWORT'];
-			$gast_users     = $GLOBALS['GAST_USERS'];
-			$demo_enabled   = $GLOBALS['DEMO_ENABLED'];
-			$demo_users     = $GLOBALS['DEMO_USERS'];
+			$login_username = isset($GLOBALS['LOGIN_USERNAME']) ? $GLOBALS['LOGIN_USERNAME'] : null;
+			$login_passwort = isset($GLOBALS['LOGIN_PASSWORT']) ? $GLOBALS['LOGIN_PASSWORT'] : null;
+			$gast_users     = isset($GLOBALS['GAST_USERS'])     ? $GLOBALS['GAST_USERS']     : array();
+			$demo_users     = isset($GLOBALS['DEMO_USERS'])     ? $GLOBALS['DEMO_USERS']     : array();
+			$demo_enabled   = isset($GLOBALS['DEMO_ENABLED'])   ? $GLOBALS['DEMO_ENABLED']   : false;
 			
 			// check username und password
-			if ($input_username == $login_username && $input_passwort == $login_passwort) {
+			if (!empty($login_username) && !empty($login_passwort) && $input_username == $login_username && $input_passwort == $login_passwort) {
 				
 				$asAdmin   = true;
 				$redirect  = true;
