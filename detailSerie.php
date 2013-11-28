@@ -2,9 +2,9 @@
 <?php
 	include_once "check.php";
 
-	include_once "template/functions.php";
-	include_once "template/config.php";
-	include_once "_SERIEN.php";
+	include_once "./template/functions.php";
+	include_once "./template/config.php";
+	include_once "./template/_SERIEN.php";
 
 	$admin = (isset($_SESSION['angemeldet']) && $_SESSION['angemeldet'] == true) ? 1 : 0;
 	$id = isset($_GET['id']) ? $_GET['id'] : null;
@@ -43,7 +43,7 @@ function postSerie($serie) {
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
 	echo '<th class="lefto"> Episode'.($allEpsCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto">'.$serie->getRating().'</th>';
-	echo '<th class="righto">'._format_bytes($serie->getSize()).'</th>';
+	echo '<th class="righto">'.(isDemo() ? '' : _format_bytes($serie->getSize())).'</th>';
 	echo '<th class="righto" colspan="2">';
 	if ($admin) {
 		if ($serie->isWatched() || $serie->isWatchedAny()) {
@@ -70,7 +70,7 @@ function postStaffel($staffel) {
 	$admin = $GLOBALS['admin'];
 
 	$eps = $staffel->getEpisodeCount();
-	if ($eps == 0) { continue; }
+	if ($eps == 0) { return; }
 
 	$strAllEps = $eps;
 	if ($eps < 10) { $strAllEps = '0'.$eps; }
@@ -80,12 +80,13 @@ function postStaffel($staffel) {
 
 	$idShow = $staffel->getIdShow();
 	$spanId = 'iD'.$idShow.'.S'.$sNum;
+	$linkId = 'tgl'.$idShow.'.S'.$sNum;
 	echo '<tr class="seasonTR">';
-	echo '<td class="seasonTRd1"><A HREF="#" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></A>Season '.$sNum.'</td>';
+	echo '<td class="seasonTRd1"><a href="#" id="'.$linkId.'" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></a>Season '.$sNum.'</td>';
 	echo '<td class="seasonTRd2 righto">'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
 	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
-	echo '<td class="righto vSpan">'._format_bytes($staffel->getSize()).'</td>';
+	echo '<td class="righto vSpan">'.(isDemo() ? '' : _format_bytes($staffel->getSize())).'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($admin) {
 		if ($staffel->isWatched() || $staffel->isWatchedAny()) {
@@ -102,7 +103,7 @@ function postStaffel($staffel) {
 	$xbmcRunning = xbmcRunning();
 	foreach ($staffel->getEpisoden() as $epi) {
 		if (!is_object($epi)) { continue; }
-
+		
 		$epNum = $epi->getEpNum();
 		if ($epNum < 10) { $epNum = '0'.$epNum; }
 		
@@ -111,14 +112,16 @@ function postStaffel($staffel) {
 		$epTitle = trimDoubles($epi->getName());
 		#$epTitle = $epi->getName();
 		$hover = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
-
+		
 		$path = $epi->getPath();
 		$filename = $epi->getFilename();
-		$playItem = isAdmin() && $xbmcRunning && !empty($path) && !empty($filename) ? '<a class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'._format_bytes($epi->getSize()).'</a>' : '<span class="showPlayItem">'._format_bytes($epi->getSize()).'</span>';
+		$playItem = isAdmin() && $xbmcRunning && !empty($path) && !empty($filename) ? '<a class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.(isDemo() ? '' : _format_bytes($epi->getSize())).'</a>' : '<span class="showPlayItem">'.(isDemo() ? '' : _format_bytes($epi->getSize())).'</span>';
 		
-		echo '<tr class="epTR" id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" href="./detailEpisode.php?id='.$idEpisode.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
+		$seasonId = 'iD'.$idShow.'.S'.$sNum;
+		#id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" 
+		echo '<tr class="epTR '.$seasonId.'" id="'.$epi->getIdEpisode().'" _href="./detailEpisode.php?id='.$idEpisode.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
 		echo '<td class="epTRd1" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.'  </span><span class="searchField">'.$epTitle.'</span></td>';
-		echo '<td class="righto padTD">'.$epi->getRating().'</td>';
+		echo '<td class="righto padTD">'.(floatval($epi->getRating()) > 0 ? $epi->getRating() : '').'</td>';
 		#echo '<td class="righto padTD"><span class="vSpan'.(!empty($playItem) ? ' cursor:pointer;' : '').'"'.$playItem.'>'._format_bytes($epi->getSize()).'</span></td>';
 		echo '<td class="righto padTD">'.$playItem.'</td>';
 		echo '<td class="righto">';

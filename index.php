@@ -1,7 +1,7 @@
 <?php
 include_once "auth.php";
-include_once "template/config.php";
-include_once "template/functions.php";
+include_once "./template/config.php";
+include_once "./template/functions.php";
 
 	startSession();
 	if (!empty($_GET['img'])) { include_once "img.php"; exit; }
@@ -35,14 +35,15 @@ include_once "template/functions.php";
 	else if ($show == 'import')                     { include "./dbImport.php"; }
 	else if ($show == 'details' && !empty($idShow)) { include "./details.php";  }
 	else if ($show == 'serien')                     { include "./serien_.php";  }
+	else if ($show == 'mvids')                     { include "./mvids_.php";  }
 	else if ($show == 'filme')                      { include "./filme_.php";   }
 	
 	adminInfo($start, $show);
 ?>
-
-</body>
 <?php
-	logc( 'Page generated in: '.round(microtime(true)-$start, 2).'s', true );
-	adminInfoJS();
+	if (!isDemo()) {
+		logc( 'Page generated in: '.round(microtime(true)-$start, 2).'s', true );
+		adminInfoJS();
+	}
 ?>
 </html>

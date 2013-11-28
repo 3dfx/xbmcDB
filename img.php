@@ -1,5 +1,5 @@
 <?php
-include_once "template/functions.php";
+include_once "./template/functions.php";
 	
 	startSession();
 	if (!isLogedIn()) { shoutImage(); }
@@ -37,28 +37,43 @@ include_once "template/functions.php";
 	shoutImage($img);
 	
 function shoutImage($img = null) {
-	header('Content-Type: image/jpeg');
-	if (isset($img) && file_exists($img)) {
+#echo $img;
+	#header('Content-Type: image/jpeg');
+	if (!empty($img) && file_exists($img)) {
 		setHeaders($img);
-		readfile($img);
+		try {
+			readfile($img);
+			
+		} catch (Exception $e) {
+			shoutImage(null);
+		}
 		
 	} else {
 		$img = imagecreatetruecolor(1, 1);
 		imagejpeg($img, NULL, 1);
-		imagedestroy($im);
+		imagedestroy($img);
 		exit;
 	}
 }
 
 function setHeaders($img) {
 	if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
-		$if_modified_since = preg_replace('/;.*$/', '',   $_SERVER['HTTP_IF_MODIFIED_SINCE']);
+		$if_modified_since = preg_replace('/;.*$/', '', $_SERVER['HTTP_IF_MODIFIED_SINCE']);
 	} else {
 		$if_modified_since = '';
 	}
-
-	$mtime = isset($img) && file_exists($img) ? filemtime($img) : filemtime($_SERVER['SCRIPT_FILENAME']);
-	$gmdate_mod = gmdate('D, d M Y H:i:s', $mtime) . ' GMT';
+	
+	set_error_handler('handleError');
+	$mtime = null;
+	try {
+		$mtime = isset($img) && file_exists($img) ? filemtime($img) : null;
+	} catch (Exception $e) { }
+	
+	#filemtime($_SERVER['SCRIPT_FILENAME'])
+	#strtotime("yesterday")
+	$mtime = empty($mtime) ? filemtime($_SERVER['SCRIPT_FILENAME']) : $mtime;
+	
+	$gmdate_mod = gmdate('D, d M Y H:i:s', $mtime).' GMT';
 
 	if ($if_modified_since == $gmdate_mod) {
 		header("HTTP/1.0 304 Not Modified");
@@ -68,6 +83,12 @@ function setHeaders($img) {
 	
 	header("Pragma: cache");
 	header("Cache-Control: public, must-revalidate");
-	header('Expires: ' . date("D, j M Y", strtotime("tomorrow")) . ' 02:00:00 GMT');
+	header('Expires: '.date("D, j M Y", strtotime("tomorrow")).' 02:00:00 GMT');
+}
+
+function handleError($errno, $errstr, $errfile, $errline, array $errcontext) {
+	// error was suppressed with the @-operator
+	if (0 === error_reporting()) { return false; }
+	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 ?>

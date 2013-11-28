@@ -101,8 +101,6 @@ class rss_php {
 		$itemCounter = 0;
 		$tempNode = ''; //[] = array();
 		foreach($nodeList as $values) {
-//echo $values->nodeName .'<br/>----------------<br/>';
-//echo $itemCounter;
 			if(substr($values->nodeName,0,1) != '#') {
 				if($values->nodeName == 'item' || 
 				   $values->nodeName == 'Series' || 
@@ -114,7 +112,6 @@ class rss_php {
 				} else {
 					$nodeName = $values->nodeName;
 				}
-//echo '~~~~~'.$nodeName.'<br/>';
 				
 				$tempNode[$nodeName] = array();				
 				if($values->attributes) {

@@ -1,10 +1,9 @@
 <?php
-	include_once "auth.php";
 	include_once "check.php";
 	
-	include_once "template/functions.php";
-	include_once "template/matrix.php";
-	include_once "template/config.php";
+	include_once "./template/functions.php";
+	include_once "./template/matrix.php";
+	include_once "./template/config.php";
 	include_once "globals.php";
 
 	function getNeededColspan($res, $spalte) {
@@ -215,7 +214,7 @@
 		
 		if (!empty($cover)) {
 			if ($ENCODE) {
-				$cover = base64_encode_image($cover);
+				$cover     = base64_encode_image($cover);
 				$cover_big = base64_encode_image($cover_big);
 			}
 			echo "\r\n";
@@ -229,7 +228,7 @@
 			echo '</div>';
 			echo "\r\n";
 		}
-
+		
 		echo '<div class="moviebox2">';
 		echo '<div class="movieTitle">';
 		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$ANONYMIZER.$IMDBFILMTITLE.$row['imdbId'].'">'.$titel.' ('.$jahr.')'.'</a>';
@@ -238,7 +237,16 @@
 			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>';
 			echo "\r\n";
 		}
-		if (!empty($orTitel) && strtolower($titel) != strtolower($orTitel)) {
+		
+		$cmpTitel = strtolower($titel);
+		$cmpTitel = str_replace('and', '', $cmpTitel);
+		$cmpTitel = str_replace('und', '', $cmpTitel);
+		$cmpTitel = str_replace('&', '', $cmpTitel);
+		$cmpOrTit = strtolower($orTitel);
+		$cmpOrTit = str_replace('and', '', $cmpOrTit);
+		$cmpOrTit = str_replace('und', '', $cmpOrTit);
+		$cmpOrTit = str_replace('&', '', $cmpOrTit);
+		if (!empty($cmpOrTit) && $cmpTitel != $cmpOrTit) {
 			echo "\r\n";
 			echo '<span class="originalTitle">';
 			echo '<br/>';
@@ -248,7 +256,7 @@
 		}
 		echo '</div>';
 		echo "\r\n";
-
+		
 		if (!empty($inhalt)) {
 			$MAXLEN = isset($GLOBALS['MAXMOVIEINFOLEN']) ? $GLOBALS['MAXMOVIEINFOLEN'] : 1000;
 			$tmp_inhalt = $inhalt;
@@ -263,7 +271,7 @@
 			}
 			
 			$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
-
+			
 			if (!$spProtect || ($admin && $watched >= 1)) {
 				echo '<span id="movieDescription">';
 				echo $inhalt;
@@ -275,7 +283,7 @@
 				echo $inhalt;
 				echo '</span>';
 			}
-
+			
 		} else {
 			echo '<i>Keine Beschreibung vorhanden.</i>';
 		}
@@ -283,7 +291,7 @@
 		echo "\r\n";
 		echo '<div style="width:700px; height:2px;"></div>';
 		echo "\r\n";
-
+		
 		$size1     = '';
 		$minutes   = '';
 		$hours     = '';
@@ -300,7 +308,7 @@
 		$sLang     = array();
 		$res       = array();
 		$run       = 0;
-
+		
 		if ($row['c00'] != $row['c16']) {
 			$orTitle = $row['c16'];
 			$run = 1;
@@ -321,12 +329,12 @@
 			$genre = explode(" / ", $row['c14']);
 			$run = 1;
 		}
-
+		
 		#if ($size != '' && $size > 0) {
 		if (!empty($size)) {
 			$size1 = _format_bytes($size);
 		}
-
+		
 		foreach($result3 as $row3) {
 			$tmp = $row3['fVideoAspect'];
 			if ($tmp != null) {
@@ -336,7 +344,7 @@
 				}
 				$ar = $tmp;
 			}
-
+			
 			$tmp = $row3['iVideoWidth'];
 			if (!empty($tmp)) { $width = $tmp; }
 
@@ -344,19 +352,19 @@
 			if (!empty($tmp)) { $height = $tmp; }
 
 			$tmp = $row3['strVideoCodec'];
-			if (!empty($tmp)) { $vCodec = strtoupper($tmp); }
+			if (!empty($tmp) && !isDemo()) { $vCodec = strtoupper($tmp); }
 
 			$tmp = $row3['strAudioCodec'];
-			if (!empty($tmp)) { $aCodec[count($aCodec)] = strtoupper($tmp); }
+			if (!empty($tmp) && !isDemo()) { $aCodec[count($aCodec)] = strtoupper($tmp); }
 
 			$tmp = $row3['iAudioChannels'];
-			if (!empty($tmp)) { $aChannels[count($aChannels)] = $tmp; }
+			if (!empty($tmp) && !isDemo()) { $aChannels[count($aChannels)] = $tmp; }
 
 			$tmp = $row3['strAudioLanguage'];
-			if (!empty($tmp)) { $aLang[count($aLang)] = strtoupper($tmp); }
+			if (!empty($tmp) && !isDemo()) { $aLang[count($aLang)] = strtoupper($tmp); }
 			
 			$tmp = $row3['strSubtitleLanguage'];
-			if (!empty($tmp)) { $sLang[count($sLang)] = strtoupper($tmp); }
+			if (!empty($tmp) && !isDemo()) { $sLang[count($sLang)] = strtoupper($tmp); }
 			
 			$run++;
 		}
@@ -416,8 +424,8 @@
 		$res[0][0] = $hours;
 		$res[0][1] = $rating;
 		$res[0][2] = $stimmen;
-		$res[0][3] = $jahr;
-		if ($width != '' && $height != '') {
+		$res[0][3] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
+		if (!empty($width) && !empty($height)) {
 			$res[0][5] = $width.'x'.$height;
 		}
 		$res[0][6] = $vCodec;
@@ -432,12 +440,12 @@
 			echo '<tr>';
 			echo '<th>Duration</th><th>Rating</th><th>Votes</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
 			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th>';
-			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
+			if (!empty($aCodec)) {
+				echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
+			} else { $spalten--; }
 			if (!empty($sLang)) {
 				echo '<th class="streaminfoLasTD">Sub</th>';
-			} else {
-				$spalten--;
-			}
+			} else { $spalten--; }
 			echo '</tr>';
 			echo "\r\n";
 			echo '<tr class="abstand"><td colspan="10"></td></tr>';
@@ -552,10 +560,13 @@
 				$filename = '';
 			}
 			
+			
 			echo '<tr class="abstand"><td colspan="10"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
+			if (!isDemo()) {
 			echo '<span class="filename lefto"'.($admin ? ' title="'.$path.'"' : '').'>'.encodeString($filename).'</span>';
 			echo '<span class="filesize righto" title="'.formatToDeNotation($size).'">'.$size1.'</span>';
+			}
 			echo '</td></tr>';
 			echo "\r\n";
 			
@@ -570,7 +581,7 @@
 				$idSet = $row['idSet'];
 				$isSet = ($set != null && $set != '');
 
-				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>In keinem Set!</i>');
+				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>Not in any set!</i>');
 				if ($isSet) {
 					$href = '<a href="?show=filme&which=set&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
 				}

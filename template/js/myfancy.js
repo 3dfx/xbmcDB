@@ -1,15 +1,4 @@
 jQuery(document).ready(function() {
-/*
-	$("a[rel=groupimage]").fancybox({
-		'transitionIn'		: 'none',
-		'transitionOut'		: 'none',
-		'titlePosition' 	: 'over',
-		'titleFormat'      	: function(title, currentArray, currentIndex, currentOpts) {
-		    return '<span id="fancybox-title-over">Image ' +  (currentIndex + 1) + ' / ' + currentArray.length + ' ' + title + '</span>';
-		}
-	});
-*/
-
 	$(".innerCoverImg").fancybox({
 		'autoScale'			: true,
 		'centerOnScroll'		: true,
@@ -37,7 +26,7 @@ jQuery(document).ready(function() {
 			});
 		}
 	});
-
+	
 	$("img[href$='.jpg'],img[href$='.png']").fancybox({
 		'autoScale'			: true,
 		'centerOnScroll'		: true,
@@ -65,7 +54,7 @@ jQuery(document).ready(function() {
 			});
 		}
 	});
-
+	
 	$(".openImdb").fancybox({
 		'width'				: '63%',
 		'height'			: '94%',

@@ -1,6 +1,6 @@
 <?php
-include_once "template/config.php";
-include_once "template/functions.php";
+include_once "./template/config.php";
+include_once "./template/functions.php";
 include_once "globals.php";
 	
 if (!isAdmin()) { return; }

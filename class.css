@@ -871,31 +871,33 @@ a.showlink {
 
 .mnuIcon    { position:relative; top:-24px; right:0px; width:24px; height:0px; }
 #showDesc   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
-#showInfo   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
-#showEpDesc { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
-#showsTable { z-index:10; border:1px solid #69C; margin-bottom:15px; }
-#emptyTR    { height:20px; border:1px solid #69C; }
-#showsCount { position:relative; right:120px; top:12px; text-align:right; float:right; }
-#showBanner { position:relative; top:0px; left:0px; border:0px; padding:10px; padding-top:25px; text-align:center; }
+#showInfo   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; padding-bottom:25px; }
+#showEpDesc { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; padding-bottom:25px; }
+#showsTable { z-index:10; border:1px solid #69C; margin-bottom:15px; width:550px; min-width:550px; max-width:550px !important; }
+#showsBody  { width:550px; min-width:550px; max-width:550px !important; }
+.emptyTR    { height:20px; border:1px solid #69C; }
+#showsCount { position:relative; right:130px; top:12px; text-align:right; float:right; }
+#showBanner { position:relative; top:0px; left:0px; border:0px; padding:10px 0px; padding--top:25px; text-align:center; }
 
-.showShowInfo  { cursor:default; width:1px; white-space:nowrap; height:20px; }
+.showShowInfo  { cursor:default; width:1px; white-space:nowrap; height:20px; width:550px; min-width:550px; max-width:550px !important; }
 .showShowInfo1 { color:silver; padding:2px 4px; }
 .sInfoSize     { color:silver; float:right; padding-left:10px; }
 .sInfoRating   { float:right; padding-left:10px; }
 .galleryImage  { width:16px !important; height:16px !important; z-index:50; }
+.selectedShow  { font-weight: bold !important; }
 
 .tableDesc  { width:350px; padding:0px; margin:0px; z-index:1; }
-#tvBanner   { cursor:pointer; width:300px; }
-.showDescTD { padding:25px 25px; text-align:justify; white-space:pre-line !important; }
+#tvBanner   { cursor:default; height:54px; }
+.showDescTD { padding:10px 25px 20px 25px; text-align:justify; white-space:pre-line !important; }
 .descDiv    { width:300px; margin-top:15px; }
 
 #descTR       { cursor:default; height:20px; }
 .descTRd1     { padding:0px 0px 0px 25px; }
 .seasonTR     { cursor:default; height:20px; }
 .seasonTRd1   { padding:0 0 0 10px; }
-.seasonTRd2   { padding-right:2px; }
+.seasonTRd2   { padding-right:2px !important; }
 .epTR         { cursor:default; height:20px; }
-.epTRd1       { padding:0px 0px 0px 25px; max-width:180px; overflow:hidden; }
+.epTRd1       { padding:0px 0px 0px 25px; min-width:180px; max-width:180px; overflow:hidden; }
 .padTD        { padding-left:10px; }
 .vSpan        { color:silver; }
 .showPlayItem,

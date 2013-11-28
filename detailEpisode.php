@@ -2,12 +2,13 @@
 //	include_once "auth.php";
 	include_once "check.php";
 
-	include_once "template/functions.php";
-	include_once "template/config.php";
-	include_once "_SERIEN.php";
+	include_once "./template/functions.php";
+	include_once "./template/config.php";
+	include_once "./template/_SERIEN.php";
 	header("Content-Type: text/html; charset=UTF-8");
 
-	$admin = isAdmin();
+	$isAdmin = isAdmin();
+	$isDemo  = isDemo();
 
 	$id = $_GET['id'];
 	if ($id == null || $id <= 0) { die('No id given!'); }
@@ -116,10 +117,13 @@
 		if ($fromSrc && empty($sessionImg)) {
 			// READ EMBER GENERATED THUMBS FROM SOURCE
 			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
+			
+			#echo $path.$filename.'<br/>';
 			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
 			$smb = (substr($sessionImg, 0, 6) == 'smb://');
 			
 			if (file_exists($sessionImg)) {
+			#echo $sessionImg;
 				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encode' : null);
 				#$thumbImg = base64_encode_image($thumb);
 			}
@@ -128,8 +132,7 @@
 		if (empty($sessionImg)) {
 			$sessionImg = getTvShowThumb($coverP.$filename);
 			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
-			#$thumbImg = $ENCODE ? base64_encode_image($img) : $img;
-
+			
 			if (empty($sessionImg) && $existArtTable) {
 				$res2 = $dbh->query("SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';");
 				$row2 = $res2->fetch();
@@ -137,17 +140,14 @@
 				#logc( $id.' - '.$url );
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
-					#logc( $sessionImg );
 					if (file_exists($img)) {
 						$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
-						#$thumbImg = base64_encode_image($img);
 					}
 
 				}
 			}
 		}
 		
-		#$_SESSION['thumbs']['file'][$idFile] = $sessionImg;
 		wrapItUp('file', $idFile, $sessionImg);
 	}
 	
@@ -157,7 +157,7 @@
 	echo '<div style="width:300px;">';
 	echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;"><div><u><i><b>Title:</b></i></u></div><span>'.$title.' [ S'.$season.'.E'.$episode.' ]</span>';
 	echo '<span class="epCheckSpan">';
-	if ($admin && $playCount > 0) {
+	if ($isAdmin && $playCount > 0) {
 		echo '<img src="./img/check.png" class="galleryImage thumbCheck" title="watched" />';
 	}
 	echo '</span>';
@@ -171,14 +171,14 @@
 		$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
 		
 		$tmp = '<div class="epDesc"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
-		if (!$spProtect || !$admin || !empty($playCount)) {
-			echo $tmp;
-
-		} else if ($admin && empty($playCount)) {
+		if (!$isAdmin || ($isAdmin && empty($playCount))) {
 			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red; cursor:pointer;">spoil it!</span></div>';
 			echo '<span id="epDescr" style="display:none;">';
 			echo $tmp;
 			echo '</span>';
+			
+		} else if (!$spProtect || !empty($playCount)) {
+			echo $tmp;
 		}
 	}
 
@@ -193,25 +193,28 @@
 	}
 	
 	if (!empty($airDate)) {
-		$airDate = date('Y-m-d \(D\)', strtotime($airDate));
-		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright">'.$airDate.'</span></div>';
+		$dayOfWk = dayOfWeekShort($airDate);
+		$airDate = toEuropeanDateFormat($airDate);
+		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:35px;"> ('.$dayOfWk.')</span><span class="flalright">'.$airDate.'</span></div>';
 	}
 	
-	if ($admin) {
+	if ($isAdmin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
-			$lastPlayed = substr($lastPlayed, 0, 10);
-			$lastPlayed = date('Y-m-d \(D\)', strtotime($lastPlayed));
-			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright">'.$lastPlayed.'</span></div>';
+			$dayOfWk    = dayOfWeekShort($airDate);
+			$lastPlayed = toEuropeanDateFormat(substr($lastPlayed, 0, 10));
+			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:35px;"> ('.$dayOfWk.')</span><span class="flalright">'.$lastPlayed.'</span></div>';
 		}
 	}
 	
-	echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
+	if (!$isDemo) {
+		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
+	}
 	
-	if ($admin) {
+	if ($isAdmin) {
 		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />'.encodeString($path.$filename).'</div>';
 	}
 	
-	if (!empty($aCodec)) {
+	if (!empty($aCodec) && !$isDemo) {
 		$codecs = '';
 		$countyMap = getCountyMap();
 		for($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditCodec($aCodec[$i]).getLanguage($countyMap, $aLang, $i).($i < count($aCodec)-1 ? ' | ' : ''); }

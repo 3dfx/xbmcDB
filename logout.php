@@ -1,5 +1,5 @@
 <?php
-	include_once "template/functions.php";
+	include_once "./template/functions.php";
 	startSession();
 	if (isset($_SESSION)) {
 		storeSession();

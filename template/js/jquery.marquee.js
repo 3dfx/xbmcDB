@@ -14,47 +14,47 @@
 				containerWidth,
 				animationCss,
 				elWidth;
-      		
+      			
 			//check if element has data attributes. They have top priority
 			o = $.extend({}, o, $this.data());
-
+			
 			//no gap if not duplicated
 			o.gap = o.duplicated ? o.gap : 0;
-
+			
 			//wrap inner content into a div
 			$this.wrapInner('<div class="js-marquee">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>');
-      
+      			
 			//Make copy of the element
 			var $el = $this.find('.js-marquee').css({
 				'margin-right': o.gap, 
 				'float':'left'
 			});
-
+			
 			if(o.duplicated) {
 				$el.clone().appendTo($this);
 			}
-      
+      			
 			//wrap both inner elements into one div
 			$this.wrapInner('<div style="width:1000px; height:35px; padding:0px; postition:absolute; top:0px;" class="js-marquee-wrapper"></div>');
-      
+      			
 			//Save the width of the each element so we can use it in animation
 			elWidth = $this.find('.js-marquee:first').width() + o.gap;
-
+			
 			//Save the reference of the wrapper
 			$marqueeWrapper = $this.find('.js-marquee-wrapper');
-
+			
 			//container width
 			containerWidth = $this.width();
-
+			
 			//adjust the animation speed according to the text length
 			//formula is to: (Width of the text node / Width of the main container) * speed;
 			o.speed = ((parseInt(elWidth,10) + parseInt(containerWidth,10)) / parseInt(containerWidth,10)) * o.speed;
-
+			
 			//if duplicated than reduce the speed
 			if(o.duplicated) {
 				o.speed = o.speed / 2;
 			}
-
+			
 			function pause() {
 				if($.fn.pause) {
 					$marqueeWrapper.pause();
@@ -62,7 +62,7 @@
 					$this.trigger('paused');
 				}
 			}
-
+			
 			function resume() {
 				if($.fn.resume) {
 					$marqueeWrapper.resume();
@@ -70,7 +70,7 @@
 					$this.trigger('resumed');
 				}
 			}
-
+			
 			//Animate recursive method
 			var animate = function() {
 				if (! $('#xbmControl').is(":visible") ) { return; }
@@ -97,7 +97,7 @@
 			//bind pause and resume events
 			$this.on('pause', pause);
 			$this.on('resume', resume);
-
+			
 			if(o.pauseOnHover) {
 				$this.hover(pause, resume);
 			}

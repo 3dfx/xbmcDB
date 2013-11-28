@@ -1,6 +1,6 @@
 <?php
-	include_once "template/config.php";
-	include_once "template/functions.php";
+	include_once "./template/config.php";
+	include_once "./template/functions.php";
 	include_once "globals.php";
 	
 	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
@@ -30,6 +30,8 @@
 			$login_username = $GLOBALS['LOGIN_USERNAME'];
 			$login_passwort = $GLOBALS['LOGIN_PASSWORT'];
 			$gast_users     = $GLOBALS['GAST_USERS'];
+			$demo_enabled   = $GLOBALS['DEMO_ENABLED'];
+			$demo_users     = $GLOBALS['DEMO_USERS'];
 			
 			// check username und password
 			if ($input_username == $login_username && $input_passwort == $login_passwort) {
@@ -51,6 +53,18 @@
 				$_SESSION['gast'] = true;
 				unset( $_SESSION['angemeldet'] );
 				
+			} else if (
+				  $demo_enabled && 
+				  (isset($demo_users[$input_username]) && $input_passwort == $demo_users[$input_username])
+				  ) {
+				
+				$redirect  = true;
+				$logedInAs = 'DEMO';
+				
+				$_SESSION['user'] = $input_username;
+				$_SESSION['demo'] = true;
+				unset( $_SESSION['angemeldet'] );
+				
 			} else {
 				$logedInAs = 'FAiL';
 			}
@@ -65,12 +79,12 @@
 	if (isBlacklisted()) { $noMoreLogin = true; $failedText = 'too many failed logins!'; }
 
 function logedInSoRedirect($logedInAlready = false) {
+	if (isset($_SESSION['show']) && $_SESSION['show'] == 'details') {
+		unset( $_SESSION['show'], $_SESSION['idShow'] );
+	}
+
 	if (!$logedInAlready) { restoreSession(); }
-	
 	redirectPage('', true);
-	#$path = dirname($_SERVER['PHP_SELF']);
-	#header('Location: '.getHostnamee().($path == '/' ? '' : $path));
-	#exit;
 }
 
 function logLogin() {

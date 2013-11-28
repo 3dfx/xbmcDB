@@ -3,10 +3,10 @@ date_default_timezone_set('Europe/Berlin');
 
 /** Includes */
 include_once 'auth.php';
-include_once 'template/functions.php';
-require_once 'template/export/myExcelFunks.php';
-#require_once 'template/export/PHPExcel.php';
-require_once 'template/export/PHPExcel/IOFactory.php';
+include_once './template/functions.php';
+require_once './template/export/myExcelFunks.php';
+#require_once './template/export/PHPExcel.php';
+require_once './template/export/PHPExcel/IOFactory.php';
 ?>
 
 <head>

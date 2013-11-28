@@ -5,8 +5,8 @@
 	include_once "auth.php";
 	include_once "check.php";
 
-	include_once "template/functions.php";
-	include_once "template/config.php";
+	include_once "./template/functions.php";
+	include_once "./template/config.php";
 	include_once "globals.php";
 
 	startSession();

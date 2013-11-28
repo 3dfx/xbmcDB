@@ -1,16 +1,18 @@
 <?php
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
 	$ANONYMIZER         = "http://anonym.to/?";
-
+	
 	$IMDB               = "http://www.imdb.de/find?s=";
 	$IMDBFILMTITLE      = "http://www.imdb.de/title/";
 	$PERSONINFOSEARCH   = $IMDB."nm&q=";
 	$FILMINFOSEARCH     = $IMDB."tt&q=";
-
+	
 	$SHOW_NEW_VALUES    = array(10, 30, 60, 90, 120, 150, 180);
 	$COLUMNCOUNT        = 9;
 	
 	$BLACKLIST_FILE     = './logs/blacklist.log';
+	
+	$DAY_IN_SECONDS     = 86400;
 	
 	$LOCALHOST          = false;
 	$HOMENETWORK        = false;
@@ -29,48 +31,48 @@
 	}
 	
 	$COUNTRY_MAP =	array(
-				"DE" => array(
-						"GER" => "Deutsch",
-						"GMH" => "Deutsch",
-						"DEU" => "Deutsch",
+		"DE" => array(
+				"GER" => "Deutsch",
+				"GMH" => "Deutsch",
+				"DEU" => "Deutsch",
 
-						"ENG" => "Englisch",
+				"ENG" => "Englisch",
 
-						"TUR" => "T&uuml;rkce",
+				"TUR" => "T&uuml;rkce",
 
-						"FRE" => "Franz&ouml;sisch",
+				"FRE" => "Franz&ouml;sisch",
 
-						"ITA" => "Italienisch",
-						"SPA" => "Spanisch",
-						"POR" => "Portugiesisch",
+				"ITA" => "Italienisch",
+				"SPA" => "Spanisch",
+				"POR" => "Portugiesisch",
 
-						"JPN" => "Japanisch",
-						"CHI" => "Chinesisch",
-						"KOR" => "Koreanisch",
+				"JPN" => "Japanisch",
+				"CHI" => "Chinesisch",
+				"KOR" => "Koreanisch",
 
-						"POL" => "Polnisch"
-					),
-				
-				"EN" => array(
-						"GER" => "German",
-						"GMH" => "German",
-						"DEU" => "German",
+				"POL" => "Polnisch"
+			),
 
-						"ENG" => "English",
+		"EN" => array(
+				"GER" => "German",
+				"GMH" => "German",
+				"DEU" => "German",
 
-						"TUR" => "Turkish",
+				"ENG" => "English",
 
-						"FRE" => "French",
+				"TUR" => "Turkish",
 
-						"ITA" => "Italian",
-						"SPA" => "Spanish",
-						"POR" => "Portuguese",
+				"FRE" => "French",
 
-						"JPN" => "Japanese",
-						"CHI" => "Chinese",
-						"KOR" => "Korean",
+				"ITA" => "Italian",
+				"SPA" => "Spanish",
+				"POR" => "Portuguese",
 
-						"POL" => "Polish"
-					)
-			);
+				"JPN" => "Japanese",
+				"CHI" => "Chinese",
+				"KOR" => "Korean",
+
+				"POL" => "Polish"
+			)
+	);
 ?>

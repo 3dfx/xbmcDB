@@ -1,4 +1,5 @@
-var ids   = '';
+var ids          = '';
+var searchLength = 0;
 
 $(document).ready(function() {
 	$('.dropdown-toggle').dropdown();
@@ -79,10 +80,10 @@ function selected(obj, changeMaster, postRequest, admin) {
 
 	if (obj.checked) {
 		ids = ids + (ids.length == 0 ? '' : ', ') + obj.value;
-		$( tr ).children().addClass('highLighTR');
+		$( tr ).children('TD').addClass('highLighTR');
 
 	} else {
-		$( tr ).children().removeClass('highLighTR');
+		$( tr ).children('TD').removeClass('highLighTR');
 
 		if (ids.indexOf(obj.value + ', ') != -1) {
 			ids = ids.replace(obj.value + ', ', '');
@@ -173,7 +174,6 @@ function newlyChange() {
 	moviefrm.submit();
 }
 
-var searchLength = 0;
 function searchForString(obj, event) {
 	var search = ( obj == null ? '' : $.trim(obj.value).toLowerCase() );
 

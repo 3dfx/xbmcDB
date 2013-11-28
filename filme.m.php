@@ -2,9 +2,9 @@
 include_once "auth.php";
 include_once "check.php";
 
-include_once "template/config.php";
-include_once "template/matrix.php";
-include_once "template/functions.php";
+include_once "./template/config.php";
+include_once "./template/matrix.php";
+include_once "./template/functions.php";
 include_once "globals.php";
 include_once "_FILME.php";
 ?>

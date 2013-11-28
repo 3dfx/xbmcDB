@@ -2,11 +2,13 @@
 	include_once "auth.php";
 	include_once "check.php";
 	
-	include_once "template/functions.php";
-	include_once "template/config.php";
+	include_once "./template/functions.php";
+	include_once "./template/config.php";
 	include_once "globals.php";
-	include_once "_SERIEN.php";
-
+	include_once "./template/_SERIEN.php";
+	
+	header("Content-Type: text/html; charset=UTF-8");
+	
 	$admin = isAdmin();
 	if (!$admin) { die(';-)'); };
 	
@@ -50,7 +52,7 @@
 	if ($idShow == -1) { die('TV-Show not found!'); }
 	$serie = $serien->getSerie($idShow);
 	if ($serie == null) { die('TV-Show is null!'); }
-
+	
 	if ($update && $idEpisode == -1) { die('idEpisode not set!'); }	
 	$episodeToUp = $serie->findEpisode($idEpisode);
 	if ($update && $episodeToUp == null) { die('Selected Episode is null!'); }
@@ -61,6 +63,9 @@
 	$episodes = null;
 	if ($idSelected) { $episodes = getShowInfo($idTvdb); }
 	if ($idSelected && $episodes == null) { die('NOTHING FOUND!'); }
+	
+	#print_r( $episodes );
+	#return;
 	
 	$item = null;
 	if ($seasonSelected) { $item = getEpisodeInfo($episodes, $getSeason, $getEpisode); }
@@ -316,13 +321,16 @@ function postPaths() {
 
 function postPathsJS() {
 	$paths = fetchPaths();
-
+	
 	echo 'var paths = new Array(';
 	for ($i = 0; $i < count($paths); $i++) {
-		$id = $paths[$i][0];
+		$id   = $paths[$i][0];
 		$name = $paths[$i][1];
+		if (empty($name)) { continue; }
+		
 		echo "\n\r";
-		echo 'new Array("'.$id.'",'.json_encode( $name ).')';
+		#echo 'new Array("'.$id.'",'.json_encode( $name ).')';
+		echo 'new Array("'.$id.'","'.$name.'")';
 		if ($i < count($paths)-1) {
 			echo ',';
 		}
@@ -333,7 +341,7 @@ function postPathsJS() {
 function postEpisodesJS($episodes) {
 	foreach ($episodes as $xdex => $season) {}
 	$cEpisodes = count($episodes);
-
+	
 	$index = 1;
 	echo 'var episodes = new Array(';
 	foreach ($episodes as $xdex => $season) {

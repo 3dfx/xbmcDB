@@ -1,26 +1,42 @@
 <?php
 	include_once "check.php";
 	
-	include_once "template/functions.php";
-	include_once "template/config.php";
+	include_once "./template/functions.php";
+	include_once "./template/config.php";
 	include_once "globals.php";
 	
-	if (isset($_POST['ids']))     { $ids = SQLite3::escapeString(trim($_POST['ids'])); }
-	else if (isset($_GET['ids'])) { $ids = SQLite3::escapeString(trim($_GET['ids']));  }
-	else { die('No ids given!'); }
+	if (isDemo()) { return; }
+	
+	$ids = null;
+	if (isset($_POST['ids']))     { $ids = trim($_POST['ids']); }
+	else if (isset($_GET['ids'])) { $ids = trim($_GET['ids']);  }
+	else { return; die('No ids given!'); }
+	
+	$ids = SQLite3::escapeString($ids);
+	if (empty($ids)) { return; die('No ids given!'); }
+	
+	$isShow = isset($_POST['isShow']) || isset($_GET['isShow']);
 	
 	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED']) ? $GLOBALS['COPYASSCRIPT_ENABLED'] : false;
 	$scriptCopyTo        = isset($GLOBALS['COPYASSCRIPT_COPY_TO']) ? $GLOBALS['COPYASSCRIPT_COPY_TO'] : '/mnt/hdd/';
 	$scriptCopyFrom      = isset($GLOBALS['COPYASSCRIPT_COPY_FROM']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM'] : null;
+	$scriptCopyToShow    = isset($GLOBALS['COPYASSCRIPT_COPY_TO_SHOW']) ? $GLOBALS['COPYASSCRIPT_COPY_TO_SHOW'] : '/mnt/hdd/';
+	$scriptCopyFromShow  = isset($GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW'] : null;
 	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN']) ? $GLOBALS['COPYASSCRIPT_COPY_WIN'] : false;
 	$copyAsScript        = isset($_POST['copyAsScript']) ? $_POST['copyAsScript'] : (isset($_GET['copyAsScript']) ? $_GET['copyAsScript'] : 0);
 	$forOrder            = isset($_POST['forOrder']) ? $_POST['forOrder'] : (isset($_GET['forOrder']) ? $_GET['forOrder'] : 0);
 	$username            = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 	
-	$sql =  "SELECT c00 AS filmname, B.strFilename AS filename, c.strPath AS path, d.filesize FROM movie a, files b, path c, fileinfo d ".
-		"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".
-		"ORDER BY filename";
-	$res = fetchFromDB($sql, false);
+	$SQL = null;
+	if (!$isShow) {
+		$SQL =  "SELECT c00 AS filmname, B.strFilename AS filename, c.strPath AS path, d.filesize FROM movie a, files b, path c, fileinfo d ".
+			"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".
+			"ORDER BY filename";
+	} else {
+		$SQL = "SELECT strPath, c00 AS name FROM tvshowview WHERE idShow IN (".$ids.");";
+	}
+	
+	$res = fetchFromDB($SQL, false);
 	if (empty($res)) {
 		echo $forOrder == 1 ? '-1' : null;
 		exit;
@@ -32,7 +48,7 @@
 		//to prevent spamming, no minutes and seconds in filename!
 		$fname   = './orders/'.date('Ymd_').$username.'.order';
 		$append  = file_exists($fname);
-		$content = doTheStuff($res, true);
+		$content = $isShow ? doTheStuffTvShow($res, true) : doTheStuffMovie($res, true);
 		
 		if ($append) {
 			$fsize = filesize($fname);
@@ -49,33 +65,73 @@
 		}
 		
 		$file = fopen($fname, 'w+');
-		#fwrite($file, $content, strlen($content)); 
 		fwrite($file, $content); 
 		fclose($file);
 		
 		if ($exist) {
-			$sql = "REPLACE INTO orders VALUES('".$fname."', '".time()."', '".$username."', 1);";
-			execSQL($sql, false);
+			$SQL = "REPLACE INTO orders VALUES('".$fname."', '".time()."', '".$username."', 1);";
+			execSQL($SQL, false);
 		}
 		
 		echo $append ? '2' : '1';
 		exit;
 	}
 	
-	#echo encodeString(doTheStuff($res));
-	echo doTheStuff($res);
+	echo $isShow ? doTheStuffTvShow($res) : doTheStuffMovie($res);
 ?>
 <?php
-	function doTheStuff($result, $forOrder = false, $append = false) {
-		$copyAsScriptEnabled = $GLOBALS['copyAsScriptEnabled'];
+	function doTheStuffTvShow($result, $forOrder = false, $append = false) {
+		$scriptCopyTo        = $GLOBALS['scriptCopyToShow'];
+		$scriptCopyFrom      = $GLOBALS['scriptCopyFromShow'];
+		$copyAsScriptEnabled = isset($GLOBALS['copyAsScriptEnabled']) ? $GLOBALS['copyAsScriptEnabled'] : false;
+		$copyAsScript        = isset($GLOBALS['copyAsScript']) ? $GLOBALS['copyAsScript'] : false;
+		$scriptCopyWin       = isset($GLOBALS['scriptCopyWin']) ? $GLOBALS['scriptCopyWin'] : false;
+		$tvShowDir           = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : $scriptCopyFrom;
+		
+		$newLine = $forOrder ? "\n" : '<br />';
+		$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+		foreach($result as $row) {
+			if ($forOrder || ($copyAsScript && $copyAsScriptEnabled)) {
+				$path = $row['strPath'];
+				$path = str_replace($tvShowDir, $scriptCopyFrom, $path);
+				
+				$newFoldername = '';
+				if ($scriptCopyWin) {
+					$newFoldername = str_replace($scriptCopyFrom, '', $path);
+					if (substr($path, -1) == '/') {
+						$path = substr($path, 0, strlen($path)-1);
+					}
+					
+					$path = str_replace("/", "\\", $path);
+					$newFoldername = str_replace("/", "\\", $newFoldername);
+					
+				} else {
+					$newFoldername = str_replace($scriptCopyFrom, '', $path);
+				}
+				
+				$path = $forOrder ? decodeString(encodeString($path)) : $path;
+				
+				$res .= $scriptCopyWin ? 'xcopy /S ' : 'cp -r ';
+				$res .= '"'.$path.'" "'.$scriptCopyTo.($scriptCopyWin ? $newFoldername : '').'"'.$newLine;
+			} else {
+				$name = $row['name'];
+				$res .= $name.$newLine;
+			}
+		}
+		
+		return $res;
+	}
+	
+	function doTheStuffMovie($result, $forOrder = false, $append = false) {
 		$scriptCopyTo        = $GLOBALS['scriptCopyTo'];
 		$scriptCopyFrom      = $GLOBALS['scriptCopyFrom'];
-		$copyAsScript        = $GLOBALS['copyAsScript'];
-		$scriptCopyWin       = $GLOBALS['scriptCopyWin'];
+		$copyAsScriptEnabled = isset($GLOBALS['copyAsScriptEnabled']) ? $GLOBALS['copyAsScriptEnabled'] : false;
+		$copyAsScript        = isset($GLOBALS['copyAsScript']) ? $GLOBALS['copyAsScript'] : false;
+		$scriptCopyWin       = isset($GLOBALS['scriptCopyWin']) ? $GLOBALS['scriptCopyWin'] : false;
 		
 		$oldPath   = '';
-		$newLine   = "\n"; //$scriptCopyWin ? "\r\n" : "\n";
-		$names = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+		$newLine = $forOrder ? "\n" : '<br />';
+		$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
 		$totalsize = 0;
 		foreach($result as $row) {
 			$path       = $row['path'];
@@ -94,7 +150,7 @@
 			
 			if (!empty($name) && ($forOrder || !isAdmin())) {
 				if ($forOrder || ($copyAsScript && $copyAsScriptEnabled)) {
-					#$names .= getScriptString($path, $names, $formattedName);
+					#$res .= getScriptString($path, $res, $formattedName);
 					if (!empty($scriptCopyFrom)) {
 						$path = $scriptCopyFrom;
 					}
@@ -111,27 +167,25 @@
 						$path = str_replace(' ', '\ ', $path);
 					}
 					
-					#if ($oldPath != $path) { $names .= 'cd '.$path.$newLine; }
-					$names .= $scriptCopyWin ? 'copy ' : 'cp ';
-					$names .= ($scriptCopyWin ? '"' : '').$path.$formattedName.($scriptCopyWin ? '"' : '').' '.$scriptCopyTo.' ';
-					$names .= $newLine;
+					$res .= $scriptCopyWin ? 'copy ' : 'cp ';
+					$res .= ($scriptCopyWin ? '"' : '').$path.$formattedName.($scriptCopyWin ? '"' : '').' '.$scriptCopyTo.' ';
+					$res .= $newLine;
 					$oldPath = $path;
 					
 				} else {
-					$names .= $name;
-					$names .= '<br>';
+					$res .= $name.$newLine;
 				}
 			}
 		}
 		
 		if (!$forOrder) {
 			$s = _format_bytes($totalsize);
-			$names .= '<br><br>Total size: '.$s;
+			$res .= $newLine.$newLine.'Total size: '.$s;
 		}
 		
-		return $names;
+		return $res;
 	}
-
+	
 	function getScriptString($path, $names, $formattedName) {
 		$scriptCopyTo = $GLOBALS['scriptCopyTo'];
 		$oldPath = '';
