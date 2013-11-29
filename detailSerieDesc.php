@@ -21,7 +21,7 @@
 	include_once "./template/config.php";
 	include_once "./template/_SERIEN.php";
 	
-	$id = isset($_GET['id']) ? SQLite3::escapeString($_GET['id']) : null;
+	$id = getEscGet('id');
 	if (empty($id) || $id < 0) { return; }
 	
 	$serien  = fetchSerien($GLOBALS['SerienSQL'], null);
