@@ -30,6 +30,23 @@
 	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
 	echo "\t\t".'var isAdmin = '.(isAdmin() ? '1' : '0').";\r\n";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
+/*
+	echo "\t\t".'var freshloaded = false;'."\r\n";
+	if (isset($_SESSION['tvShowParam'])) {
+		$sId      = isset($_SESSION['tvShowParam']['idShow'])    ? $_SESSION['tvShowParam']['idShow']    : null;
+		$epId     = isset($_SESSION['tvShowParam']['idEpisode']) ? $_SESSION['tvShowParam']['idEpisode'] : null;
+		$idSeason = isset($_SESSION['tvShowParam']['idSeason'])  ? $_SESSION['tvShowParam']['idSeason']  : null;
+		if (!empty($sId) && !empty($epId) && !empty($idSeason)) {
+			echo "\t\t".'$(document).ready(function() {'."\r\n";
+			echo "\t\t\t".'if (!freshloaded) {'."\r\n";
+			echo "\t\t\t".'var obj = document.getElementById(\'epl_'.$sId.'\');'."\r\n";
+			echo "\t\t\t".'loadLatestShowInfo(obj, '.$sId.', '.$epId.', \''.$idSeason.'\', 10);'."\r\n";
+			echo "\t\t\t".'freshloaded = true;'."\r\n";
+			echo "\t\t\t".'}'."\r\n";
+			echo "\t\t".'});'."\r\n";
+		}
+	}
+*/
 ?>
 	</script>
 <?php if(isAdmin()) { ?>
@@ -46,10 +63,10 @@
 #main
 	$isAdmin = isAdmin();
 	$isDemo  = isDemo();
-
+	
 	$maself = $_SERVER['PHP_SELF'];
 	postNavBar($maself == '/index.php');
-
+	
 	echo "\r\n\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
 	fillTable();
 	echo "\t".'</div>'."\r\n";
@@ -77,8 +94,7 @@
 </body>
 <?php
 function fillTable() {
-	$SQL =  $GLOBALS['SerienSQL'].';';
-	
+	$SQL    = $GLOBALS['SerienSQL'].';';
 	$serien = fetchSerien($SQL, null);
 	$serien->sortSerien();
 	$colspan = isAdmin() ? 1 : 0;
@@ -140,7 +156,7 @@ function postSerien($serien) {
 		$check = $isAdmin || $isDemo ? '' : '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
 		$strCounter = $counter;
 		echo '<td class="showShowInfo1 righto">'.$check.$strCounter.'</td>';
-		echo '<td onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'"><span style="float:left;">'.($running ? '<i>' : '').$serie->getName().$info.'</span>';
+		echo '<td id="epl_'.$idShow.'" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'"><span style="float:left;">'.($running ? '<i>' : '').$serie->getName().$info.'</span>';
 		if (!isDemo()) {
 			echo '<span class="sInfoSize">'._format_bytes($serie->getSize()).'</span>';
 		}

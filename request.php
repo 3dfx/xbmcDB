@@ -7,13 +7,8 @@
 	
 	if (isDemo()) { return; }
 	
-	$ids = null;
-	if (isset($_POST['ids']))     { $ids = trim($_POST['ids']); }
-	else if (isset($_GET['ids'])) { $ids = trim($_GET['ids']);  }
-	else { return; die('No ids given!'); }
-	
-	$ids = SQLite3::escapeString($ids);
-	if (empty($ids)) { return; die('No ids given!'); }
+	$ids = getEscGPost('ids');;
+	if (empty($ids)) { return; }
 	
 	$isShow = isset($_POST['isShow']) || isset($_GET['isShow']);
 	

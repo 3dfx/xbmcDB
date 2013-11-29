@@ -146,9 +146,9 @@
 	
 	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
 	if (empty($id)) { die('<br/>no param!<br/>'); }
-
+	
 	$idFile = 0;
-
+	
 	$dbh = getPDO();
 	try {
 		$existArtTable = existsArtTable($dbh);
@@ -184,15 +184,13 @@
 
   		$fanart    = '';
   		$covers    = getCovers($fnam, '', $idMovie);
-  		$cover     = getImageWrap($covers[0], $idMovie, 'movie', 1); //'./getImg.php?size=1&movie='.$idMovie;
-  		$cover_big = getImageWrap($covers[1], $idMovie, 'movie', 2); //'./getImg.php?size=2&movie='.$idMovie;
+  		$cover     = getImageWrap($covers[0], $idMovie, 'movie', 1);
+  		$cover_big = getImageWrap($covers[1], $idMovie, 'movie', 2);
 		
 		$fanartExists = false;
 		if ($DETAILFANART) {
 			$fanart = getFanartCover($fnam, $idMovie);
 			$fanartExists = !empty($fanart);
-			
-			#$_SESSION['thumbs']['fanart'][$idMovie] = $fanart;
 			wrapItUp('fanart', $idMovie, $fanart);
 		}
 ?>

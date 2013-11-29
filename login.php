@@ -23,8 +23,8 @@
 	$noMoreLogin = false;
 	
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-		$input_username = isset($_POST['username']) ? urldecode(trim($_POST['username'])) : null;
-		$input_passwort = isset($_POST['passwort']) ? urldecode(trim($_POST['passwort'])) : null;
+		$input_username = urldecode(getEscPost('username'));
+		$input_passwort = urldecode(getEscPost('passwort'));
 		
 		if (!(empty($input_username) || empty($input_passwort))) {
 			$login_username = isset($GLOBALS['LOGIN_USERNAME']) ? $GLOBALS['LOGIN_USERNAME'] : null;

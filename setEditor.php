@@ -12,7 +12,7 @@
 	<head>
 	<title>Set Editor</title>
 <?php
-	$closeFrame = isset($_GET['closeFrame']) ? trim($_GET['closeFrame']) : 0;
+	$closeFrame = isset($_GET['closeFrame']) ? trim(SQLite3::escapeString($_GET['closeFrame'])) : 0;
 ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="class.css" />
@@ -110,7 +110,7 @@ function postSets() {
 		$sets = array();
 		$s = 0;
 		foreach($result as $row) {
-			$sets[$s]['idSet'] = $row['idSet'];
+			$sets[$s]['idSet']  = $row['idSet'];
 			$sets[$s]['strSet'] = $row['strSet'];
 			$s++;
 		}
@@ -133,10 +133,7 @@ function postSets() {
 			postSet($idSet, $strSet);
 			
 			foreach($movies as $movie) {
-				if ($movie['idSet'] != $idSet) {
-					continue;
-				}
-				
+				if ($movie['idSet'] != $idSet) { continue; }
 				postSetMovie($movie['idSet'], $movie['idMovie'], $movie['filmname']);
 			}
 		}

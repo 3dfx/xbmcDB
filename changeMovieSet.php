@@ -1,6 +1,3 @@
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<html>
-	<head>
 <?php
 	include_once "auth.php";
 	include_once "check.php";
@@ -8,17 +5,17 @@
 	include_once "./template/functions.php";
 	include_once "./template/config.php";
 	include_once "globals.php";
-
+?>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<html>
+	<head>
+<?php
 	startSession();
-	$admin = isAdmin();
-	if (!$admin) { die(';-)'); };
-
-	$idMovie = -1;
-	if (isset($_GET['idMovie'])) { $idMovie = trim($_GET['idMovie']); }
+	if (!isAdmin()) { return; };
 	
-	$closeFrame = 0;
-	if (isset($_GET['closeFrame'])) { $closeFrame = trim($_GET['closeFrame']); }
-
+	$idMovie    = getEscGPost('idMovie', -1);
+	$closeFrame = getEscGPost('closeFrame', 0);;
+	
 	$dbh = null;
 	
 	$idSet = -1;

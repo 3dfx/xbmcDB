@@ -10,27 +10,51 @@ function allowedRequest() { return true; }
 
 function execSQL($SQL, $throw = true) {
 	$dbh = getPDO();
+	return execSQL_($dbh, $SQL, $throw);
+}
+
+function execSQL_($dbh, $SQL, $throw = true, $commit = true) {
 	try {
-		if (!empty($dbh) && !$dbh->inTransaction()) {
+		if (!$commit && !empty($dbh) && !$dbh->inTransaction()) {
 			$dbh->beginTransaction();
 		}
 		
 		$dbh->exec($SQL);
 		
-		if (!empty($dbh) && $dbh->inTransaction()) {
+		if (!$commit && !empty($dbh) && $dbh->inTransaction()) {
 			$dbh->commit();
 		}
-
+		
 	} catch(PDOException $e) {
-		if (!empty($dbh) && $dbh->inTransaction()) {
+		if (!$commit && !empty($dbh) && $dbh->inTransaction()) {
 			$dbh->rollBack();
 		}
 		if ($throw) { echo $e->getMessage(); }
 	}
-	return;
+	return null;
+}
+
+function querySQL($SQL, $throw = true) {
+	$dbh = getPDO();
+	return querySQL_($dbh, $SQL, $throw);
+}
+
+function querySQL_($dbh, $SQL, $throw = true) {
+	try {
+		return $dbh->query($SQL);
+
+	} catch(PDOException $e) {
+		if ($throw) { echo $e->getMessage(); }
+	}
+	return null;
 }
 
 function singleSQL($SQL, $throw = true) {
+	$dbh = getPDO();
+	return singleSQL_($dbh, $SQL, $throw);
+}
+
+function singleSQL_($dbh, $SQL, $throw = true) {
 	$dbh = getPDO();
 	try {
 		return $dbh->querySingle($SQL);
@@ -41,27 +65,21 @@ function singleSQL($SQL, $throw = true) {
 	return null;
 }
 
+function fetchFromDB($SQL, $throw = true) {
+	$dbh = getPDO();
+	return fetchFromDB_($dbh, $SQL, $throw);
+}
+
 function fetchFromDB_($dbh, $SQL, $throw = true) {
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
 	try {
 		return $dbh->query($SQL);
-
+		
 	} catch(PDOException $e) {
 		if ($throw) {
 			echo $e->getMessage();
 		}
-	}
-	return null;
-}
-
-function fetchFromDB($SQL, $throw = true) {
-	$dbh = getPDO();
-	try {
-		return $dbh->query($SQL);
-
-	} catch(PDOException $e) {
-		if ($throw) { echo $e->getMessage(); }
 	}
 	return null;
 }
@@ -121,8 +139,9 @@ function getResolution($dbh) {
 		$idStream = unserialize($_SESSION['idStream']);
 		
 	} else {
-		$sql = "SELECT * FROM streamdetails WHERE iVideoWidth IS NOT NULL";
-		$result = $dbh->query($sql);
+		$SQL = "SELECT * FROM streamdetails WHERE iVideoWidth IS NOT NULL";
+		#$result = $dbh->query($sql);
+		$result = querySQL_($dbh, $SQL, false);
 		foreach($result as $row) {
 			$id = $row['idFile'];
 			$idStream[$id][0] = $row['iVideoWidth'];
@@ -290,7 +309,7 @@ function existsOrdersTable($dbh = null) {
 }
 
 function existsTable($tableName, $type = 'table', $dbh = null) {
-	$dbh = ($dbh != null ? $dbh : getPDO());
+	$dbh = (!empty($dbh) ? $dbh : getPDO());
 	try {
 		$exist = isset($_SESSION['existsTable'.$tableName]) ? $_SESSION['existsTable'.$tableName] : -1;
 		if ($exist !== -1) { return $exist; }
@@ -331,39 +350,30 @@ function checkFileMapTable($dbh) {
 }
 
 function fetchPaths() {
-	$TVSHOWDIR = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : '';
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-
-	$SQL = "SELECT idPath, strPath FROM path WHERE strPath like '%".$TVSHOWDIR."%' ORDER BY strPath ASC;";
 	
 	$paths = array();
 	if (isset($_SESSION['paths']) && $overrideFetch == 0) {
 		$paths = unserialize($_SESSION['paths']);
 
 	} else {
+		$TVSHOWDIR = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : '';
+		$SQL = "SELECT idPath, strPath FROM path WHERE strPath like '%".$TVSHOWDIR."%' ORDER BY strPath ASC;";
+		
 		$dbh = getPDO();
-		try {
-			$dbh->beginTransaction();
-			$result = $dbh->query($SQL);
-			
-			$index = 0;
-			foreach($result as $row) {
-				$paths[$index][0] = $row['idPath'];
-				$paths[$index][1] = $path = $row['strPath'];
-				
-				$index++;
-			}
-			
-			$dbh->commit();
-
-		} catch(PDOException $e) {
-			echo $e->getMessage();
+		$res = querySQL_($dbh, $SQL, false);
+		
+		$index = 0;
+		foreach($res as $row) {
+			$paths[$index][0] = $row['idPath'];
+			$paths[$index][1] = $row['strPath'];
+			$index++;
 		}
 		
 		$_SESSION['paths'] = serialize($paths);
 		unset( $_SESSION['overrideFetch'] );
 	}
-
+	
 	return $paths;
 }
 
@@ -373,18 +383,17 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 		if ($stacked) {
 			$fsize = getStackedFilesize($filename);
 		} else {
-			$fnam = $path.$filename;
+			$fnam  = $path.$filename;
 			$fsize = getFilesize($fnam);
 		}
 		
 		if (empty($fsize)) { return 0; }
+		
+		$dbhIsNull = ($dbh == null);
 		try {
-			$dbhIsNull = ($dbh == null);
-			if ($dbhIsNull) {
-				$dbh = getPDO();
-			}
+			if ($dbhIsNull) { $dbh = getPDO(); }
 			
-			$sqli = "REPLACE INTO fileinfo (idFile, filesize) VALUES('$idFile', '$fsize');";
+			$sqli = "REPLACE INTO fileinfo (idFile, filesize) VALUES(".$idFile.", ".$fsize.");";
 			if ($dbhIsNull) { $dbh->beginTransaction(); }
 			
 			$dbh->exec($sqli);
@@ -394,7 +403,7 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 			clearMediaCache();
 
 		} catch(PDOException $e) {
-			$dbh->rollBack();
+			if ($dbhIsNull) { $dbh->rollBack(); }
 			echo $e->getMessage();
 		}
 	} // if fsize == null...
@@ -703,7 +712,7 @@ function getNewAddedCount() {
 }
 
 function postNavBar($isMain) {
-	$admin       = isAdmin();
+	$isAdmin     = isAdmin();
 	$saferSearch = null;
 	
 	$isMain              = !isset($_SESSION['show']) || $_SESSION['show'] == 'filme'  ? true : false;
@@ -863,7 +872,7 @@ function postNavBar($isMain) {
 			echo '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
 		}
 		
-		if ($admin) {
+		if ($isAdmin) {
 			echo '<li class="divider"></li>';
 			echo '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) ? ' class="selectedItem"' : '').'>unseen</a></li>';
 			echo '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
@@ -931,7 +940,7 @@ function postNavBar($isMain) {
 	echo '</ul>';
 	
 	echo '<ul class="nav pull-right" style="padding-top:2px;">';
-	if ($admin && $XBMCCONTROL_ENABLED) {
+	if ($isAdmin && $XBMCCONTROL_ENABLED) {
 		$run = xbmcRunning();
 		if ($run != 0) {
 		$playing = $run != 0 ? cleanedPlaying(xbmcGetNowPlaying())  : '';
@@ -959,7 +968,7 @@ function postNavBar($isMain) {
 	}
 	echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	
-	if ($admin) {
+	if ($isAdmin) {
 		$msgs = checkNotifications();
 		$selected = '';
 		if ($msgs > 0) {
@@ -1018,7 +1027,7 @@ function postNavBar($isMain) {
 }
 
 function createEpisodeSubmenu($result) {
-	$admin = isAdmin();
+	$isAdmin = isAdmin();
 	$counter = 2;
 	foreach($result as $key => $show) {
 		echo '<li class="dropdown-submenu">';
@@ -1037,7 +1046,7 @@ function createEpisodeSubmenu($result) {
 			
 			$SE = '<span style="padding-right:10px; color:silver;"><b><sub>S'.$season.'.E'.$episode.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;">'.$SE.trimDoubles($title).'</span>';
-			$chkImg = ($admin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
+			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
 			#echo '<li href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'"><a tabindex="-1" _href="#"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 			echo '<li _href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="-1"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 		}
@@ -1213,31 +1222,47 @@ function getLocalhostWPath() {
 function setSessionParams($isAuth = false) {
 	if (!isset( $_SESSION )) { return; }
 	
-	if (isset( $_GET['mode']           )) { unset($_SESSION['newmode']); $_SESSION['mode']    = $_GET['mode'];   }
-	if (isset( $_GET['unseen']         )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = $_GET['unseen']; }
-	if (isset( $_GET['show']           )) { if($_GET['show'] != 'logout') { $_SESSION['show'] = $_GET['show']; } }
-	if (isset( $_GET['sort']           )) { $_SESSION['sort']          = $_GET['sort'];           }
-	if (isset( $_GET['idShow']         )) { $_SESSION['idShow']        = $_GET['idShow'];         }
-	if (isset( $_GET['ref']            )) { $_SESSION['reffer']        = $_GET['ref'];            }
-	if (isset( $_GET['newmode']        )) { $_SESSION['newmode']       = $_GET['newmode'];        }
-	if (isset( $_GET['country']        )) { $_SESSION['country']       = $_GET['country'];        }
-	if (isset( $_GET['gallerymode']    )) { $_SESSION['gallerymode']   = $_GET['gallerymode'];    }
-	if (isset( $_GET['which']          )) { $_SESSION['which']         = $_GET['which'];          }
-	if (isset( $_GET['name']           )) { $_SESSION['name']          = $_GET['name'];           }
-	if (isset( $_GET['just']           )) { $_SESSION['just']          = $_GET['just'];           }
-	if (isset( $_GET['newAddedCount']  )) { $_SESSION['newAddedCount'] = $_GET['newAddedCount'];  }
-	if (isset( $_POST['newAddedCount'] )) { $_SESSION['newAddedCount'] = $_POST['newAddedCount']; }
+/*
+	if (isset( $_GET['mode']           )) { unset($_SESSION['newmode']); $_SESSION['mode']    = SQLite3::escapeString($_GET['mode']);   }
+	if (isset( $_GET['unseen']         )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = SQLite3::escapeString($_GET['unseen']); }
+	if (isset( $_GET['show']           )) { if($_GET['show'] != 'logout') { $_SESSION['show'] = SQLite3::escapeString($_GET['show']); } }
+	if (isset( $_GET['sort']           )) { $_SESSION['sort']          = SQLite3::escapeString($_GET['sort']);           }
+	if (isset( $_GET['idShow']         )) { $_SESSION['idShow']        = SQLite3::escapeString($_GET['idShow']);         }
+	if (isset( $_GET['ref']            )) { $_SESSION['reffer']        = SQLite3::escapeString($_GET['ref']);            }
+	if (isset( $_GET['newmode']        )) { $_SESSION['newmode']       = SQLite3::escapeString($_GET['newmode']);        }
+	if (isset( $_GET['country']        )) { $_SESSION['country']       = SQLite3::escapeString($_GET['country']);        }
+	if (isset( $_GET['gallerymode']    )) { $_SESSION['gallerymode']   = SQLite3::escapeString($_GET['gallerymode']);    }
+	if (isset( $_GET['which']          )) { $_SESSION['which']         = SQLite3::escapeString($_GET['which']);          }
+	if (isset( $_GET['name']           )) { $_SESSION['name']          = SQLite3::escapeString($_GET['name']);           }
+	if (isset( $_GET['just']           )) { $_SESSION['just']          = SQLite3::escapeString($_GET['just']);           }
+	if (isset( $_GET['newAddedCount']  )) { $_SESSION['newAddedCount'] = SQLite3::escapeString($_GET['newAddedCount']);  }
+	if (isset( $_POST['newAddedCount'] )) { $_SESSION['newAddedCount'] = SQLite3::escapeString($_POST['newAddedCount']); }
+*/
 
+	if (!empty( getEscGet('mode')            )) { unset($_SESSION['newmode']); $_SESSION['mode']    = getEscGet('mode');   }
+	if (!empty( getEscGet('unseen')          )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = getEscGet('unseen'); }
+	if (!empty( getEscGet('show')            )) { if(getEscGet('show') != 'logout') { $_SESSION['show'] = getEscGet('show'); } }
+	if (!empty( getEscGet('sort')            )) { $_SESSION['sort']          = getEscGet('sort');             }
+	if (!empty( getEscGet('idShow')          )) { $_SESSION['idShow']        = getEscGet('idShow');           }
+	if (!empty( getEscGet('ref')             )) { $_SESSION['reffer']        = getEscGet('ref');              }
+	if (!empty( getEscGet('newmode')         )) { $_SESSION['newmode']       = getEscGet('newmode');          }
+	if (!empty( getEscGet('country')         )) { $_SESSION['country']       = getEscGet('country');          }
+	if (!empty( getEscGet('gallerymode')     )) { $_SESSION['gallerymode']   = getEscGet('gallerymode');      }
+	if (!empty( getEscGet('which')           )) { $_SESSION['which']         = getEscGet('which');            }
+	if (!empty( getEscGet('name')            )) { $_SESSION['name']          = getEscGet('name');             }
+	if (!empty( getEscGet('just')            )) { $_SESSION['just']          = getEscGet('just');             }
+	if (!empty( getEscGPost('newAddedCount') )) { $_SESSION['newAddedCount'] = getEscGPost('newAddedCount');  }
+	
 	if (!$isAuth) {
 		unset( $_SESSION['submit'], $_SESSION['export'] );
 		
 		if (!empty($_SESSION['which']))    { unset( $_SESSION['dbSearch'] ); }
 		if (!empty($_SESSION['dbSearch'])) { unset( $_SESSION['which'], $_SESSION['just'] ); }
 		
-		foreach ($_POST as $key => $value)    { $_SESSION[$key] = $value; }
-		foreach ($_GET as $key => $value)     {
+		foreach ($_POST as $key => $value)    { $_SESSION[$key] = SQLite3::escapeString($value); }
+		foreach ($_GET  as $key => $value)    {
 			if(isset($_GET['show']) && 
-			   $_GET['show'] != 'logout') { $_SESSION[$key] = $value; }
+			   $_GET['show'] != 'logout') { $_SESSION[$key] = SQLite3::escapeString($value); }
 		}
 		
 		if (isset($_POST['xlsUpload'])) { moveUploadedFile('xls', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); }
@@ -1264,7 +1289,8 @@ function storeSession() {
 	clearMediaCache();
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['xbmcRunning'], $_SESSION['overrideFetch'],
 	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['refferLoged'], $_SESSION['dbName'], 
-	       $_SESSION['angemeldet'], $_SESSION['paths'], $_SESSION['thumbs'],   $_SESSION['private'],     $_SESSION['TvDbCache']
+	       $_SESSION['angemeldet'], $_SESSION['paths'], $_SESSION['thumbs'],   $_SESSION['private'],     $_SESSION['TvDbCache'],
+	       $_SESSION['tvShowParam']
 	     ); //remove values that should be determined at login
 	
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
@@ -1433,13 +1459,13 @@ function isDemo() {
 }
 
 function isLogedIn() {
-	checkOpenGuest();
+	#checkOpenGuest();
 	return (isAdmin() || isGast() || isDemo() ? 1 : 0);
 }
 
 function checkOpenGuest() {
 //-- deactivated --//
-	$LOCALHOST = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
+	$LOCALHOST  = isset($GLOBALS['LOCALHOST']) ? $GLOBALS['LOCALHOST'] : false;
 	$gast_users = $GLOBALS['GAST_USERS'];
 	
 	if ($LOCALHOST || count($gast_users) == 0 && !isAdmin()) {
@@ -1748,7 +1774,6 @@ function trimDoubles($text) {
 	return $text;
 }
 
-
 function encodeString($text, $plain = false) {
 	$text = str_replace("''", "'", $text);
 	//return htmlspecialchars($text, ENT_QUOTES);
@@ -1862,4 +1887,15 @@ function getPD0() {
 	} catch(Exception $e) { }
 	return $dbh;
 }
+
+function getEscGet($key, $defVal = null)  { return isset($_GET[$key])  ? trim(SQLite3::escapeString($_GET[$key]))  : $defVal; }
+function getEscPost($key, $defVal = null) { return isset($_POST[$key]) ? trim(SQLite3::escapeString($_POST[$key])) : $defVal; }
+function getEscGPost($key, $defVal = null) {
+	$res = getEscGet($key);
+	if (isset($res)) { return $res; }
+	$res = getEscPost($key);
+	if (isset($res)) { return $res; }
+	return $defVal;
+}
+
 ?>

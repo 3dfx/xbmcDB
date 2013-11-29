@@ -8,10 +8,10 @@
 	$which = 1;
 	$file = 'logs/reffer.php';
 	$title = 'Refferer-log';
-	if (isset($_GET['which'])) {
-		$which = $_GET['which'];
+	$which = getEscGet('which');
+	if (isset($which)) {
 		if ($which == 2) {
-			$file = 'logs/loginLog.php';
+			$file  = 'logs/loginLog.php';
 			$title = 'Login-log';
 		}
 	}

@@ -7,7 +7,7 @@ include_once "./template/functions.php";
 	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	if (!$xbmControl) { return; }
 
-	$method = isset($_POST['method']) ? trim($_POST['method']) : null;
+	$method = getEscGPost('method');
 	if (empty($method)) { return; }
 
 	if ($method == 'clearCache') {
@@ -40,7 +40,7 @@ include_once "./template/functions.php";
 		echo xbmcPlayPrev() ? '1' : '0';
 
 	} else if ($method == 'playExt') {
-		$file = isset($_POST['file']) ? trim($_POST['file']) : null;
+		$file = getEscGPost('file');
 		if (empty($file)) { echo ''; }
 		
 		$url   = null;
@@ -71,7 +71,7 @@ include_once "./template/functions.php";
 		}
 
 	} else if ($method == 'play') {
-		$file = isset($_POST['file']) ? trim($_POST['file']) : null;
+		$file = getEscGPost('file');
 		if (empty($file)) { return; }
 		
 		$file = decodeString($file);

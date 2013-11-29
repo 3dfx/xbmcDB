@@ -1,20 +1,25 @@
 <?php
 //	include_once "auth.php";
 	include_once "check.php";
-
+	
 	include_once "./template/functions.php";
 	include_once "./template/config.php";
 	include_once "./template/_SERIEN.php";
 	header("Content-Type: text/html; charset=UTF-8");
-
+	
 	$isAdmin = isAdmin();
 	$isDemo  = isDemo();
-
-	$id = $_GET['id'];
+	
+	$id       = getEscGPost('id');
+	$idSeason = getEscGPost('idSeason');
+	
 	if ($id == null || $id <= 0) { die('No id given!'); }
-
+	
+	$_SESSION['tvShowParam']['idEpisode'] = $id;
+	$_SESSION['tvShowParam']['idSeason']  = $idSeason;
+	
 	$SQL =  $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
-
+	
 	$idFile     = 0;
 	$title      = '';
 	$epDesc     = '';

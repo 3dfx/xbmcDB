@@ -4,17 +4,17 @@ include_once "./template/config.php";
 include_once "./template/functions.php";
 
 	startSession();
-	if (!empty($_GET['img'])) { include_once "img.php"; exit; }
+	if (!empty(getEscGPost('img'))) { include_once "img.php"; exit; }
 	
 	header("Content-Type: text/html; charset=UTF-8");
 
 	$start  = microtime(true);
-	$show   = !empty($_GET['show'])   ? $_GET['show']   : null;
-	$idShow = !empty($_GET['idShow']) ? $_GET['idShow'] : null;
-
+	$show   = getEscGPost('show');
+	$idShow = getEscGPost('idShow');
+	
 	if ( isAdmin() && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST) ) {
-		$what       = isset($_POST['aktion'])     ? $_POST['aktion']     : null;
-		$checkFilme = isset($_POST['checkFilme']) ? $_POST['checkFilme'] : null;
+		$what       = getEscGPost('aktion');
+		$checkFilme = getEscGPost('checkFilme');
 		
 		if (!empty($what) && !empty($checkFilme)) {
 			setSeenDelMovie($what, $checkFilme);
@@ -35,7 +35,7 @@ include_once "./template/functions.php";
 	else if ($show == 'import')                     { include "./dbImport.php"; }
 	else if ($show == 'details' && !empty($idShow)) { include "./details.php";  }
 	else if ($show == 'serien')                     { include "./serien_.php";  }
-	else if ($show == 'mvids')                     { include "./mvids_.php";  }
+	else if ($show == 'mvids')                      { include "./mvids_.php";  }
 	else if ($show == 'filme')                      { include "./filme_.php";   }
 	
 	adminInfo($start, $show);

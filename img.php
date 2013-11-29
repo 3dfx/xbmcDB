@@ -4,15 +4,15 @@ include_once "./template/functions.php";
 	startSession();
 	if (!isLogedIn()) { shoutImage(); }
 	
-	$id       = isset($_GET['img'])      ? $_GET['img']      : null;
-	$size     = isset($_GET['size'])     ? $_GET['size']     : null;
-	$movie    = isset($_GET['movie'])    ? $_GET['movie']    : null;
-	$file     = isset($_GET['file'])     ? $_GET['file']     : null;
-	$fanart   = isset($_GET['fanart'])   ? $_GET['fanart']   : null;
-	$actor    = isset($_GET['actor'])    ? $_GET['actor']    : null;
-	$director = isset($_GET['director']) ? $_GET['director'] : null;
-	$banner   = isset($_GET['banner'])   ? $_GET['banner']   : null;
-
+	$id       = getEscGet('img');
+	$size     = getEscGet('size');
+	$movie    = getEscGet('movie');
+	$file     = getEscGet('file');
+	$fanart   = getEscGet('fanart');
+	$actor    = getEscGet('actor');
+	$director = getEscGet('director');
+	$banner   = getEscGet('banner');
+	
 	$arr = null;
 	     if (isset($movie))    { $arr = 'cover';    }
 	else if (isset($file))     { $arr = 'file';     }

@@ -5,9 +5,9 @@
 	
 	if (!isAdmin()) { exit; }
 	if ($_SERVER['REQUEST_METHOD'] == 'GET' && !empty($_GET)) {
-		$action = isset($_GET['act']) ? urldecode(trim($_GET['act'])) : null;
+		$action = isset($_GET['act']) ? urldecode(getEscGet('act')) : null;
 		if ($action == 'delete') {
-			$ipDel = isset($_GET['ip']) ? urldecode(trim($_GET['ip'])) : null;
+			$ipDel = isset($_GET['ip']) ? urldecode(getEscGet('ip')) : null;
 			removeBlacklist($ipDel);
 		}
 	}

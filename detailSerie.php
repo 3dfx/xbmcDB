@@ -1,18 +1,21 @@
-<script type="text/javascript" src="./template/js/myfancy.js"></script>
 <?php
 	include_once "check.php";
 
 	include_once "./template/functions.php";
 	include_once "./template/config.php";
 	include_once "./template/_SERIEN.php";
-
-	$admin = (isset($_SESSION['angemeldet']) && $_SESSION['angemeldet'] == true) ? 1 : 0;
-	$id = isset($_GET['id']) ? $_GET['id'] : null;
+?>
+<script type="text/javascript" src="./template/js/myfancy.js"></script>
+<?php
+	$isAdmin = isAdmin();
+	$id = getEscGPost('id');
 	if (empty($id) || $id < 0) { return; }
-
-	$SQL =  $GLOBALS['SerienSQL'];
+	
+	$_SESSION['tvShowParam']['idShow'] = $id;
+	
+	$SQL    = $GLOBALS['SerienSQL'];
 	$serien = fetchSerien($SQL, null);
-
+	
 	echo '<table id="serieTable" class="film" style="width:350px; padding:0px; z-index:1;">';
 	echo "\r\n";
 	$serie = $serien->getSerie($id);
@@ -31,7 +34,7 @@ function postSerien($serien) {
 }
 
 function postSerie($serie) {
-	$admin = $GLOBALS['admin'];
+	$isAdmin = $GLOBALS['isAdmin'];
 	$USECACHE = isset($GLOBALS['USECACHE']) ? $GLOBALS['USECACHE'] : true;
 
 	$stCount = $serie->getStaffelCount();
@@ -45,7 +48,7 @@ function postSerie($serie) {
 	echo '<th class="righto">'.$serie->getRating().'</th>';
 	echo '<th class="righto">'.(isDemo() ? '' : _format_bytes($serie->getSize())).'</th>';
 	echo '<th class="righto" colspan="2">';
-	if ($admin) {
+	if ($isAdmin) {
 		if ($serie->isWatched() || $serie->isWatchedAny()) {
 			$img = './img/check'.($serie->isWatched() ? '' : 'B').'.png';
 			echo ' <img src="'.$img.'" class="galleryImage" title="'.($serie->isWatched() ? '' : 'partly ').'watched" />';
@@ -67,7 +70,7 @@ function postSerie($serie) {
 }
 
 function postStaffel($staffel) {
-	$admin = $GLOBALS['admin'];
+	$isAdmin = $GLOBALS['isAdmin'];
 
 	$eps = $staffel->getEpisodeCount();
 	if ($eps == 0) { return; }
@@ -88,7 +91,7 @@ function postStaffel($staffel) {
 	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
 	echo '<td class="righto vSpan">'.(isDemo() ? '' : _format_bytes($staffel->getSize())).'</td>';
 	echo '<td class="righto" colspan="2">';
-	if ($admin) {
+	if ($isAdmin) {
 		if ($staffel->isWatched() || $staffel->isWatchedAny()) {
 			$img = './img/check'.($staffel->isWatched() ? '' : 'B').'.png';
 			echo ' <img src="'.$img.'" class="galleryImage" title="'.($staffel->isWatched() ? '' : 'partly ').'watched" />';
@@ -119,20 +122,20 @@ function postStaffel($staffel) {
 		
 		$seasonId = 'iD'.$idShow.'.S'.$sNum;
 		#id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" 
-		echo '<tr class="epTR '.$seasonId.'" id="'.$epi->getIdEpisode().'" _href="./detailEpisode.php?id='.$idEpisode.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
+		echo '<tr class="epTR '.$seasonId.'" id="'.$epi->getIdEpisode().'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
 		echo '<td class="epTRd1" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.'  </span><span class="searchField">'.$epTitle.'</span></td>';
 		echo '<td class="righto padTD">'.(floatval($epi->getRating()) > 0 ? $epi->getRating() : '').'</td>';
 		#echo '<td class="righto padTD"><span class="vSpan'.(!empty($playItem) ? ' cursor:pointer;' : '').'"'.$playItem.'>'._format_bytes($epi->getSize()).'</span></td>';
 		echo '<td class="righto padTD">'.$playItem.'</td>';
 		echo '<td class="righto">';
-		if ($admin) {
+		if ($isAdmin) {
 			echo '<a class="fancy_addEpisode" href="./addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'">';
 			echo '<img src="./img/add.png" class="galleryImage" title="edit Episode" />';
 			echo '</a> ';
 		}
 		echo '</td>';
 		echo '<td class="righto">';
-		if ($admin) {
+		if ($isAdmin) {
 			if ($epi->isWatched()) {
 				echo '<a class="fancy_movieEdit" href="./dbEdit.php?act=setUnseen&idFile='.$epi->getIdFile().'">';
 				echo '<img src="./img/check.png" class="galleryImage" title="watched" /> ';

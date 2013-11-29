@@ -14,8 +14,8 @@
 		<title>Order Viewer</title>
 <?php
 	$self        = $_SERVER['PHP_SELF'];
-	$orderName   = isset($_GET['orderName'])   ? trim($_GET['orderName']) : null;
-	$deleteOrder = isset($_GET['deleteOrder']) ? trim($_GET['deleteOrder']) : 0;
+	$orderName   = getEscGet('orderName');
+	$deleteOrder = getEscGet('deleteOrder');
 	
 	if (!empty($deleteOrder)) {
 		$dir   = './orders';

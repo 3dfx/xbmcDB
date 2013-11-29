@@ -23,28 +23,26 @@
 	$idSelected = false;
 	$seasonSelected = false;
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-		if (isset($_POST['season'])) { $getSeason = trim($_POST['season']); }
-		if (isset($_POST['episode'])) { $getEpisode = trim($_POST['episode']); }
-		if (isset($_POST['idShow'])) { $idShow = trim($_POST['idShow']); }
-		if (isset($_POST['idEpisode'])) { $idEpisode = trim($_POST['idEpisode']); }
-		if (isset($_POST['idTvdb'])) { $idTvdb = trim($_POST['idTvdb']); }
-		if (isset($_POST['update'])) { $update = trim($_POST['update']); }
-		if (isset($_POST['closeFrame'])) { $closeFrame = trim($_POST['closeFrame']); }
-		
+		$getSeason  = getEscPost('season');
+		$getEpisode = getEscPost('episode');
+		$idShow     = getEscPost('idShow');
+		$idEpisode  = getEscPost('idEpisode');
+		$idTvdb     = getEscPost('idTvdb');
+		$update     = getEscPost('update');
+		$closeFrame = getEscPost('closeFrame');
 		$idSelected = true;
 		
 	} else if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-		if (isset($_GET['season'])) { $getSeason = trim($_GET['season']); }
-		if (isset($_GET['episode'])) { $getEpisode = trim($_GET['episode']); }
-		if (isset($_GET['idShow'])) { $idShow = trim($_GET['idShow']); }
-		if (isset($_GET['idEpisode'])) { $idEpisode = trim($_GET['idEpisode']); }
-		if (isset($_GET['idTvdb'])) { $idTvdb = trim($_GET['idTvdb']); }
-		if (isset($_GET['update'])) { $update = trim($_GET['update']); }
-		if (isset($_GET['closeFrame'])) { $closeFrame = trim($_GET['closeFrame']); }
-		
+		$getSeason  = getEscGet('season');
+		$getEpisode = getEscGet('episode');
+		$idShow     = getEscGet('idShow');
+		$idEpisode  = getEscGet('idEpisode');
+		$idTvdb     = getEscGet('idTvdb');
+		$update     = getEscGet('update');
+		$closeFrame = getEscGet('closeFrame');
 		$idSelected = true;
 	}
-
+	
 	$serien = fetchSerien(null, null);
 	$serien->sortSerien();
 	
@@ -64,9 +62,6 @@
 	if ($idSelected) { $episodes = getShowInfo($idTvdb); }
 	if ($idSelected && $episodes == null) { die('NOTHING FOUND!'); }
 	
-	#print_r( $episodes );
-	#return;
-	
 	$item = null;
 	if ($seasonSelected) { $item = getEpisodeInfo($episodes, $getSeason, $getEpisode); }
 ?>
@@ -83,9 +78,6 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 			$('.styled-select').customStyle();
-			//$('.styled-select').select2();
-			//$('.select2-search').hide();
-			
 			showEpInfos();
 <?php
 	if ($closeFrame) {

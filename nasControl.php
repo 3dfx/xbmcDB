@@ -19,24 +19,31 @@ if (!isAdmin()) { return; }
 <?php
 	$res = null;
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-		if (isset($_POST['shutdownBtn'])) {
+		$shutdownBtn       = getEscPost('shutdownBtn');
+		$restartBtn        = getEscPost('restartBtn');
+		$delay_shutdownBtn = getEscPost('delay_shutdown_btn');
+		$delay_shutdown    = getEscPost('delay_shutdown');
+		$delay_restartBtn  = getEscPost('delay_restart_btn');
+		$delay_restart     = getEscPost('delay_restart');
+		
+		if (isset($shutdownBtn)) {
 			shutdownNAS();
 		} else
-		if (isset($_POST['restartBtn'])) {
+		if (isset($restartBtn)) {
 			startNAS();
 		} else
-		if (isset($_POST['delay_shutdown_btn'])) {
-			if (isset($_POST['delay_shutdown'])) {
-				delayShutdown($_POST['delay_shutdown']);
+		if (isset($delay_shutdownBtn)) {
+			if (isset($delay_shutdown)) {
+				delayShutdown($delay_shutdown);
 			}
 		} else
-		if (isset($_POST['delay_restart_btn'])) {
-			if (isset($_POST['delay_restart'])) {
-				delayRestart($_POST['delay_restart']);
+		if (isset($delay_restartBtn)) {
+			if (isset($delay_restart)) {
+				delayRestart($delay_restart);
 			}
 		}
 	}
-
+	
 	$nasIP = isset($GLOBALS['NAS_IP']) ? $GLOBALS['NAS_IP'] : 0;
 	$serverRunning = !empty($nasIP) ? pingNAS($nasIP) : 0;
 ?>

@@ -166,7 +166,7 @@ function createTable() {
 			$unseen = 3;
 		}
 		$sessionKey .= 'unseen_'.$unseen.'_';
-
+		
 		$saferSearch = '';
 		if (!empty($dbSearch)) {
 			$mode = $newmode = 0;
@@ -340,19 +340,14 @@ function createTable() {
 			
 			if  (empty($dateAdded)) {
 				$creation = getCreation($fnam);
-				#logc( $creation );
 				if (empty($creation)) {
 					$creation = '2001-01-01 12:00:00';
 				}
+				
 				$dateAdded = $creation;
-
-				try {
-					$datum = SQLite3::escapeString(strtotime($dateAdded));
-					$dbfname = SQLite3::escapeString($filename);
-					$dbh->exec("REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$dbfname."', '".$dateAdded."', '".$datum."');");
-				} catch(PDOException $e) {
-					echo $e->getMessage();
-				}
+				$datum = strtotime($dateAdded);
+				$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".$datum."');";
+				execSQL_($dbh, $SQL_, false, false);
 			}
 			
 			if ($gallerymode || $COVER_OVER_TITLE) {
@@ -360,7 +355,8 @@ function createTable() {
 					$cover = getCoverThumb($fnam, $cover, false);
 					
 				} else if ($existArtTable) {
-					$res2 = $dbh->query("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
+					$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
+					$res2 = querySQL_($dbh, $SQL_, false);
 					foreach($res2 as $row2) {
 						$type = $row2['type'];
 						$url  = $row2['url'];
@@ -477,8 +473,8 @@ function createTable() {
 				
 #artist
 				$spalTmp = '<td class="actorTD"';
-				$sql2 = "select A.strActor, B.strRole, B.idActor, A.strThumb as actorimage from actorlinkmovie B, actors A where A.idActor = B.idActor and B.idMovie = '$idMovie'";
-				$result2 = $dbh->query($sql2);
+				$SQL_ = "select A.strActor, B.strRole, B.idActor, A.strThumb as actorimage from actorlinkmovie B, actors A where A.idActor = B.idActor and B.idMovie = '$idMovie'";
+				$result2 = querySQL_($dbh, $SQL_, false);
 				$firstartist = '';
 				$firstId = '';
 				$artist = '';
@@ -498,7 +494,8 @@ function createTable() {
 
 				$actorimg = getActorThumb($firstartist, $actorpicURL, false);
 				if (!file_exists($actorimg) && !empty($firstId) && $existArtTable) {
-					$res3 = $dbh->query("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';");
+					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
+					$res3 = querySQL_($dbh, $SQL_, false);
 					$row3 = $res3->fetch();
 					$url = $row3['url'];
 					if (!empty($url)) {
@@ -553,8 +550,8 @@ function createTable() {
 				
 #regie
 				$spalTmp = '<td class="direcTD"';
-				$sql3 = "SELECT A.strActor, B.idDirector, A.strThumb AS actorimage FROM directorlinkmovie B, actors A WHERE B.idDirector = A.idActor AND B.idMovie = '$idMovie'";
-				$result3 = $dbh->query($sql3);
+				$SQL_ = "SELECT A.strActor, B.idDirector, A.strThumb AS actorimage FROM directorlinkmovie B, actors A WHERE B.idDirector = A.idActor AND B.idMovie = '$idMovie'";
+				$result3 = querySQL_($dbh, $SQL_, false);
 				$firstdirector = '';
 				$firstId = '';
 				$artistinfo = '';
@@ -573,7 +570,8 @@ function createTable() {
 				
 				$actorimg = getActorThumb($firstdirector, $actorpicURL, false);
 				if (!file_exists($actorimg) && !empty($firstId) && $existArtTable) {
-					$res3 = $dbh->query("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';");
+					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
+					$res3 = querySQL_($dbh, $SQL_, false);
 					$row3 = $res3->fetch();
 					$url = $row3['url'];
 					if (!empty($url)) {
@@ -749,10 +747,14 @@ function createTable() {
 			}
 		} // if ($galleryMode)
 		
-		$dbh->commit();
+		if (!empty($dbh) && $dbh->inTransaction()) {
+			$dbh->commit();
+		}
 		
 	} catch(PDOException $e) {
-		$dbh->rollBack();
+		if (!empty($dbh) && $dbh->inTransaction()) {
+			$dbh->rollBack();
+		}
 		echo $e->getMessage();
 	}
 } // function createTable

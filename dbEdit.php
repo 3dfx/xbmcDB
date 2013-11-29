@@ -1,6 +1,6 @@
 <?php
 	include_once "check.php";
-
+	
 	include_once "./template/functions.php";
 	include_once "./template/config.php";
 	include_once "globals.php";
@@ -11,58 +11,28 @@
 	$hostname = $_SERVER['HTTP_HOST'];
 	$path = dirname($_SERVER['PHP_SELF']);
 	
-	$idFile       = -1;
-	$idMovie      = -1;
-	$idGenre      = -1;
-	$id           = -1;
-	$jahr         = '';
-	$rating       = '';
-	$dateAdded    = '';
-	$file         = '';
-	$name         = '';
-	$title        = '';
-	$act          = '';
-	
-	$idShow       = -1;
-	$idTvdb       = -1;
-	$idPath       = -1;
-	$idEpisode    = -1;
-	$strPath      = '';
-	$showEpi      = '';
-	$regie        = '';
-	$gast_autor   = '';
-	$airdate      = '';
-	$rating       = '';
-	$desc         = '';
-	$genre        = '';
-	
-	if (isset($_GET['act']))          { $act        = trim(SQLite3::escapeString($_GET['act']));          }
-	if (isset($_GET['id']))           { $id         = trim(SQLite3::escapeString($_GET['id']));           }
-	if (isset($_GET['idFile']))       { $idFile     = trim(SQLite3::escapeString($_GET['idFile']));       }
-	if (isset($_GET['idMovie']))      { $idMovie    = trim(SQLite3::escapeString($_GET['idMovie']));      }
-	if (isset($_GET['idGenre']))      { $idGenre    = trim(SQLite3::escapeString($_GET['idGenre']));      }
-	if (isset($_GET['name']))         { $name       = trim(SQLite3::escapeString($_GET['name']));         }
-	if (isset($_GET['title']))        { $title      = trim(SQLite3::escapeString($_GET['title']));        }
-	if (isset($_GET['jahr']))         { $jahr       = trim(SQLite3::escapeString($_GET['jahr']));         }
-	if (isset($_GET['dateAdded']))    { $dateAdded  = trim(SQLite3::escapeString($_GET['dateAdded']));    }
-	if (isset($_GET['rating']))       { $rating     = trim(SQLite3::escapeString($_GET['rating']));       }
-	if (isset($_GET['filename']))     { $file       = trim(SQLite3::escapeString($_GET['filename']));     }
-	if (isset($_GET['genre']))        { $genre      = trim(SQLite3::escapeString($_GET['genre']));        }
-
-	if (isset($_POST['idFile']))      { $idFile     = trim(SQLite3::escapeString($_POST['idFile']));      }
-	if (isset($_POST['idShow']))      { $idShow     = trim(SQLite3::escapeString($_POST['idShow']));      }
-	if (isset($_POST['idTvdb']))      { $idTvdb     = trim(SQLite3::escapeString($_POST['idTvdb']));      }
-	if (isset($_POST['idEpisode']))   { $idEpisode  = trim(SQLite3::escapeString($_POST['idEpisode']));   }
-	if (isset($_POST['idPath']))      { $idPath     = trim(SQLite3::escapeString($_POST['idPath']));      }
-	if (isset($_POST['strPath']))     { $strPath    = trim(SQLite3::escapeString($_POST['strPath']));     }
-	if (isset($_POST['showEpisode'])) { $showEpi    = trim(SQLite3::escapeString($_POST['showEpisode'])); }
-	if (isset($_POST['regie']))       { $regie      = trim(SQLite3::escapeString($_POST['regie']));       }
-	if (isset($_POST['title']))       { $title      = trim(SQLite3::escapeString($_POST['title']));       }
-	if (isset($_POST['filename']))    { $file       = trim(SQLite3::escapeString($_POST['filename']));    }	
-	if (isset($_POST['gast_autor']))  { $gast_autor = trim(SQLite3::escapeString($_POST['gast_autor']));  }
-	if (isset($_POST['airdate']))     { $airdate    = trim(SQLite3::escapeString($_POST['airdate']));     }
-	if (isset($_POST['rating']))      { $rating     = trim(SQLite3::escapeString($_POST['rating']));      }
-	if (isset($_POST['desc']))        { $desc       = trim(SQLite3::escapeString($_POST['desc']));        }
+	$act        = getEscGPost('act', '');
+	$id         = getEscGPost('id', -1);
+	$idFile     = getEscGPost('idFile', -1);
+	$idMovie    = getEscGPost('idMovie', -1);
+	$idGenre    = getEscGPost('idGenre', -1);
+	$idShow     = getEscGPost('idShow', -1);
+	$idTvdb     = getEscGPost('idTvdb', -1);
+	$idEpisode  = getEscGPost('idEpisode', -1);
+	$idPath     = getEscGPost('idPath', -1);
+	$name       = getEscGPost('name', '');
+	$title      = getEscGPost('title', '');
+	$jahr       = getEscGPost('jahr', '');
+	$dateAdded  = getEscGPost('dateAdded', '');
+	$rating     = getEscGPost('rating', '');
+	$file       = getEscGPost('filename', '');
+	$genre      = getEscGPost('genre', '');
+	$strPath    = getEscGPost('strPath', '');
+	$showEpi    = getEscGPost('showEpisode', '');
+	$regie      = getEscGPost('regie', '');
+	$gast_autor = getEscGPost('gast_autor', '');
+	$airdate    = getEscGPost('airdate', '');
+	$desc       = getEscGPost('desc', '');
 	
 	$dbh = getPDO();
 	try {
