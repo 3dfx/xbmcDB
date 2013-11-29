@@ -1222,23 +1222,6 @@ function getLocalhostWPath() {
 function setSessionParams($isAuth = false) {
 	if (!isset( $_SESSION )) { return; }
 	
-/*
-	if (isset( $_GET['mode']           )) { unset($_SESSION['newmode']); $_SESSION['mode']    = SQLite3::escapeString($_GET['mode']);   }
-	if (isset( $_GET['unseen']         )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = SQLite3::escapeString($_GET['unseen']); }
-	if (isset( $_GET['show']           )) { if($_GET['show'] != 'logout') { $_SESSION['show'] = SQLite3::escapeString($_GET['show']); } }
-	if (isset( $_GET['sort']           )) { $_SESSION['sort']          = SQLite3::escapeString($_GET['sort']);           }
-	if (isset( $_GET['idShow']         )) { $_SESSION['idShow']        = SQLite3::escapeString($_GET['idShow']);         }
-	if (isset( $_GET['ref']            )) { $_SESSION['reffer']        = SQLite3::escapeString($_GET['ref']);            }
-	if (isset( $_GET['newmode']        )) { $_SESSION['newmode']       = SQLite3::escapeString($_GET['newmode']);        }
-	if (isset( $_GET['country']        )) { $_SESSION['country']       = SQLite3::escapeString($_GET['country']);        }
-	if (isset( $_GET['gallerymode']    )) { $_SESSION['gallerymode']   = SQLite3::escapeString($_GET['gallerymode']);    }
-	if (isset( $_GET['which']          )) { $_SESSION['which']         = SQLite3::escapeString($_GET['which']);          }
-	if (isset( $_GET['name']           )) { $_SESSION['name']          = SQLite3::escapeString($_GET['name']);           }
-	if (isset( $_GET['just']           )) { $_SESSION['just']          = SQLite3::escapeString($_GET['just']);           }
-	if (isset( $_GET['newAddedCount']  )) { $_SESSION['newAddedCount'] = SQLite3::escapeString($_GET['newAddedCount']);  }
-	if (isset( $_POST['newAddedCount'] )) { $_SESSION['newAddedCount'] = SQLite3::escapeString($_POST['newAddedCount']); }
-*/
-
 	if (!empty( getEscGet('mode')            )) { unset($_SESSION['newmode']); $_SESSION['mode']    = getEscGet('mode');   }
 	if (!empty( getEscGet('unseen')          )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = getEscGet('unseen'); }
 	if (!empty( getEscGet('show')            )) { if(getEscGet('show') != 'logout') { $_SESSION['show'] = getEscGet('show'); } }
