@@ -36,7 +36,9 @@
 	
 	$dbh = getPDO();
 	try {
-		$dbh->beginTransaction();
+		if (!empty($dbh) && !$dbh->inTransaction()) {
+			$dbh->beginTransaction();
+		}
 		$SQL = '';
 		
 		/*
@@ -121,8 +123,8 @@
 			
 			$showEpi = explode('-', $showEpi);
 			
-			$title = str_replace("'", "''", $title);
-			$desc  = str_replace("'", "''", $desc);
+			#$title = str_replace("'", "''", $title);
+			#$desc  = str_replace("'", "''", $desc);
 			
 			$SQLepi = "INSERT INTO episode ".
 				   "VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,'[RATING]','[GUEST_AUTOR]','[AIRED]',NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL,[idShow]);";
@@ -143,11 +145,15 @@
 			$dbh->exec($SQLepi);
 			clearMediaCache();
 			
-			checkNextAirDateTable($dbh);
-			clearAirdateInDb($idShow);
-			
-			fetchAndUpdateAirdate($idShow);
-			clearMediaCache();
+			try {
+				if (checkAirDate()) {
+					checkNextAirDateTable($dbh);
+					clearAirdateInDb($idShow, $dbh);
+					
+					fetchAndUpdateAirdate($idShow, $dbh);
+					clearMediaCache();
+				}
+			} catch(Exception $e) { }
 			
 			/*
 			//table in eden, no more in frodo!

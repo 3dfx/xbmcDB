@@ -347,7 +347,7 @@ function createTable() {
 				$dateAdded = $creation;
 				$datum = strtotime($dateAdded);
 				$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".$datum."');";
-				execSQL_($dbh, $SQL_, false, false);
+				execSQL_($dbh, $SQL_, false, true);
 			}
 			
 			if ($gallerymode || $COVER_OVER_TITLE) {

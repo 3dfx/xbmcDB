@@ -46,6 +46,8 @@
 			$('#dropLatestEps').removeClass('open');
 		}
 		
+		function checkForCheck() { return true; }
+		
 <?php
 	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	$bindF      = false;
@@ -61,9 +63,7 @@
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
 #main
-	$admin = isAdmin();
-	
-	$maself = $_SERVER['PHP_SELF'];
+	$maself = getEscServer('PHP_SELF');
 	postNavBar($maself == '/index.php');
 	
 	echo "\r\n\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";

@@ -103,7 +103,7 @@
 		$serien = new Serien();
 		$dbh = getPDO();
 		try {
-			$dbh->beginTransaction();
+			#$dbh->beginTransaction();
 			checkMyEpisodeView($dbh);
 			checkNextAirDateTable($dbh);
 			checkTvshowRunningTable($dbh);
@@ -146,10 +146,10 @@
 				}
 			}
 			
-			$dbh->commit();
+			#$dbh->commit();
 
 		} catch(PDOException $e) {
-			$dbh->rollBack();
+			#$dbh->rollBack();
 			echo $e->getMessage();
 		}
 

@@ -203,6 +203,9 @@ function postSerien($serien) {
 }
 
 function fetchFilesizes() {
+//deprecated
+	return array();
+/*
 	$filesizes = array();
 
 	try {
@@ -217,6 +220,7 @@ function fetchFilesizes() {
 	} catch(PDOException $e) { echo $e->getMessage(); }
 
 	return $filesizes;
+*/
 }
 
 function getRandomBanner() {

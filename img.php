@@ -58,8 +58,9 @@ function shoutImage($img = null) {
 }
 
 function setHeaders($img) {
-	if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
-		$if_modified_since = preg_replace('/;.*$/', '', $_SERVER['HTTP_IF_MODIFIED_SINCE']);
+	$modSince_ = getEscServer('HTTP_IF_MODIFIED_SINCE');
+	if (isset($modSince_)) {
+		$if_modified_since = preg_replace('/;.*$/', '', $modSince_);
 	} else {
 		$if_modified_since = null;
 	}
@@ -67,7 +68,8 @@ function setHeaders($img) {
 	header("Pragma: no-cache");
 	header("Cache-Control: public, must-revalidate, max-age=86400", true);
 	
-	$img = str_replace('./', $_SERVER['DOCUMENT_ROOT'].'/', $img);
+	$docRoot = getEscServer('DOCUMENT_ROOT');
+	$img = str_replace('./', $docRoot.'/', $img);
 	$oldHandler = set_error_handler('handleError');
 	$mtime = null;
 	try {
@@ -77,8 +79,9 @@ function setHeaders($img) {
 			$mtime = empty($mtime) ? workaroundMTime($img) : null;
 		} catch (Exception $e) { }
 	}
-	$mtime = empty($mtime) ? filemtime($_SERVER['SCRIPT_FILENAME']) : $mtime;
-	set_error_handler($oldHandler);
+	$scriptFName = getEscServer('SCRIPT_FILENAME');
+	$mtime = empty($mtime) ? filemtime($scriptFName) : $mtime;
+	if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 	
 	$gmdate_mod = gmdate('D, d M Y H:i:s', $mtime).' GMT';
 	if (!empty($if_modified_since) && $if_modified_since == $gmdate_mod) {

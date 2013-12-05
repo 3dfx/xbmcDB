@@ -4,10 +4,11 @@ include_once "./template/config.php";
 include_once "./template/functions.php";
 
 	startSession();
-	if (!empty(getEscGPost('img'))) { include_once "img.php"; exit; }
+	$img = getEscGPost('img');
+	if (!empty($img)) { include_once "img.php"; exit; }
 	
 	header("Content-Type: text/html; charset=UTF-8");
-
+	
 	$start  = microtime(true);
 	$show   = getEscGPost('show');
 	$idShow = getEscGPost('idShow');

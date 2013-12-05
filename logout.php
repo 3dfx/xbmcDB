@@ -6,5 +6,8 @@
 		$dhb = getPDO();
 		session_destroy();
 	}
+	
+	startSession();
+	$_SESSION['refferLoged'] = true;
 	redirectPage('', true);
 ?>

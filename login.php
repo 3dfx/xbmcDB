@@ -12,9 +12,7 @@
 	startSession();
 	if (isLogedIn()) { logedInSoRedirect(true); }
 	
-	$reffer = (isset($_SESSION['reffer']) ? $_SESSION['reffer'] : null);
-	if (empty($reffer)) { $reffer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null; }
-	logRefferer($reffer);
+	logRefferer();
 	
 	$logedInAs   = '';
 	$failedText  = 'login failed!';
@@ -23,8 +21,10 @@
 	$noMoreLogin = false;
 	
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-		$input_username = urldecode(getEscPost('username'));
-		$input_passwort = urldecode(getEscPost('passwort'));
+		$username_ = getEscPost('username');
+		$passwort_ = getEscPost('passwort');
+		$input_username = urldecode($username_);
+		$input_passwort = urldecode($passwort_);
 		
 		if (!(empty($input_username) || empty($input_passwort))) {
 			$login_username = isset($GLOBALS['LOGIN_USERNAME']) ? $GLOBALS['LOGIN_USERNAME'] : null;

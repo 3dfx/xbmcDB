@@ -14,6 +14,8 @@ function execSQL($SQL, $throw = true) {
 }
 
 function execSQL_($dbh, $SQL, $throw = true, $commit = true) {
+	if (empty($dbh)) { $dbh = getPDO(); }
+	
 	try {
 		if (!$commit && !empty($dbh) && !$dbh->inTransaction()) {
 			$dbh->beginTransaction();
@@ -40,6 +42,8 @@ function querySQL($SQL, $throw = true) {
 }
 
 function querySQL_($dbh, $SQL, $throw = true) {
+	if (empty($dbh)) { $dbh = getPDO(); }
+	
 	try {
 		return $dbh->query($SQL);
 
@@ -55,7 +59,8 @@ function singleSQL($SQL, $throw = true) {
 }
 
 function singleSQL_($dbh, $SQL, $throw = true) {
-	$dbh = getPDO();
+	if (empty($dbh)) { $dbh = getPDO(); }
+	
 	try {
 		return $dbh->querySingle($SQL);
 
@@ -71,6 +76,8 @@ function fetchFromDB($SQL, $throw = true) {
 }
 
 function fetchFromDB_($dbh, $SQL, $throw = true) {
+	if (empty($dbh)) { $dbh = getPDO(); }
+	
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
 	try {
@@ -739,6 +746,7 @@ function postNavBar($isMain) {
 	$DREIDENABLED        = isset($GLOBALS['DREID_ENABLED'])       ? $GLOBALS['DREID_ENABLED']       : true;
 	$XBMCCONTROL_ENABLED = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	$CHOOSELANGUAGES     = isset($GLOBALS['CHOOSELANGUAGES'])     ? $GLOBALS['CHOOSELANGUAGES']     : false;
+	$MUSICVIDS_ENABLED   = isset($GLOBALS['MUSICVIDS_ENABLED'])   ? $GLOBALS['MUSICVIDS_ENABLED']   : false;
 	$countryLabel        = $CHOOSELANGUAGES ? 'language' : '';
 	$newAddedCount       = getNewAddedCount();
 	
@@ -896,48 +904,36 @@ function postNavBar($isMain) {
 		echo '</li>';
 	} //$isMain
 	
-	if ($isTvshow) {
-		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
-	}
-	if ($SEARCH_ENABLED) {
-		echo '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
-		echo '<a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">search <b class="caret"></b></a>';
-		echo '<ul class="dropdown-menu">';
-			echo '<li tabindex="1"'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
-			echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
-			echo '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/fancy-close.png" /></a>';
-			echo '</li>';
-			
-			if ($isTvshow && !empty($saferSearch)) {
-				createEpisodeSubmenu(fetchSearchSerien($saferSearch));
-			}
-			
-			if (!$isTvshow) {
-				echo '<li class="navbar-search" style="margin:0px;">';
-				echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchfor" name="searchfor" placeholder="filter..." onfocus="this.select();" onkeyup="searchForString(this, event); return false;" onmouseover="focus(this);"'.($gallerymode || !$isMain ? ' disabled' : '').' />';
-				echo '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/fancy-close.png" /></a>';
-				echo '</li>';
-			}
-		echo '</ul>';
-		echo '</li>';
+	if ($SEARCH_ENABLED && $isMain) {
+		createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
 	}
 	
-	if (!$isTvshow) {
-		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
-		echo '<li'.($isTvshow ? ' class="active"' : '').' style="font-weight:bold;">';
-		echo '<a href="?show=serien" onmouseover="closeNavs();" onclick="return checkForCheck();"'.($isTvshow ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">tv-shows</a>';
-		echo '</li>';
-	} else {
+	echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+	if ($isTvshow) {
 		echo '<li class="dropdown" id="dropLatestEps" onmouseover="openNav(\'#dropLatestEps\');">';
-		#echo '<a href="?show=serien&dbSearch=" onmouseover="closeNavs();" zz_onclick="location.reload(true);"'.($isTvshow ? ' class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' zz_data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">tv-shows <b class="caret"></b></a>';
-		echo '<a href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="return checkForCheck();"'.($isTvshow ? ' class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">tv-shows <b class="caret"></b></a>';
+		echo '<a href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="return checkForCheck();" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'">tv-shows <b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
-		
 		createEpisodeSubmenu(fetchLastSerien());
 		echo '</ul>';
 		echo '</li>';
+	} else {
+		echo '<li style="font-weight:bold;">';
+		echo '<a href="?show=serien" onmouseover="closeNavs();" onclick="return checkForCheck();" style="font-weight:bold;'.($bs211).'">tv-shows</a>';
+		echo '</li>';
 	}
-	echo '</ul>';
+	
+	if ($SEARCH_ENABLED && $isTvshow) {
+		createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
+	}
+	
+	if ($MUSICVIDS_ENABLED) {
+		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+		echo '<li'.($isMVids ? ' class="active"' : '').' style="font-weight:bold;">';
+		echo '<a href="?show=mvids" onmouseover="closeNavs();" onclick="return checkForCheck();"'.($isMVids ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">music-videos</a>';
+		echo '</li>';
+	}
+	
+	echo '</ul>'; //after this menu on right-side
 	
 	echo '<ul class="nav pull-right" style="padding-top:2px;">';
 	if ($isAdmin && $XBMCCONTROL_ENABLED) {
@@ -1008,7 +1004,7 @@ function postNavBar($isMain) {
 		echo '</li>';
 		*/
 		
-		$NAS_CONTROL     = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
+		$NAS_CONTROL = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
 		if ($NAS_CONTROL) {
 			echo '<li class="divider"></li>';
 			echo '<li><a class="fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
@@ -1024,6 +1020,29 @@ function postNavBar($isMain) {
 	echo '</div></div></div>';
 	
 	return;
+}
+
+function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211) {
+	echo '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
+	echo '<a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">search <b class="caret"></b></a>';
+	echo '<ul class="dropdown-menu">';
+		echo '<li tabindex="1"'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
+		echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
+		echo '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/fancy-close.png" /></a>';
+		echo '</li>';
+		
+		if ($isTvshow && !empty($saferSearch)) {
+			createEpisodeSubmenu(fetchSearchSerien($saferSearch));
+		}
+		
+		if (!$isTvshow) {
+			echo '<li class="navbar-search" style="margin:0px;">';
+			echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchfor" name="searchfor" placeholder="filter..." onfocus="this.select();" onkeyup="searchForString(this, event); return false;" onmouseover="focus(this);"'.($gallerymode || !$isMain ? ' disabled' : '').' />';
+			echo '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/fancy-close.png" /></a>';
+			echo '</li>';
+		}
+	echo '</ul>';
+	echo '</li>';
 }
 
 function createEpisodeSubmenu($result) {
@@ -1197,7 +1216,6 @@ function logc($val, $noadmin = false) { if (isAdmin() || $noadmin) { echo '<scri
 function pre($val, $noadmin = false)  { if (isAdmin() || $noadmin) { echo '<pre>'.$val.'</pre>'."\r\n"; } }
 
 function redirectPage($subPage = null, $redirect = false) {
-	#$path = dirname($_SERVER['PHP_SELF']);
 	$hostname = getHostnameWPath().($subPage != null ? $subPage : '');
 	
 	if (!empty($_GET) || !empty($_POST)) { setSessionParams(); }
@@ -1206,35 +1224,45 @@ function redirectPage($subPage = null, $redirect = false) {
 }
 
 function getHostnameWPath() {
-	$path = dirname($_SERVER['PHP_SELF']);
-	$hostname = getHostnamee().$path;
-	
-	return $hostname;
+	$phpSelf = getEscServer('PHP_SELF');
+	return getHostnamee().dirname($phpSelf);
 }
 
 function getLocalhostWPath() {
-	$path = dirname($_SERVER['PHP_SELF']);
-	$hostname = getLocalhost().$path;
-	
-	return $hostname;
+	$phpSelf = getEscServer('PHP_SELF');
+	return getLocalhost().dirname($phpSelf);
 }
 
 function setSessionParams($isAuth = false) {
 	if (!isset( $_SESSION )) { return; }
 	
-	if (!empty( getEscGet('mode')            )) { unset($_SESSION['newmode']); $_SESSION['mode']    = getEscGet('mode');   }
-	if (!empty( getEscGet('unseen')          )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = getEscGet('unseen'); }
-	if (!empty( getEscGet('show')            )) { if(getEscGet('show') != 'logout') { $_SESSION['show'] = getEscGet('show'); } }
-	if (!empty( getEscGet('sort')            )) { $_SESSION['sort']          = getEscGet('sort');             }
-	if (!empty( getEscGet('idShow')          )) { $_SESSION['idShow']        = getEscGet('idShow');           }
-	if (!empty( getEscGet('ref')             )) { $_SESSION['reffer']        = getEscGet('ref');              }
-	if (!empty( getEscGet('newmode')         )) { $_SESSION['newmode']       = getEscGet('newmode');          }
-	if (!empty( getEscGet('country')         )) { $_SESSION['country']       = getEscGet('country');          }
-	if (!empty( getEscGet('gallerymode')     )) { $_SESSION['gallerymode']   = getEscGet('gallerymode');      }
-	if (!empty( getEscGet('which')           )) { $_SESSION['which']         = getEscGet('which');            }
-	if (!empty( getEscGet('name')            )) { $_SESSION['name']          = getEscGet('name');             }
-	if (!empty( getEscGet('just')            )) { $_SESSION['just']          = getEscGet('just');             }
-	if (!empty( getEscGPost('newAddedCount') )) { $_SESSION['newAddedCount'] = getEscGPost('newAddedCount');  }
+	$mode          = getEscGet('mode');
+	$unseen        = getEscGet('unseen');
+	$show          = getEscGet('show');
+	$sort          = getEscGet('sort');
+	$idShow        = getEscGet('idShow');
+	$ref           = getEscGet('ref');
+	$newmode       = getEscGet('newmode');
+	$country       = getEscGet('country');
+	$gallerymode   = getEscGet('gallerymode');
+	$which         = getEscGet('which');
+	$name          = getEscGet('name');
+	$just          = getEscGet('just');
+	$newAddedCount = getEscGPost('newAddedCount');
+	
+	if (!empty( $mode          )) { unset($_SESSION['newmode']); $_SESSION['mode']    = $mode;   }
+	if (!empty( $unseen        )) { unset($_SESSION['newmode']); $_SESSION['unseen']  = $unseen; }
+	if (!empty( $show          )) { if($show != 'logout') { $_SESSION['show'] = $show; } }
+	if (!empty( $sort          )) { $_SESSION['sort']          = $sort;          }
+	if (!empty( $idShow        )) { $_SESSION['idShow']        = $idShow;        }
+	if (!empty( $ref           )) { $_SESSION['reffer']        = $ref;           }
+	if (!empty( $newmode       )) { $_SESSION['newmode']       = $newmode;       }
+	if (!empty( $country       )) { $_SESSION['country']       = $country;       }
+	if (!empty( $gallerymode   )) { $_SESSION['gallerymode']   = $gallerymode;   }
+	if (!empty( $which         )) { $_SESSION['which']         = $which;         }
+	if (!empty( $name          )) { $_SESSION['name']          = $name;          }
+	if (!empty( $just          )) { $_SESSION['just']          = $just;          }
+	if (!empty( $newAddedCount )) { $_SESSION['newAddedCount'] = $newAddedCount; }
 	
 	if (!$isAuth) {
 		unset( $_SESSION['submit'], $_SESSION['export'] );
@@ -1270,10 +1298,10 @@ function restoreSession() {
 function storeSession() {
 	$user = $_SESSION['user'];
 	clearMediaCache();
-	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['xbmcRunning'], $_SESSION['overrideFetch'],
-	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['refferLoged'], $_SESSION['dbName'], 
-	       $_SESSION['angemeldet'], $_SESSION['paths'], $_SESSION['thumbs'],   $_SESSION['private'],     $_SESSION['TvDbCache'],
-	       $_SESSION['tvShowParam']
+	unset( $_SESSION['username'],   $_SESSION['user'], $_SESSION['idGenre'],  $_SESSION['xbmcRunning'], $_SESSION['overrideFetch'],
+	       $_SESSION['passwort'],   $_SESSION['gast'], $_SESSION['idStream'], $_SESSION['refferLoged'], $_SESSION['dbName'], 
+	       $_SESSION['angemeldet'], $_SESSION['demo'], $_SESSION['thumbs'],   $_SESSION['tvShowParam'], $_SESSION['TvDbCache'],
+	       $_SESSION['private'],    $_SESSION['paths']
 	     ); //remove values that should be determined at login
 	
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
@@ -1283,7 +1311,7 @@ function storeSession() {
 
 function adminInfo($start, $show) {
 	$adminInfo = isset($GLOBALS['ADMIN_INFO']) ? $GLOBALS['ADMIN_INFO'] : true;
-	if (isAdmin() && $adminInfo && ($show == 'filme' || $show == 'serien')) {
+	if (isAdmin() && $adminInfo && ($show == 'filme' || $show == 'serien' || $show == 'mvids')) {
 		echo '<div class="bs-docs" id="adminInfo" style="z-index:10;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
 		
 		//hdparm
@@ -1414,7 +1442,8 @@ function moveUploadedFile($prefix, $fileType) {
 			return;
 
 		} else { // OK - do the rest of the file handling here
-			$target_path = '/var/www'.dirname($_SERVER['PHP_SELF']).'/uploads/';
+			$phpSelf = getEscServer('PHP_SELF');
+			$target_path = '/var/www'.dirname($phpSelf).'/uploads/';
 			$target_path = $target_path.basename($_FILES['thefile']['name']);
 
 			if (move_uploaded_file($_FILES['thefile']['tmp_name'], $target_path)) {
@@ -1458,12 +1487,15 @@ function checkOpenGuest() {
 }
 
 function getHttPre() {
-	$isHTTPs = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on');
+	$https   = getEscServer('HTTPS');
+	$isHTTPs = (isset($https) && $https == 'on');
 	return 'http'.($isHTTPs ? 's' : '').'://';
 }
 
 function getHostnamee() {
-	$hostname = $_SERVER['HTTP_HOST'];
+	$httpHost = getEscServer('HTTP_HOST');
+	$hostname = isset($httpHost) ? $httpHost : null;
+	if (empty($hostname)) { header("HTTP/1.1 400 Bad Request"); exit; }
 	return getHttPre().$hostname;
 }
 
@@ -1472,36 +1504,31 @@ function getLocalhost() {
 	return getHttPre().$hostname;
 }
 
-function logRefferer($reffer) {
-	if (isset($_SESSION['refferLoged'])) {
-		return false;
-	}
-	
-	//if (empty($reffer)) { return false; }
-	$exit = false;
-	
+function logRefferer($reffer = null) {
+	if (isset($_SESSION['refferLoged'])) { return false; }
 	$_SESSION['refferLoged'] = true;
+	$exit = false;
 	
 	$LOCALHOST   = isset($GLOBALS['LOCALHOST'])   ? $GLOBALS['LOCALHOST']   : false;
 	$HOMENETWORK = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
-
+	
 	if (!($LOCALHOST || $HOMENETWORK)) {
-		$ip = $_SERVER['REMOTE_ADDR'];
+		$ip = getEscServer('REMOTE_ADDR');
 		$host = gethostbyaddr($ip);
-
-		$hostname = $_SERVER['HTTP_HOST'];
+		
+		$hostname = getEscServer('HTTP_HOST');
 		if (empty($reffer)) {
-			$reffer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+			$reffer = getEscServer('HTTP_REFERER', '');
 		}
 		
 		$datei = "./logs/reffer.php";
-
+		
 		$datum = strftime("%d.%m.%Y");
 		$time = strftime("%X");
 		if (!allowedRequest()) { $exit = true; }
 		
 		$input = $datum."|".$time."|".$ip."|".$host."|".$reffer."|".($exit ? 1 : 0)."\n";
-
+		
 		$fp = fopen($datei, "r");
 		$eintraege = '';
 		while(!feof($fp)) {
@@ -1576,15 +1603,20 @@ function getEpisodeInfo($episodes, $getSeason, $getEpisode) {
 	return $episodes[$getSeason][$getEpisode];
 }
 
-function fetchAndUpdateAirdate($idShow) {
+function checkAirDate() {
+	return isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
+}
+
+function fetchAndUpdateAirdate($idShow, $dbh = null) {
+	if (!checkAirDate()) { return; }
 	if (empty($idShow) || $idShow < 0) { return; }
 	
 	$serien      = fetchSerien($GLOBALS['SerienSQL'], null);
+	if (!is_object($serien)) { return; }
 	$serie       = $serien->getSerie($idShow);
 	$nextEpisode = getNextEpisode($serie);
 	
 	if (empty($nextEpisode)) { return; }
-	#$airDate     = addRlsDiffToDate(getNextAirDate($nextEpisode));
 	$airDate     = getNextAirDate($nextEpisode);
 	
 	//tvdb
@@ -1592,23 +1624,26 @@ function fetchAndUpdateAirdate($idShow) {
 	$episode = $nextEpisode['EpisodeNumber'];
 	
 	if (empty($season) || empty($episode)) { return; }
-	updateAirdateInDb($idShow, $season, $episode, $airDate);
+	updateAirdateInDb($idShow, $season, $episode, $airDate, $dbh);
 	clearMediaCache();
 }
 
-function clearAirdateInDb($idShow) {
+function clearAirdateInDb($idShow, $dbh = null) {
+	if (!checkAirDate()) { return; }
 	$SQL = "DELETE FROM nextairdate WHERE idShow = [idShow];";
 	$SQL = str_replace('[idShow]', $idShow, $SQL);
-	execSQL($SQL, false);
+	execSQL_($dbh, $SQL, false, false);
 }
 
-function updateAirdateInDb($id, $season, $episode, $airdate) {
+function updateAirdateInDb($id, $season, $episode, $airdate, $dbh = null) {
+	if (!checkAirDate()) { return; }
 	if ($id == -1 || $season == -1 || $episode == -1 || empty($airdate)) { return; }
 	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate) VALUES ('".$id."', '".$season."', '".$episode."', '".strtotime($airdate)."');";
-	execSQL($SQL, false);
+	execSQL_($dbh, $SQL, false, false);
 }
 
 function getNextEpisode($serie) {
+	if (!checkAirDate()) { return null; }
 	$idTvDb      = $serie->getIdTvdb();
 	$stCount     = $serie->getStaffelCount();
 	$running     = $serie->isRunning();
@@ -1805,7 +1840,7 @@ function decodeString($text) {
 
 function isBlacklisted($ipIs = null) {
 	$blacklisted = restoreBlacklist();
-	$ip          = empty($ipIs) ? $_SERVER['REMOTE_ADDR'] : $ipIs;
+	$ip          = empty($ipIs) ? getEscServer('REMOTE_ADDR') : $ipIs;
 	
 	if (!isset($blacklisted[$ip])) { return false; }
 	if ($blacklisted[$ip]['count'] <= 4) { return false; }
@@ -1818,7 +1853,7 @@ function isBlacklisted($ipIs = null) {
 
 function removeBlacklist($ipDel = null) {
 	$blacklisted = restoreBlacklist();
-	$ip          = empty($ipDel) ? $_SERVER['REMOTE_ADDR'] : $ipDel;
+	$ip          = empty($ipDel) ? getEscServer('REMOTE_ADDR') : $ipDel;
 	
 	unset( $blacklisted[$ip] );
 	
@@ -1827,7 +1862,7 @@ function removeBlacklist($ipDel = null) {
 
 function addBlacklist() {
 	$blacklisted = restoreBlacklist();
-	$ip          = $_SERVER['REMOTE_ADDR'];
+	$ip          = getEscServer('REMOTE_ADDR');
 	
 	$blacklisted[$ip]['date']  = time();
 	$blacklisted[$ip]['count'] = isset($blacklisted[$ip]['count']) ? $blacklisted[$ip]['count']+1 : 1;
@@ -1871,8 +1906,9 @@ function getPD0() {
 	return $dbh;
 }
 
-function getEscGet($key, $defVal = null)  { return isset($_GET[$key])  ? trim(SQLite3::escapeString($_GET[$key]))  : $defVal; }
-function getEscPost($key, $defVal = null) { return isset($_POST[$key]) ? trim(SQLite3::escapeString($_POST[$key])) : $defVal; }
+function getEscServer($key, $defVal = null)  { return isset($_SERVER[$key])  ? htmlspecialchars($_SERVER[$key], ENT_QUOTES, 'UTF-8') : $defVal; }
+function getEscGet($key, $defVal = null)     { return isset($_GET[$key])  ? trim(SQLite3::escapeString($_GET[$key]))  : $defVal; }
+function getEscPost($key, $defVal = null)    { return isset($_POST[$key]) ? trim(SQLite3::escapeString($_POST[$key])) : $defVal; }
 function getEscGPost($key, $defVal = null) {
 	$res = getEscGet($key);
 	if (isset($res)) { return $res; }

@@ -75,7 +75,7 @@
 	</script>
 	</head>
 	<body>
-	<table id="serieSet" class="film" style="width:350px; padding:0px; z-index:1;">
+	<table id="serieSet" class="film" style="width:350px; padding:0px; margin-left:13px !important; z-index:1;">
 		<tr><th class="righto" style="padding:0 0 0 15px;">id</th><th colspan="2" style="padding-left:10px !important;">Setname</th></tr>
 <?php postSets(); ?>
 		<tr><td class="righto" colspan="3" style="cursor:pointer;" onclick="addSet(); return false;"><img src="./img/add.png" style="height:24px; width:24px;" title="add set"></td></tr>
@@ -128,7 +128,7 @@ function postSets() {
 		}
 		
 		foreach($sets as $entry) {
-			$idSet = $entry['idSet'];
+			$idSet  = $entry['idSet'];
 			$strSet = $entry['strSet'];
 			postSet($idSet, $strSet);
 			

@@ -45,8 +45,7 @@
 	}
 	
 	echo '<div class="descDiv">';
-	$checkAirDate = isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
-	if ($checkAirDate && $running) {
+	if (checkAirDate() && $running) {
 		$airDate     = null;
 		$nextEpisode = null;
 		$nextAirDate = $serie->getNextAirDateStr();
