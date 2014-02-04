@@ -1,18 +1,17 @@
 <?php
-	#include_once "auth.php";
-	#include_once "check.php";
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "globals.php";
+include_once "check.php";
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "globals.php";
 	
-	if (!isAdmin()) { exit; }
+	if (!isAdmin()) { return; }
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
 	<head>
 	<title>Set Editor</title>
 <?php
-	$closeFrame = isset($_GET['closeFrame']) ? trim(SQLite3::escapeString($_GET['closeFrame'])) : 0;
+	$closeFrame = getEscGet('closeFrame', 0);
 ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="class.css" />
@@ -87,24 +86,6 @@
 function postSets() {
 	$dbh = getPDO();
 	try {
-		/*
-		$SQL_SETLINK = 'SELECT S.idSet, S.strSet, M.c00 AS filmname, M.idMovie AS idMovie FROM movie M, sets S WHERE M.idSet = S.idSet ORDER BY S.strSet, M.c00;';
-		$result = $dbh->query($SQL_SETLINK);
-		$lastSet = -1;
-		foreach($result as $entry) {
-			$idSet    = $entry['idSet'];
-			$strSet   = $entry['strSet'];
-			$idMovie  = $entry['idMovie'];
-			$filmname = $entry['filmname'];
-			
-			if ($idSet != $lastSet) {
-				postSet($idSet, $strSet);
-			}
-			postSetMovie($idSet, $idMovie, $filmname);
-			$lastSet = $idSet;
-		}
-		*/
-		
 		$SQL_SETS = 'SELECT * FROM sets ORDER BY strSet;';
 		$result = $dbh->query($SQL_SETS);
 		$sets = array();

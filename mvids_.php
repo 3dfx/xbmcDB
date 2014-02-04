@@ -48,6 +48,11 @@
 		
 		function checkForCheck() { return true; }
 		
+		function markActive(obj) {
+			$('.showShowInfo').children('TD').removeClass('selectedShow');
+			$(obj).children('TD').addClass('selectedShow');
+		}
+		
 <?php
 	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	$bindF      = false;
@@ -74,18 +79,15 @@
 	
 <?php	
 function fillTable() {
-	$sessionKey = 'mvidz';
-	$mvids = fetchMVids($sessionKey, 1);
+	$sort  = $_SESSION['mvSort'];
+	$mvids = fetchMVids('', $sort);
 	
 	echo "\t".'<table id="showsTable" class="film">'."\r\n";
-	#echo "\t\t".'<tr class="emptyTR" style="border-bottom:0px;">';
-	#echo '<th colspan="'.(6 + $colspan).'" style="padding:0px;"></th>';
-	#echo '</tr>'."\r\n";
 	echo "\t\t".'<tr class="emptyTR" id="emptyTR" style="border-top:0px;">';
-	echo '<th class="showShowInfo1" style="float:right;">#</th>';
-	echo '<th class="showShowInfo1" style="margin-left:-10px;">Artist</th>';
-	echo '<th class="showShowInfo1" style="margin-left:-10px;">Title</th>';
-	echo '<th class="showShowInfo1" style="margin-left:-10px;">Featuring</th>';
+	echo '<th class="th1" style="float:right;"><a href="?show=mvids&mvSort=4"'.($sort == 4 ? ' style="color:red;"' : '').'>#</a></th>';
+	echo '<th class="th1" style="margin-left:-10px;"><a href="?show=mvids&mvSort=1"'.($sort == 1 ? ' style="color:red;"' : '').'>Artist</a></th>';
+	echo '<th class="th1" style="margin-left:-10px;"><a href="?show=mvids&mvSort=2"'.($sort == 2 ? ' style="color:red;"' : '').'>Title</a></th>';
+	echo '<th class="th1" style="margin-left:-10px;">Featuring</th>';
 	echo '</tr>'."\r\n";
 	postMVids($mvids);
 	echo "\t".'</table>'."\r\n";
@@ -95,13 +97,20 @@ function postMVids($mvids) {
 	$mvids = $mvids->getMVids();
 	$lmLen = strlen(count($mvids));
 	$count = 1;
+	
+	$isAdmin     = isAdmin();
+	$xbmcRunning = xbmcRunning();
+	
 	foreach ($mvids as $mvid) {
 		$strCount = $count;
 		while(strlen($strCount) < $lmLen) { $strCount = '0'.$strCount; }
 		$count++;
 		
-		echo "\t\t".'<tr class="showShowInfo">';
-		echo '<td style="color:silver;" class="sInfoSize">'.$strCount.'</td>';
+		$filename = prepPlayFilename($mvid->getFilename());
+		$playItem = $isAdmin && $xbmcRunning && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;"' : null;
+		
+		echo "\t\t".'<tr class="showShowInfo" onclick="markActive(this);">';
+		echo '<td style="color:silver;'.(!empty($playItem) ? ' cursor:pointer;' : '').'" class="sInfoSize"'.$playItem.'>'.$strCount.'</td>';
 		echo '<td style="padding-left:3px;">'.$mvid->getArtist().'</td>';
 		echo '<td style="padding-left:3px;">'.$mvid->getTitle().'</td>';
 		echo '<td style="padding-left:3px;">'.$mvid->getFeat().'</td>';

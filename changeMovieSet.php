@@ -1,53 +1,30 @@
 <?php
-	include_once "auth.php";
-	include_once "check.php";
+include_once "auth.php";
+include_once "check.php";
 
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "globals.php";
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "globals.php";
+	
+	startSession();
+	if (!isAdmin()) { return; };
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
 	<head>
 <?php
-	startSession();
-	if (!isAdmin()) { return; };
-	
-	$idMovie    = getEscGPost('idMovie', -1);
 	$closeFrame = getEscGPost('closeFrame', 0);;
+	$idMovie    = getEscGPost('idMovie', -1);
 	
-	$dbh = null;
+	$row    = fetchFromDB('SELECT idSet FROM movie WHERE idMovie = '.$idMovie.';');
+	$idSet  = $row['idSet'];
 	
-	$idSet = -1;
-	$dbh = getPDO();
-	try {
-		$idMovie = $GLOBALS['idMovie'];
-		$SQL_SET = 'SELECT idSet FROM movie WHERE idMovie = '.$idMovie.';';
-
-		$result = $dbh->query($SQL_SET);
-		$row = $result->fetch();
-		$idSet = $row['idSet'];
-
-	} catch(PDOException $e) {
-		echo $e->getMessage();
-	}
-
 /*	FUNCTIONS	*/
 function postSets() {
-	$idSet = $GLOBALS['idSet'];
-	
-	$dbh = getPDO();
-	try {
-		$SQL_SETS = 'SELECT * FROM sets ORDER BY strSet;';
-		$result = $dbh->query($SQL_SETS);
-		$sets = array();
-		$s = 0;
-		foreach($result as $row) {
-			postSet($idSet, $row['idSet'], $row['strSet']);
-		}
-		
-	} catch(PDOException $e) {
-		echo $e->getMessage();
+	$idSet  = $GLOBALS['idSet'];
+	$result = querySQL('SELECT * FROM sets ORDER BY strSet;');
+	foreach($result as $row) {
+		postSet($idSet, $row['idSet'], $row['strSet']);
 	}
 }
 

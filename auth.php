@@ -1,7 +1,7 @@
 <?php
-	include_once "./template/config.php";
-	include_once "./template/functions.php";
-	include_once "globals.php";
+include_once "./template/config.php";
+include_once "./template/functions.php";
+include_once "globals.php";
 	
 	$gast_users     = isset($GLOBALS['GAST_USERS'])     ? $GLOBALS['GAST_USERS']     : array();
 	$login_username = isset($GLOBALS['LOGIN_USERNAME']) ? $GLOBALS['LOGIN_USERNAME'] : null;

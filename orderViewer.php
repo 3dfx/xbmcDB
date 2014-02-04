@@ -1,12 +1,11 @@
 <?php
-	#include_once "auth.php";
-	#include_once "check.php";
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "globals.php";
+include_once "check.php";
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "globals.php";
 	
 	if (!isAdmin()) { exit; }
-	$exist = existsOrdersTable();
+	$tableExists = existsOrdersTable();
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
@@ -16,20 +15,24 @@
 	$self        = $_SERVER['PHP_SELF'];
 	$orderName   = getEscGet('orderName');
 	$deleteOrder = getEscGet('deleteOrder');
+	$unreadOrder = getEscGet('unreadOrder');
+	$fname       = null;
 	
-	if (!empty($deleteOrder)) {
+	if (!empty($unreadOrder) || !empty($deleteOrder)) {
 		$dir   = './orders';
 		$fname = $dir.'/'.$orderName;
-		if (file_exists($fname)) {
-			unlink($fname);
+	}
+	
+	if (!empty($fname)) {
+		if (!empty($unreadOrder)) {
+			if ($tableExists) { execSQL("UPDATE orders SET fresh = 1 WHERE strFilename = '".$fname."';", false); }
+			unset( $orderName, $unreadOrder );
+			
+		} else if (!empty($deleteOrder)) {
+			if (file_exists($fname)) { unlink($fname); }
+			if ($tableExists) { execSQL("DELETE FROM orders WHERE strFilename = '".$fname."';", false); }
+			unset( $orderName, $deleteOrder );
 		}
-		
-		if ($exist) {
-			$sql = "DELETE FROM orders WHERE strFilename = '".$fname."';";
-			execSQL($sql, false);
-		}
-		
-		unset( $deleteOrder, $orderName );
 	}
 ?>
 		<link rel="stylesheet" type="text/css" href="class.css" />
@@ -46,6 +49,13 @@
 				
 				cursorBusy();
 				window.location.href='<?php echo $self; ?>?orderName=' + orderName;
+			}
+			
+			function unReadOrder(orderName) {
+				if (orderName == null || orderName == '') { return; }
+				
+				cursorBusy();
+				window.location.href='<?php echo $self; ?>?unreadOrder=1&orderName=' + orderName;
 			}
 			
 			function dletOrder(orderName) {
@@ -79,12 +89,12 @@
 <?php if (empty($orderName)) { ?>
 
 		<table id="orders" class="film" style="width:95%; padding:0px; z-index:1;">
-			<tr><th class="righto">#</th><th style="padding-left:10px !important;">User</th><th class="righto">Date</th><th></th></tr>
+			<tr><th class="righto">#</th><th style="padding-left:10px !important;">User</th><th class="righto">Date</th><th></th><th></th></tr>
 <?php readOrders(); ?>
 		</table>
 <?php } ?>
 <?php if (!empty($orderName)) {
-	$exist = $GLOBALS['exist'];
+	$tableExists = $GLOBALS['tableExists'];
 	echo "\r\n<b>".$orderName."</b>\r\n";
 	$dir   = './orders';
 	$fname = $dir.'/'.$orderName;
@@ -100,22 +110,18 @@
 		echo "</pre>\r\n";
 	}
 	
-	if ($exist) {
-		$sql = "UPDATE orders SET fresh = 0 WHERE strFilename = '".$fname."';";
-		execSQL($sql, false);
-	}
+	if ($tableExists) { execSQL("UPDATE orders SET fresh = 0 WHERE strFilename = '".$fname."';", false); }
 } ?>
 	</body>
 </html>
 <?php
 /*	FUNCTIONS	*/
 function readOrders() {
-	$exist = $GLOBALS['exist'];
+	$tableExists = $GLOBALS['tableExists'];
 	
 	$freshs = array();
-	if ($exist) {
-		$sql = "SELECT strFilename, fresh FROM orders ORDER BY strFilename;";
-		$res = fetchFromDB($sql);
+	if ($tableExists) {
+		$res = querySQL("SELECT strFilename, fresh FROM orders ORDER BY strFilename;");
 		foreach($res as $row) {
 			$fname = $row['strFilename'];
 			$fresh = $row['fresh'];
@@ -150,7 +156,7 @@ function readOrders() {
 	
 	if (empty($counter)) {
 		echo "\t\t\t".'<tr>';
-		echo '<td colspan="4">No orders found!</td>';
+		echo '<td colspan="5">No orders found!</td>';
 		echo '</tr>';
 		echo "\r\n";
 	}
@@ -166,7 +172,8 @@ function postOrder($c, $name, $fname, $fresh) {
 	echo '<td onclick="readOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto">'.$c.'</td>';
 	echo '<td onclick="readOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.' padding-left:10px !important;">'.$user.'</td>';
 	echo '<td onclick="readOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto">'.$date.'</td>';
-	echo '<td onclick="dletOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.'" class="righto"><img src="./img/del.png" style="height:16px; width:16px;" title="delete"></td>';
+	echo '<td onclick="unReadOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.' max-width:35px;" class="righto"><img src="./img/apply.png" style="height:16px; width:16px;" title="set unread"></td>';
+	echo '<td onclick="dletOrder(\''.$name.'\'); return false;" style="cursor:pointer;'.$style.' max-width:35px;" class="righto"><img src="./img/del.png" style="height:16px; width:16px;" title="delete"></td>';
 	echo '</tr>';
 	echo "\r\n";
 }

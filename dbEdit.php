@@ -1,9 +1,9 @@
 <?php
-	include_once "check.php";
-	
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "globals.php";
+include_once "check.php";
+
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "globals.php";
 	
 	startSession();
 	if (!isAdmin()) { die; }
@@ -33,6 +33,7 @@
 	$gast_autor = getEscGPost('gast_autor', '');
 	$airdate    = getEscGPost('airdate', '');
 	$desc       = getEscGPost('desc', '');
+	$val        = getEscGPost('val', -1);
 	
 	$dbh = getPDO();
 	try {
@@ -102,8 +103,9 @@
 			 #############################
 			
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
-			$result    = $dbh->query($GETID_SQL);
-			$row       = $result->fetch();
+			#$result    = $dbh->query($GETID_SQL);
+			#$row       = $result->fetch();
+			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId    = $row['idFile'];
 			$idFile    = $lastId + 1;
 			$added     = date("Y-m-d H:i:s", time());
@@ -116,8 +118,9 @@
 			$dbh->exec($SQLfile);
 			
 			$GETID_SQL = 'SELECT idEpisode FROM episode ORDER BY idEpisode DESC LIMIT 0, 1;';
-			$result    = $dbh->query($GETID_SQL);
-			$row       = $result->fetch();
+			#$result    = $dbh->query($GETID_SQL);
+			#$row       = $result->fetch();
+			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId    = $row['idEpisode'];
 			$idEpisode = $lastId + 1;
 			
@@ -196,6 +199,16 @@
 			clearMediaCache();
 		}
 
+		if ($act == 'setRunning' && $idShow != -1 && $val != -1) {
+			if ($val == 1) {
+				$dbh->exec('INSERT INTO tvshowrunning VALUES('.$idShow.', 1);');
+			} else {
+				$dbh->exec('DELETE FROM tvshowrunning WHERE idShow = '.$idShow.';');
+				$dbh->exec('DELETE FROM nextairdate WHERE idShow = '.$idShow.';');
+			}
+			clearMediaCache();
+		}
+
 		if (($act == 'linkInsert' || $act == 'linkUpdate') && $id != -1 && $idMovie != -1) {
 			$SQL = 'UPDATE movie SET idSet='.$id.' WHERE idMovie = '.$idMovie.';';
 			clearMediaCache();
@@ -214,14 +227,13 @@
 		
 		if ($act == 'setMoviesetCover' && $id != -1 && $idMovie != -1) {
 			$url = '';
-			$dbh = getPDO();
 			try {
 				$res = $dbh->query("SELECT url,type FROM art WHERE media_type = 'movie' AND media_id = '".$idMovie."';");
 				$poster  = '';
 				$fanart  = '';
 				foreach($res as $row) {
 					$type = $row['type'];
-					$url = $row['url'];
+					$url  = $row['url'];
 					if (!empty($url)) {
 						if (
 						    $type == 'poster' ||
@@ -235,26 +247,29 @@
 					}
 				}
 				
-				$dbh->beginTransaction();
+				$dbh->exec("DELETE FROM art WHERE media_type='set' AND media_id ='".$id."';");
+				$dbh->exec("REPLACE INTO art (media_id, media_type, type, url) VALUES('".$id."', 'set', 'poster', '".$poster."');");
+				$dbh->exec("REPLACE INTO art (media_id, media_type, type, url) VALUES('".$id."', 'set', 'fanart', '".$fanart."');");
 				
-				$dbh->exec("REPLACE INTO art (media_id, media_type, type, url) VALUES ('".$id."', 'set', 'poster', '".$poster."');");
-				$dbh->exec("REPLACE INTO art (media_id, media_type, type, url) VALUES ('".$id."', 'set', 'fanart', '".$fanart."');");
-				$dbh->commit();
-
 			} catch(PDOException $e) {
 				if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
 				exit;
 			}
 			echo 'Setcover was set!<br />';
-			exit;
+			#exit;
 			
+			if ($false) {
 			if (!empty($url)) {
-				$crc = thumbnailHash($url);
+				$docRoot = getEscServer('DOCUMENT_ROOT');
+				$path    = $GLOBALS['THUMBNAIL_DIR'];
+				$path    = str_replace('./', $docRoot, $path);
+				
+				$crc    = thumbnailHash($url);
 				$crcSet = thumbnailHash('videodb://1/7/'.$id.'/');
 				
-				$go = true;
-				$movieCover = "/var/www/img/Thumbnails/".substr($crc, 0, 1)."/".$crc.".jpg";
-				$setCover = "/var/www/img/Thumbnails/".substr($crcSet, 0, 1)."/".$crcSet.".jpg";
+				$go         = true;
+				$movieCover = $path.substr($crc, 0, 1)."/".$crc.".jpg";
+				$setCover   = $path.substr($crcSet, 0, 1)."/".$crcSet.".jpg";
 				
 				if (!empty($setCover)) {
 					if (is_file($setCover)) {
@@ -265,7 +280,7 @@
 							echo 'Old cover was deleted!<br />';
 						}
 					}
-
+					
 					if ($go) {
 						if ( copy($movieCover, $setCover) or die ('DENiED!') ) {
 							echo 'Setcover was set!<br />';
@@ -277,12 +292,12 @@
 				
 				echo '<br />';
 				
-				$movieFanart = "/var/www/img/Thumbnails/".$crc.".jpg";
+				$movieFanart = $path.$crc.".jpg";
 				$setFanart = '';
 				$go = true;
 				if (!empty($movieFanart) && is_file($movieFanart)) {
-					$setFanart = "/var/www/img/Thumbnails/".$crcSet.".jpg";
-
+					$setFanart = $path.$crcSet.".jpg";
+					
 					if (!empty($setFanart)) {
 						if (is_file($setFanart)) {
 							if ( unlink($setFanart) === false ) {
@@ -305,16 +320,18 @@
 				
 				exit;
 			} //empty url
+			}
 		}
 		
 		if ($act == 'addset' && !empty($name)) {
 			$GETID_SQL = 'SELECT idSet FROM sets ORDER BY idSet DESC LIMIT 0, 1';
-			$result = $dbh->query($GETID_SQL);
-			$row = $result->fetch();
+			#$result = $dbh->query($GETID_SQL);
+			#$row = $result->fetch();
+			$row = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId = $row['idSet'];
 			$id = $lastId + 1;
 			
-			$SQL = 'REPLACE INTO sets values ('.$id.', "'.$name.'");';
+			$SQL = 'REPLACE INTO sets VALUES('.$id.', "'.$name.'");';
 		}
 		
 		if ($act == 'delete' && $id != -1) {
@@ -333,7 +350,10 @@
 		
 		if ($act == 'setSeen' || $act == 'setUnseen') {
 			echo '<span style="font:12px Verdana, Arial;">Episode is set to '.($act == 'setUnseen' ? 'not ' : '').'watched!</span>';
-			
+		
+		} else if ($act == 'setRunning' && $idShow != -1 && $val != -1) {
+			echo '<span style="font:12px Verdana, Arial;">TV-Show is set to '.($val == 1 ? 'running' : 'not running').'!</span>';
+		
 		} else if ($act == 'updateEpisode') {
 			#header('Location: '.($path == '/' ? '' : $path).'/addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'&closeFrame=1');
 			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');

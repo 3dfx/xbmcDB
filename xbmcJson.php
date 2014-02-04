@@ -6,17 +6,19 @@ include_once "./template/functions.php";
 	
 	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	if (!$xbmControl) { return; }
-
+	
 	$method = getEscGPost('method');
 	if (empty($method)) { return; }
-
+	
 	if ($method == 'clearCache') {
-		unset( $_SESSION['xbmcRunning'] );
+		#unset( $_SESSION['xbmcRunning'] );
 		clearMediaCache();
-
-	} else if ($method == 'scanLib') {
+	}
+	
+	if (!xbmcRunning()) { return; }
+	if ($method == 'scanLib') {
 		clearMediaCache();
-		unset( $_SESSION['xbmcRunning'] );
+		#unset( $_SESSION['xbmcRunning'] );
 		echo xbmcScanLibrary() ? '1' : '0';
 
 	} else if ($method == 'state') {
@@ -52,7 +54,7 @@ include_once "./template/functions.php";
 			
 			if (empty($vidId)) { echo ''; }
 			$url = "plugin://plugin.video.youtube/?action=play_video&videoid=".$vidId."";
-
+			
 		} else if (substr_count($file, 'vimeo') > 0) {
 			if (preg_match('/^http:\/\/(www\.)?vimeo\.com\/(clip\:)?(\d+).*$/', $file, $match)) {
 				$vidId = $match[3];
@@ -69,12 +71,12 @@ include_once "./template/functions.php";
 		} else {
 			echo '';
 		}
-
+		
 	} else if ($method == 'play') {
 		$file = getEscGPost('file');
 		if (empty($file)) { return; }
 		
-		$file = decodeString($file);
-		echo xbmcPlayFile($file);
+		$file = str_replace ("_AND_", "&", stripslashes($file));
+		echo xbmcPlayFile(decodeString(trimDoubles($file)));
 	}
 ?>

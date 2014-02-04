@@ -1,9 +1,8 @@
 <?php
-	#include_once "auth.php";
-	#include_once "check.php";
-	include_once "./template/functions.php";
+include_once "check.php";
+include_once "./template/functions.php";
 	
-	if (!isAdmin()) { exit; }
+	if (!isAdmin()) { return; }
 	if ($_SERVER['REQUEST_METHOD'] == 'GET' && !empty($_GET)) {
 		$action = isset($_GET['act']) ? urldecode(getEscGet('act')) : null;
 		if ($action == 'delete') {
@@ -47,7 +46,9 @@
 	$x = 1;
 	$blacklist = restoreBlacklist();
 	if (!empty($blacklist)) {
-		arsort($blacklist, SORT_NUMERIC);
+		#arsort($blacklist, SORT_NUMERIC);
+		foreach($blacklist as $ip => $entry) { $dates[$ip] = $entry['date']; }
+		array_multisort($dates, SORT_DESC, SORT_NUMERIC, $blacklist);
 		
 		foreach($blacklist as $ip => $entry) {
 			$date  = $entry['date'];
@@ -57,6 +58,7 @@
 			echo "<tr style='height:15px;'>";
 			echo "<td style='padding:2px 5px; text-align:right;".$color."'>".($x++)."</td>";
 			echo "<td style='padding:2px 10px;".$color."'>".strftime("%d.%m.%Y <b>%X</b>", $date)."</td>";
+			#echo "<td style='padding:2px 10px;".$color."'>".$date."</td>";
 			echo "<td style='padding:2px 10px;".$color."'>".$ip."</td>";
 			echo "<td style='padding:2px 10px;".$color." text-align:center;'>".$count."</td>";
 			echo "<td style='padding:2px 10px;".$color." text-align:center;'><img src='./img/del.png' style='height:18px; width:18px; cursor:pointer;' title='delete' onclick='deleteBlock(\"".$ip."\"); return false;'></td>";

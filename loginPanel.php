@@ -1,14 +1,14 @@
 <?php
-	#include_once "auth.php";
-	#include_once "check.php";
-	include_once "./template/functions.php";
+include_once "./template/functions.php";
 	
 	if (!isAdmin()) { exit; }
 	
-	$which = 1;
-	$file = 'logs/reffer.php';
-	$title = 'Refferer-log';
-	$which = getEscGet('which');
+	$which  = 1;
+	$file   = 'logs/reffer.php';
+	$title  = 'Refferer-log';
+	$which  = getEscGet('which');
+	$filter = getEscPost('filter');
+	
 	if (isset($which)) {
 		if ($which == 2) {
 			$file  = 'logs/loginLog.php';
@@ -22,13 +22,17 @@
 	<title><?php echo $title; ?></title>
 	<link type="text/css" rel="stylesheet" href="./class.css">
 </head>
-<body !oncontextmenu="return false" ondragstart="return false">
+<body>
 <?php
-	$datei  = file($file);
-	$linien = sizeof($datei);
-	$x = 0;
+	if ($which == 2) {
+		echo '<div style="position:relative; right:7px;"><span style="float:right;">'."\r\n";
+		echo '<form name="loginPanel" action="loginPanel.php?which=2" method="post" style="margin-bottom:5px;">'."\r\n";
+		echo "\t".'<button type="submit" name="filter" value="'.(empty($filter) ? 'fails' : '').'" class="key okButton" onclick="this.blur();" style="width:80px;'.(empty($filter) ? '' : ' background-color:red; color:white;').'">Filter'.(empty($filter) ? '' : ' on').'</button>'."\r\n";
+		echo '</form>'."\r\n";
+		echo '</span></div>'."\r\n";
+	}
 	
-	echo "<table class='film' style='margin-top:15px;'>\r\n";
+	echo "<table class='film' style='margin-top:15px; max-width:850px; width:850px;'>\r\n";
 	echo "<tr>";
 	echo "<th colspan='".($which == 1 ? 6 : 8)."' style='padding:5px 5px;'>".$title."</th>";
 	echo "</tr>";
@@ -48,7 +52,10 @@
 	}
 	echo "</tr>\r\n";
 	
+	$datei  = file($file);
+	$linien = sizeof($datei);
 	if ($linien > 0) {
+		$x = 0;
 		for ($i = 1; $i < $linien-1; $i++) {
 			if ($datei[$i] != "") {
 				$eintraege = explode ("|", $datei[$i]);
@@ -76,6 +83,10 @@
 							$color = ' color:#6699CC;';
 						}
 					}
+				}
+				
+				if ($exit && !empty($filter)) {
+					continue;
 				}
 				
 				echo "<tr style='height:15px;'>";

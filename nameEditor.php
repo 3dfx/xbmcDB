@@ -169,49 +169,42 @@ function fetchInfos() {
 	$idMovie = $GLOBALS['idMovie'];
 	$idGenre = $GLOBALS['idGenre'];
 	$change  = $GLOBALS['change'];
-
-	$dbh = getPDO();
-	try {
-		if ($change == 'movie') {
-			$SQL = 'SELECT F.idFile, M.c00 as title, M.c05 as rating, M.c07 as jahr, M.c14 as genre, F.strFilename as filename, FM.dateAdded as dateAdded '.
-			'FROM movie M, filemap FM, files F WHERE FM.idFile = F.idFile AND M.idFile = F.idFile AND M.idMovie = '.$idMovie.';';
-			$result = $dbh->query($SQL);
-			$res = array();
-			$i = 0;
-			foreach($result as $row) {
-				$res[] = trim($row['title']);
-				$res[] = trim($row['jahr']);
-				$res[] = trim($row['filename']);
-				$res[] = trim($row['idFile']);
-				$res[] = trim($row['dateAdded']);
-				$res[] = trim($row['rating']);
-				$res[] = trim($row['genre']);
-				$i++;
-			}
-
-		} else if ($change == 'genre') {
-			$SQL = 'SELECT * FROM genre WHERE idGenre = '.$idGenre.';';
-			$result = $dbh->query($SQL);
-			$res = array();
-			$i = 0;
-			foreach($result as $row) {
-				$res[0] = trim($row['strGenre']);
-				$i++;
-			}
+	
+	if ($change == 'movie') {
+		$SQL = 'SELECT F.idFile, M.c00 AS title, M.c05 AS rating, M.c07 AS jahr, M.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded '.
+		'FROM movie M, filemap FM, files F WHERE FM.idFile = F.idFile AND M.idFile = F.idFile AND M.idMovie = '.$idMovie.';';
+		$result = querySQL($SQL);
+		$res = array();
+		$i = 0;
+		foreach($result as $row) {
+			$res[] = trim($row['title']);
+			$res[] = trim($row['jahr']);
+			$res[] = trim($row['filename']);
+			$res[] = trim($row['idFile']);
+			$res[] = trim($row['dateAdded']);
+			$res[] = trim($row['rating']);
+			$res[] = trim($row['genre']);
+			$i++;
 		}
-
-		return ($i == 0 ? null : $res);
-
-	} catch(PDOException $e) {
-		echo $e->getMessage();
+		
+	} else if ($change == 'genre') {
+		$SQL = 'SELECT * FROM genre WHERE idGenre = '.$idGenre.';';
+		$result = querySQL($SQL);
+		$res = array();
+		$i = 0;
+		foreach($result as $row) {
+			$res[0] = trim($row['strGenre']);
+			$i++;
+		}
 	}
+	
+	return ($i == 0 ? null : $res);
 }
 
 function postEditor() {
 	$change = $GLOBALS['change'];
-
-	$title = $GLOBALS['title'];
-
+	$title  = $GLOBALS['title'];
+	
 	echo "\t\t".'<tr>';
 	if ($change == 'movie') {
 		$filename  = $GLOBALS['filename'];
@@ -261,7 +254,7 @@ function postOrValues() {
 		$dateAdded = $GLOBALS['dateAdded'];
 		$rating    = $GLOBALS['rating'];
 		$genre     = $GLOBALS['genre'];
-
+		
 		echo "\t\t\t".'var orJahr      = \''.$jahr.'\';'."\r\n";
 		echo "\t\t\t".'var orRating    = \''.$rating.'\';'."\r\n";
 		echo "\t\t\t".'var orFile      = \''.$filename.'\';'."\r\n";
@@ -269,7 +262,7 @@ function postOrValues() {
 		echo "\t\t\t".'var idMovie     = '.$idMovie.';'."\r\n";
 		echo "\t\t\t".'var orDateAdded = \''.$dateAdded.'\';'."\r\n";
 		echo "\t\t\t".'var orGenre     = \''.$genre.'\';'."\r\n";
-
+		
 	} else if ($change == 'genre') {
 		$idGenre = $GLOBALS['idGenre'];
 		echo "\t\t\t".'var idGenre = '.$idGenre.';'."\r\n";

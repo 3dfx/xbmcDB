@@ -13,25 +13,27 @@ function execSQL($SQL, $throw = true) {
 	return execSQL_($dbh, $SQL, $throw);
 }
 
-function execSQL_($dbh, $SQL, $throw = true, $commit = true) {
+function execSQL_($dbh, $SQL, $throw = true, $commitExtern = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
+	/*** make it or break it ***/
+	error_reporting(E_ALL);
 	try {
-		if (!$commit && !empty($dbh) && !$dbh->inTransaction()) {
+		if (!$commitExtern && !$dbh->inTransaction()) {
 			$dbh->beginTransaction();
 		}
 		
 		$dbh->exec($SQL);
 		
-		if (!$commit && !empty($dbh) && $dbh->inTransaction()) {
+		if (!$commitExtern && $dbh->inTransaction()) {
 			$dbh->commit();
 		}
 		
 	} catch(PDOException $e) {
-		if (!$commit && !empty($dbh) && $dbh->inTransaction()) {
+		if (!$commitExtern && $dbh->inTransaction()) {
 			$dbh->rollBack();
 		}
-		if ($throw) { echo $e->getMessage(); }
+		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
 }
@@ -44,11 +46,13 @@ function querySQL($SQL, $throw = true) {
 function querySQL_($dbh, $SQL, $throw = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
+	/*** make it or break it ***/
+	error_reporting(E_ALL);
 	try {
 		return $dbh->query($SQL);
 
 	} catch(PDOException $e) {
-		if ($throw) { echo $e->getMessage(); }
+		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
 }
@@ -61,11 +65,13 @@ function singleSQL($SQL, $throw = true) {
 function singleSQL_($dbh, $SQL, $throw = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
+	/*** make it or break it ***/
+	error_reporting(E_ALL);
 	try {
 		return $dbh->querySingle($SQL);
 
 	} catch(PDOException $e) {
-		if ($throw) { echo $e->getMessage(); }
+		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
 }
@@ -81,12 +87,11 @@ function fetchFromDB_($dbh, $SQL, $throw = true) {
 	/*** make it or break it ***/
 	error_reporting(E_ALL);
 	try {
-		return $dbh->query($SQL);
+		$result = $dbh->query($SQL);
+		return $result->fetch();
 		
 	} catch(PDOException $e) {
-		if ($throw) {
-			echo $e->getMessage();
-		}
+		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
 }
@@ -104,13 +109,12 @@ function getTableNames() {
 		return $result;
 
 	} catch(PDOException $e) {
-		echo $e->getMessage();
+		if (isAdmin()) { echo $e->getMessage(); }
 	}
 }
 
 function getStreamDetails($idFile) {
-	$sql = "SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL) AND idFile = ".$idFile.";";
-	return fetchFromDB($sql);
+	return querySQL("SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL) AND idFile = ".$idFile.";");
 }
 
 function getGenres($dbh) {
@@ -271,61 +275,54 @@ function filesize_n($path) {
         return $size;
 }
 
-function existsArtTable($dbh) {
+function existsArtTable($dbh = null) {
 	return existsTable('art', 'table', $dbh);
 }
 
-function existsSetTable($dbh) {
+function existsSetTable($dbh = null) {
 	return existsTable('sets', 'table', $dbh);
 }
 
-function checkFileInfoTable($dbh) {
+function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
-	if (!$exist) { $dbh->exec("CREATE TABLE IF NOT EXISTS fileinfo (idFile INTEGER NOT NULL, filesize LONGINT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);"); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo (idFile INTEGER NOT NULL, filesize LONGINT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
 }
 
-function checkMyEpisodeView($dbh) {
+function checkMyEpisodeView($dbh = null) {
 	$exist = existsTable('episodeviewMy', 'view', $dbh);
-	if (!$exist) { $dbh->exec("CREATE VIEW IF NOT EXISTS episodeviewMy as select episode.*,files.strFileName as strFileName,path.idPath as idPath,path.strPath as strPath,files.playCount as playCount,files.lastPlayed as lastPlayed,tvshow.c00 as strTitle,tvshow.c14 as strStudio,tvshow.idShow as idShow,tvshow.c05 as premiered, tvshow.c13 as mpaa, tvshow.c16 as strShowPath from tvshow join episode on episode.idShow=tvshow.idShow join files on files.idFile=episode.idFile join path on files.idPath=path.idPath;"); }
+	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy as select episode.*,files.strFileName as strFileName,path.idPath as idPath,path.strPath as strPath,files.playCount as playCount,files.lastPlayed as lastPlayed,tvshow.c00 as strTitle,tvshow.c14 as strStudio,tvshow.idShow as idShow,tvshow.c05 as premiered, tvshow.c13 as mpaa, tvshow.c16 as strShowPath from tvshow join episode on episode.idShow=tvshow.idShow join files on files.idFile=episode.idFile join path on files.idPath=path.idPath;", false); }
 }
 
-function checkTvshowRunningTable($dbh) {
+function checkTvshowRunningTable($dbh = null) {
 	$exist = existsTable('tvshowrunning', 'table', $dbh);
-	if (!$exist) { $dbh->exec("CREATE TABLE IF NOT EXISTS tvshowrunning (idShow INTEGER NOT NULL, running INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);"); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS tvshowrunning (idShow INTEGER NOT NULL, running INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 }
 
-function checkNextAirDateTable($dbh) {
+function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
-	if (!$exist) { $dbh->exec("CREATE TABLE IF NOT EXISTS nextairdate (idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);"); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate (idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 }
 
 function existsOrdersTable($dbh = null) {
 	$exist = existsTable('orders', 'table', $dbh);
 	if (!$exist) {
-		$sql = "CREATE TABLE IF NOT EXISTS orders (strFilename text primary key, dateAdded text, user text, fresh integer);";
-		if (empty($dbh)) {
-			execSQL($sql, false);
-		} else {
-			try { $dbh->exec($sql); }
-			catch(PDOException $e) { $dbh->rollBack(); }
-		}
-		$exist = existsTable('orders', $dbh);
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orders (strFilename text primary key, dateAdded text, user text, fresh integer);", false, false);
+		$exist = existsTable('orders', 'table', $dbh);
 	}
-	
 	return $exist;
 }
 
 function existsTable($tableName, $type = 'table', $dbh = null) {
 	$dbh = (!empty($dbh) ? $dbh : getPDO());
 	try {
-		$exist = isset($_SESSION['existsTable'.$tableName]) ? $_SESSION['existsTable'.$tableName] : -1;
+		$exist = isset($_SESSION['existsTable'][$tableName]) ? $_SESSION['existsTable'][$tableName] : -1;
 		if ($exist !== -1) { return $exist; }
 		
 		$res = $dbh->query("SELECT name FROM sqlite_master WHERE type='".$type."' and name='".$tableName."';");
 		$row = $res->fetch();
 		
 		$exist = !empty($row['name']);
-		$_SESSION['existsTable'.$tableName] = $exist;
+		$_SESSION['existsTable'][$tableName] = $exist;
 		return $exist;
 
 	} catch(PDOException $e) { }
@@ -401,17 +398,17 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 			if ($dbhIsNull) { $dbh = getPDO(); }
 			
 			$sqli = "REPLACE INTO fileinfo (idFile, filesize) VALUES(".$idFile.", ".$fsize.");";
-			if ($dbhIsNull) { $dbh->beginTransaction(); }
+			if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 			
 			$dbh->exec($sqli);
 			
-			if ($dbhIsNull) { $dbh->commit(); }
+			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->commit(); }
 			
 			clearMediaCache();
 
 		} catch(PDOException $e) {
-			if ($dbhIsNull) { $dbh->rollBack(); }
-			echo $e->getMessage();
+			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
+			if (isAdmin()) { echo $e->getMessage(); }
 		}
 	} // if fsize == null...
 	
@@ -554,10 +551,10 @@ function setSeenDelMovie($what, $checkFilme) {
 	
 	$dbh = getPDO();
 	try {
-		$dbh->beginTransaction();
+		if (!$dbh->inTransaction()) { $dbh->beginTransaction(); }
 		for ($i = 0; $i < count($checkFilme); $i++) {
 			$id = $checkFilme[$i];
-
+			
 			if ($id != null) {
 				$sql = "SELECT idFile FROM movie WHERE idMovie = '$id'";
 				$result = $dbh->query($sql);
@@ -580,15 +577,15 @@ function setSeenDelMovie($what, $checkFilme) {
 			} // id is not null
 		} // for each keys
 		
-		$dbh->commit();
+		if ($dbh->inTransaction()) { $dbh->commit(); }
 		
 	} catch(PDOException $e) {
-		$dbh->rollBack();
-		echo $e->getMessage();
+		if ($dbh->inTransaction()) { $dbh->rollBack(); }
+		if (isAdmin()) { echo $e->getMessage(); }
 	}
 }
 
-function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
+function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies_') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
 function startsWith($haystack, $needle) { return !strncmp($haystack, $needle, strlen($needle)); }
 
 function resizeImg($SRC, $DST, $w, $h) {
@@ -1055,16 +1052,17 @@ function createEpisodeSubmenu($result) {
 		echo '<ul class="dropdown-menu">';
 		
 		foreach($show as $row) {
-			$idShow    = $row['idShow'];    $serie = $row['serie']; $season  = $row['season'];
-			$idEpisode = $row['idEpisode']; $title = $row['title']; $episode = $row['episode'];
-			$playCount = $row['playCount']; $sCount = $row['sCount'];
+			$idShow    = $row['idShow'];    $serie = $row['serie'];   $season  = $row['season'];
+			$idEpisode = $row['idEpisode']; $title = $row['title'];   $episode = $row['episode'];
+			$playCount = $row['playCount']; $rating = $row['rating']; $sCount = $row['sCount'];
 			
 			if ($season  < 10) { $season  = '0'.$season;  }
 			if ($episode < 10) { $episode = '0'.$episode; }
 			$epTrId = 'iD'.$idShow.'.S'.$season;
+			$noRating = empty($rating) || substr($rating, 0, 1) == '0';
 			
 			$SE = '<span style="padding-right:10px; color:silver;"><b><sub>S'.$season.'.E'.$episode.'</sub></b></span> ';
-			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;">'.$SE.trimDoubles($title).'</span>';
+			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
 			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
 			#echo '<li href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'"><a tabindex="-1" _href="#"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 			echo '<li _href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="-1"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
@@ -1192,18 +1190,17 @@ function xbmcRunning() {
 	if (!isAdmin()) { return 0; }
 	
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if ($overrideFetch == 0 && isset($_SESSION['xbmcRunning'])) { return $_SESSION['xbmcRunning']; }
+	if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
 	
 	exec('ps -ea | grep lightdm | wc -l', $output);
 	$res = intval(trim($output[0]));
-	$_SESSION['xbmcRunning'] = $res;
+	$_SESSION['param_xbmcRunning'] = $res;
 	return $res;
 }
-	
+
 function checkNotifications() {
 	if (existsOrdersTable()) {
-		$sql = "SELECT COUNT(fresh) AS count FROM orders WHERE fresh = 1;";
-		$res = fetchFromDB($sql);
+		$res = querySQL("SELECT COUNT(fresh) AS count FROM orders WHERE fresh = 1;");
 		if (empty($res)) { return 0; }
 		$row = $res->fetch();
 		return $row['count'];
@@ -1298,10 +1295,11 @@ function restoreSession() {
 function storeSession() {
 	$user = $_SESSION['user'];
 	clearMediaCache();
-	unset( $_SESSION['username'],   $_SESSION['user'], $_SESSION['idGenre'],  $_SESSION['xbmcRunning'], $_SESSION['overrideFetch'],
-	       $_SESSION['passwort'],   $_SESSION['gast'], $_SESSION['idStream'], $_SESSION['refferLoged'], $_SESSION['dbName'], 
-	       $_SESSION['angemeldet'], $_SESSION['demo'], $_SESSION['thumbs'],   $_SESSION['tvShowParam'], $_SESSION['TvDbCache'],
+	unset( $_SESSION['username'],   $_SESSION['user'], $_SESSION['idGenre'],  $_SESSION['refferLoged'], $_SESSION['overrideFetch'], 
+	       $_SESSION['passwort'],   $_SESSION['gast'], $_SESSION['idStream'], $_SESSION['tvShowParam'], $_SESSION['dbName'], 
+	       $_SESSION['angemeldet'], $_SESSION['demo'], $_SESSION['thumbs'],   $_SESSION['existsTable'], $_SESSION['TvDbCache'], 
 	       $_SESSION['private'],    $_SESSION['paths']
+	       #$_SESSION['xbmcRunning'], 
 	     ); //remove values that should be determined at login
 	
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
@@ -1637,7 +1635,7 @@ function clearAirdateInDb($idShow, $dbh = null) {
 
 function updateAirdateInDb($id, $season, $episode, $airdate, $dbh = null) {
 	if (!checkAirDate()) { return; }
-	if ($id == -1 || $season == -1 || $episode == -1 || empty($airdate)) { return; }
+	if ($id == -1 || $season == -1 || $episode == -1 || empty($episode) || empty($airdate)) { return; }
 	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate) VALUES ('".$id."', '".$season."', '".$episode."', '".strtotime($airdate)."');";
 	execSQL_($dbh, $SQL, false, false);
 }
@@ -1716,14 +1714,32 @@ function addRlsDiffToDate($given) {
 }
 
 function compareDates($given1, $given2) {
-	if (empty($given1)) { return false; }
-	if (empty($given2)) { return true;  }
+	if (empty($given1)) { return true; }
+	if (empty($given2)) { return false;  }
 	return strtotime($given1) < strtotime($given2);
 }
 
 function formatToDeNotation($str) {
 	$res = number_format($str, 3, ',', '.');
 	return substr($res, 0, strlen($res)-4);
+}
+
+function getPausedAt($timeAt) {
+	$sec = $timeAt % 60;
+	$min = $timeAt / 60 % 60;
+	$hrs = round($timeAt / 3600, 0);
+	return sprintf('%02d:%02d:%02d', $hrs, $min, $sec);
+}
+
+function workaroundMTime($img) {
+	exec('stat -c %Y "'.$img.'"', $output);
+	return $output != null && count($output) > 0 ? $output[0] : null;
+}
+
+function handleError($errno, $errstr, $errfile, $errline, array $errcontext) {
+	// error was suppressed with the @-operator
+	#if (0 === error_reporting()) { return false; }
+	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 
 function is3d($filename) {
@@ -1786,10 +1802,17 @@ function postEditChannels($str) {
 	return ($str >= 3) ? ($str-1).'.1' : $str.'.0';
 }
 
+function prepPlayFilename($filename) {
+	if (empty($filename)) { return null; }
+	
+	$filename = addslashes($filename);
+	$filename = str_replace("&", "_AND_", $filename);
+	$filename = encodeString($filename);
+	return $filename;
+}
+
 function trimDoubles($text) {
-	$text = str_replace("''", "'", $text);
-	$text = str_replace("\'", "'", $text);
-	return $text;
+	return str_replace("''", "'", $text);
 }
 
 function encodeString($text, $plain = false) {
@@ -1827,7 +1850,8 @@ function encodeString($text, $plain = false) {
 function decodeString($text) {
 	$text = str_replace("&#039;", "'", $text);
 	//return htmlspecialchars_decode($text, ENT_QUOTES);
-
+	
+	$text = str_replace ("&amp;", "&", $text);
 	$text = str_replace ("&auml;", "ä", $text);
 	$text = str_replace ("&Auml;", "Ä", $text);
 	$text = str_replace ("&ouml;", "ö", $text);
@@ -1841,9 +1865,10 @@ function decodeString($text) {
 function isBlacklisted($ipIs = null) {
 	$blacklisted = restoreBlacklist();
 	$ip          = empty($ipIs) ? getEscServer('REMOTE_ADDR') : $ipIs;
+	$retryLimit  = isset($GLOBALS['BLACKLIST_RETRY_LIMIT']) ? $GLOBALS['BLACKLIST_RETRY_LIMIT'] : 4;
 	
 	if (!isset($blacklisted[$ip])) { return false; }
-	if ($blacklisted[$ip]['count'] <= 4) { return false; }
+	if ($blacklisted[$ip]['count'] <= $retryLimit) { return false; }
 	$date = $blacklisted[$ip]['date'];
 	//30 minutes
 	if (time()-intval($date) > 30*60) { return false; }
@@ -1906,9 +1931,14 @@ function getPD0() {
 	return $dbh;
 }
 
-function getEscServer($key, $defVal = null)  { return isset($_SERVER[$key])  ? htmlspecialchars($_SERVER[$key], ENT_QUOTES, 'UTF-8') : $defVal; }
-function getEscGet($key, $defVal = null)     { return isset($_GET[$key])  ? trim(SQLite3::escapeString($_GET[$key]))  : $defVal; }
-function getEscPost($key, $defVal = null)    { return isset($_POST[$key]) ? trim(SQLite3::escapeString($_POST[$key])) : $defVal; }
+function escapeArray($val) {
+	if (!is_array($val)) { return trim(SQLite3::escapeString($val)); }
+	else { for ($i = 0; $i < count($val); $i++) { $val[$i] = escapeArray($val[$i]); } return $val; }
+}
+
+function getEscServer($key, $defVal = null)  { return isset($_SERVER[$key]) ? htmlspecialchars($_SERVER[$key], ENT_QUOTES, 'UTF-8') : $defVal; }
+function getEscGet($key, $defVal = null)     { return isset($_GET[$key])  ? escapeArray($_GET[$key])  : $defVal; }
+function getEscPost($key, $defVal = null)    { return isset($_POST[$key]) ? escapeArray($_POST[$key]) : $defVal; }
 function getEscGPost($key, $defVal = null) {
 	$res = getEscGet($key);
 	if (isset($res)) { return $res; }

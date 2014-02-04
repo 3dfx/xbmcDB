@@ -1,3 +1,10 @@
+<?php
+include_once "check.php";
+
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "./template/_SERIEN.php";
+?>
 <script type="text/javascript">
 	jQuery(document).ready(function() {
 		$("#tvBanner").fancybox({
@@ -15,12 +22,6 @@
 	});
 </script>
 <?php
-	include_once "check.php";
-	
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "./template/_SERIEN.php";
-	
 	$id = getEscGet('id');
 	if (empty($id) || $id < 0) { return; }
 	
@@ -45,6 +46,10 @@
 	}
 	
 	echo '<div class="descDiv">';
+	if (isAdmin()) {
+		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$serie->getIdShow().'</span></div>';
+	}
+	
 	if (checkAirDate() && $running) {
 		$airDate     = null;
 		$nextEpisode = null;
@@ -67,10 +72,10 @@
 				$season  = $nextEpisode['SeasonNumber'];
 				$episode = $nextEpisode['EpisodeNumber'];
 			} else {
-				$st      = $serie->getLastStaffel();
-				$ep      = $st->getLastEpisode();
-				$season  = $st->getStaffelNum();
-				$episode = $ep->getEpNum();
+				$st      = !empty($serie) && is_object($serie) ? $serie->getLastStaffel() : null;
+				$ep      = !empty($st) && is_object($st) ? $st->getLastEpisode() : null;
+				$season  = !empty($st) && is_object($st) ? $st->getStaffelNum() : null;
+				$episode = !empty($ep) && is_object($ep) ? $ep->getEpNum() : null;
 			}
 			
 			$dbDate    = $airDate;
@@ -82,7 +87,7 @@
 					'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : '').' on '.$dayOfWeek :
 					(isAdmin() ? ($missed ? 'Missed episode' : 'Today') : '');
 			
-			$info2     = ' [<b style="color:'.($missed && isAdmin() ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b>]';
+			$info2     = ' [ <b style="color:'.($missed && isAdmin() ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			
 			echo 'Next airdate:<br />'.$info1.$info2.'<br /><br />';
 			

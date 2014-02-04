@@ -1,26 +1,26 @@
 <?php
-	include_once "check.php";
-	
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "globals.php";
+include_once "check.php";
+
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "globals.php";
 	
 	if (isDemo()) { return; }
 	
-	$ids = getEscGPost('ids');;
+	$ids = getEscGPost('ids');
 	if (empty($ids)) { return; }
 	
 	$isShow = isset($_POST['isShow']) || isset($_GET['isShow']);
 	
-	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED']) ? $GLOBALS['COPYASSCRIPT_ENABLED'] : false;
-	$scriptCopyTo        = isset($GLOBALS['COPYASSCRIPT_COPY_TO']) ? $GLOBALS['COPYASSCRIPT_COPY_TO'] : '/mnt/hdd/';
-	$scriptCopyFrom      = isset($GLOBALS['COPYASSCRIPT_COPY_FROM']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM'] : null;
-	$scriptCopyToShow    = isset($GLOBALS['COPYASSCRIPT_COPY_TO_SHOW']) ? $GLOBALS['COPYASSCRIPT_COPY_TO_SHOW'] : '/mnt/hdd/';
+	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED'])        ? $GLOBALS['COPYASSCRIPT_ENABLED']        : false;
+	$scriptCopyTo        = isset($GLOBALS['COPYASSCRIPT_COPY_TO'])        ? $GLOBALS['COPYASSCRIPT_COPY_TO']        : '/mnt/hdd/';
+	$scriptCopyFrom      = isset($GLOBALS['COPYASSCRIPT_COPY_FROM'])      ? $GLOBALS['COPYASSCRIPT_COPY_FROM']      : null;
+	$scriptCopyToShow    = isset($GLOBALS['COPYASSCRIPT_COPY_TO_SHOW'])   ? $GLOBALS['COPYASSCRIPT_COPY_TO_SHOW']   : '/mnt/hdd/';
 	$scriptCopyFromShow  = isset($GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW'] : null;
-	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN']) ? $GLOBALS['COPYASSCRIPT_COPY_WIN'] : false;
-	$copyAsScript        = isset($_POST['copyAsScript']) ? $_POST['copyAsScript'] : (isset($_GET['copyAsScript']) ? $_GET['copyAsScript'] : 0);
-	$forOrder            = isset($_POST['forOrder']) ? $_POST['forOrder'] : (isset($_GET['forOrder']) ? $_GET['forOrder'] : 0);
-	$username            = isset($_SESSION['user']) ? $_SESSION['user'] : null;
+	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN'])       ? $GLOBALS['COPYASSCRIPT_COPY_WIN']       : false;
+	$username            = isset($_SESSION['user'])                       ? $_SESSION['user']                       : null;
+	$copyAsScript        = getEscGPost('copyAsScript', 0);
+	$forOrder            = getEscGPost('forOrder', 0);
 	
 	$SQL = null;
 	if (!$isShow) {
@@ -31,7 +31,7 @@
 		$SQL = "SELECT strPath, c00 AS name FROM tvshowview WHERE idShow IN (".$ids.");";
 	}
 	
-	$res = fetchFromDB($SQL, false);
+	$res = querySQL($SQL, false);
 	if (empty($res)) {
 		echo $forOrder == 1 ? '-1' : null;
 		exit;

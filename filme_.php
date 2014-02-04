@@ -149,7 +149,7 @@ function createTable() {
 		checkFileInfoTable($dbh);
 		checkFileMapTable($dbh);
 		existsOrdersTable($dbh);
-
+		
 		$_just  = $GLOBALS['just'];
 		$_which = $GLOBALS['which'];
 		if (isset($_SESSION['mode']))        { $mode          = $_SESSION['mode'];        }
@@ -602,12 +602,13 @@ function createTable() {
 				
 #resolution
 				if (!isDemo()) {
-				$resInfo = (!empty($vRes) ? ($vRes[0] == 1920 ? '1080p' : '720p') : '');
-				$resTip  = (!empty($vRes) ? $vRes[0].'x'.$vRes[1] : '');
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'"><span class="searchField">'.$resInfo.'</span></td>';
+					$resInfo = (!empty($vRes) ? ($vRes[0] == 1920 ? '1080p' : '720p') : '');
+					$resTip  = (!empty($vRes) ? $vRes[0].'x'.$vRes[1] : '');
+					$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'"><span class="searchField">'.$resInfo.'</span></td>';
 #filesize
-				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.encodeString($path.$filename).'\'); return false;" style="cursor:pointer;"' : null;
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right"'.$playItem.'>'.$moviesize.'</td>';
+					$filename = prepPlayFilename($path.$filename);
+					$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;
+					$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right"'.$playItem.'>'.$moviesize.'</td>';
 				}
 				
 				$zeile++;
@@ -658,24 +659,46 @@ function createTable() {
 				$is3d      = $zeilen[$t][4];
 				$path      = $zeilen[$t][5];
 				$filename  = $zeilen[$t][6];
-				 
+				
+				#debug
+				#$xbmcRunning = true;
+				#$is3d = $thumbsAddedInRow % 2 == 0;
+				
 				$showSpan = $is3d || $playCount;
 				$break3d  = $is3d && $isAdmin && $playCount;
 				$breakPl  = false;
 				
 				$playItem = '';
+				$filename = prepPlayFilename($path.$filename);
 				if ($isAdmin && $xbmcRunning && !empty($path) && !empty($filename)) {
 					$showSpan = true;
 					$breakPl  = $playCount;
-					$playItem = '<img src="./img/play.png" class="icon24 galleryPlay'.($is3d ? ' galleryPlay2nd' : '').'" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;" />';
+					$playItem = '<img src="./img/play.png" class="icon24 galleryPlay'.($is3d ? ' galleryPlay2nd' : '').'" onclick="playItem(\''.$filename.'\'); return false;" />';
 				}
 				
 				if ($showSpan) { echo '<div class="gallerySpan">'; }
-					if ($showSpan && $is3d) { echo '<img src="./img/3d.png" class="icon24 gallery3d" />'; }
-					if ($showSpan && $break3d) { echo '<br/>'; }
-					echo $playItem;
-					if ($showSpan && $breakPl) { echo '<br/>'; }
-					if ($playCount) { echo '<img src="./img/check.png" class="icon32 gallery2nd" />'; }
+				if ($showSpan && $is3d) { echo '<img src="./img/3d.png" class="icon24 gallery3d" />'; }
+				echo $playItem;
+				
+				$gCnt = 0;
+				if ($xbmcRunning) { $gCnt++; }
+				if ($break3d)     { $gCnt++; }
+				if ($playCount)   { $gCnt++; }
+				
+				switch ($gCnt) {
+					case 3:
+						$gCount = '3rd';
+						break;
+					case 2:
+						$gCount = '2nd';
+						break;
+					case 1:
+					default:
+						$gCount = '1st';
+						break;
+				}
+				
+				if ($playCount) { echo '<img src="./img/check.png" class="icon32 gallery'.$gCount.'" />'; }
 				if ($showSpan) { echo '</div>'; }
 				echo '</div>';
 				#echo '</a>';
@@ -710,7 +733,8 @@ function createTable() {
 			if (!isDemo()) {
 				echo '<input type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 			}
-			echo '<a style="font-weight:bold;" href="?sort='.($saferSearch).'">Title</a>'.$titleInfo.'</th>';
+			#http://192.168.0.10/?show=filme&newmode=0&unseen=3&dbSearch&which&just&sort&mode&country
+			echo '<a style="font-weight:bold;" href="?show=filme&sort'.($saferSearch).'">Title</a>'.$titleInfo.'</th>';
 			echo '<th class="th0"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr' || $sort=='jahra') ? 'color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
 			echo '<th class="th1"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? 'color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
 			echo '<th class="th2">Actor</th>';
@@ -755,7 +779,7 @@ function createTable() {
 		if (!empty($dbh) && $dbh->inTransaction()) {
 			$dbh->rollBack();
 		}
-		echo $e->getMessage();
+		if (isAdmin()) { echo $e->getMessage(); }
 	}
 } // function createTable
 

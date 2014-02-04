@@ -34,7 +34,9 @@ include_once "./template/functions.php";
 		}
 	}
 	
+	$oldHandler = set_error_handler('handleError');
 	shoutImage($img);
+	if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 	
 function shoutImage($img = null) {
 	header('Content-Type: image/jpeg');
@@ -79,9 +81,9 @@ function setHeaders($img) {
 			$mtime = empty($mtime) ? workaroundMTime($img) : null;
 		} catch (Exception $e) { }
 	}
+	
 	$scriptFName = getEscServer('SCRIPT_FILENAME');
 	$mtime = empty($mtime) ? filemtime($scriptFName) : $mtime;
-	if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 	
 	$gmdate_mod = gmdate('D, d M Y H:i:s', $mtime).' GMT';
 	if (!empty($if_modified_since) && $if_modified_since == $gmdate_mod) {
@@ -95,14 +97,4 @@ function setHeaders($img) {
 	return true;
 }
 
-function workaroundMTime($img) {
-	exec('stat -c %Y "'.$img.'"', $output);
-	return $output != null && count($output) > 0 ? $output[0] : null;
-}
-
-function handleError($errno, $errstr, $errfile, $errline, array $errcontext) {
-	// error was suppressed with the @-operator
-	#if (0 === error_reporting()) { return false; }
-	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-}
 ?>

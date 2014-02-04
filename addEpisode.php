@@ -1,11 +1,11 @@
 <?php
-	include_once "auth.php";
-	include_once "check.php";
-	
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "globals.php";
-	include_once "./template/_SERIEN.php";
+include_once "auth.php";
+include_once "check.php";
+
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "globals.php";
+include_once "./template/_SERIEN.php";
 	
 	header("Content-Type: text/html; charset=UTF-8");
 	
@@ -61,6 +61,8 @@
 	$episodes = null;
 	if ($idSelected) { $episodes = getShowInfo($idTvdb); }
 	if ($idSelected && $episodes == null) { die('NOTHING FOUND!'); }
+	
+	$showPath = $serie->getShowpath();
 	
 	$item = null;
 	if ($seasonSelected) { $item = getEpisodeInfo($episodes, $getSeason, $getEpisode); }
@@ -254,7 +256,7 @@
 	}
 	
 	$value = ($update ? 'Update' : 'Add');
-	echo '<tr><td colspan="2" class="righto" style="padding:10 0px !important;"><div style="float:right; padding:0px 15px;"><input type="submit" value="'.$value.'" class="key okButton" onclick="this.blur();"></div></tr>';
+	echo '<tr><td colspan="2" class="righto" style="padding:10 0px !important;"><div style="float:right; padding:0px 15px;"><input type="submit" value="'.$value.'" class="key okButton" onclick="this.blur();" /></div></tr>';
 ?>
 	</table>
 	</form>
@@ -263,10 +265,14 @@
 <?php
 /*	FUNCTIONS	*/
 function postSerien() {
+	$serie = $GLOBALS['serie'];
+	postSerie($serie->getIdTvdb(), $serie->getName());
+	/*
 	$serien = $GLOBALS['serien'];
 	foreach ($serien->getSerien() as $serie) {
 		postSerie($serie->getIdTvdb(), $serie->getName());
 	}
+	*/
 }
 
 function postSerie($id, $name) {
@@ -295,7 +301,8 @@ function postEpisoden($episodes) {
 }
 
 function postPaths() {
-	$paths = fetchPaths();
+	$paths    = fetchPaths();
+	$showPath = $GLOBALS['showPath'];
 	
 	$idPath = -1;
 	if ($GLOBALS['update']) {
@@ -304,8 +311,10 @@ function postPaths() {
 	}
 	
 	for ($i = 0; $i < count($paths); $i++) {
-		$id = $paths[$i][0];
 		$name = $paths[$i][1];
+		if (strpos($name, $showPath) === false) { continue; }
+		
+		$id   = $paths[$i][0];
 		echo "\t\t\t".'<option value="'.$id.'"'.($idPath == $id ? 'SELECTED' : '').'>'.$name.'</option>';
 		echo "\r\n";
 	}

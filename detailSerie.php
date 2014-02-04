@@ -1,9 +1,9 @@
 <?php
-	include_once "check.php";
+include_once "check.php";
 
-	include_once "./template/functions.php";
-	include_once "./template/config.php";
-	include_once "./template/_SERIEN.php";
+include_once "./template/functions.php";
+include_once "./template/config.php";
+include_once "./template/_SERIEN.php";
 ?>
 <script type="text/javascript" src="./template/js/myfancy.js"></script>
 <?php
@@ -15,10 +15,12 @@
 	
 	$SQL    = $GLOBALS['SerienSQL'];
 	$serien = fetchSerien($SQL, null);
+	$serie  = $serien->getSerie($id);
 	
-	echo '<table id="serieTable" class="film" style="width:350px; padding:0px; z-index:1;">';
+	if ($serie->isWatchedAny()) { echo "<script type=\"text/javascript\">$(document).ready(function() { $('.knob-dyn').knob(); });</script>"; }
+	
+	echo '<table id="serieTable" class="film">';
 	echo "\r\n";
-	$serie = $serien->getSerie($id);
 	postSerie($serie);
 	echo '</table>';
 
@@ -36,11 +38,11 @@ function postSerien($serien) {
 function postSerie($serie) {
 	$isAdmin = $GLOBALS['isAdmin'];
 	$USECACHE = isset($GLOBALS['USECACHE']) ? $GLOBALS['USECACHE'] : true;
-
+	
 	$stCount = $serie->getStaffelCount();
 	$allEpsCount = $serie->getAllEpisodeCount();
 	if ($allEpsCount < 10) { $allEpsCount = '0'.$allEpsCount; }
-
+	
 	echo '<tr id="descTR">';
 	echo '<th class="descTRd1">'.$stCount.' Season'.($stCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
@@ -49,17 +51,31 @@ function postSerie($serie) {
 	echo '<th class="righto">'.(isDemo() ? '' : _format_bytes($serie->getSize())).'</th>';
 	echo '<th class="righto" colspan="2">';
 	if ($isAdmin) {
+		$showEmpty = false;
 		if ($serie->isWatched() || $serie->isWatchedAny()) {
-			$img = './img/check'.($serie->isWatched() ? '' : 'B').'.png';
-			echo ' <img src="'.$img.'" class="galleryImage" title="'.($serie->isWatched() ? '' : 'partly ').'watched" />';
+			if ($serie->isWatched()) {
+				echo ' <img src="./img/check.png" class="galleryImage" title="watched" />';
+			} else {
+				$percent = $serie->getWatchedPercent();
+				$showEmpty = empty($percent);
+				if (!empty($percent)) {
+					echo '<span title="'.$percent.'%" style="position:relative; right:2px; top:3px; padding-left:4px;">';
+					echo '<input type="text" class="knob-dyn" data-width="12" data-height="12" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
+					echo '</span>';
+				}
+			}
 		} else {
+			$showEmpty = true;
+		}
+		
+		if ($showEmpty) {
 			echo ' <img src="./img/empty.png" class="galleryImage" /> ';
 		}
 	}
 	echo '</th>';
 	echo '</tr>';
 	echo "\r\n";
-
+	
 	foreach ($serie->getStaffeln() as $staffel) {
 		if (!is_object($staffel)) {
 			continue;
@@ -71,16 +87,16 @@ function postSerie($serie) {
 
 function postStaffel($staffel) {
 	$isAdmin = $GLOBALS['isAdmin'];
-
+	
 	$eps = $staffel->getEpisodeCount();
 	if ($eps == 0) { return; }
-
+	
 	$strAllEps = $eps;
 	if ($eps < 10) { $strAllEps = '0'.$eps; }
-
+	
 	$sNum = $staffel->getStaffelNum();
 	if ($sNum < 10) { $sNum = '0'.$sNum; }
-
+	
 	$idShow = $staffel->getIdShow();
 	$spanId = 'iD'.$idShow.'.S'.$sNum;
 	$linkId = 'tgl'.$idShow.'.S'.$sNum;
@@ -92,10 +108,24 @@ function postStaffel($staffel) {
 	echo '<td class="righto vSpan">'.(isDemo() ? '' : _format_bytes($staffel->getSize())).'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($isAdmin) {
+		$showEmpty = false;
 		if ($staffel->isWatched() || $staffel->isWatchedAny()) {
-			$img = './img/check'.($staffel->isWatched() ? '' : 'B').'.png';
-			echo ' <img src="'.$img.'" class="galleryImage" title="'.($staffel->isWatched() ? '' : 'partly ').'watched" />';
+			if ($staffel->isWatched()) {
+				echo ' <img src="./img/check.png" class="galleryImage" title="watched" />';
+			} else {
+				$percent = $staffel->getWatchedPercent();
+				$showEmpty = empty($percent);
+				if (!empty($percent)) {
+					echo '<span title="'.$percent.'%" style="position:relative; right:2px; top:3px; padding-left:4px;">';
+					echo '<input type="text" class="knob-dyn" data-width="12" data-height="12" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
+					echo '</span>';
+				}
+			}
 		} else {
+			$showEmpty = true;
+		}
+		
+		if ($showEmpty) {
 			echo ' <img src="./img/empty.png" class="galleryImage" /> ';
 		}
 	}
