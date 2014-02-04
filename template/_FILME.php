@@ -8,25 +8,25 @@
 			$res = unserialize($_SESSION[$sessionKey]);
 			
 		} else {
-			$result = fetchFromDB_($dbh, $SQL);
+			$result = querySQL_($dbh, $SQL);
 			$count = 0;
 			foreach($result as $row) {
-				$res[$count]['idFile']    = $row['idFile'];
-				$res[$count]['idMovie']   = $row['idMovie'];
-				$res[$count]['c00']       = $row['c00'];
-				$res[$count]['playCount'] = $row['playCount'];
-				$res[$count]['thumb']     = $row['thumb'];
-				$res[$count]['filename']  = $row['filename'];
-				$res[$count]['dateAdded'] = $row['dateAdded'];
-				$res[$count]["path"]      = $row["path"];
-				$res[$count]['jahr']      = $row['jahr'];
-				$res[$count]['filesize']  = $row['filesize'];
-				$res[$count]['playCount'] = $row['playCount'];
-				$res[$count]['trailer']   = $row['trailer'];
-				$res[$count]['c05']       = $row['c05'];
-				$res[$count]['imdbId']    = $row['imdbId'];
-				$res[$count]['c14']       = $row['c14'];
-				$res[$count]['filename']  = $row['filename'];
+				$res[$count]['idFile']    = isset($row['idFile'])    ? $row['idFile']    : -1;
+				$res[$count]['idMovie']   = isset($row['idMovie'])   ? $row['idMovie']   : -1;
+				$res[$count]['c00']       = isset($row['c00'])       ? $row['c00']       : '';
+				$res[$count]['playCount'] = isset($row['playCount']) ? $row['playCount'] : '';
+				$res[$count]['thumb']     = isset($row['thumb'])     ? $row['thumb']     : '';
+				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
+				$res[$count]['dateAdded'] = isset($row['dateAdded']) ? $row['dateAdded'] : '';
+				$res[$count]["path"]      = isset($row["path"])      ? $row["path"]      : '';
+				$res[$count]['jahr']      = isset($row['jahr'])      ? $row['jahr']      : '';
+				$res[$count]['filesize']  = isset($row['filesize'])  ? $row['filesize']  : '';
+				$res[$count]['playCount'] = isset($row['playCount']) ? $row['playCount'] : '';
+				$res[$count]['trailer']   = isset($row['trailer'])   ? $row['trailer']   : '';
+				$res[$count]['c05']       = isset($row['c05'])       ? $row['c05']       : '';
+				$res[$count]['imdbId']    = isset($row['imdbId'])    ? $row['imdbId']    : '';
+				$res[$count]['c14']       = isset($row['c14'])       ? $row['c14']       : '';
+				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
 				$count++;
 			}
 			
