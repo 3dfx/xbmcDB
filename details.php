@@ -186,8 +186,10 @@ include_once "globals.php";
 			$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';");
 			$timeAt    = $result['timeAt'];
 			$timeTotal = $result['timeTotal'];
-			$pausedAt  = getPausedAt($timeAt);
-			$percent   = round($timeAt / $timeTotal * 100, 0);
+			if (!empty($timeAt) && !empty($timeTotal)) {
+				$pausedAt  = getPausedAt($timeAt);
+				$percent   = round($timeAt / $timeTotal * 100, 0);
+			}
 		}
 		
   		$fanart    = '';

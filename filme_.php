@@ -319,6 +319,8 @@ function createTable() {
 			$zeilenSpalte = 0;
 			
 			$idFile    = $row['idFile'];
+			if ($idFile < 0) { continue; }
+			
 			$idMovie   = $row['idMovie'];
 			$filmname  = $row['c00'];
 			$watched   = $row['playCount'];
@@ -338,16 +340,18 @@ function createTable() {
 			$fnam      = $path.$filename;
 			$cover     = '';
 			
-			if  (empty($dateAdded)) {
+			if (empty($dateAdded)) {
 				$creation = getCreation($fnam);
 				if (empty($creation)) {
 					$creation = '2001-01-01 12:00:00';
 				}
 				
 				$dateAdded = $creation;
-				$datum = strtotime($dateAdded);
-				$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".$datum."');";
-				execSQL_($dbh, $SQL_, false, true);
+				if (!empty($dateAdded)) {
+					$datum = strtotime($dateAdded);
+					$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".$datum."');";
+					execSQL_($dbh, $SQL_, false, true);
+				}
 			}
 			
 			if ($gallerymode || $COVER_OVER_TITLE) {
