@@ -173,7 +173,7 @@ include_once "globals.php";
 			}
 		}
 		
-		if (!$forOrder) {
+		if (!$forOrder && !empty($totalsize)) {
 			$s = _format_bytes($totalsize);
 			$res .= $newLine.$newLine.'Total size: '.$s;
 		}

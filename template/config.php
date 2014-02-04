@@ -29,11 +29,17 @@
 #						''   => ''
 					);
 	
+	#$DEMO_USERS                    = array( 'live' => 'demo' );
+	$DEMO_ENABLED                  = isset($DEMO_USERS) && count($DEMO_USERS) > 0;
+	
 	$NO_LOG_FROM                   = array(
 //						'admin' => array('host1.com', 'host2.com')
 					);
 	
 	$REFF                          = 'HOST.dyndns.org';
+	
+	$TVSHOWDIR                     = ''; //'/mnt/media/Serien/';
+	#$HIDE_WATCHED_ANY_EP_IN_MAIN   = array(1 => true, 2 => true);
 	
 	/*
 	// Just needed if samba drive is mounted....
@@ -53,7 +59,8 @@
 					);
 	*/
 	
-	//$TVSHOWDIR                     = 'media/Serien/';
+	#$EXCLUDEDIRS                   = array('/mnt/media/folder/' => id);
+	
 	$THUMBNAIL_DIR                 = './img/thumbs/';
 	
 	$NAVBAR_INVERSE                = false;
@@ -70,8 +77,6 @@
 						array('fre', 'french'),
 						array('ita', 'latino (ITA / SPA / POR)'),
 						array('jpn', 'asia (JPN / CHI / KOR)'),
-						#array('ita', '<span style="float:left;">latino</span><span style="float:right;">&nbsp;(ITA / SPA / POR)</span>'),
-						#array('jpn', '<span style="float:left;">asia</span><span style="float:right;">&nbsp;(JPN / CHI / KOR)</span>'),
 						array('und', 'undefiniert')
 					);
 	
@@ -87,10 +92,16 @@
 						array('extended' => ' (extended)')
 					);
 	
+	$MUSICVIDS_ENABLED             = false;
+	
 	$ELEMSINROW                    = 7; //values: 13, 11, 9, 7, 5 or 3
 	$DEFAULT_NEW_ADDED             = 30;
 	
 	$USECACHE                      = true;
+	
+	$CHECK_NEXT_AIRDATE            = false;
+	$RLS_OFFSET_IN_DAYS            = 1;
+	$EUROPEAN_DATE_FORMAT          = false;
 	$TVSHOW_THUMBS                 = true;
 	$TVSHOW_THUMBS_FROM_SRC        = true;
 	$ENCODE_IMAGES                 = false;
@@ -105,9 +116,10 @@
 	
 	$COPYASSCRIPT_ENABLED          = false;
 	$COPYASSCRIPT_COPY_WIN         = true;
-	#$COPYASSCRIPT_COPY_TO          = '/media/Elements/movies';
-	$COPYASSCRIPT_COPY_TO          = 'D:\\';
-	$COPYASSCRIPT_COPY_FROM        = 'X:\\';
+	$COPYASSCRIPT_COPY_TO          = 'G:\\folder1\\';
+	$COPYASSCRIPT_COPY_FROM        = 'D:\\folder1\\';
+	$COPYASSCRIPT_COPY_TO_SHOW     = 'G:\\folder2\\';
+	$COPYASSCRIPT_COPY_FROM_SHOW   = 'D:\\folder2\\';
 	
 	$SEARCH_ENABLED                = true;
 	$CUTS_ENABLED                  = true;  // extended, directors, uncut / unrated
@@ -129,10 +141,14 @@
 	
 	$importLogging                 = true;
 	
+	$CPU_TEMPS                     = array(45,45,60);
+	$ADMIN_INFO                    = true;
 	$NAS_CONTROL                   = false;
 	$NAS_IP                        = null;
 	
 	$BIND_CTRL_F                   = true;
+	
+	$BLACKLIST_RETRY_LIMIT         = 3;
 	
 	//- sensitive Data -//
 	$LOGIN_USERNAME                = '';
