@@ -153,9 +153,8 @@ function checkShowInfo(objId, xOffset1) {
 	do {
 		if ($(objId).width() > 0) {
 			cursorBusy('');
-			setFlagsBack(objId);
-
 			resizeAll(xOffset1);
+			setFlagsBack(objId);
 			return;
 		}
 		if (c++ > 100) { return; }
@@ -190,9 +189,7 @@ function loadShowInfo(obj, id) {
 }
 
 function loadShowInfoPlus(obj, id, trClass, eps) {
-	if (lastIdShow == id) {
-		return;
-	}
+	if (epDescLoading || lastIdShow == id) { return; }
 	
 	cursorBusy('progress');
 	
@@ -213,9 +210,7 @@ function loadShowInfoPlus(obj, id, trClass, eps) {
 
 function loadEpDetails(obj, epId) {
 	epsPositioned = false;
-	if (epDescLoading || lastIdEp == epId) {
-		return;
-	}
+	if (epDescLoading || lastIdEp == epId) { return; }
 	
 	$('.epTR').children('TD').removeClass('selectedShow');
 	$('#' + epId).children('TD').addClass('selectedShow');
@@ -265,11 +260,11 @@ function moveDivEpDesc(resizeOffset) {
 	var posElem  = lastIdShow < 0 ? '#showsTable' : '.selectedShow';
 	
 	var yOffset  = 1;
-	var xOffset  = $.browser.webkit ? 2 : 0;
+	var xOffset  = $.browser.webkit ? 3 : 0;
 	var left     = $(posElem).position().left;
 	var top      = $("#showDesc").position().top + $(".showDesc").height() + yOffset;
 	var width    = $("#showDesc").width();
-	var height   = "5px"; //$("table:first").height() - top;
+	var height   = "5px";
 	var divTop   = top + "px";
 	var divLeft  = Math.floor(left + resizeOffset + xOffset) + "px";
 	
@@ -316,21 +311,21 @@ function loadEplist_(obj) {
 
 function loadEplistPlus_(obj, trClass, eps) {
 	eplistLoading = true;
-
+	
 	$('#showInfo').text('');
 	$('#showInfo').show();
 	moveDivR(0);
-
+	
 	$('#showInfo').load(
 		$(obj).attr('eplist'),
 		function() {
 			$('#showInfo').animate(
-				{ "width": "+=351px" },
+				{ "width": "+=385px" },
 				"slow",
 				function() {
 					var height = $('#serieTable').height() + "px";
 					checkShowInfo('#showInfo', 0);
-					$("#showInfo").css({ "width" : "351px", "height" : height });
+					$("#showInfo").css({ "width" : "385px", "height" : height });
 					if ($.browser.mozilla) { $("#showInfo").css({ "left" : "+=1px" }); }
 					toggleEps(trClass, eps, null);
 					
@@ -365,23 +360,24 @@ function loadDesc(obj) {
 function loadDesc_(obj) {
 	var posElem = lastIdShow < 0 ? '#showsTable' : '.selectedShow';
 	
-	var xOffset = $.browser.webkit ? 2 : 0;
+	var yOffset = $.browser.webkit ? 0 : -1;
+	var xOffset = $.browser.webkit ? 3 : 1;
 	var resizeOffset = 0;
 	descLoading = true;
-
+	
 	$('#showDesc').text('');
 	$('#showDesc').show();
 	moveDivL(resizeOffset);
-
-	var left = $(posElem).position().left;
+	
+	var top     = $(posElem).position().top + yOffset + "px";
+	var left    = $(posElem).position().left;
 	var divLeft = Math.floor(left + resizeOffset + xOffset - 352) + "px";
 	
 	$('#showDesc').load(
 		$(obj).attr('desc'),
 		function() {
 			$('#showDesc').animate(
-				{ "width": "+=351px", "left": divLeft },
-				/*{ "width": "+=351px" },*/
+				{ "width": "+=351px", "left": divLeft, "top": top },
 				"slow",
 				function() {
 					checkShowInfo('#showDesc', 0);
@@ -395,13 +391,12 @@ function loadDesc_(obj) {
 function moveDivL(resizeOffset) {
 	var posElem  = lastIdShow < 0 ? '#showsTable' : '.selectedShow';
 	
-	var yOffset  = 0;
-	var xOffset  = $.browser.webkit ? 1 : 0.5;
+	var yOffset  = $.browser.webkit ? 0 : -1;
+	var xOffset  = $.browser.webkit ? 2 : 0.5;
 	var left     = $(posElem).position().left;
-	var top      = $(posElem).position().top;
-	//var top      = $("#showsTable").position().top;
+	var top      = $(posElem).position().top + yOffset;
 	var width    = $("tbody:first").width();
-	var height   = "350px"; //$("table:first").height() - top;
+	var height   = "350px";
 	var divTop   = top + "px";
 	var divLeft  = Math.floor(left + resizeOffset + xOffset) + "px";
 	
@@ -424,13 +419,11 @@ function moveDivR(resizeOffset) {
 	
 	var posElem  = lastIdShow < 0 ? '#emptyTR' : '.selectedShow';
 	
-	var yOffset  = $.browser.webkit ? 1 : -1;
-	var xOffset  = $.browser.webkit ? -1 : -2.5;
+	var yOffset  = $.browser.webkit ? 0 : -1;
+	var xOffset  = $.browser.webkit ? 1 : -0.5;
 	var left     = $(posElem).position().left;
-	var top      = $(posElem).position().top;
-	//var top      = $("#emptyTR").position().top + $("#emptyTR").height() + yOffset;
+	var top      = $(posElem).position().top + yOffset;
 	var width    = $("tbody:first").width();
-	//var height   = $("table:first").height() - top;
 	var height   = $('#serieTable').height() + "px";
 	var divTop   = top + "px";
 	var divLeft   = Math.floor(left + width + xOffset + resizeOffset) + "px";
@@ -445,15 +438,19 @@ function moveDivR(resizeOffset) {
 	});
 
 	if (!eplistLoading) {
-		$("#showInfo").css({ "width" : "351px" });
+		$("#showInfo").css({ "width" : "385px" });
 	}
 }
 
 function toggleAirdates() {
-	if (airdateVisible) { $( '.airdate' ).hide(); }
-	else { $( '.airdate' ).show(); }
+	if (!isAdmin) { return; }
+	var w = $( '#showsTable' ).width();
+	
+	if (airdateVisible) { $( '.airdate' ).hide(); w -= 75; }
+	else { $( '.airdate' ).show(); w += 75; }
 	airdateVisible = !airdateVisible;
 	
+	$('#showsTable').css({ "width" : w+"px" });
 	resizeAll(0);
 }
 

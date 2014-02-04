@@ -27,6 +27,7 @@ jQuery(document).ready(function() {
 		}
 	});
 	
+/*
 	$("img[href$='.jpg'],img[href$='.png']").fancybox({
 		'autoScale'			: true,
 		'centerOnScroll'		: true,
@@ -54,6 +55,7 @@ jQuery(document).ready(function() {
 			});
 		}
 	});
+*/
 	
 	$(".openImdb").fancybox({
 		'width'				: '63%',
@@ -134,7 +136,7 @@ jQuery(document).ready(function() {
 	});
 
 	$(".fancy_sets").fancybox({
-		'width'				: 500,
+		'width'				: 480,
 		'height'			: 650,
 		'transitionIn'			: 'elastic',
 		'transitionOut'			: 'elastic',
