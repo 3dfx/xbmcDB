@@ -59,7 +59,7 @@ function postSerie($serie) {
 				$percent = $serie->getWatchedPercent();
 				$showEmpty = empty($percent);
 				if (!empty($percent)) {
-					echo '<span title="'.$percent.'%" style="position:relative; right:2px; top:3px; padding-left:4px;">';
+					echo '<span title="'.$percent.'% [ '.$serie->getEpCountWatched().'/'.$serie->getAllEpisodeCount().' ]" style="position:relative; right:2px; top:3px; padding-left:4px;">';
 					echo '<input type="text" class="knob-dyn" data-width="12" data-height="12" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
 					echo '</span>';
 				}
@@ -116,7 +116,7 @@ function postStaffel($staffel) {
 				$percent = $staffel->getWatchedPercent();
 				$showEmpty = empty($percent);
 				if (!empty($percent)) {
-					echo '<span title="'.$percent.'%" style="position:relative; right:2px; top:3px; padding-left:4px;">';
+					echo '<span title="'.$percent.'% [ '.$staffel->getEpCountWatched().'/'.$staffel->getEpisodeCount().' ]" style="position:relative; right:2px; top:3px; padding-left:4px;">';
 					echo '<input type="text" class="knob-dyn" data-width="12" data-height="12" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
 					echo '</span>';
 				}

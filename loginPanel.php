@@ -27,7 +27,7 @@ include_once "./template/functions.php";
 	if ($which == 2) {
 		echo '<div style="position:relative; right:7px;"><span style="float:right;">'."\r\n";
 		echo '<form name="loginPanel" action="loginPanel.php?which=2" method="post" style="margin-bottom:5px;">'."\r\n";
-		echo "\t".'<button type="submit" name="filter" value="'.(empty($filter) ? 'fails' : '').'" class="key okButton" onclick="this.blur();" style="width:80px;'.(empty($filter) ? '' : ' background-color:red; color:white;').'">Filter'.(empty($filter) ? '' : ' on').'</button>'."\r\n";
+		echo "\t".'<button type="submit" name="filter" value="'.(empty($filter) ? '1' : ($filter == '1' ? '2' : '')).'" class="key okButton" onclick="this.blur();" style="width:120px;'.(empty($filter) ? '' : ' background-color:'.($filter == '1' ? 'green' : 'red').'; color:white;').'">Filter'.(empty($filter) ? '' : ($filter == '1' ? ' fails' : ' success')).'</button>'."\r\n";
 		echo '</form>'."\r\n";
 		echo '</span></div>'."\r\n";
 	}
@@ -85,8 +85,9 @@ include_once "./template/functions.php";
 					}
 				}
 				
-				if ($exit && !empty($filter)) {
-					continue;
+				if (!empty($filter)) {
+					if ($filter == '1' && $exit)  { continue; }
+					if ($filter == '2' && !$exit) { continue; }
 				}
 				
 				echo "<tr style='height:15px;'>";

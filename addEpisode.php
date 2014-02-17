@@ -20,7 +20,7 @@ include_once "./template/_SERIEN.php";
 	$update        = 0;
 	$closeFrame    = 0;
 	
-	$idSelected = false;
+	$idSelected     = false;
 	$seasonSelected = false;
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$getSeason  = getEscPost('season');
@@ -82,6 +82,11 @@ include_once "./template/_SERIEN.php";
 			$('.styled-select').customStyle();
 			showEpInfos();
 <?php
+	if (!$update && $idEpisode != -1) {
+?>
+			$('#filename').focus();
+<?php
+	}
 	if ($closeFrame) {
 ?>
 			parent.$.fancybox.close();

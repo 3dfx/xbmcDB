@@ -720,9 +720,10 @@ function postNavBar($isMain) {
 	$isAdmin     = isAdmin();
 	$saferSearch = null;
 	
-	$isMain              = !isset($_SESSION['show']) || $_SESSION['show'] == 'filme'  ? true : false;
-	$isTvshow            = isset($_SESSION['show'])  && $_SESSION['show'] == 'serien' ? true : false;
-	$isMVids             = isset($_SESSION['show'])  && $_SESSION['show'] == 'mvids'  ? true : false;
+	$show                = isset($_SESSION['show'])        ? $_SESSION['show']        : 'filme';
+	$isMain              = $show == 'filme'  ? true : false;
+	$isTvshow            = $show == 'serien' ? true : false;
+	$isMVids             = $show == 'mvids'  ? true : false;
 	
 	$country             = isset($_SESSION['country'])     ? $_SESSION['country']     : '';
 	$mode                = isset($_SESSION['mode'])        ? $_SESSION['mode']        : 0;
@@ -896,8 +897,8 @@ function postNavBar($isMain) {
 		
 		echo '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
-		echo '<li><a href="?show=filme&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
-		echo '<li><a href="?show=filme&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
+		echo '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
+		echo '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
 		echo '</ul>';
 		echo '</li>';
 	} //$isMain

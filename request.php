@@ -28,7 +28,7 @@ include_once "globals.php";
 			"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".
 			"ORDER BY filename";
 	} else {
-		$SQL = "SELECT strPath, c00 AS name FROM tvshowview WHERE idShow IN (".$ids.");";
+		$SQL = "SELECT strPath, c00 AS name FROM tvshowview WHERE idShow IN (".$ids.") ORDER BY name;";
 	}
 	
 	$res = querySQL($SQL, false);
