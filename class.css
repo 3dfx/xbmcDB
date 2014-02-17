@@ -19,9 +19,14 @@ body 	{
 	scrollbar-darkshadow-Color: 666;
 }
 
-::-webkit-scrollbar{width:8px}
-::-webkit-scrollbar-track-piece{background-color:transparent}
-::-webkit-scrollbar-thumb{background:#ddd}
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track-piece { background-color:transparent; }
+::-webkit-scrollbar-thumb { background:#ddd; }
+
+::-webkit-input-placeholder { padding-top:0px; }
+::-moz-placeholder { padding-top:3px; }
+:-ms-input-placeholder { padding-top:3px; }
+input:-moz-placeholder { padding-top:3px; }
 
 a, a:hover {
 	color: #000000;
@@ -511,7 +516,7 @@ input[type=checkbox] {
 	border-radius:8px;
 }
 
-.innerCoverImg {
+.innerCoverImg, .tvRandomBanner {
 	position:relative;
 	left:2px;
 	top:2px;
@@ -729,9 +734,9 @@ table.gallery {
 	right:-75px;
 	top:-140px;
 	width:32px;
-	height:183px;
+	height:140px;
 	vertical-align:bottom;
-	#display:table-cell;
+	display: inline-block;
 	z-index:1;
 }
 
@@ -766,14 +771,30 @@ table.gallery {
 .gallery1st {
 	position:absolute;
 	border:0px;
-	left:4px;
+	left:0px;
 	top:0px;
 }
 
-.gallery2nd {
-	position:absolute;
+.gallery1st {
+	position: relative;
 	border:0px;
-	bottom:32px;
+	#bottom:32px;
+	top: 120px;
+}
+
+.gallery2nd {
+	position: relative;
+	border:0px;
+	#bottom:32px;
+	top: 96px;
+}
+
+.gallery3rd {
+	#position:absolute;
+	position: relative;
+	border:0px;
+	#bottom:32px;
+	top: 72px;
 }
 
 .gallery3d {
@@ -880,8 +901,10 @@ a.showlink {
 #showBanner { position:relative; top:0px; left:0px; border:0px; padding:10px 0px; padding--top:25px; text-align:center; }
 
 .showShowInfo  { cursor:default; width:1px; white-space:nowrap; height:20px; width:550px; min-width:550px; max-width:550px !important; }
-.showShowInfo1 { color:silver; padding:2px 4px; }
-.sInfoSize     { color:silver; float:right; padding-left:10px; }
+.checkaCheck   { padding-left:4px; padding-right:0px !important; }
+.showShowInfo1 { color:silver; padding:2px 4px 2px 0px; }
+.showName      { float:left; overflow-x:hidden; width:150px; }
+.sInfoSize     { float:right; color:silver; padding-left:10px; }
 .sInfoRating   { float:right; padding-left:10px; }
 .galleryImage  { width:16px !important; height:16px !important; z-index:50; }
 .selectedShow  { font-weight: bold !important; }
@@ -891,6 +914,7 @@ a.showlink {
 .showDescTD { padding:10px 25px 20px 25px; text-align:justify; white-space:pre-line !important; }
 .descDiv    { width:300px; margin-top:15px; }
 
+#serieTable   { width: 385px; padding:0px; margin-left:0px; z-index:1; }
 #descTR       { cursor:default; height:20px; }
 .descTRd1     { padding:0px 0px 0px 25px; }
 .seasonTR     { cursor:default; height:20px; }
@@ -906,7 +930,7 @@ a.showlink {
 
 #epDescription { position:relative; border-top:0px; width:350px; padding:0px; margin:0px; z-index:1; }
 .showDescTD2   { padding:20px 25px; white-space:pre-line !important; }
-.epCheckSpan   { float:right; position:relative; top:-6px; width:24px; height:24px; }
+.epCheckSpan   { text-align:right; float:right; position:relative; top:-2px; width:24px; height:24px; }
 .thumbCheck    { width:24px !important; height:24px !important; }
 .thumbDiv      { position:relative; top:-8px; padding-bottom:10px; }
 .thumbImg      { width:298px; border-radius:3px; -webkit-border-radius:3px; }
