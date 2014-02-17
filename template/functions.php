@@ -1012,7 +1012,7 @@ function postNavBar($isMain) {
 		echo '</ul>';
 		echo '</li>';
 	}
-	echo '<li><a href="?show=logout" onmouseover="closeNavs();"'.($isMain ? ' onclick="return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
+	echo '<li><a href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
 	
 	echo '</ul>';
 	echo '</div>';
