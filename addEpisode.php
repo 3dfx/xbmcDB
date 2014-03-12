@@ -59,8 +59,10 @@ include_once "./template/_SERIEN.php";
 	if ($getSeason == -1 && $getEpisode == -1) { $seasonSelected = false; }
 	
 	$episodes = null;
-	if ($idSelected) { $episodes = getShowInfo($idTvdb); }
-	if ($idSelected && $episodes == null) { die('NOTHING FOUND!'); }
+	if ($idSelected) {
+		$episodes = getShowInfo($idTvdb);
+		if ($episodes == null) { die('NOTHING FOUND!'); }
+	}
 	
 	$showPath = $serie->getShowpath();
 	

@@ -232,7 +232,10 @@ include_once "./template/_SERIEN.php";
 	}
 	
 	if ($isAdmin) {
-		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />'.encodeString($path.$filename).'</div>';
+		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />';
+		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
+		echo encodeString($path).$filename;
+		echo '</div>';
 	}
 	
 	if (!$isDemo) {
@@ -248,7 +251,7 @@ include_once "./template/_SERIEN.php";
 		if (!empty($subtitle)) {
 			$codecs = '';
 			$countyMap = getCountyMap();
-			for($i = 0; $i < count($subtitle); $i++) { $codecs .= getLanguage($countyMap, $aLang, $i, false).($i < count($subtitle)-1 ? ' <font color="silver">|</font> ' : ''); }
+			for($i = 0; $i < count($subtitle); $i++) { $codecs .= getLanguage($countyMap, $subtitle, $i, false).($i < count($subtitle)-1 && !empty($subtitle[$i]) ? ' <font color="silver">|</font> ' : ''); }
 			echo '<div style="overflow-x:hidden;"><span><u><i><b>Sub:</b></i></u></span><span class="flalright">'.count($subtitle).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
 	}
@@ -262,12 +265,12 @@ include_once "./template/_SERIEN.php";
 	echo '</table>';
 	
 //- FUNCTIONS -//
-function getLanguage($countyMap, $aLang, $i, $trenner = true) {
-	return isValidLang($countyMap, $aLang, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($aLang[$i]), false) : '';
+function getLanguage($countyMap, $languages, $i, $trenner = true) {
+	return isValidLang($countyMap, $languages, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($languages[$i]), false) : '';
 }
 
-function isValidLang($countyMap, $aLang, $i) {
-	return isset($aLang[$i]) && isset($countyMap[strtoupper($aLang[$i])]);
+function isValidLang($countyMap, $languages, $i) {
+	return isset($languages[$i]) && isset($countyMap[strtoupper($languages[$i])]);
 }
 //- FUNCTIONS -//
 ?>

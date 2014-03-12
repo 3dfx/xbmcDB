@@ -106,7 +106,7 @@ include_once "globals.php";
 				
 				$path = $forOrder ? decodeString(encodeString($path)) : $path;
 				
-				$res .= $scriptCopyWin ? 'xcopy /S ' : 'cp -r ';
+				$res .= $scriptCopyWin ? 'xcopy /S /J /Y ' : 'cp -r ';
 				$res .= '"'.$path.'" "'.$scriptCopyTo.($scriptCopyWin ? $newFoldername : '').'"'.$newLine;
 			} else {
 				$name = $row['name'];
@@ -162,7 +162,7 @@ include_once "globals.php";
 						$path = str_replace(' ', '\ ', $path);
 					}
 					
-					$res .= $scriptCopyWin ? 'copy ' : 'cp ';
+					$res .= $scriptCopyWin ? 'xcopy /S /J /Y ' : 'cp ';
 					$res .= ($scriptCopyWin ? '"' : '').$path.$formattedName.($scriptCopyWin ? '"' : '').' '.$scriptCopyTo.' ';
 					$res .= $newLine;
 					$oldPath = $path;

@@ -599,7 +599,7 @@ include_once "globals.php";
 
 				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>Not in any set!</i>');
 				if ($isSet) {
-					$href = '<a href="?show=filme&which=set&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
+					$href = '<a href="?show=filme&which=set&sort=jahr&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
 				}
 				if ($isAdmin) {
 					$href .= ' <a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id.'"><img style="border:0px; height:9px;" src="img/edit-pen.png" title="change set" /></a>';

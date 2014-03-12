@@ -7,6 +7,13 @@ require_once "./rss_php.php";
 
 function startSession()   { if (!isset($_SESSION)) { session_start(); } }
 function allowedRequest() { return true; }
+function getOS() {
+	startSession();
+	if (!isset($_SESSION['OS']) || isset($_SESSION['overrideFetch'])) { $_SESSION['OS'] = strtoupper(php_uname('s')); }
+	return $_SESSION['OS'];
+}
+
+function isLinux() { return 'LINUX' == getOS(); }
 
 function execSQL($SQL, $throw = true) {
 	$dbh = getPDO();
@@ -429,6 +436,8 @@ function getStackedFilesize($filename) {
 }
 
 function getFilesize($file) {
+	if (!isLinux()) { return null; }
+	
 	$ersetzen = array(
 		'Ã¤' => 'ä', 
 		'Ã¶' => 'ö', 
@@ -453,6 +462,8 @@ function getFilesize($file) {
 }
 
 function getCreation($file) {
+	if (!isLinux()) { return null; }
+	
 	$ersetzen = array(
 		'Ã¤' => 'ä', 
 		'Ã¶' => 'ö', 
@@ -537,12 +548,12 @@ function mapSambaDirs($path, $DIRMAP = null) {
 	for ($d = 0; $d < count($DIRMAP); $d++) {
 		$src = trim($DIRMAP[$d][0]);
 		$mnt = trim($DIRMAP[$d][1]);
-
+		
 		if (!empty($src) && !empty($mnt)) {
 			$path = str_replace($src, $mnt, $path);
 		}
 	}
-
+	
 	return $path;
 }
 
@@ -560,7 +571,7 @@ function setSeenDelMovie($what, $checkFilme) {
 				$result = $dbh->query($sql);
 				$row = $result->fetch();
 				$idFile = $row['idFile'];
-
+				
 				if ($what == 1) { // unseen
 					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile = '$idFile'");
 
@@ -1189,7 +1200,7 @@ function curlJson($method) {
 }
 
 function xbmcRunning() {
-	if (!isAdmin()) { return 0; }
+	if (!isAdmin() || !isLinux()) { return 0; }
 	
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
@@ -1300,7 +1311,7 @@ function storeSession() {
 	unset( $_SESSION['username'],   $_SESSION['user'], $_SESSION['idGenre'],  $_SESSION['refferLoged'], $_SESSION['overrideFetch'], 
 	       $_SESSION['passwort'],   $_SESSION['gast'], $_SESSION['idStream'], $_SESSION['tvShowParam'], $_SESSION['dbName'], 
 	       $_SESSION['angemeldet'], $_SESSION['demo'], $_SESSION['thumbs'],   $_SESSION['existsTable'], $_SESSION['TvDbCache'], 
-	       $_SESSION['private'],    $_SESSION['paths']
+	       $_SESSION['private'],    $_SESSION['OS'],   $_SESSION['paths']
 	       #$_SESSION['xbmcRunning'], 
 	     ); //remove values that should be determined at login
 	
@@ -1310,6 +1321,7 @@ function storeSession() {
 }
 
 function adminInfo($start, $show) {
+	if (!isLinux()) { return; }
 	$adminInfo = isset($GLOBALS['ADMIN_INFO']) ? $GLOBALS['ADMIN_INFO'] : true;
 	if (isAdmin() && $adminInfo && ($show == 'filme' || $show == 'serien' || $show == 'mvids')) {
 		echo '<div class="bs-docs" id="adminInfo" style="z-index:10;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
@@ -1559,18 +1571,19 @@ function isWatchedAnyHiddenInMain($idShow) {
 
 function getShowInfo($idShow) {
 	if (empty($idShow) || $idShow < 0) { return null; }
-	
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if (isset($_SESSION['TvDbCache'][$idShow]) && $overrideFetch == 0) {
 		return unserialize($_SESSION['TvDbCache'][$idShow]);
 	}
 	
 	$LANG         = isset($GLOBALS['TVDB_LANGUAGE']) ? $GLOBALS['TVDB_LANGUAGE'] : 'en';
-	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY']) ? $GLOBALS['TVDB_API_KEY'] : null;
-	if (empty($TVDB_API_KEY)) { return array(); }
+	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY'])  ? $GLOBALS['TVDB_API_KEY']  : null;
+	
+	if (empty($TVDB_API_KEY)) { return null; }
 	
 	$rss_0 = new rss_php;
-	$rss_0->load('http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$idShow.'/all/'.$LANG.'.xml');
+	$URL = 'http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$idShow.'/all/'.$LANG.'.xml';
+	$rss_0->load($URL);
 	$items = $rss_0->getItems();
 	
 	$episodes = array();
@@ -1578,12 +1591,10 @@ function getShowInfo($idShow) {
 	foreach($items as $index => $item0) {
 		foreach($item0 as $jndex => $item) {
 			if (!isset($item0['Episode:'.$count])) { break; }
+
 			$item = $item0['Episode:'.$count];
-			
-			$s  = $item['SeasonNumber'];
-			$e  = $item['EpisodeNumber'];
-			#$id = $item['id'];
-			
+			$s    = $item['SeasonNumber'];
+			$e    = $item['EpisodeNumber'];
 			$episodes[$s][$e] = $item;
 			$count++;
 		}
@@ -1734,6 +1745,7 @@ function getPausedAt($timeAt) {
 }
 
 function workaroundMTime($img) {
+	if (!isLinux()) { return null; }
 	exec('stat -c %Y "'.$img.'"', $output);
 	return $output != null && count($output) > 0 ? $output[0] : null;
 }

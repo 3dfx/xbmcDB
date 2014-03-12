@@ -22,6 +22,7 @@ include_once "./template/_SERIEN.php";
 	});
 </script>
 <?php
+	$isAdmin = isAdmin();
 	$id = getEscGet('id');
 	if (empty($id) || $id < 0) { return; }
 	
@@ -29,6 +30,9 @@ include_once "./template/_SERIEN.php";
 	$serie   = $serien->getSerie($id);
 	$idTvdb  = $serie->getIdTvdb();
 	$desc    = $serie->getDesc();
+	$genre   = $serie->getGenre();
+	$studio  = $serie->getStudio();
+	$fsk     = $serie->getFsk();
 	$running = $serie->isRunning();
 	$banner  = null;
 	$imgURL  = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
@@ -46,8 +50,22 @@ include_once "./template/_SERIEN.php";
 	}
 	
 	echo '<div class="descDiv">';
-	if (isAdmin()) {
+	if ($isAdmin) {
 		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$serie->getIdShow().'</span></div>';
+	}
+	
+	if (!empty($genre)) {
+		echo '<div class="'.($isAdmin ? '' : 'padtop15').'" style="overflow-x:hidden;"><u><i><b>Genre:</b></i></u><span class="flalright">'.$genre.'</span></div>';
+	}
+	if (!empty($fsk)) {
+		echo '<div class="" style="overflow-x:hidden;"><u><i><b>FSK:</b></i></u><span class="flalright">'.$fsk.'</span></div>';
+	}
+	if (!empty($studio)) {
+		echo '<div class="" style="overflow-x:hidden;"><u><i><b>Studio:</b></i></u><span class="flalright">'.$studio.'</span></div>';
+	}
+	
+	if (!empty($genre.$studio.$fsk)) {
+		echo '<div class="padbot15" style="overflow-x:hidden;"></div>';
 	}
 	
 	if (checkAirDate() && $running) {
@@ -85,9 +103,9 @@ include_once "./template/_SERIEN.php";
 			$missed    = dateMissed($airDate);
 			$info1     = $daysLeft > 0 ?
 					'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : '').' on '.$dayOfWeek :
-					(isAdmin() ? ($missed ? 'Missed episode' : 'Today') : '');
+					($isAdmin ? ($missed ? 'Missed episode' : 'Today') : '');
 			
-			$info2     = ' [ <b style="color:'.($missed && isAdmin() ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
+			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			
 			echo 'Next airdate:<br />'.$info1.$info2.'<br /><br />';
 			
