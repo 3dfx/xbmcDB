@@ -213,17 +213,16 @@ include_once "globals.php";
 ?>
 <body>
 <?php
-		$fanart  = getImageWrap($fanart, $idMovie, 'fanart', 0);
+		if ($DETAILFANART && $fanartExists) {
+			$fanart  = getImageWrap($fanart, $idMovie, 'fanart', 0);
+			if ($ENCODE) { $fanart = base64_encode_image($fanart); }
+			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>';
+			echo "\r\n";
+		}
 		
 		$pos1 = strpos($filename, '.3D.');
 		if ( $pos1 == true) {
 			$titel .= ' (3D)';
-		}
-		
-		if ($DETAILFANART && $fanartExists || true) {
-			if ($ENCODE) { $fanart = base64_encode_image($fanart); }
-			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>';
-			echo "\r\n";
 		}
 		
 		if (!empty($cover)) {
@@ -646,7 +645,15 @@ include_once "globals.php";
 			
 			$actorimg = getActorThumb($artist, $actorpicURL, false);
 			if (!file_exists($actorimg) && $existArtTable) {
-				$actorimg = $artCovers['actor'][$idActor]['cover'];
+				if (!empty($artCovers)) {
+					$actorimg = $artCovers['actor'][$idActor]['cover'];
+				} else {
+					$row3 = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';");
+					$url  = $row3['url'];
+					if (!empty($url)) {
+						$actorimg = getActorThumb($url, $url, true);
+					}
+				}
 			}
 			
 			wrapItUp('actor', $idActor, $actorimg);
