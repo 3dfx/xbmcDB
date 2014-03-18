@@ -20,7 +20,7 @@ include_once "globals.php";
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.js"></script>
+	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
