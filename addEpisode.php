@@ -74,21 +74,19 @@ include_once "./template/_SERIEN.php";
 	<head>
 	<link rel="stylesheet" type="text/css" href="./class.css" />
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
-	<!-- <link rel="stylesheet" type="text/css" href="./template/js/bootstrap/select/select2.css" media="screen" /> -->
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.js"></script>
-	<!-- <script type="text/javascript" src="./template/js/bootstrap/select/select2.min.js"></script> -->
 	<script type="text/javascript" src="./template/js/customSelect.jquery.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function(){
 			$('.styled-select').customStyle();
 			showEpInfos();
 <?php
-	if (!$update && $idEpisode != -1) {
+//	if (!$update && $idEpisode != -1) {
 ?>
 			$('#filename').focus();
 <?php
-	}
+//	}
 	if ($closeFrame) {
 ?>
 			parent.$.fancybox.close();
@@ -97,7 +95,7 @@ include_once "./template/_SERIEN.php";
 	}
 ?>
 		});
-
+		
 		function cursorBusy() {
 			$('body').css('cursor', 'wait');
 			$('button').css('cursor', 'wait');
@@ -111,7 +109,7 @@ include_once "./template/_SERIEN.php";
 			
 			window.location.href=url;
 		}
-
+		
 		function showEpInfos() {
 			var sel = document.getElementById('showEpisode');
 			var id = sel.value;
@@ -128,7 +126,7 @@ include_once "./template/_SERIEN.php";
 						var airdate = document.getElementById('airdate');
 						var rating = document.getElementById('rating');
 						var desc = document.getElementById('desc');
-
+						
 						title.value = episode[2];
 						airdate.value = episode[3];
 						rating.value = episode[4];
@@ -139,7 +137,7 @@ include_once "./template/_SERIEN.php";
 				}
 			}
 		}
-
+		
 		function saveStrPath() {
 			var sel = document.getElementById('idPath');
 			var id = sel.value;
@@ -151,7 +149,7 @@ include_once "./template/_SERIEN.php";
 					break;
 				}
 			}
-
+			
 			var str = document.getElementById('strPath');
 			str.value = strPath;
 		}
@@ -187,8 +185,7 @@ include_once "./template/_SERIEN.php";
 	if ($idSelected) {
 		echo "\t\t".'<tr>';
 		echo "\t\t".'<td style="padding-left:5px; font-weight:bold; text-align:center;" colspan="2">'.$serie->getName().'</td>';
-		echo "\t\t".'</tr>';
-
+		echo "\t\t".'</tr>'."\n\r";
 ?>
 		<tr style="border-top:0px;">
 		<td style="padding-left:5px;">Episode:</td>
@@ -201,7 +198,7 @@ include_once "./template/_SERIEN.php";
 			</div>
 		</td>
 		</tr>
-
+		
 		<tr style="border-top:0px;">
 		<td style="padding-left:5px;">Path:</td>
 		<td style="padding-left:7px; width:450px;">
@@ -224,9 +221,8 @@ include_once "./template/_SERIEN.php";
 		$idFile = ($update ? $episodeToUp->getIdFile() : -1);
 		echo '<input type="hidden" id="idFile" name="idFile" value="'.$idFile.'" style="font-size:10px; width:20px;" />';
 		echo '</td>';
-		echo '</tr>';
+		echo '</tr>'."\n\r";
 ?>
-
 		<tr>
 		<td style="padding-left:5px;">Titel:</td>
 		<td style="padding-left:5px; width:450px;"><input type="text" id="title" name="title" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" /></td>
@@ -259,9 +255,8 @@ include_once "./template/_SERIEN.php";
 		echo '<input type="text" id="idTvdb" name="idTvdb" style="width:10px;" value="'.$idTvdb.'" />';
 		echo '<input type="text" id="strPath" name="strPath" style="width:10px;" value="-1" />';
 		echo '</td>';
-		echo "\t\t".'</tr>';
+		echo "\t\t".'</tr>'."\n\r";
 	}
-	
 	$value = ($update ? 'Update' : 'Add');
 	echo '<tr><td colspan="2" class="righto" style="padding:10 0px !important;"><div style="float:right; padding:0px 15px;"><input type="submit" value="'.$value.'" class="key okButton" onclick="this.blur();" /></div></tr>';
 ?>
@@ -274,12 +269,6 @@ include_once "./template/_SERIEN.php";
 function postSerien() {
 	$serie = $GLOBALS['serie'];
 	postSerie($serie->getIdTvdb(), $serie->getName());
-	/*
-	$serien = $GLOBALS['serien'];
-	foreach ($serien->getSerien() as $serie) {
-		postSerie($serie->getIdTvdb(), $serie->getName());
-	}
-	*/
 }
 
 function postSerie($id, $name) {
@@ -337,7 +326,6 @@ function postPathsJS() {
 		if (empty($name)) { continue; }
 		
 		echo "\n\r";
-		#echo 'new Array("'.$id.'",'.json_encode( $name ).')';
 		echo 'new Array("'.$id.'","'.$name.'")';
 		if ($i < count($paths)-1) {
 			echo ',';
@@ -358,19 +346,16 @@ function postEpisodesJS($episodes) {
 		$lastSeason = 0;
 		$jndex = 1;
 		foreach($season as $ydex => $episode) {
-			$seas = $episode['SeasonNumber'];
+			$seas       = $episode['SeasonNumber'];
 			if ($seas == '') { $seas = 0; }
 			$lastSeason = $seas;
-
-			$gastStars = processCredits($episode['GuestStars'], 'Gast Star');
-			$autoren = processCredits($episode['Writer'], 'Autor');
-			$spl = ($gastStars != '' && $autoren != '' ? ' / ' : '');
+			$gastStars  = processCredits($episode['GuestStars'], 'Gast Star');
+			$autoren    = processCredits($episode['Writer'], 'Autor');
+			$spl        = ($gastStars != '' && $autoren != '' ? ' / ' : '');
 			$gast_autor = $gastStars.$spl.$autoren;
-
-			$regie = processCredits($episode['Director'], null);
-
-			$rating = getRating($episode['Rating']);
-
+			$regie      = processCredits($episode['Director'], null);
+			$rating     = getRating($episode['Rating']);
+			
 			echo "\n\r";
 			echo 'new Array(';
 			echo '"'.$seas.'","'.$episode['EpisodeNumber'].'",'.json_encode( $episode['EpisodeName'] ).',"'.$episode['FirstAired'].'","'.$rating.'",'.json_encode( $regie ).','.json_encode( $gast_autor );
@@ -378,7 +363,7 @@ function postEpisodesJS($episodes) {
 			if ($jndex < count($season)) {
 				echo ', ';
 			}
-
+			
 			$jndex++;
 		}
 		echo ')';
@@ -390,7 +375,7 @@ function postEpisodesJS($episodes) {
 	echo ');';
 	echo "\n\r";
 	echo "\n\r";
-
+	
 	$index = 1;
 	echo 'var descriptions = new Array(';
 	foreach ($episodes as $xdex => $season) {
@@ -421,7 +406,7 @@ function processCredits($input, $role) {
 	if (substr($input, -1) == '|') { $input = substr($input, 0, strlen($input)-1); }
 	
 	if (trim($input) == '') { return ''; }
-
+	
 	$tmp = explode("|", $input);
 	$name = $role != null ? ' ('.$role.')' : '';
 	if (count($tmp) > 1) { $input = implode($name.' / ', $tmp); }

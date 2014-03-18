@@ -10,12 +10,13 @@
 	$path        = dirname($_SERVER['PHP_SELF']);
 	
 	startSession();
-	if (isLogedIn()) { logedInSoRedirect(true); }
+	if (isLoggedIn()) { loggedInSoRedirect(true); }
 	
 	logRefferer();
 	
-	$logedInAs   = '';
+	$loggedInAs  = '';
 	$failedText  = 'login failed!';
+	$FAIL_       = 'FAiL';
 	$redirect    = false;
 	$asAdmin     = false;
 	$noMoreLogin = false;
@@ -36,18 +37,18 @@
 			// check username und password
 			if (!empty($login_username) && !empty($login_passwort) && $input_username == $login_username && $input_passwort == $login_passwort) {
 				
-				$asAdmin   = true;
-				$redirect  = true;
-				$logedInAs = 'ADMiN';
+				$asAdmin    = true;
+				$redirect   = true;
+				$loggedInAs = 'ADMiN';
 				
-				$_SESSION['user']       = $logedInAs;
+				$_SESSION['user']       = $loggedInAs;
 				$_SESSION['angemeldet'] = true;
 				unset( $_SESSION['gast'] );
 				
 			} else if (isset($gast_users[$input_username]) && $input_passwort == $gast_users[$input_username]) {
 				
-				$redirect  = true;
-				$logedInAs = 'GUEST';
+				$redirect   = true;
+				$loggedInAs = 'GUEST';
 				
 				$_SESSION['user'] = $input_username;
 				$_SESSION['gast'] = true;
@@ -58,41 +59,42 @@
 				  (isset($demo_users[$input_username]) && $input_passwort == $demo_users[$input_username])
 				  ) {
 				
-				$redirect  = true;
-				$logedInAs = 'DEMO';
+				$redirect   = true;
+				$loggedInAs = 'DEMO';
 				
 				$_SESSION['user'] = $input_username;
 				$_SESSION['demo'] = true;
 				unset( $_SESSION['angemeldet'] );
 				
 			} else {
-				$logedInAs = 'FAiL';
+				$loggedInAs = $FAIL_;
 			}
 		} else {
-			$logedInAs = 'FAiL';
+			$loggedInAs = $FAIL_;
 		}
 		
 		logLogin();
-		if ($redirect) { logedInSoRedirect(); }
+		if ($redirect) { loggedInSoRedirect(); }
 	}
 	
 	if (isBlacklisted()) { $noMoreLogin = true; $failedText = 'too many failed logins!'; }
 
-function logedInSoRedirect($logedInAlready = false) {
+function loggedInSoRedirect($loggedInAlready = false) {
 	if (isset($_SESSION['show']) && $_SESSION['show'] == 'details') {
 		unset( $_SESSION['show'], $_SESSION['idShow'] );
 	}
 
-	if (!$logedInAlready) { restoreSession(); }
+	if (!$loggedInAlready) { restoreSession(); }
 	redirectPage('', true);
 }
 
 function logLogin() {
-	$LOCALHOST   = isset($GLOBALS['LOCALHOST'])   ? $GLOBALS['LOCALHOST']   : false;
-	$HOMENETWORK = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
-	$asAdmin     = $GLOBALS['asAdmin'];
-	$logedInAs   = $GLOBALS['logedInAs'];
-	if ($logedInAs == 'FAiL') { addBlacklist(); }
+	$LOCALHOST    = isset($GLOBALS['LOCALHOST'])   ? $GLOBALS['LOCALHOST']   : false;
+	$HOMENETWORK  = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
+	$asAdmin      = $GLOBALS['asAdmin'];
+	$loggedInAs   = $GLOBALS['loggedInAs'];
+	$FAIL_        = $GLOBALS['FAIL_'];
+	if ($loggedInAs == $FAIL_) { addBlacklist(); }
 	else { removeBlacklist(); }
 	
 	if (!($LOCALHOST || $HOMENETWORK)) {
@@ -105,7 +107,7 @@ function logLogin() {
 		$ip             = $_SERVER['REMOTE_ADDR'];
 		$host           = gethostbyaddr($ip);
 		
-		if (noLog($username, $host) && $logedInAs != 'FAiL') { return; }
+		if (noLog($username, $host) && $loggedInAs != $FAIL_) { return; }
 		
 		$datum = strftime("%d.%m.%Y");
 		$time  = strftime("%X");
@@ -114,7 +116,7 @@ function logLogin() {
 			$logPass = '****';
 		}
 		
-		$input = $datum."|".$time."|".$ip."|".$host."|".$hostname."|".$logedInAs."|".$username."|".$logPass."\n";
+		$input = $datum."|".$time."|".$ip."|".$host."|".$hostname."|".$loggedInAs."|".$username."|".$logPass."\n";
 		
 		$datei = "./logs/loginLog.php";
 		if (file_exists($datei)) {
@@ -172,7 +174,7 @@ function noLog($username, $host) {
 <?php } ?>
 </head>
 <body style='overflow-x:hidden; overflow-y:auto;'>
-<?php if ($logedInAs == 'FAiL' || $noMoreLogin) { ?>
+<?php if ($loggedInAs == $FAIL_ || $noMoreLogin) { ?>
 	<div id='failed' class='navBarBrand' style='min-width:0%; margin:0 auto; font-size:16pt; <?php echo $noMoreLogin ? 'width:250px; left:43%;' : 'width:120px; left:45%;'; ?> top:45.5%; position:absolute; z-index:1;'><?php echo $failedText; ?></div>
 <?php } ?>
 	<div class='navbar<?php echo ($INVERSE ? ' navbar-inverse' : ''); ?>' id='navLogin' style='margin:0px -15px; position:absolute; top:45%; width:102%;'>

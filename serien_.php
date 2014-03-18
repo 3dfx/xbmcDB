@@ -20,7 +20,7 @@ include_once "globals.php";
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
@@ -173,7 +173,7 @@ function postSerien($serien) {
 			echo '</td>';
 		}
 		echo '<td class="showShowInfo1 righto">';
-		$run1  = $isAdmin ? '<a class="fancy_movieEdit" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
+		$run1  = $isAdmin ? '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
 		$run2  = $isAdmin ? '</a>' : '';
 		$strCounter = $counter;
 		echo $run1.$strCounter.$run2;
@@ -206,7 +206,7 @@ function postSerien($serien) {
 		echo '<td class="righto">'.$allEpsCount.' Episode'.($allEpsCount > 1 ? 's' : '&nbsp;').'</td>';
 		echo '<td class="righto">';
 		if ($isAdmin) {
-			echo '<a class="fancy_addEpisode" href="./addEpisode.php?idShow='.$idShow.'&idTvdb='.$idTvDb.'">';
+			echo '<a tabindex="-1" class="fancy_addEpisode" href="./addEpisode.php?idShow='.$idShow.'&idTvdb='.$idTvDb.'">';
 			echo '<img src="./img/add.png" class="galleryImage" title="add Episode" />';
 			echo '</a> ';
 			

@@ -42,33 +42,13 @@ include_once "globals.php";
 		}
 		$SQL = '';
 		
-		/*
-		if ($act == 'setgenreinfo' && $idGenre != -1) {
-			if ($title != '') {
-				$dbh->exec('UPDATE genre set strGenre="'.$title.'" where idGenre = '.$idGenre.';');
-			}
-		}
-		*/
-		
 		if ($idFile != -1 && ($act == 'setSeen' || $act == 'setUnseen'))  {
 			$dbh->exec("UPDATE files SET playCount=".($act == 'setSeen' ? '1' : '0')." WHERE idFile = ".$idFile.";");
 			clearMediaCache();
 			
-		/*
-		} else if ($act == 'setSeen' && $idFile != -1) {
-			$dbh->exec("UPDATE files SET playCount=1 WHERE idFile = ".$idFile.";");
-			clearMediaCache();
-		*/
-		
 		} else if ($act == 'updateEpisode' && $idEpisode != -1 && $idPath != -1 && $idFile != -1 && !empty($file) && !empty($strPath)) {
 			$title = str_replace("'", "''", $title);
 			$desc  = str_replace("'", "''", $desc);
-			
-			/*
-			CREATE TABLE episode ( idEpisode integer primary key, idFile integer,c00 text,c01 text,c02 text,c03 text,c04 text,c05 text,c06 text,c07 text,c08 text,c09 text,c10 text,c11 text,c12 varchar(24),c13 varchar(24),c14 text,c15 text,c16 text,c17 varchar(24),c18 text,c19 text,c20 text,c21 text,c22 text,c23 text);
-			"UPDATE episode VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,[RATING],'[GUEST_AUTOR]',[AIRED],NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL);";
-			$SQLfile = "UPDATE files SET idPath=[idPath],strFilename='[FILENAME]',dateAdded='[ADDED]' WHERE idFile=[idFile];";
-			*/
 			
 			$SQLfile = "UPDATE files SET idPath=[idPath],strFilename='[FILENAME]' WHERE idFile=[idFile];";
 			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
@@ -103,8 +83,6 @@ include_once "globals.php";
 			 #############################
 			
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
-			#$result    = $dbh->query($GETID_SQL);
-			#$row       = $result->fetch();
 			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId    = $row['idFile'];
 			$idFile    = $lastId + 1;
@@ -118,16 +96,11 @@ include_once "globals.php";
 			$dbh->exec($SQLfile);
 			
 			$GETID_SQL = 'SELECT idEpisode FROM episode ORDER BY idEpisode DESC LIMIT 0, 1;';
-			#$result    = $dbh->query($GETID_SQL);
-			#$row       = $result->fetch();
 			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId    = $row['idEpisode'];
 			$idEpisode = $lastId + 1;
 			
-			$showEpi = explode('-', $showEpi);
-			
-			#$title = str_replace("'", "''", $title);
-			#$desc  = str_replace("'", "''", $desc);
+			$showEpi   = explode('-', $showEpi);
 			
 			$SQLepi = "INSERT INTO episode ".
 				   "VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,'[RATING]','[GUEST_AUTOR]','[AIRED]',NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL,[idShow]);";
@@ -157,14 +130,6 @@ include_once "globals.php";
 					clearMediaCache();
 				}
 			} catch(Exception $e) { }
-			
-			/*
-			//table in eden, no more in frodo!
-			$SQLlink = "INSERT INTO tvshowlinkepisode VALUES([idShow],[idEpisode]);";
-			$SQLlink = str_replace('[idShow]', $idShow, $SQLlink);
-			$SQLlink = str_replace('[idEpisode]', $idEpisode, $SQLlink);
-			$dbh->exec($SQLlink);
-			*/
 		}
 		
 		if ($act == 'setmovieinfo' && $idMovie != -1 && $idFile != -1) {
@@ -325,8 +290,6 @@ include_once "globals.php";
 		
 		if ($act == 'addset' && !empty($name)) {
 			$GETID_SQL = 'SELECT idSet FROM sets ORDER BY idSet DESC LIMIT 0, 1';
-			#$result = $dbh->query($GETID_SQL);
-			#$row = $result->fetch();
 			$row = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId = $row['idSet'];
 			$id = $lastId + 1;
@@ -345,7 +308,6 @@ include_once "globals.php";
 		
 		if (!empty($dbh) && $dbh->inTransaction()) {
 			$dbh->commit();
-			#clearMediaCache();
 		}
 		
 		if ($act == 'setSeen' || $act == 'setUnseen') {
@@ -355,19 +317,15 @@ include_once "globals.php";
 			echo '<span style="font:12px Verdana, Arial;">TV-Show is set to '.($val == 1 ? 'running' : 'not running').'!</span>';
 		
 		} else if ($act == 'updateEpisode') {
-			#header('Location: '.($path == '/' ? '' : $path).'/addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'&closeFrame=1');
 			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 			
 		} else if ($act == 'addEpisode') {
-			#header('Location: '.($path == '/' ? '' : $path).'/addEpisode.php?idShow='.$idShow.'&idTvdb='.$idTvdb.'&closeFrame=1');
 			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 			
 		} else if ($act == 'linkInsert' || $act == 'linkUpdate' || $act == 'linkDelete') {
-			#header('Location: '.($path == '/' ? '' : $path).'/changeMovieSet.php?idMovie='.$idMovie.'&idSet='.$id.'&closeFrame=1');
 			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 			
 		} else if ($act == 'setmovieinfo') {
-			#header('Location: '.($path == '/' ? '' : $path).'/nameEditor.php?change=movie&idMovie='.$idMovie.'&closeFrame=1');
 			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 			
 		} else {

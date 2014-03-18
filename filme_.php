@@ -75,7 +75,7 @@ include_once "./template/_FILME.php";
 		echo "\t";
 		echo '<tr><td colspan="'.getColSpan().'" class="optTD">';
 		echo '<div style="float:right; padding:4px 5px;">';
-		echo '<input type="submit" value="Ok" name="submit" class="okButton">';
+		echo '<input tabindex="-1" type="submit" value="Ok" name="submit" class="okButton">';
 		echo '</div>';
 		echo '<div style="float:right; padding-top:2px; margin-right:165px;">';
 		echo '<select class="styled-select2" name="aktion" size="1">';
@@ -101,10 +101,10 @@ include_once "./template/_FILME.php";
 			echo '<div id="movieList" class="lefto" style="padding-left:15px; z-order=1; height:60px; display:none;">'."\r\n";
 			echo "\t".'<div>';
 			if ($COPYASSCRIPT_ENABLED && !$isAdmin) {
-				echo "\t<input type='checkbox' id='copyAsScript' onClick='doRequest(".$isAdmin."); return true;' style='float:left;'/><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
+				echo "\t<input tabindex='-1' type='checkbox' id='copyAsScript' onClick='doRequest(".$isAdmin."); return true;' style='float:left;'/><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
 				echo "<br/>";
 			}
-			echo "<input type='button' name='orderBtn' id='orderBtn' onclick='saveSelection(".$isAdmin."); return true;' value='save'/>";
+			echo "<input tabindex='-1' type='button' name='orderBtn' id='orderBtn' onclick='saveSelection(".$isAdmin."); return true;' value='save'/>";
 			echo '</div>';
 			
 			echo "\r\n\t".'<div id="result" class="selectedfield"></div>'."\r\n";
@@ -123,10 +123,10 @@ function createTable() {
 	$NAS_CONTROL = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
 	$COVER_OVER_TITLE = isset($GLOBALS['COVER_OVER_TITLE']) ? $GLOBALS['COVER_OVER_TITLE'] : false;
 	
-	$IMDB = $GLOBALS['IMDB'];
-	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
-	$IMDBFILMTITLE = $GLOBALS['IMDBFILMTITLE'];
-	$FILMINFOSEARCH = $GLOBALS['FILMINFOSEARCH'];
+	$IMDB             = $GLOBALS['IMDB'];
+	$ANONYMIZER       = $GLOBALS['ANONYMIZER'];
+	$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
+	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
 	$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
 	
 	$mode          = 1;
@@ -205,8 +205,6 @@ function createTable() {
 			$_which = null;
 		}
 		
-		#if ($isAdmin) { $newAddedCount = 30; }
-
 		$unseenCriteria = '';
 		if ($unseen == "0") {
 			$unseenCriteria = " AND B.playCount > 0 ";
@@ -298,22 +296,30 @@ function createTable() {
 		$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
 		$SQL .= $params.";";
 		
-		$counter = 0;
-		$zeile = 0;
-		$counter2 = 0;
-		$moviesTotal = 0;
-		$moviesSeen = 0;
+		$counter      = 0;
+		$zeile        = 0;
+		$counter2     = 0;
+		$moviesTotal  = 0;
+		$moviesSeen   = 0;
 		$moviesUnseen = 0;
 		
 		$idGenre  = getGenres($dbh);
 		$idStream = getResolution($dbh);
 		
-		$EXCLUDEDIRS  = isset($GLOBALS['EXCLUDEDIRS'])   ? $GLOBALS['EXCLUDEDIRS']   : array();
-		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER'])  ? $GLOBALS['SHOW_TRAILER']  : false;
+		$EXCLUDEDIRS  = isset($GLOBALS['EXCLUDEDIRS'])  ? $GLOBALS['EXCLUDEDIRS']  : array();
+		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		
 		$xbmcRunning = xbmcRunning();
-		$pronoms = array('the ', 'der ', 'die ', 'das ');
-		$result = fetchMovies($dbh, $SQL, $sessionKey);
+		$pronoms     = array('the ', 'der ', 'die ', 'das ');
+		$result      = fetchMovies($dbh, $SQL, $sessionKey);
+		
+#		$POWERFUL_CPU = hasPowerfulCpu();
+#		if (isset($POWERFUL_CPU)) {
+		$artCovers    = fetchArtCovers($existArtTable, $dbh);
+		$actorImgs    = fetchActorCovers($dbh);
+		$directorImgs = fetchDirectorCovers($dbh);
+#		}
+		
 		for($rCnt = 0; $rCnt < count($result); $rCnt++) {
 			$row = $result[$rCnt];
 			$zeilenSpalte = 0;
@@ -353,39 +359,50 @@ function createTable() {
 					execSQL_($dbh, $SQL_, false, true);
 				}
 			}
-			
+#covers
 			if ($gallerymode || $COVER_OVER_TITLE) {
-				if (file_exists(getCoverThumb($fnam, $cover, false))) {
-					$cover = getCoverThumb($fnam, $cover, false);
-					
-				} else if ($existArtTable) {
-					$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
-					$res2 = querySQL_($dbh, $SQL_, false);
-					foreach($res2 as $row2) {
-						$type = $row2['type'];
-						$url  = $row2['url'];
-						if (!empty($url)) { $cover = getCoverThumb($url, $url, true); }
-						if ($type == 'poster') { break; }
+				if (!empty($artCovers)) {
+					$cover_ = getCoverThumb($fnam, $cover, false);
+					if (!empty($cover_) && file_exists($cover_)) {
+						$cover = $cover_;
+					} else if ($existArtTable && isset($artCovers['movie'][$idMovie])) {
+						$cover = $artCovers['movie'][$idMovie]['cover'];
 					}
-				}
+				} else {
+					if (file_exists(getCoverThumb($fnam, $cover, false))) {
+						$cover = getCoverThumb($fnam, $cover, false);
+
+					} else if ($existArtTable) {
+						$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
+						$res2 = querySQL_($dbh, $SQL_, false);
+						foreach($res2 as $row2) {
+							$type = $row2['type'];
+							$url  = $row2['url'];
+							if (!empty($url)) { $cover = getCoverThumb($url, $url, true); }
+							if ($type == 'poster') { break; }
+						}
+					}
+				} //POWERFUL_CPU
 			}
+			
+			#logc( $cover );
 			
 			$path = mapSambaDirs($path);
 			if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
 			
-			$fsize = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
+			$fsize     = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
 			$moviesize = _format_bytes($fsize);
 			
 			$filmname0 = $filmname;
-			$titel = $filmname;
+			$titel     = $filmname;
 			
 			$wasCutoff = false;
-			$cutoff = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
+			$cutoff    = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
 			if (strlen($filmname) >= $cutoff && $cutoff > 0) {
 				$filmname = substr($filmname, 0, $cutoff).'...';
 				$wasCutoff = true;
 			}
-
+			
 			$pr = strtolower(substr($filmname, 0, 4));
 			for ($prs = 0; $prs < count($pronoms); $prs++) {
 				if ($pr == $pronoms[$prs]) {
@@ -406,30 +423,28 @@ function createTable() {
 					$zeilen[$counter][5] = $path;
 					$zeilen[$counter][6] = $filename;
 					$counter++;
-
+					
 			} else {
-				
 				$zeilen[$zeile][$zeilenSpalte++] = $filmname;
 #counter
 				$spalTmp = '<td class="countTD">';
-				if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '<a class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'" style="cursor:default;">'; }
+				if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'" style="cursor:default;">'; }
 				if ($isAdmin) { $spalTmp .= '<span class="fancy_movieEdit" href="./nameEditor.php?change=movie&idMovie='.$idMovie.'" style="cursor:pointer;">'; }
 				$spalTmp .= '_C0UNTER_';
 				if ($isAdmin) { $spalTmp .= '</span>'; }
 				if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '</a>'; }
 				$spalTmp .= '</td>';
-				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
+				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;				
 #checkbox
 				$spalTmp = '<td class="titleTD">';
 				if (!isDemo()) {
-				$spalTmp .= '<input type="checkbox" name="checkFilme[]" id="opt_'.$idMovie.'" class="checka" value="'.$idMovie.'" onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
+				$spalTmp .= '<input tabindex="-1" type="checkbox" name="checkFilme[]" id="opt_'.$idMovie.'" class="checka" value="'.$idMovie.'" onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
 				}
 #title
 				$suffix = '';
 				if (is3d($filename)) { $suffix = ' (3D)'; }
-				if ($wasCutoff) { $spalTmp .= '<a class="fancy_iframe" href="./?show=details&idShow='.$id.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
-				else { $spalTmp .= '<a class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
+				if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$id.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
+				else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
 #seen
 				if ($isAdmin) {
 					if ($playCount >= 1) {
@@ -438,101 +453,107 @@ function createTable() {
 					} else {
 						$moviesUnseen++;
 					}
-
 					$moviesTotal++;
 				}
-
+				
 				if ($SHOW_TRAILER && !empty($trailer)) {
-					$spalTmp .= '<a class="fancy_iframe2" href="'.$ANONYMIZER.$trailer.'"> <img src="img/filmrolle.jpg" width=15px; border=0px;></a>';
+					$spalTmp .= '<a tabindex="-1" class="fancy_iframe2" href="'.$ANONYMIZER.$trailer.'"> <img src="img/filmrolle.jpg" width=15px; border=0px;></a>';
 				}
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
 #jahr
 				$spalTmp = '<td class="yearTD';
 				if (!empty($jahr)) {
 					$spalTmp .= '">';
-					$spalTmp .= '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" title="filter"><span class="searchField">'.$jahr.'</span></a>';
+					$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" title="filter"><span class="searchField">'.$jahr.'</span></a>';
 				} else {
 					$spalTmp .= ' centro">-';
 				}
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
 #bewertung
 				$rating = substr($rating, 0, 4);
 				$rating = substr($rating, 0, substr($rating, 2, 1) == '.' ? 4 : 3);
 				
 				$spalTmp = '<td class="ratingTD '.($rating > 0 ? 'righto' : 'centro').'">';
 				if (!empty($imdbId)) {
-					$spalTmp .= '<a class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
+					$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
 				} else {
-					$spalTmp .= '<a class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';
+					$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';
 				}
 				
 				$spalTmp .= ($rating > 0 ? $rating : '&nbsp;&nbsp;-');
 				$spalTmp .= '</a>';
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
 #artist
 				$spalTmp = '<td class="actorTD"';
-				$SQL_ = "select A.strActor, B.strRole, B.idActor, A.strThumb as actorimage from actorlinkmovie B, actors A where A.idActor = B.idActor and B.idMovie = '$idMovie'";
-				$result2 = querySQL_($dbh, $SQL_, false);
+				$firstId     = '';
 				$firstartist = '';
-				$firstId = '';
-				$artist = '';
-				$artistinfo = '';
 				$actorpicURL = '';
-				foreach($result2 as $row2) {
-					$artist = $row2['strActor'];
-					$idActor = $row2['idActor'];
-					$actorpicURL = $row2['actorimage'];
-
-					if (empty($firstartist)) {
-						$firstartist = $artist;
-						$firstId = $idActor;
-						break;
+				if (!empty($actorImgs)) {
+					if (isset($actorImgs[$idMovie])) {
+						$firstId     = $actorImgs[$idMovie]['id'];
+						$actorpicURL = $actorImgs[$idMovie]['image'];
+						$firstartist = $actorImgs[$idMovie]['artist'];
 					}
-				}
-
+				} else {
+					$SQL_ = "SELECT A.strActor, B.strRole, B.idActor, A.strThumb AS actorimage FROM actorlinkmovie B, actors A WHERE A.idActor = B.idActor AND B.iOrder = 0 AND B.idMovie = '".$idMovie."';";
+					$result2 = querySQL_($dbh, $SQL_, false);
+					foreach($result2 as $row2) {
+						$artist      = $row2['strActor'];
+						$idActor     = $row2['idActor'];
+						$actorpicURL = $row2['actorimage'];
+						
+						if (empty($firstartist)) {
+							$firstartist = $artist;
+							$firstId     = $idActor;
+							break;
+						}
+					}
+				} //POWERFUL_CPU
+				
 				$actorimg = getActorThumb($firstartist, $actorpicURL, false);
 				if (!file_exists($actorimg) && !empty($firstId) && $existArtTable) {
-					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
-					$res3 = querySQL_($dbh, $SQL_, false);
-					$row3 = $res3->fetch();
-					$url = $row3['url'];
-					if (!empty($url)) {
-						$actorimg = getActorThumb($url, $url, true);
-					}
+					if (!empty($artCovers)) {
+						if (isset($artCovers['actor'][$firstId])) {
+							$actorimg = $artCovers['actor'][$firstId];
+						}
+					} else {
+						$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
+						$res3 = querySQL_($dbh, $SQL_, false);
+						$row3 = $res3->fetch();
+						$url = $row3['url'];
+						if (!empty($url)) {
+							$actorimg = getActorThumb($url, $url, true);
+						}
+					} //POWERFUL_CPU
 				}
 				
 				if (!empty($firstartist) && !empty($firstId)) {
 					wrapItUp('actor', $firstId, $actorimg, $sessionKey);
 					
 					$spalTmp .= '>';
-					$spalTmp .= '<a class="openIMDB filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstartist.'">[i] </a>';
-
-					$spalTmp .= '<a href="?show=filme&country=&mode=1&which=artist&just='.$firstId.'&name='.$firstartist.'"';
+					$spalTmp .= '<a tabindex="-1" class="openIMDB filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstartist.'">[i] </a>';
+					$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=artist&just='.$firstId.'&name='.$firstartist.'"';
 					if (file_exists($actorimg)) {
 						$spalTmp .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $firstId, 'actor', 0).'" title="'.$firstartist.'"';
 					} else {
 						$spalTmp .= 'title="filter"';
 					}
-
+					
 					$spalTmp .= '><span class="searchField">'.$firstartist.'</span></a>';
 				} else {
 					$spalTmp .= ' style="padding-left:40px;">-';
 				}
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
 #genre
 				$spalTmp = '<td class="genreTD"';
 				$genres = explode("/", $genres);
 				$genre = count($genres) > 0 ? trim($genres[0]) : '';
 				$genreId = -1;
-
+				
 				if (!empty($genre)) {
 					$spalTmp .= '>';
 					$genre = ucwords(strtolower($genre));
@@ -540,9 +561,9 @@ function createTable() {
 						$genreId = $idGenre[$genre][0];
 						$idGenre[$genre][1] = $idGenre[$genre][1] + 1;
 					}
-
+					
 					if (($genreId != -1) && (!isset($_just) || empty($_just) || $_which != 'genre' || $_just != $genreId)) {
-						$spalTmp .= '<a href="?show=filme&country=&mode=1&which=genre&just='.$genreId.'&name='.$genre.'" title="filter"><span class="searchField">'.$genre.'</span></a>';
+						$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=genre&just='.$genreId.'&name='.$genre.'" title="filter"><span class="searchField">'.$genre.'</span></a>';
 					} else {
 						$spalTmp .= '<span class="searchField">'.$genre.'</span>';
 					}
@@ -551,62 +572,71 @@ function createTable() {
 				}
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
 #regie
 				$spalTmp = '<td class="direcTD"';
-				$SQL_ = "SELECT A.strActor, B.idDirector, A.strThumb AS actorimage FROM directorlinkmovie B, actors A WHERE B.idDirector = A.idActor AND B.idMovie = '$idMovie'";
-				$result3 = querySQL_($dbh, $SQL_, false);
+				$firstId       = '';
 				$firstdirector = '';
-				$firstId = '';
-				$artistinfo = '';
-				$actorpicURL = '';
-				foreach($result3 as $row3) {
-					$artist = $row3['strActor'];
-					$idActor = $row3['idDirector'];
-					$actorpicURL = $row3['actorimage'];
-
-					if (empty($firstdirector)) {
-						$firstdirector = $artist;
-						$firstId = $idActor;
-						break;
+				$actorpicURL   = '';
+				if (!empty($directorImgs)) {
+					if (isset($directorImgs[$idMovie])) {
+						$firstId       = $directorImgs[$idMovie]['id'];
+						$actorpicURL   = $directorImgs[$idMovie]['image'];
+						$firstdirector = $directorImgs[$idMovie]['artist'];
 					}
-				}
+				} else {
+					$SQL_ = "SELECT A.strActor, B.idDirector, A.strThumb AS actorimage FROM directorlinkmovie B, actors A WHERE B.idDirector = A.idActor AND B.idMovie = '".$idMovie."';";
+					$result3 = querySQL_($dbh, $SQL_, false);
+					foreach($result3 as $row3) {
+						$artist      = $row3['strActor'];
+						$idActor     = $row3['idDirector'];
+						$actorpicURL = $row3['actorimage'];
+						
+						if (empty($firstdirector)) {
+							$firstdirector = $artist;
+							$firstId = $idActor;
+							break;
+						}
+					}
+				} //POWERFUL_CPU
 				
 				$actorimg = getActorThumb($firstdirector, $actorpicURL, false);
 				if (!file_exists($actorimg) && !empty($firstId) && $existArtTable) {
-					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
-					$res3 = querySQL_($dbh, $SQL_, false);
-					$row3 = $res3->fetch();
-					$url = $row3['url'];
-					if (!empty($url)) {
-						$actorimg = getActorThumb($url, $url, true);
-					}
+					if (!empty($artCovers)) {
+						if (isset($artCovers['actor'][$firstId])) {
+							$actorimg = $artCovers['actor'][$firstId];
+						}
+					} else {
+						$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
+						$res3 = querySQL_($dbh, $SQL_, false);
+						$row3 = $res3->fetch();
+						$url = $row3['url'];
+						if (!empty($url)) {
+							$actorimg = getActorThumb($url, $url, true);
+						}
+					} //POWERFUL_CPU
 				}
 				
 				if (!empty($firstdirector) && !empty($firstId)) {
 					wrapItUp('director', $firstId, $actorimg, $sessionKey);
 					
 					$spalTmp .= '>';
-					$spalTmp .= '<a class="openImdb filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstdirector.'">[i] </a>';
-					
-					$spalTmp .= '<a href="?show=filme&country=&mode=1&which=regie&just='.$firstId.'&name='.$firstdirector.'"';
+					$spalTmp .= '<a tabindex="-1" class="openImdb filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstdirector.'">[i] </a>';
+					$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=regie&just='.$firstId.'&name='.$firstdirector.'"';
 					if (file_exists($actorimg)) {
-						#$spalTmp .= ' class="hoverpic" rel="'.$actorimg.'" title="'.$firstdirector.'"';
 						$spalTmp .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $firstId, 'director', 0).'" title="'.$firstdirector.'"';
 					} else {
 						$spalTmp .= 'title="filter"';
 					}
-
+					
 					$spalTmp .= '><span class="searchField">'.$firstdirector.'</span></a>';
 				} else {
 					$spalTmp .= ' style="padding-left:40px;">-';
 				}
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-				
 #resolution
 				if (!isDemo()) {
-					$resInfo = (!empty($vRes) ? ($vRes[0] == 1920 ? '1080p' : '720p') : '');
+					$resInfo = (!empty($vRes) ? ($vRes[0] == 1920 ? '1080p' : ($vRes[0] == 1280 ? '720p' : '480p')) : '');
 					$resTip  = (!empty($vRes) ? $vRes[0].'x'.$vRes[1] : '');
 					$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'"><span class="searchField">'.$resInfo.'</span></td>';
 #filesize
@@ -648,11 +678,11 @@ function createTable() {
 						}
 					}
 				}
-
+				
 				if (isset($matrix)) {
 					$thumbsAddedInRow = echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow);
 				}
-
+				
 				echo "\n\t";
 				echo '<td class="galleryTD">';
 				$covImg = (!empty($zeilen[$t][3]) ? $zeilen[$t][3] : './img/nothumb.png');
@@ -663,10 +693,6 @@ function createTable() {
 				$is3d      = $zeilen[$t][4];
 				$path      = $zeilen[$t][5];
 				$filename  = $zeilen[$t][6];
-				
-				#debug
-				#$xbmcRunning = true;
-				#$is3d = $thumbsAddedInRow % 2 == 0;
 				
 				$showSpan = $is3d || $playCount;
 				$break3d  = $is3d && $isAdmin && $playCount;
@@ -735,18 +761,18 @@ function createTable() {
 			echo '<tr><th class="th0"> </th>';
 			echo '<th class="th4">';
 			if (!isDemo()) {
-				echo '<input type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
+				echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 			}
-			#http://192.168.0.10/?show=filme&newmode=0&unseen=3&dbSearch&which&just&sort&mode&country
-			echo '<a style="font-weight:bold;" href="?show=filme&sort'.($saferSearch).'">Title</a>'.$titleInfo.'</th>';
-			echo '<th class="th0"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr' || $sort=='jahra') ? 'color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
-			echo '<th class="th1"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? 'color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
+			
+			echo '<a tabindex="-1" style="font-weight:bold;" href="?show=filme&sort'.($saferSearch).'">Title</a>'.$titleInfo.'</th>';
+			echo '<th class="th0"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr' || $sort=='jahra') ? 'color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
+			echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? 'color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
 			echo '<th class="th2">Actor</th>';
 			echo '<th class="th2">Genre</th>';
 			echo '<th class="th2">Director</th>';
 			if (!isDemo()) {
 				echo '<th class="th5">Res</th>';
-				echo '<th class="th5"><a style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
+				echo '<th class="th5"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
 			}
 			echo "\r\n";
 
@@ -788,7 +814,7 @@ function createTable() {
 } // function createTable
 
 function infobox($title, $info) {
-	echo '<div id="boxx"><a href="#">';
+	echo '<div id="boxx"><a tabindex="-1" href="#">';
 	echo $title;
 	echo '<span>';
  	echo $info;

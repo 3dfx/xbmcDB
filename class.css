@@ -549,6 +549,7 @@ input[type=checkbox] {
 
 .originalTitle {
 	font-size: 12px;
+	font-weight: normal;
 }
 
 .movieTitle {

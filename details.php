@@ -34,7 +34,7 @@ include_once "globals.php";
 		if (file_exists(getCoverMid($fnam, $cover, false))) {
 			$res[0] = getCoverMid($fnam, $cover, false); //cover
 			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
-
+			
 		} else if ($existArtTable) {
 			$res2 = querySQL("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
 			foreach($res2 as $row2) {
@@ -47,8 +47,15 @@ include_once "globals.php";
 				}
 			}
 		}
-
+		
 		return $res;
+	}
+	
+	function getCountry($idMovie) {
+		$SQL = "SELECT c.strCountry FROM countrylinkmovie cl, country c, movie m WHERE m.idMovie = cl.idMovie AND cl.idCountry = c.idCountry AND m.idMovie = '".$idMovie."';";
+		$res = querySQL($SQL, false);
+		$row = $res->fetch();
+		return $row['strCountry'];
 	}
 	
 	function getFanartCover($fnam, $idMovie) {
@@ -136,12 +143,12 @@ include_once "globals.php";
 
 
 <?php
-	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
-	$IMDB = $GLOBALS['IMDB'];
+	$ANONYMIZER       = $GLOBALS['ANONYMIZER'];
+	$IMDB             = $GLOBALS['IMDB'];
 	$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
-	$FILMINFOSEARCH = $GLOBALS['FILMINFOSEARCH'];
-	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
-	$ENCODE = isset($GLOBALS['ENCODE_IMAGES']) ? $GLOBALS['ENCODE_IMAGES'] : false;
+	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
+	$DETAILFANART     = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
+	$ENCODE           = isset($GLOBALS['ENCODE_IMAGES']) ? $GLOBALS['ENCODE_IMAGES'] : false;
 	
 	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
 	if (empty($id)) { die('<br/>no param!<br/>'); }
@@ -153,12 +160,12 @@ include_once "globals.php";
 		
 		$SQL = "SELECT c00, c01, c02, idMovie, c07 AS jahr, c08 AS thumb, c09 AS imdbId, B.strFilename AS filename, A.c19 AS trailer, c04, c05, c11, c14, c16, ".
 			"C.strPath AS path, D.filesize, A.idFile, B.playCount AS playCount ".
-			"FROM movie A, files B, path C LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE idMovie = $id AND A.idFile = B.idFile AND C.idPath = B.idPath ";
+			"FROM movie A, files B, path C LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE A.idFile = B.idFile AND C.idPath = B.idPath AND idMovie = '".$id."' ";
 		$row = fetchFromDB($SQL, false);
 		
 		if (empty($row)) { die('not found...'); }
 		
-		$SQL2     = "SELECT B.strActor, A.strRole, A.idActor, B.strThumb AS actorimage FROM actorlinkmovie A, actors B WHERE A.idActor = B.idActor AND A.idMovie = '$id'";
+		$SQL2     = "SELECT B.strActor, A.strRole, A.idActor, B.strThumb AS actorimage FROM actorlinkmovie A, actors B WHERE A.idActor = B.idActor AND A.idMovie = '".$id."' ORDER BY A.iOrder;";
 		$result2  = querySQL($SQL2);
 		$result2_ = querySQL($SQL2);
 		
@@ -167,16 +174,16 @@ include_once "globals.php";
 		
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
-		$idMovie      = $row["idMovie"];
-		$path         = $row["path"];
+		$idMovie      = $row['idMovie'];
+		$path         = $row['path'];
 		$filename     = $row['filename'];
 		$watched      = $row['playCount'];
 		$fnam         = $path.$filename;
-		$idMovie      = $row['idMovie'];
 		$titel        = trim($row['c00']);
 		$orTitel      = trim($row['c16']);
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['c01'];
+		$country      = getCountry($idMovie);
 		
 		$percent;
 		$timeAt;
@@ -261,6 +268,14 @@ include_once "globals.php";
 			echo '<span class="originalTitle">';
 			echo '<br/>';
 			echo '<b>Original title</b>: '.$row['c16'];
+			echo '</span>';
+			echo "\r\n";
+		}
+		if (!empty($country)) {
+			echo "\r\n";
+			echo '<span class="originalTitle">';
+			echo '<br/>';
+			echo '<b>Made in</b>: '.$country;
 			echo '</span>';
 			echo "\r\n";
 		}
@@ -387,7 +402,7 @@ include_once "globals.php";
 			$run++;
 		}
 		
-		$sqlG = "select * from genre";
+		$sqlG = "SELECT * FROM genre";
 		$resultG = querySQL($sqlG);
 		$idGenre = array();
 		foreach($resultG as $rowG) {
@@ -621,6 +636,7 @@ include_once "globals.php";
 		$counter = 1;
 		$acLimit = 5;
 		$schauspTblOut = array();
+		$artCovers = fetchArtCovers($existArtTable, $dbh);
 		foreach($result2_ as $row2) { $actCnt++; }
 		if ($actCnt-1 == $acLimit) { $acLimit++; }
 		foreach($result2 as $row2) {
@@ -630,24 +646,19 @@ include_once "globals.php";
 			
 			$actorimg = getActorThumb($artist, $actorpicURL, false);
 			if (!file_exists($actorimg) && $existArtTable) {
-				// ayar
-				$row3 = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';");
-				$url  = $row3['url'];
-				if (!empty($url)) {
-					$actorimg = getActorThumb($url, $url, true);
-				}
+				$actorimg = $artCovers['actor'][$idActor]['cover'];
 			}
 			
 			wrapItUp('actor', $idActor, $actorimg);
 			
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
 			$schauspTblOut[$actors] .= '<td class="art">';
-			$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$artist.'">[i] </a>';
+			$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.str_replace(' ', '+', $artist).'">[i] </a>';
 			$schauspTblOut[$actors] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
 			if (file_exists($actorimg)) {
 				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
 			} else {
-				 $schauspTblOut[$actors] .= 'title="filter"';
+				$schauspTblOut[$actors] .= 'title="filter"';
 			}
 			$schauspTblOut[$actors] .= '>'.$artist.'</a>';
 

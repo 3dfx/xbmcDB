@@ -101,7 +101,7 @@ function postStaffel($staffel) {
 	$spanId = 'iD'.$idShow.'.S'.$sNum;
 	$linkId = 'tgl'.$idShow.'.S'.$sNum;
 	echo '<tr class="seasonTR">';
-	echo '<td class="seasonTRd1"><a href="#" id="'.$linkId.'" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></a>Season '.$sNum.'</td>';
+	echo '<td class="seasonTRd1"><a tabindex="-1" href="#" id="'.$linkId.'" class="plmin hidelink" onclick="toggleEps(\''.$spanId.'\', '.$eps.', this); $(this).blur(); return false;"></a>Season '.$sNum.'</td>';
 	echo '<td class="seasonTRd2 righto">'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
 	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
@@ -143,23 +143,20 @@ function postStaffel($staffel) {
 		$idEpisode = $epi->getIdEpisode();
 		$idTvdb = $epi->getIdTvdb();
 		$epTitle = trimDoubles($epi->getName());
-		#$epTitle = $epi->getName();
 		$hover = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
 		
 		$path = $epi->getPath();
 		$filename = $epi->getFilename();
-		$playItem = isAdmin() && $xbmcRunning && !empty($path) && !empty($filename) ? '<a class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.(isDemo() ? '' : _format_bytes($epi->getSize())).'</a>' : '<span class="showPlayItem">'.(isDemo() ? '' : _format_bytes($epi->getSize())).'</span>';
+		$playItem = isAdmin() && $xbmcRunning && !empty($path) && !empty($filename) ? '<a tabindex="-1" class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.(isDemo() ? '' : _format_bytes($epi->getSize())).'</a>' : '<span class="showPlayItem">'.(isDemo() ? '' : _format_bytes($epi->getSize())).'</span>';
 		
 		$seasonId = 'iD'.$idShow.'.S'.$sNum;
-		#id="iD'.$idShow.'.S'.$sNum.'.E'.$epNum.'" 
 		echo '<tr class="epTR '.$seasonId.'" id="'.$epi->getIdEpisode().'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
 		echo '<td class="epTRd1" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.'  </span><span class="searchField">'.$epTitle.'</span></td>';
 		echo '<td class="righto padTD">'.(floatval($epi->getRating()) > 0 ? $epi->getRating() : '').'</td>';
-		#echo '<td class="righto padTD"><span class="vSpan'.(!empty($playItem) ? ' cursor:pointer;' : '').'"'.$playItem.'>'._format_bytes($epi->getSize()).'</span></td>';
 		echo '<td class="righto padTD">'.$playItem.'</td>';
 		echo '<td class="righto">';
 		if ($isAdmin) {
-			echo '<a class="fancy_addEpisode" href="./addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'">';
+			echo '<a tabindex="-1" class="fancy_addEpisode" href="./addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'">';
 			echo '<img src="./img/add.png" class="galleryImage" title="edit Episode" />';
 			echo '</a> ';
 		}
@@ -167,12 +164,12 @@ function postStaffel($staffel) {
 		echo '<td class="righto">';
 		if ($isAdmin) {
 			if ($epi->isWatched()) {
-				echo '<a class="fancy_movieEdit" href="./dbEdit.php?act=setUnseen&idFile='.$epi->getIdFile().'">';
+				echo '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setUnseen&idFile='.$epi->getIdFile().'">';
 				echo '<img src="./img/check.png" class="galleryImage" title="watched" /> ';
 				echo '</a>';
 
 			} else {
-				echo '<a class="fancy_movieEdit" href="./dbEdit.php?act=setSeen&idFile='.$epi->getIdFile().'">';
+				echo '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setSeen&idFile='.$epi->getIdFile().'">';
 				echo '<img src="./img/checkR.png" class="galleryImage" title="set watched" /> ';
 				echo '</a>';
 			}
