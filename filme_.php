@@ -7,6 +7,23 @@ include_once "./template/matrix.php";
 include_once "./template/functions.php";
 include_once "globals.php";
 include_once "./template/_FILME.php";
+
+	$isAdmin = isAdmin();
+	$isDemo  = isDemo();
+	
+	$maself = $_SERVER['PHP_SELF'];
+	$isMain = (substr($maself, -9) == 'index.php');
+	postNavBar($isMain);
+	
+	$mode = 0;
+	if (isset($_SESSION['mode'])) { $mode = $_SESSION['mode']; }
+	
+	$newmode     = isset($_SESSION['newmode'])     ? $_SESSION['newmode']     : 0;
+	$newsort     = isset($_SESSION['newsort'])     ? $_SESSION['newsort']     : 0;
+	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
+	$which       = isset($_SESSION['which'])       ? $_SESSION['which']       : '';
+	$just        = isset($_SESSION['just'])        ? $_SESSION['just']        : '';
+	$country     = isset($_SESSION['country'])     ? $_SESSION['country']     : '';
 ?>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -33,11 +50,14 @@ include_once "./template/_FILME.php";
 	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
 	echo "\t\t".'var isAdmin = '.(isAdmin() ? '1' : '0').";\r\n";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
+	echo "\t\t".'var newMovies = '.(checkLastHighest() && $newsort != 2 ? 'true' : 'false').";\r\n";
 ?>
 	</script>
 <?php if(isAdmin()) { ?>
+	<script type="text/javascript" src="./template/js/general.js"></script>
 	<script type="text/javascript" src="./template/js/filme.js"></script>
 <?php } else { ?>
+	<script type="text/javascript" src="./template/js/general.min.js"></script>
 	<script type="text/javascript" src="./template/js/filme.min.js"></script>
 <?php } ?>
 <?php if(isAdmin() && $xbmControl) { ?>
@@ -46,31 +66,15 @@ include_once "./template/_FILME.php";
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
-	$isAdmin = isAdmin();
-	$isDemo  = isDemo();
-	
-	$maself = $_SERVER['PHP_SELF'];
-	$isMain = (substr($maself, -9) == 'index.php');
-	postNavBar($isMain);
-	
-	$mode = 0;
-	if (isset($_SESSION['mode'])) { $mode = $_SESSION['mode']; }
-	
-	$newmode = (isset($_SESSION['newmode']) ? $_SESSION['newmode'] : 0);
-	$newsort = (isset($_SESSION['newsort']) ? $_SESSION['newsort'] : 0);
-	$gallerymode = (isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0);
-	
-	$which = (isset($_SESSION['which']) ? $_SESSION['which'] : '');
-	$just = (isset($_SESSION['just']) ? $_SESSION['just'] : '');
-	$country = (isset($_SESSION['country']) ? $_SESSION['country'] : '');
-	
 	echo '<div class="tabDiv" onmouseover="closeNavs();">';
 	echo "\r\n";
-	echo '<table class="'.($gallerymode != 1 ? 'film' : 'gallery').'" cellspacing="0">';
+	echo '<table class="'.($gallerymode ? 'gallery' : 'film').'" cellspacing="0">';
 	echo "\r\n";
 	
 	createTable();
 	
+	if (isset($_SESSION['lastMovie']['seen']) && !isset($_SESSION['lastMovie']['set'])) { setLastHighest(); }
+	if ($newsort == 2 && !$gallerymode) { $_SESSION['lastMovie']['seen'] = true; }
 	if ($isAdmin && !$gallerymode) {
 		echo "\t";
 		echo '<tr><td colspan="'.getColSpan().'" class="optTD">';
@@ -119,6 +123,7 @@ function createTable() {
 	$hostname = $_SERVER['HTTP_HOST'];
 	
 	$isAdmin = isAdmin();
+	$isDemo  = isDemo();
 	$dev = $isAdmin;
 	$NAS_CONTROL = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
 	$COVER_OVER_TITLE = isset($GLOBALS['COVER_OVER_TITLE']) ? $GLOBALS['COVER_OVER_TITLE'] : false;
@@ -149,6 +154,7 @@ function createTable() {
 		checkFileInfoTable($dbh);
 		checkFileMapTable($dbh);
 		existsOrdersTable($dbh);
+		$lastHighest = $isDemo ? null : $_SESSION['lastHighest'];
 		
 		$_just  = $GLOBALS['just'];
 		$_which = $GLOBALS['which'];
@@ -309,16 +315,12 @@ function createTable() {
 		$EXCLUDEDIRS  = isset($GLOBALS['EXCLUDEDIRS'])  ? $GLOBALS['EXCLUDEDIRS']  : array();
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		
-		$xbmcRunning = xbmcRunning();
-		$pronoms     = array('the ', 'der ', 'die ', 'das ');
-		$result      = fetchMovies($dbh, $SQL, $sessionKey);
-		
-#		$POWERFUL_CPU = hasPowerfulCpu();
-#		if (isset($POWERFUL_CPU)) {
+		$xbmcRunning  = xbmcRunning();
+		$pronoms      = array('the ', 'der ', 'die ', 'das ');
+		$result       = fetchMovies($dbh, $SQL, $sessionKey);
 		$artCovers    = fetchArtCovers($existArtTable, $dbh);
 		$actorImgs    = fetchActorCovers($dbh);
 		$directorImgs = fetchDirectorCovers($dbh);
-#		}
 		
 		for($rCnt = 0; $rCnt < count($result); $rCnt++) {
 			$row = $result[$rCnt];
@@ -345,6 +347,7 @@ function createTable() {
 			$vRes      = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
 			$fnam      = $path.$filename;
 			$cover     = '';
+			$isNew     = !empty($lastHighest) && $idMovie > $lastHighest;
 			
 			if (empty($dateAdded)) {
 				$creation = getCreation($fnam);
@@ -384,8 +387,6 @@ function createTable() {
 					}
 				} //POWERFUL_CPU
 			}
-			
-			#logc( $cover );
 			
 			$path = mapSambaDirs($path);
 			if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
@@ -436,8 +437,8 @@ function createTable() {
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;				
 #checkbox
-				$spalTmp = '<td class="titleTD">';
-				if (!isDemo()) {
+				$spalTmp = '<td class="titleTD"'.($isNew ? ' style="font-weight:bold;"' : '').'>';
+				if (!$isDemo) {
 				$spalTmp .= '<input tabindex="-1" type="checkbox" name="checkFilme[]" id="opt_'.$idMovie.'" class="checka" value="'.$idMovie.'" onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
 				}
 #title
@@ -635,7 +636,7 @@ function createTable() {
 				$spalTmp .= '</td>';
 				$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 #resolution
-				if (!isDemo()) {
+				if (!$isDemo) {
 					$resInfo = (!empty($vRes) ? ($vRes[0] == 1920 ? '1080p' : ($vRes[0] == 1280 ? '720p' : '480p')) : '');
 					$resTip  = (!empty($vRes) ? $vRes[0].'x'.$vRes[1] : '');
 					$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'"><span class="searchField">'.$resInfo.'</span></td>';
@@ -731,7 +732,6 @@ function createTable() {
 				if ($playCount) { echo '<img src="./img/check.png" class="icon32 gallery'.$gCount.'" />'; }
 				if ($showSpan) { echo '</div>'; }
 				echo '</div>';
-				#echo '</a>';
 				echo '</td>';
 				
 				$thumbsAddedInRow++;
@@ -760,7 +760,7 @@ function createTable() {
 			echo "\t";
 			echo '<tr><th class="th0"> </th>';
 			echo '<th class="th4">';
-			if (!isDemo()) {
+			if (!$isDemo) {
 				echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 			}
 			
@@ -770,7 +770,7 @@ function createTable() {
 			echo '<th class="th2">Actor</th>';
 			echo '<th class="th2">Genre</th>';
 			echo '<th class="th2">Director</th>';
-			if (!isDemo()) {
+			if (!$isDemo) {
 				echo '<th class="th5">Res</th>';
 				echo '<th class="th5"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
 			}

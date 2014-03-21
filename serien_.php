@@ -31,30 +31,16 @@ include_once "globals.php";
 	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
 	echo "\t\t".'var isAdmin = '.(isAdmin() ? '1' : '0').";\r\n";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
-/*
-	echo "\t\t".'var freshloaded = false;'."\r\n";
-	if (isset($_SESSION['tvShowParam'])) {
-		$sId      = isset($_SESSION['tvShowParam']['idShow'])    ? $_SESSION['tvShowParam']['idShow']    : null;
-		$epId     = isset($_SESSION['tvShowParam']['idEpisode']) ? $_SESSION['tvShowParam']['idEpisode'] : null;
-		$idSeason = isset($_SESSION['tvShowParam']['idSeason'])  ? $_SESSION['tvShowParam']['idSeason']  : null;
-		if (!empty($sId) && !empty($epId) && !empty($idSeason)) {
-			echo "\t\t".'$(document).ready(function() {'."\r\n";
-			echo "\t\t\t".'if (!freshloaded) {'."\r\n";
-			echo "\t\t\t".'var obj = document.getElementById(\'epl_'.$sId.'\');'."\r\n";
-			echo "\t\t\t".'loadLatestShowInfo(obj, '.$sId.', '.$epId.', \''.$idSeason.'\', 10);'."\r\n";
-			echo "\t\t\t".'freshloaded = true;'."\r\n";
-			echo "\t\t\t".'}'."\r\n";
-			echo "\t\t".'});'."\r\n";
-		}
-	}
-*/
+	echo "\t\t".'var newMovies = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
 ?>
 
 		$(document).ready(function() { $('.knob-dyn').knob(); });
 	</script>
 <?php if(isAdmin()) { ?>
+	<script type="text/javascript" src="./template/js/general.js"></script>
 	<script type="text/javascript" src="./template/js/serien.js"></script>
 <?php } else { ?>
+	<script type="text/javascript" src="./template/js/general.min.js"></script>
 	<script type="text/javascript" src="./template/js/serien.min.js"></script>
 <?php } ?>
 <?php if(isAdmin() && $xbmControl) { ?>
@@ -172,12 +158,10 @@ function postSerien($serien) {
 			echo '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
 			echo '</td>';
 		}
-		echo '<td class="showShowInfo1 righto">';
-		$run1  = $isAdmin ? '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
-		$run2  = $isAdmin ? '</a>' : '';
+		$run1 = $isAdmin ? '<a tabindex="-1" class="fancy_movieEdit" style="cursor:default;" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
+		$run2 = $isAdmin ? '</a>' : '';
 		$strCounter = $counter;
-		echo $run1.$strCounter.$run2;
-		echo '</td>';
+		echo '<td class="showShowInfo1 righto">'.$run1.$strCounter.$run2.'</td>';
 		echo '<td id="epl_'.$idShow.'" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'">';
 		echo '<span class="showName">'.($running ? '<i>' : '').$serie->getName().$info.($running ? '</i>' : '').'</span>';
 		if (!$isDemo) {
@@ -187,12 +171,14 @@ function postSerien($serien) {
 		if ($isAdmin) {
 			echo '<td style="padding:0px; margin:0px;">';
 			if (!empty($airDate)) {
-				$fSize = '';
+				$fSize = ' font-size:11px;';
 				$fSize = ($daysLeft > 30 ? ' font-size:9px;' : $fSize);
 				$fSize = ($daysLeft > 60 ? ' font-size:8px;' : $fSize);
 				#$fSize = ($daysLeft > 90 ? ' font-size:7px;' : $fSize);
 				$title = ($daysLeft < 0 ? 'Missed episode' : 'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : ''));
-				echo '<span class="airdate sInfoSize" style="display:none; vertical-align:middle;'.($missed ? ' color:red;' : '').$fSize.'" title="'.$title.'">'.$airDate.'</span>';
+				$clear1 = $isAdmin ? '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
+				$clear2 = $isAdmin ? '</a>' : '';
+				echo $clear1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default;'.($missed ? ' color:red;' : '').$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$clear2;
 			}
 			echo '</td>';
 		}

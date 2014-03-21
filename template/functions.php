@@ -478,10 +478,7 @@ function getCreation($file) {
 	$file = strtr($file, $ersetzen);
 	$file = mapSambaDirs($file);
 	
-	#if (!file_exists($file)) { return null; }
-	
 	$execString = 'stat -c %y '.$file;
-	
 	exec($execString, $output);
 	if ($output != null && count($output) > 0) {
 		return substr(trim($output[0]), 0, 19);
@@ -595,7 +592,7 @@ function setSeenDelMovie($what, $checkFilme) {
 	}
 }
 
-function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies_') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
+function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies_') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') || startsWith($key, 'covers') || startsWith($key, 'thumbs') || startsWith($key, 'lastMovie') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
 function startsWith($haystack, $needle) { return !strncmp($haystack, $needle, strlen($needle)); }
 
 function resizeImg($SRC, $DST, $w, $h) {
@@ -735,7 +732,6 @@ function fetchArtCovers($existArtTable, $dbh = null) {
 	
 	$result = array();
 	$SQL    = "SELECT media_id AS idMedia, media_type AS media, type, url FROM art WHERE url NOT NULL AND (media_type = 'movie' OR media_type = 'actor') AND (type = 'poster' OR type = 'thumb');";
-	#$SQL    = "SELECT media_id AS idMedia, media_type AS media, url, type FROM art WHERE (media_type = 'movie' AND (type = 'poster' OR type = 'thumb')) OR ((media_type = 'actor' OR media_type = 'artist') AND type = 'thumb');";
 	$res    = querySQL_($dbh, $SQL, false);
 	
 	foreach($res as $row) {
@@ -808,9 +804,33 @@ function hasPowerfulCpu() {
 	return isset($GLOBALS['POWERFUL_CPU']) ? $GLOBALS['POWERFUL_CPU'] : false;
 }
 
+function fetchHighestMovieId() {
+	if (!isset($_SESSION['lastMovie']['highestId'])) {
+		$SQL = "SELECT idMovie FROM movie ORDER BY idMovie DESC LIMIT 0,1;";
+		$res = fetchFromDB($SQL, false);
+		$_SESSION['lastMovie']['highestId'] = $res['idMovie'];
+	}
+	return $_SESSION['lastMovie']['highestId'];
+}
+
+function checkLastHighest() {
+	if (isDemo()) { return false; }
+	$highestId   = fetchHighestMovieId();
+	$lastHighest = isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null;
+	
+	if (empty($highestId) || isset($_SESSION['lastMovie']['confirmed'])) { return false; }
+	$_SESSION['lastMovie']['confirmed'] = true;
+	return $highestId > $lastHighest;
+}
+
+function setLastHighest() {
+	$_SESSION['lastHighest'] = fetchHighestMovieId();
+	$_SESSION['lastMovie']['set'] = true;
+}
+
 function getNewAddedCount() {
 	$newAddedCount = isset($GLOBALS['DEFAULT_NEW_ADDED']) ? $GLOBALS['DEFAULT_NEW_ADDED'] : 30;
-	$newAddedCount = isset($_SESSION['newAddedCount']) ? $_SESSION['newAddedCount'] : $newAddedCount;
+	$newAddedCount = isset($_SESSION['newAddedCount'])    ? $_SESSION['newAddedCount']    : $newAddedCount;
 	return $newAddedCount;
 }
 
@@ -1050,7 +1070,6 @@ function postNavBar($isMain) {
 		echo '</li>';
 		
 		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
-		#echo '<li style="font-weight:bold;"><a href="#" onclick="playItemPrompt();" style="padding-top:3px; height:18px !important;"><img src="./img/yt.png" style="width:32px; height:32px;" /></a></li>';
 		echo '<li style="font-weight:bold;">';
 		echo '<span style="position:relative; top:3px;">';
 		echo '<input id="plaYoutube" name="plaYoutube" class="search-query span2" style="margin:4px 5px; width:200px; height:23px; display:none;" type="text" placeholder="play youTube / vimeo" onfocus="this.select();" onkeyup="return playItemPrompt(this, event); return false;" onmouseover="focus(this);" />';
@@ -1394,12 +1413,12 @@ function restoreSession() {
 
 function storeSession() {
 	$user = $_SESSION['user'];
+	setLastHighest();
 	clearMediaCache();
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['refferLogged'], $_SESSION['overrideFetch'],
 	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['dbName'], 
 	       $_SESSION['angemeldet'], $_SESSION['demo'],  $_SESSION['thumbs'],   $_SESSION['existsTable'],  $_SESSION['TvDbCache'], 
-	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['OS']
-	       #$_SESSION['xbmcRunning'], 
+	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['OS'],           $_SESSION['lastMovie']
 	     ); //remove values that should be determined at login
 	
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
@@ -1571,10 +1590,7 @@ function isDemo() {
 }
 
 function isLogedIn() { return isLoggedIn(); }
-function isLoggedIn() {
-	#checkOpenGuest();
-	return (isAdmin() || isGast() || isDemo() ? 1 : 0);
-}
+function isLoggedIn() { return (isAdmin() || isGast() || isDemo() ? 1 : 0); }
 
 function checkOpenGuest() {
 //-- deactivated --//
@@ -1841,7 +1857,6 @@ function workaroundMTime($img) {
 
 function handleError($errno, $errstr, $errfile, $errline, array $errcontext) {
 	// error was suppressed with the @-operator
-	#if (0 === error_reporting()) { return false; }
 	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 

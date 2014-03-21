@@ -23,15 +23,37 @@ $(document).ready(function() {
 	}); }
 });
 
-function openNav(objId) {
-	closeNavs();
+function selSpanText(obj) {
+	var range, selection;
+	
+	if (window.getSelection && document.createRange) {
+		selection = window.getSelection();
+		range = document.createRange();
+		range.selectNodeContents($(obj)[0]);
+		selection.removeAllRanges();
+		selection.addRange(range);
+	} else if (document.selection && document.body.createTextRange) {
+		range = document.body.createTextRange();
+		range.moveToElementText($(obj)[0]);
+		range.select();
+	}
+}
+
+function openNav(objId) { openNav_(objId, true); }
+function openNav_(objId, all) {
+	closeNavs_(all);
 	$(objId).addClass('open');
 }
 
-function closeNavs() {
+function closeNavs() { closeNavs_(true); }
+function closeNavs_(all) {
+	$('.dropdown-submenu').removeClass('open');
+	
 	$('#dropAdmin').removeClass('open');
 	$('#dropSearch').removeClass('open');
-	$('#dropLatestEps').removeClass('open');
+	if (all) {
+		$('#dropLatestEps').removeClass('open');
+	}
 }
 
 function toggleActive(obj) {
@@ -455,7 +477,7 @@ function toggleAirdates() {
 }
 
 function checkForCheck() {
-	return (ids != null && ids != '' ? confirm("Achtung:\nAuswahl geht verloren!") : true);
+	return (ids != null && ids != '' ? confirm("Attention:\nSelection will be lost!") : true);
 }
 
 function clearSelectBoxes(obj) {

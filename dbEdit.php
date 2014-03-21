@@ -173,6 +173,10 @@ include_once "globals.php";
 			}
 			clearMediaCache();
 		}
+		if ($act == 'clearAirdate' && $idShow != -1) {
+			$dbh->exec('DELETE FROM nextairdate WHERE idShow = '.$idShow.';');
+			clearMediaCache();
+		}
 
 		if (($act == 'linkInsert' || $act == 'linkUpdate') && $id != -1 && $idMovie != -1) {
 			$SQL = 'UPDATE movie SET idSet='.$id.' WHERE idMovie = '.$idMovie.';';
@@ -315,6 +319,9 @@ include_once "globals.php";
 		
 		} else if ($act == 'setRunning' && $idShow != -1 && $val != -1) {
 			echo '<span style="font:12px Verdana, Arial;">TV-Show is set to '.($val == 1 ? 'running' : 'not running').'!</span>';
+		
+		} else if ($act == 'clearAirdate' && $idShow != -1) {
+			echo '<span style="font:12px Verdana, Arial;">Next airdate was cleared!</span>';
 		
 		} else if ($act == 'updateEpisode') {
 			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');

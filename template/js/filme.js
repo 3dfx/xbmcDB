@@ -38,7 +38,7 @@ function closeNavs() {
 }
 
 function checkForCheck() {
-	return (ids != null && ids != '' ? confirm("Achtung:\nAuswahl geht verloren!") : true);
+	return (ids != null && ids != '' ? confirm("Attention:\nSelection will be lost!") : true);
 }
 
 function clearSelectBoxes(obj) {

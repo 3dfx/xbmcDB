@@ -42,8 +42,6 @@
 
 		function closeNavs() {
 			$('#dropAdmin').removeClass('open');
-			$('#dropSearch').removeClass('open');
-			$('#dropLatestEps').removeClass('open');
 		}
 		
 		function checkForCheck() { return true; }
@@ -58,11 +56,17 @@
 	$bindF      = false;
 	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
+	echo "\t\t".'var newMovies = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
 ?>
 	</script>
 	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
-<?php if(isAdmin() && $xbmControl) { ?>
+<?php if(isAdmin()) { ?>
+<?php if($xbmControl) { ?>
 	<script type="text/javascript" src="./template/js/xbmcJson.js"></script>
+<?php } ?>
+	<script type="text/javascript" src="./template/js/general.js"></script>
+<?php } else { ?>
+	<script type="text/javascript" src="./template/js/general.min.js"></script>
 <?php } ?>
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
