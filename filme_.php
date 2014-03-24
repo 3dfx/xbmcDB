@@ -183,6 +183,7 @@ function createTable() {
 					" lower(A.c01) LIKE '%".$saferSearch."%' OR".
 					" lower(A.c03) LIKE '%".$saferSearch."%' OR".
 					" lower(A.c14) LIKE '%".$saferSearch."%' OR".
+					" lower(A.c15) LIKE '%".$saferSearch."%' OR".
 					" lower(A.c16) LIKE '%".$saferSearch."%'".
 					")";
 			

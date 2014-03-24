@@ -128,11 +128,10 @@ include_once "./template/_SERIEN.php";
 	
 	if ($thumbsUp) {
 		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
-		if ($fromSrc && empty($sessionImg)) {
+		if ($fromSrc) {
 			// READ EMBER GENERATED THUMBS FROM SOURCE
 			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
 			
-			#echo $path.$filename.'<br/>';
 			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
 			$smb = (substr($sessionImg, 0, 6) == 'smb://');
 			
@@ -141,23 +140,19 @@ include_once "./template/_SERIEN.php";
 			}
 		}
 		
-		if (empty($sessionImg)) {
+		if (empty($sessionImg) || !file_exists($sessionImg)) {
 			$sessionImg = getTvShowThumb($coverP.$filename);
 			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
 			
-			if (empty($sessionImg) && $existArtTable) {
-				#$res2 = $dbh->query("SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';");
-				#$row2 = $res2->fetch();
+			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
 				$SQL  = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';";
 				$row2 = fetchFromDB_($dbh, $SQL, false);
 				$url = $row2['url'];
-				#logc( $id.' - '.$url );
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
 					if (file_exists($img)) {
 						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
 					}
-
 				}
 			}
 		}

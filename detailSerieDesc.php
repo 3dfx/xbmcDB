@@ -4,6 +4,10 @@ include_once "check.php";
 include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "./template/_SERIEN.php";
+
+	$isAdmin = isAdmin();
+	$id = getEscGet('id');
+	if (empty($id) || $id < 0) { return; }
 ?>
 <script type="text/javascript">
 	jQuery(document).ready(function() {
@@ -20,14 +24,28 @@ include_once "./template/_SERIEN.php";
 			'type'				: 'iframe'
 		});
 	});
+	
+	$(".fancy_msgbox").fancybox({
+		'width'				: 300,
+		'height'			: 50,
+		'overlayColor'			: '#000',
+		'overlayOpacity'		: 0.55,
+		'padding'			: 1,
+		'autoScale'			: true,
+		'centerOnScroll'		: true,
+		'scrolling'			: 'no',
+		'transitionIn'			: 'elastic',
+		'transitionOut'			: 'none',
+		'enableEscapeButton'		: true,
+		'type'				: 'iframe',
+		'titleShow'       		: false,
+		'borderBgs'			: false
+	});
 </script>
 <?php
-	$isAdmin = isAdmin();
-	$id = getEscGet('id');
-	if (empty($id) || $id < 0) { return; }
-	
 	$serien  = fetchSerien($GLOBALS['SerienSQL'], null);
 	$serie   = $serien->getSerie($id);
+	$idShow  = $serie->getIdShow();
 	$idTvdb  = $serie->getIdTvdb();
 	$desc    = $serie->getDesc();
 	$genre   = $serie->getGenre();
@@ -51,7 +69,7 @@ include_once "./template/_SERIEN.php";
 	
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
-		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$serie->getIdShow().'</span></div>';
+		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$idShow.'</span></div>';
 	}
 	
 	if (!empty($genre)) {
@@ -106,8 +124,11 @@ include_once "./template/_SERIEN.php";
 					($isAdmin ? ($missed ? 'Missed episode' : 'Today') : '');
 			
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
+			$info      = $info1.$info2;
+			$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
+			$clear2    = $isAdmin ? '</a>' : '';
 			
-			echo 'Next airdate:<br />'.$info1.$info2.'<br /><br />';
+			echo 'Next airdate:<br />'.$clear1.$info.$clear2.'<br /><br />';
 			
 			if (!empty($nextEpisode) && compareDates($nextAirDate, $dbDate)) {
 				updateAirdateInDb($id, $season, $episode, $dbDate);

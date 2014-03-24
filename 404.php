@@ -18,7 +18,7 @@
 			} else {
 				echo 'But you can login <a href="/login.php" style="font-weight:bold;">HERE</a>.';
 			}
-			echo "\n\r";
+			echo "\r\n";
 ?>
 		</div>
 	</body>

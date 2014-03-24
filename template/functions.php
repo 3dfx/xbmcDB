@@ -23,8 +23,6 @@ function execSQL($SQL, $throw = true) {
 function execSQL_($dbh, $SQL, $throw = true, $commitExtern = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
 	try {
 		if (!$commitExtern && !$dbh->inTransaction()) {
 			$dbh->beginTransaction();
@@ -53,8 +51,6 @@ function querySQL($SQL, $throw = true) {
 function querySQL_($dbh, $SQL, $throw = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
 	try {
 		return $dbh->query($SQL);
 		
@@ -72,8 +68,6 @@ function singleSQL($SQL, $throw = true) {
 function singleSQL_($dbh, $SQL, $throw = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
 	try {
 		return $dbh->querySingle($SQL);
 		
@@ -91,8 +85,6 @@ function fetchFromDB($SQL, $throw = true) {
 function fetchFromDB_($dbh, $SQL, $throw = true) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 	
-	/*** make it or break it ***/
-	error_reporting(E_ALL);
 	try {
 		$result = $dbh->query($SQL);
 		return $result->fetch();
@@ -306,7 +298,7 @@ function checkTvshowRunningTable($dbh = null) {
 
 function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate (idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate (idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 }
 
 function existsOrdersTable($dbh = null) {
@@ -884,7 +876,7 @@ function postNavBar($isMain) {
 	echo '<ul class="nav" style="padding-top:2px;">';
 	echo '<li class="divider-vertical" style="height:36px;"></li>';
 	echo '<li'.($isMain ? ' class="active"' : '').'>';
-	echo '<a tabindex="1" href="?show=filme'.($isMain ? '&mode=1&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
+	echo '<a tabindex="1" href="?show=filme'.($isMain ? '&mode=1&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
 	echo '</li>';
 	
 	if (!empty($dbSearch)) {
@@ -1013,7 +1005,7 @@ function postNavBar($isMain) {
 			$params .= '&mode='.$mode.'&unseen='.$unseen.'&newmode='.$newmode.'&newAddedCount='.$newAddedCount;
 		}
 		
-		echo '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
+		echo '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
 		echo '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
 		echo '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
@@ -1028,7 +1020,7 @@ function postNavBar($isMain) {
 	echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	if ($isTvshow) {
 		echo '<li class="dropdown" id="dropLatestEps" onmouseover="openNav(\'#dropLatestEps\');">';
-		echo '<a tabindex="2" href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="return checkForCheck();" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'" onfocus="openNav(\'#dropLatestEps\');">tv-shows <b class="caret"></b></a>';
+		echo '<a tabindex="2" href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'" onfocus="openNav(\'#dropLatestEps\');">tv-shows <b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
 		createEpisodeSubmenu(fetchLastSerien());
 		echo '</ul>';
@@ -1046,7 +1038,7 @@ function postNavBar($isMain) {
 	if ($MUSICVIDS_ENABLED) {
 		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 		echo '<li'.($isMVids ? ' class="active"' : '').' style="font-weight:bold;">';
-		echo '<a tabindex="51" href="?show=mvids" onmouseover="closeNavs();" onclick="return checkForCheck();"'.($isMVids ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">music-videos</a>';
+		echo '<a tabindex="51" href="?show=mvids" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMVids ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">music-videos</a>';
 		echo '</li>';
 	}
 	
@@ -1088,7 +1080,7 @@ function postNavBar($isMain) {
 			echo '<span class="notification badge badge-important"><span style="margin:-2px;">'.$msgs.'</span></span>';
 		}
 		echo '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
-		echo '<a tabindex="60" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
+		echo '<a tabindex="60" href="#" class="dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
 		if (file_exists('fExplorer.php')) {
 			echo '<li><a class="fancy_explorer" href="fExplorer.php">File Explorer</a></li>';
@@ -1129,7 +1121,7 @@ function postNavBar($isMain) {
 		echo '</ul>';
 		echo '</li>';
 	}
-	echo '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
+	echo '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="this.blur(); return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
 	
 	echo '</ul>';
 	echo '</div>';
@@ -1140,7 +1132,7 @@ function postNavBar($isMain) {
 
 function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211) {
 	echo '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
-	echo '<a tabindex="50" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'" onfocus="openNav(\'#dropSearch\');">search <b class="caret"></b></a>';
+	echo '<a tabindex="50" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'" onclick="this.blur();" onfocus="openNav(\'#dropSearch\');">search <b class="caret"></b></a>';
 	echo '<ul class="dropdown-menu">';
 		echo '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
 		echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
@@ -1590,7 +1582,7 @@ function isDemo() {
 }
 
 function isLogedIn() { return isLoggedIn(); }
-function isLoggedIn() { return (isAdmin() || isGast() || isDemo() ? 1 : 0); }
+function isLoggedIn() { return (isAdmin() || isGast() || isDemo() ? true : false); }
 
 function checkOpenGuest() {
 //-- deactivated --//
@@ -1751,11 +1743,35 @@ function clearAirdateInDb($idShow, $dbh = null) {
 	execSQL_($dbh, $SQL, false, false);
 }
 
-function updateAirdateInDb($id, $season, $episode, $airdate, $dbh = null) {
+function updateAirdateInDb($idShow, $season, $episode, $airdate, $dbh = null) {
 	if (!checkAirDate()) { return; }
-	if ($id == -1 || $season == -1 || $episode == -1 || empty($episode) || empty($airdate)) { return; }
-	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate) VALUES ('".$id."', '".$season."', '".$episode."', '".strtotime($airdate)."');";
+	if ($idShow == -1 || $season == -1 || $episode == -1 || empty($episode) || empty($airdate)) { return; }
+	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate) VALUES ('".$idShow."', '".$season."', '".$episode."', '".strtotime($airdate)."');";
 	execSQL_($dbh, $SQL, false, false);
+}
+
+function fetchNextEpisodeFromDB($idShow, $dbh = null) {
+	if (!checkAirDate() || $idShow == -1) { return null; }
+	$eps = fetchNextEpisodesFromDB($dbh);
+	return empty($eps) || !isset($eps[$idShow]) ? null : $eps[$idShow];
+}
+
+function fetchNextEpisodesFromDB($dbh = null) {
+	if (!checkAirDate()) { return null; }
+	
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	if ($overrideFetch == 0 && isset($_SESSION['param_nextEpisodes'])) { return $_SESSION['param_nextEpisodes']; }
+	
+	$SQL = "SELECT idShow, season, episode FROM nextairdate;";
+	$result = querySQL_($dbh, $SQL, false);
+	$res    = array();
+	foreach($result as $row) {
+		$res[$row['idShow']]['s'] = $row['season'];
+		$res[$row['idShow']]['e'] = $row['episode'];
+	}
+	
+	$_SESSION['param_nextEpisodes'] = $res;
+	return $res;
 }
 
 function getNextEpisode($serie) {
@@ -1780,6 +1796,22 @@ function getNextEpisode($serie) {
 
 function getNextAirDate($info) {
 	return isset($info['FirstAired']) ? $info['FirstAired'] : null;
+}
+
+function getFormattedSE($sNum, $eNum, $epDelta = 0) {
+	$pattern = isset($GLOBALS['EP_SEARCH_PATTERN'])      ? $GLOBALS['EP_SEARCH_PATTERN']      : 'S[season#]E[episode#]';
+	$lZero   = isset($GLOBALS['EP_SEARCH_LEADING_ZERO']) ? $GLOBALS['EP_SEARCH_LEADING_ZERO'] : true;
+	
+	$eNum  += $epDelta;
+	if ($lZero) {
+		if ($sNum < 10) { $sNum = '0'.$sNum; }
+		if ($eNum < 10) { $eNum = '0'.$eNum; }
+	}
+	
+	$res = $pattern;
+	$res = str_replace('[season#]',  $sNum, $res);
+	$res = str_replace('[episode#]', $eNum, $res);
+	return $res;
 }
 
 function getToday() {
@@ -2024,29 +2056,13 @@ function storeBlacklist($blacklisted) {
 function restoreBlacklist() {
 	$blFile = $GLOBALS['BLACKLIST_FILE'];
 	if (file_exists($blFile)) {
-		
 		$read = '';
 		$fp = fopen($blFile, "r");
 		while(!feof($fp)) { $read = fgets($fp, 1000); }
 		fclose($fp);
 		return unserialize($read);
-		
-	} else { return array(); }
-}
 
-$dbConnection = getPD0();
-function getPDO() { return $GLOBALS['dbConnection']; }
-function getPD0() {
-	$db_name = $GLOBALS['db_name'];
-	$dbh = new PDO($db_name);
-	try {
-		/*** make it or break it ***/
-		error_reporting(E_ALL);
-		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		return $dbh;
-		
-	} catch(Exception $e) { }
-	return $dbh;
+	} else { return array(); }
 }
 
 function escapeArray($val) {
@@ -2054,9 +2070,21 @@ function escapeArray($val) {
 	else { for ($i = 0; $i < count($val); $i++) { $val[$i] = escapeArray($val[$i]); } return $val; }
 }
 
-function getEscServer($key, $defVal = null)  { return isset($_SERVER[$key]) ? htmlspecialchars($_SERVER[$key], ENT_QUOTES, 'UTF-8') : $defVal; }
-function getEscGet($key, $defVal = null)     { return isset($_GET[$key])  ? escapeArray($_GET[$key])  : $defVal; }
-function getEscPost($key, $defVal = null)    { return isset($_POST[$key]) ? escapeArray($_POST[$key]) : $defVal; }
+$dbConnection = getPD0();
+function getPDO() { return $GLOBALS['dbConnection']; /* return DB_CONN::getConnection(); */ }
+function getPD0() {
+	$dbh = new PDO($GLOBALS['db_name']);
+	try {
+		/*** make it or break it ***/
+		error_reporting(E_ALL);
+		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	} catch(Exception $e) { }
+	return $dbh;
+}
+
+function getEscServer($key, $defVal = null) { return isset($_SERVER[$key]) ? htmlspecialchars($_SERVER[$key], ENT_QUOTES, 'UTF-8') : $defVal; }
+function getEscGet($key, $defVal = null)    { return isset($_GET[$key])  ? escapeArray($_GET[$key])  : $defVal; }
+function getEscPost($key, $defVal = null)   { return isset($_POST[$key]) ? escapeArray($_POST[$key]) : $defVal; }
 function getEscGPost($key, $defVal = null) {
 	$res = getEscGet($key);
 	if (isset($res)) { return $res; }
@@ -2065,4 +2093,15 @@ function getEscGPost($key, $defVal = null) {
 	return $defVal;
 }
 
+/* worse than old method
+class DB_CONN {
+	private static $pdo;
+	public static function getConnection() {
+		if (!isLoggedIn()) { return null; }
+		if (empty(self::$pdo)) { self::$pdo = getPD0(); }
+		return self::$pdo;
+	}
+	public static function destruct() { unset(self::$pdo); }
+}
+*/
 ?>

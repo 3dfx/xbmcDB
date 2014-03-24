@@ -135,6 +135,24 @@ jQuery(document).ready(function() {
 		'type'				: 'iframe'
 	});
 
+	$(".fancy_iframe4").fancybox({
+		'width'				: 1280,
+		'height'			: 720,
+		'transitionIn'			: 'elastic',
+		'transitionOut'			: 'elastic',
+		'overlayColor'			: '#000',
+		'overlayOpacity'		: 0.9,
+		'speedIn'			: 500,
+		'speedOut'			: 250,
+		'padding'			: 5,
+		'autoScale'			: true,
+		'centerOnScroll'		: true,
+		'enableEscapeButton'		: true,
+		'scrolling'			: 'auto',
+		'titleShow'       		: false,
+		'type'				: 'iframe'
+	});
+
 	$(".fancy_sets").fancybox({
 		'width'				: 480,
 		'height'			: 650,
@@ -190,6 +208,23 @@ jQuery(document).ready(function() {
 	$(".fancy_movieEdit").fancybox({
 		'width'				: 380,
 		'height'			: 215,
+		'overlayColor'			: '#000',
+		'overlayOpacity'		: 0.55,
+		'padding'			: 1,
+		'autoScale'			: true,
+		'centerOnScroll'		: true,
+		'scrolling'			: 'no',
+		'transitionIn'			: 'elastic',
+		'transitionOut'			: 'none',
+		'enableEscapeButton'		: true,
+		'type'				: 'iframe',
+		'titleShow'       		: false,
+		'borderBgs'			: false
+	});
+
+	$(".fancy_msgbox").fancybox({
+		'width'				: 300,
+		'height'			: 50,
 		'overlayColor'			: '#000',
 		'overlayOpacity'		: 0.55,
 		'padding'			: 1,

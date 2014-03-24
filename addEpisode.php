@@ -157,7 +157,7 @@ include_once "./template/_SERIEN.php";
 <?php
 	if ($idSelected) {
 		postPathsJS();
-		echo "\n\r\n\r";
+		echo "\r\n\r\n";
 		postEpisodesJS($episodes);
 	}
 ?>
@@ -185,7 +185,7 @@ include_once "./template/_SERIEN.php";
 	if ($idSelected) {
 		echo "\t\t".'<tr>';
 		echo "\t\t".'<td style="padding-left:5px; font-weight:bold; text-align:center;" colspan="2">'.$serie->getName().'</td>';
-		echo "\t\t".'</tr>'."\n\r";
+		echo "\t\t".'</tr>'."\r\n";
 ?>
 		<tr style="border-top:0px;">
 		<td style="padding-left:5px;">Episode:</td>
@@ -221,7 +221,7 @@ include_once "./template/_SERIEN.php";
 		$idFile = ($update ? $episodeToUp->getIdFile() : -1);
 		echo '<input type="hidden" id="idFile" name="idFile" value="'.$idFile.'" style="font-size:10px; width:20px;" />';
 		echo '</td>';
-		echo '</tr>'."\n\r";
+		echo '</tr>'."\r\n";
 ?>
 		<tr>
 		<td style="padding-left:5px;">Titel:</td>
@@ -255,7 +255,7 @@ include_once "./template/_SERIEN.php";
 		echo '<input type="text" id="idTvdb" name="idTvdb" style="width:10px;" value="'.$idTvdb.'" />';
 		echo '<input type="text" id="strPath" name="strPath" style="width:10px;" value="-1" />';
 		echo '</td>';
-		echo "\t\t".'</tr>'."\n\r";
+		echo "\t\t".'</tr>'."\r\n";
 	}
 	$value = ($update ? 'Update' : 'Add');
 	echo '<tr><td colspan="2" class="righto" style="padding:10 0px !important;"><div style="float:right; padding:0px 15px;"><input type="submit" value="'.$value.'" class="key okButton" onclick="this.blur();" /></div></tr>';
@@ -325,7 +325,7 @@ function postPathsJS() {
 		$name = $paths[$i][1];
 		if (empty($name)) { continue; }
 		
-		echo "\n\r";
+		echo "\r\n";
 		echo 'new Array("'.$id.'","'.$name.'")';
 		if ($i < count($paths)-1) {
 			echo ',';
@@ -341,7 +341,7 @@ function postEpisodesJS($episodes) {
 	$index = 1;
 	echo 'var episodes = new Array(';
 	foreach ($episodes as $xdex => $season) {
-		echo "\n\r";
+		echo "\r\n";
 		echo 'new Array(';
 		$lastSeason = 0;
 		$jndex = 1;
@@ -356,7 +356,7 @@ function postEpisodesJS($episodes) {
 			$regie      = processCredits($episode['Director'], null);
 			$rating     = getRating($episode['Rating']);
 			
-			echo "\n\r";
+			echo "\r\n";
 			echo 'new Array(';
 			echo '"'.$seas.'","'.$episode['EpisodeNumber'].'",'.json_encode( $episode['EpisodeName'] ).',"'.$episode['FirstAired'].'","'.$rating.'",'.json_encode( $regie ).','.json_encode( $gast_autor );
 			echo ')';
@@ -373,17 +373,17 @@ function postEpisodesJS($episodes) {
 		$index++;
 	}
 	echo ');';
-	echo "\n\r";
-	echo "\n\r";
+	echo "\r\n";
+	echo "\r\n";
 	
 	$index = 1;
 	echo 'var descriptions = new Array(';
 	foreach ($episodes as $xdex => $season) {
-		echo "\n\r";
+		echo "\r\n";
 		echo 'new Array(';
 		$jndex = 1;
 		foreach($season as $ydex => $episode) {
-			echo "\n\r";
+			echo "\r\n";
 			echo 'new Array(';
 			echo json_encode( $episode['Overview'] );
 			echo ')';

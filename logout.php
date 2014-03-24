@@ -3,8 +3,8 @@
 	startSession();
 	if (isset($_SESSION)) {
 		storeSession();
-		$dhb = getPDO();
 		session_destroy();
+		DB_CONN::destruct();
 	}
 	
 	startSession();

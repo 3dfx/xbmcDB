@@ -85,10 +85,12 @@ include_once "globals.php";
 function fillTable() {
 	$isAdmin  = isAdmin();
 	$isDemo   = isDemo();
+	$dbh      = getPDO();
+	$runCount = $isAdmin ? fetchRuncount($dbh) : null;
 	$SQL      = $GLOBALS['SerienSQL'].';';
-	$serien   = fetchSerien($SQL, null);
-	$runCount = $isAdmin ? fetchRuncount() : null;
+	$serien   = fetchSerien($SQL, null, $dbh);
 	$serien->sortSerien();
+	fetchNextEpisodesFromDB($dbh);
 	$colspan1 = $isDemo  ? 0 : 1;
 	$colspan2 = $isAdmin ? 1 : 0;
 	
@@ -143,7 +145,6 @@ function postSerien($serien) {
 		$spanId   = 'iDS'.$idShow;
 		
 		$checkAirDate = isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
-		
 		if ($checkAirDate && $running) {
 			$airDate  = $serie->getNextAirDateStr();
 			$daysLeft = daysLeft(addRlsDiffToDate($airDate));
@@ -158,7 +159,7 @@ function postSerien($serien) {
 			echo '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
 			echo '</td>';
 		}
-		$run1 = $isAdmin ? '<a tabindex="-1" class="fancy_movieEdit" style="cursor:default;" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
+		$run1 = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="cursor:default;" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
 		$run2 = $isAdmin ? '</a>' : '';
 		$strCounter = $counter;
 		echo '<td class="showShowInfo1 righto">'.$run1.$strCounter.$run2.'</td>';
@@ -171,14 +172,24 @@ function postSerien($serien) {
 		if ($isAdmin) {
 			echo '<td style="padding:0px; margin:0px;">';
 			if (!empty($airDate)) {
+				$ANONYMIZER = $GLOBALS['ANONYMIZER'];
+				$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
+				$epSearch   = null;
+				if (!empty($EP_SEARCH)) {
+					$name      = str_replace ("'",  "", $serie->getName());
+					$nextEp    = fetchNextEpisodeFromDB($idShow);
+					$enNum     = !empty($nextEp) ? getFormattedSE($nextEp['s'], $nextEp['e']) : null;
+					$epSearch  = !empty($enNum)  ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
+				}
+				
 				$fSize = ' font-size:11px;';
 				$fSize = ($daysLeft > 30 ? ' font-size:9px;' : $fSize);
 				$fSize = ($daysLeft > 60 ? ' font-size:8px;' : $fSize);
 				#$fSize = ($daysLeft > 90 ? ' font-size:7px;' : $fSize);
 				$title = ($daysLeft < 0 ? 'Missed episode' : 'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : ''));
-				$clear1 = $isAdmin ? '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
-				$clear2 = $isAdmin ? '</a>' : '';
-				echo $clear1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default;'.($missed ? ' color:red;' : '').$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$clear2;
+				$eSrch1 = $isAdmin && !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
+				$eSrch2 = $isAdmin && !empty($epSearch) ? '</a>' : '';
+				echo $eSrch1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default;'.($missed ? ' color:red;' : '').$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2;
 			}
 			echo '</td>';
 		}
@@ -225,10 +236,10 @@ function postSerien($serien) {
 	}
 }
 
-function fetchRuncount() {
+function fetchRuncount($dbh = null) {
 	$runCount = isset($_SESSION['param_runCount']) ? $_SESSION['param_runCount'] : null;
 	if (empty($runCount)) {
-		$runCount = fetchFromDB("SELECT COUNT(*) AS count FROM tvshowrunning;");
+		$runCount = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM tvshowrunning;");
 		$runCount = !empty($runCount) && is_array($runCount) ? $runCount['count'] : '-';
 		$_SESSION['param_runCount'] = $runCount;
 	}

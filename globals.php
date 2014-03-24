@@ -1,6 +1,6 @@
 <?php
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
-	$ANONYMIZER         = "http://anonym.to/?";
+	$ANONYMIZER         = "http://hideref.org/?";
 	
 	$IMDB               = "http://www.imdb.de/find?s=";
 	$IMDBFILMTITLE      = "http://www.imdb.de/title/";
