@@ -9,25 +9,10 @@ include_once "globals.php";
 ?>
 
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>XBMC Database</title>
-	<link rel="shortcut icon" href="favicon.ico" />
-	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./class.css" />
-	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
-	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
-	<script type="text/javascript" src="./template/js/myfancy.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
-	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
-	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
+<?php include("head.php"); ?>
 	<script type="text/javascript">
 <?php
-	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
-	$bindF      = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
+	$bindF = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
 	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
 	echo "\t\t".'var isAdmin = '.(isAdmin() ? '1' : '0').";\r\n";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
@@ -36,16 +21,6 @@ include_once "globals.php";
 
 		$(document).ready(function() { $('.knob-dyn').knob(); });
 	</script>
-<?php if(isAdmin()) { ?>
-	<script type="text/javascript" src="./template/js/general.js"></script>
-	<script type="text/javascript" src="./template/js/serien.js"></script>
-<?php } else { ?>
-	<script type="text/javascript" src="./template/js/general.min.js"></script>
-	<script type="text/javascript" src="./template/js/serien.min.js"></script>
-<?php } ?>
-<?php if(isAdmin() && $xbmControl) { ?>
-	<script type="text/javascript" src="./template/js/xbmcJson.js"></script>
-<?php } ?>
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
@@ -136,8 +111,9 @@ function postSerien($serien) {
 		if (!is_object($serie)) { continue; }
 		
 		$info     = '';
-		$airDate  = '';
-		$daysLeft = '';
+		$fcol     = '';
+		$airDate  = null;
+		$daysLeft = -1;
 		$missed   = false;
 		$idShow   = $serie->getIdShow();
 		$idTvDb   = $serie->getIdTvdb();
@@ -149,8 +125,10 @@ function postSerien($serien) {
 			$airDate  = $serie->getNextAirDateStr();
 			$daysLeft = daysLeft(addRlsDiffToDate($airDate));
 			$missed   = dateMissed($airDate) && !empty($airDate);
+			$tomorrow = $daysLeft <= 1 && $daysLeft > -1;
 			$airDate  = toEuropeanDateFormat(addRlsDiffToDate($airDate));
-			$info     = '<b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';" title="'.(!empty($airDate) ? $airDate : 'running...').'">...</b>';
+			$fCol     = 'color:'.($isAdmin && $missed ? 'red' : ($isAdmin && $tomorrow ? 'green' : 'silver')).';';
+			$info     = '<b style="'.$fCol.'" title="'.(!empty($airDate) ? $airDate : 'running...').'">...</b>';
 		}
 		
 		echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
@@ -176,10 +154,10 @@ function postSerien($serien) {
 				$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
 				$epSearch   = null;
 				if (!empty($EP_SEARCH)) {
-					$name      = str_replace ("'",  "", $serie->getName());
-					$nextEp    = fetchNextEpisodeFromDB($idShow);
-					$enNum     = !empty($nextEp) ? getFormattedSE($nextEp['s'], $nextEp['e']) : null;
-					$epSearch  = !empty($enNum)  ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
+					$name     = str_replace ("'",  "", $serie->getName());
+					$nextEp   = $daysLeft <= 1  ? fetchNextEpisodeFromDB($idShow) : null;
+					$enNum    = !empty($nextEp) ? getFormattedSE($nextEp['s'], $nextEp['e']) : null;
+					$epSearch = !empty($enNum)  ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
 				}
 				
 				$fSize = ' font-size:11px;';
@@ -189,7 +167,7 @@ function postSerien($serien) {
 				$title = ($daysLeft < 0 ? 'Missed episode' : 'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : ''));
 				$eSrch1 = $isAdmin && !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
 				$eSrch2 = $isAdmin && !empty($epSearch) ? '</a>' : '';
-				echo $eSrch1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default;'.($missed ? ' color:red;' : '').$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2;
+				echo $eSrch1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default; '.$fCol.$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2;
 			}
 			echo '</td>';
 		}

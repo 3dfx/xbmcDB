@@ -243,9 +243,9 @@ function postEditor() {
 
 function postOrValues() {
 	$change = $GLOBALS['change'];
-	$title  = $GLOBALS['title'];
+	$title  = $GLOBALS['title']; #str_replace("'", "\'", $GLOBALS['title']);
 	
-	echo "\t\t\t".'var orTitle     = \''.$title.'\';'."\r\n";
+	echo "\t\t\t".'var orTitle     = "'.$title.'";'."\r\n";
 	if ($change == 'movie') {
 		$filename  = $GLOBALS['filename'];
 		$jahr      = $GLOBALS['jahr'];
@@ -255,13 +255,13 @@ function postOrValues() {
 		$rating    = $GLOBALS['rating'];
 		$genre     = $GLOBALS['genre'];
 		
-		echo "\t\t\t".'var orJahr      = \''.$jahr.'\';'."\r\n";
-		echo "\t\t\t".'var orRating    = \''.$rating.'\';'."\r\n";
-		echo "\t\t\t".'var orFile      = \''.$filename.'\';'."\r\n";
+		echo "\t\t\t".'var orJahr      = "'.$jahr.'";'."\r\n";
+		echo "\t\t\t".'var orRating    = "'.$rating.'";'."\r\n";
+		echo "\t\t\t".'var orFile      = "'.$filename.'";'."\r\n";
 		echo "\t\t\t".'var idFile      = '.$idFile.';'."\r\n";
 		echo "\t\t\t".'var idMovie     = '.$idMovie.';'."\r\n";
-		echo "\t\t\t".'var orDateAdded = \''.$dateAdded.'\';'."\r\n";
-		echo "\t\t\t".'var orGenre     = \''.$genre.'\';'."\r\n";
+		echo "\t\t\t".'var orDateAdded = "'.$dateAdded.'";'."\r\n";
+		echo "\t\t\t".'var orGenre     = "'.$genre.'";'."\r\n";
 		
 	} else if ($change == 'genre') {
 		$idGenre = $GLOBALS['idGenre'];

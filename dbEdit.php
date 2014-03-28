@@ -82,6 +82,10 @@ include_once "globals.php";
 			##
 			 #############################
 			
+			$strPath  = str_replace("''", "'", $strPath);
+			$file     = str_replace("''", "'", $file);
+			$title    = str_replace("''", "'", $title);
+			
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
 			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId    = $row['idFile'];
@@ -89,10 +93,10 @@ include_once "globals.php";
 			$added     = date("Y-m-d H:i:s", time());
 			
 			$SQLfile = "INSERT INTO files(idFile,idPath,strFilename,dateAdded) VALUES([idFile],[idPath],'[FILENAME]','[ADDED]');";
-			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
-			$SQLfile = str_replace('[idPath]', $idPath, $SQLfile);
-			$SQLfile = str_replace('[FILENAME]', $file, $SQLfile);
-			$SQLfile = str_replace('[ADDED]', $added, $SQLfile);
+			$SQLfile = str_replace('[idFile]',   $idFile, $SQLfile);
+			$SQLfile = str_replace('[idPath]',   $idPath, $SQLfile);
+			$SQLfile = str_replace('[FILENAME]', $file,   $SQLfile);
+			$SQLfile = str_replace('[ADDED]',    $added,  $SQLfile);
 			$dbh->exec($SQLfile);
 			
 			$GETID_SQL = 'SELECT idEpisode FROM episode ORDER BY idEpisode DESC LIMIT 0, 1;';
@@ -100,24 +104,22 @@ include_once "globals.php";
 			$lastId    = $row['idEpisode'];
 			$idEpisode = $lastId + 1;
 			
-			$showEpi   = explode('-', $showEpi);
-			
+			$showEpi = explode('-', $showEpi);
 			$SQLepi = "INSERT INTO episode ".
 				   "VALUES([idEpisode],[idFile],'[TITLE]','[DESC]',NULL,'[RATING]','[GUEST_AUTOR]','[AIRED]',NULL,NULL,NULL,NULL,'[REGIE]',NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,'[FULLFILENAME]',[idPath],NULL,NULL,NULL,NULL,[idShow]);";
-			
-			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
-			$SQLepi = str_replace('[idFile]', $idFile, $SQLepi);
-			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
-			$SQLepi = str_replace('[DESC]', $desc, $SQLepi);
-			$SQLepi = str_replace('[RATING]', $rating, $SQLepi);
-			$SQLepi = str_replace('[GUEST_AUTOR]', $gast_autor, $SQLepi);
-			$SQLepi = str_replace('[AIRED]', $airdate, $SQLepi);
-			$SQLepi = str_replace('[REGIE]', $regie, $SQLepi);
-			$SQLepi = str_replace('[SEASON]', $showEpi[0], $SQLepi);
-			$SQLepi = str_replace('[EPISODE]', $showEpi[1], $SQLepi);
+			$SQLepi = str_replace('[idEpisode]',    $idEpisode,     $SQLepi);
+			$SQLepi = str_replace('[idFile]',       $idFile,        $SQLepi);
+			$SQLepi = str_replace('[TITLE]',        $title,         $SQLepi);
+			$SQLepi = str_replace('[DESC]',         $desc,          $SQLepi);
+			$SQLepi = str_replace('[RATING]',       $rating,        $SQLepi);
+			$SQLepi = str_replace('[GUEST_AUTOR]',  $gast_autor,    $SQLepi);
+			$SQLepi = str_replace('[AIRED]',        $airdate,       $SQLepi);
+			$SQLepi = str_replace('[REGIE]',        $regie,         $SQLepi);
+			$SQLepi = str_replace('[SEASON]',       $showEpi[0],    $SQLepi);
+			$SQLepi = str_replace('[EPISODE]',      $showEpi[1],    $SQLepi);
 			$SQLepi = str_replace('[FULLFILENAME]', $strPath.$file, $SQLepi);
-			$SQLepi = str_replace('[idPath]', $idPath, $SQLepi);
-			$SQLepi = str_replace('[idShow]', $idShow, $SQLepi);
+			$SQLepi = str_replace('[idPath]',       $idPath,        $SQLepi);
+			$SQLepi = str_replace('[idShow]',       $idShow,        $SQLepi);
 			$dbh->exec($SQLepi);
 			clearMediaCache();
 			
@@ -136,8 +138,9 @@ include_once "globals.php";
 			$params = null;
 			if (!empty($title) || !empty($jahr) || !empty($rating) || !empty($genre)) {
 				$title  = str_replace('_AND_', '&', $title);
-				$rating = str_replace(',', '.', $rating);
-
+				$title  = str_replace("''",    "'", $title);
+				$rating = str_replace(',',     '.', $rating);
+				
 				$params  = (!empty($title)  ? 'c00="'.$title.'"' : '');
 				$params .= (!empty($jahr)   ? (!empty($params) ? ' AND ' : '').'c07="'.$jahr.'"'   : '');
 				$params .= (!empty($rating) ? (!empty($params) ? ' AND ' : '').'c05="'.$rating.'"' : '');
@@ -148,9 +151,9 @@ include_once "globals.php";
 			
 			$params = null;
 			if (!empty($file)) {
+				$file   = str_replace("''", "'", $file);
 				$params = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
-				#$dbh->exec('DELETE FROM fileinfo WHERE idFile = '.$idFile.';');
 				$dbh->exec('UPDATE fileinfo SET filesize=NULL WHERE idFile='.$idFile.';');
 			}
 			
@@ -173,6 +176,7 @@ include_once "globals.php";
 			}
 			clearMediaCache();
 		}
+		
 		if ($act == 'clearAirdate' && $idShow != -1) {
 			$dbh->exec('DELETE FROM nextairdate WHERE idShow = '.$idShow.';');
 			clearMediaCache();
@@ -190,6 +194,7 @@ include_once "globals.php";
 		
 		if ($act == 'setname' && $id != -1 && !empty($name)) {
 			$name = str_replace('_AND_', '&', $name);
+			$name = str_replace("''", "'", $name);
 			$SQL = 'UPDATE sets SET strSet="'.$name.'" WHERE idSet = '.$id.';';
 			clearMediaCache();
 		}
@@ -225,9 +230,8 @@ include_once "globals.php";
 				exit;
 			}
 			echo 'Setcover was set!<br />';
-			#exit;
 			
-			if ($false) {
+			if (false) {
 			if (!empty($url)) {
 				$docRoot = getEscServer('DOCUMENT_ROOT');
 				$path    = $GLOBALS['THUMBNAIL_DIR'];
@@ -338,10 +342,11 @@ include_once "globals.php";
 		} else {
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');
 		}
-		exit;
 		
 	} catch(PDOException $e) {
-		header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
+		header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 	}
+	
+	exit;
 ?>

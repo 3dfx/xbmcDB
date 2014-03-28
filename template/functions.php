@@ -860,7 +860,7 @@ function postNavBar($isMain) {
 	$newAddedCount       = getNewAddedCount();
 	
 	$unsetParams  = '&dbSearch&which&just&sort';
-	$unsetMode    = '&mode';
+	$unsetMode    = '&mode=1';
 	$unsetCountry = '&country';
 	
 	$bs211 = ' padding-top:7px; height:18px !important;';
@@ -876,7 +876,7 @@ function postNavBar($isMain) {
 	echo '<ul class="nav" style="padding-top:2px;">';
 	echo '<li class="divider-vertical" style="height:36px;"></li>';
 	echo '<li'.($isMain ? ' class="active"' : '').'>';
-	echo '<a tabindex="1" href="?show=filme'.($isMain ? '&mode=1&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
+	echo '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
 	echo '</li>';
 	
 	if (!empty($dbSearch)) {
@@ -1125,9 +1125,7 @@ function postNavBar($isMain) {
 	
 	echo '</ul>';
 	echo '</div>';
-	echo '</div></div></div>';
-	
-	return;
+	echo '</div></div></div>'."\r\n\r\n";
 }
 
 function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211) {

@@ -5,19 +5,13 @@ include_once "check.php";
 include_once "./template/config.php";
 include_once "./template/matrix.php";
 include_once "./template/functions.php";
-include_once "globals.php";
 include_once "./template/_FILME.php";
+include_once "globals.php";
 
 	$isAdmin = isAdmin();
 	$isDemo  = isDemo();
 	
-	$maself = $_SERVER['PHP_SELF'];
-	$isMain = (substr($maself, -9) == 'index.php');
-	postNavBar($isMain);
-	
-	$mode = 0;
-	if (isset($_SESSION['mode'])) { $mode = $_SESSION['mode']; }
-	
+	$mode        = isset($_SESSION['mode'])        ? $_SESSION['mode']        : 0;
 	$newmode     = isset($_SESSION['newmode'])     ? $_SESSION['newmode']     : 0;
 	$newsort     = isset($_SESSION['newsort'])     ? $_SESSION['newsort']     : 0;
 	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
@@ -25,47 +19,25 @@ include_once "./template/_FILME.php";
 	$just        = isset($_SESSION['just'])        ? $_SESSION['just']        : '';
 	$country     = isset($_SESSION['country'])     ? $_SESSION['country']     : '';
 ?>
+
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>XBMC Database</title>
-	<link rel="shortcut icon" href="favicon.ico" />
-	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/select/select2.css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="./class.css" />
-	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
-	<script type="text/javascript" src="./template/js/highlight.js"></script>
-	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
-	<script type="text/javascript" src="./template/js/myfancy.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
-	<script type="text/javascript" src="./template/js/bootstrap/select/select2.min.js"></script>
-	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
+<?php include("head.php"); ?>
 	<script type="text/javascript">
 <?php
-	$xbmControl = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
-	$bindF      = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
+	$bindF = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
 	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
 	echo "\t\t".'var isAdmin = '.(isAdmin() ? '1' : '0').";\r\n";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
 	echo "\t\t".'var newMovies = '.(checkLastHighest() && $newsort != 2 ? 'true' : 'false').";\r\n";
 ?>
 	</script>
-<?php if(isAdmin()) { ?>
-	<script type="text/javascript" src="./template/js/general.js"></script>
-	<script type="text/javascript" src="./template/js/filme.js"></script>
-<?php } else { ?>
-	<script type="text/javascript" src="./template/js/general.min.js"></script>
-	<script type="text/javascript" src="./template/js/filme.min.js"></script>
-<?php } ?>
-<?php if(isAdmin() && $xbmControl) { ?>
-	<script type="text/javascript" src="./template/js/xbmcJson.js"></script>
-<?php } ?>
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
+	$maself = $_SERVER['PHP_SELF'];
+	$isMain = (substr($maself, -9) == 'index.php');
+	postNavBar($isMain);
+	
 	echo '<div class="tabDiv" onmouseover="closeNavs();">';
 	echo "\r\n";
 	echo '<table class="'.($gallerymode ? 'gallery' : 'film').'" cellspacing="0">';
