@@ -36,7 +36,8 @@ include_once "./template/functions.php";
 	else if ($show == 'import')                     { include "./dbImport.php"; }
 	else if ($show == 'details' && !empty($idShow)) { include "./details.php";  }
 	else if ($show == 'serien')                     { include "./serien_.php";  }
-	else if ($show == 'mvids')                      { include "./mvids_.php";  }
+	else if ($show == 'airdate')                    { include "./airdates.php"; }
+	else if ($show == 'mvids')                      { include "./mvids_.php";   }
 	else if ($show == 'filme')                      { include "./filme_.php";   }
 	
 	adminInfo($start, $show);

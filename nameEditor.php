@@ -243,7 +243,7 @@ function postEditor() {
 
 function postOrValues() {
 	$change = $GLOBALS['change'];
-	$title  = $GLOBALS['title']; #str_replace("'", "\'", $GLOBALS['title']);
+	$title  = $GLOBALS['title'];
 	
 	echo "\t\t\t".'var orTitle     = "'.$title.'";'."\r\n";
 	if ($change == 'movie') {

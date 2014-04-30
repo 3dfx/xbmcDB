@@ -53,7 +53,7 @@ include_once "globals.php";
 		echo '<div style="float:right; padding:4px 5px;">';
 		echo '<input tabindex="-1" type="submit" value="Ok" name="submit" class="okButton">';
 		echo '</div>';
-		echo '<div style="float:right; padding-top:2px; margin-right:165px;">';
+		echo '<div style="float:right; padding-top:2px; margin-right:5px;">';
 		echo '<select class="styled-select2" name="aktion" size="1">';
 		echo '<option value="0" label="          "></option>';
 		echo '<option value="1">mark as unseen</option>';

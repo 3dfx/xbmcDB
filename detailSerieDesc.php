@@ -54,6 +54,7 @@ include_once "./template/_SERIEN.php";
 	$running = $serie->isRunning();
 	$banner  = null;
 	$imgURL  = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
+	#$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 	
 	echo '<table class="film tableDesc">';

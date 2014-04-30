@@ -689,9 +689,14 @@ include_once "globals.php";
 			echo "\r\n";
 			echo '<table cellspacing="0" class="artists">';
 			echo "\r\n";
-			echo '<tr><th colspan="2">';
-			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
-			echo '</th></tr>';
+			echo '<tr>';
+			echo '<th>';
+			echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
+			echo '</th>';
+			echo '<th class="role">';
+			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Role</span>';
+			echo '</th>';
+			echo '</tr>';
 			echo '<tr class="abstand"><td colspan="2"></td></tr>';
 			echo "\r\n";
 			for ($i = 0; $i < count($schauspTblOut); $i++) {
@@ -700,7 +705,7 @@ include_once "globals.php";
 			
 			if ($actors > $acLimit) {
 				echo '<tr id="doTr"><td colspan="2">';
-				echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
+				echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
 				echo '</td></tr>';
 				echo "\r\n";
 			}

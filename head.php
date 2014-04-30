@@ -6,6 +6,7 @@
 	$isMVids    = $show == 'mvids'  ? true : false;
 ?>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 	<title>XBMC Database</title>
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" />
@@ -16,7 +17,11 @@
 <?php if ($isMain) { ?>
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/select/select2.css" />
 <?php } ?>
+<?php if(isAdmin()) { ?>
+	<script type="text/javascript" src="./template/js/jquery.js"></script>
+<?php } else { ?>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
+<?php } ?>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>

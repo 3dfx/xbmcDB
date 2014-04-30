@@ -7,9 +7,8 @@ include_once "./template/_SERIEN.php";
 
 	header("Content-Type: text/html; charset=UTF-8");
 	
-	$isAdmin = isAdmin();
-	$isDemo  = isDemo();
-	
+	$isAdmin  = isAdmin();
+	$isDemo   = isDemo();
 	$id       = getEscGPost('id');
 	$idSeason = getEscGPost('idSeason');
 	
@@ -18,11 +17,10 @@ include_once "./template/_SERIEN.php";
 	$_SESSION['tvShowParam']['idEpisode'] = $id;
 	$_SESSION['tvShowParam']['idSeason']  = $idSeason;
 	
-	$SQL =  $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
-	
 	$idFile     = 0;
 	$title      = '';
 	$epDesc     = '';
+	$guests     = null;
 	$path       = '';
 	$coverP     = '';
 	$filename   = '';
@@ -36,12 +34,14 @@ include_once "./template/_SERIEN.php";
 	$fsize      = 0;
 	
 	$existArtTable = existsArtTable();
-
+	
+	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
 	$result = querySQL($SQL);
 	foreach($result as $row) {
 		$idFile     = $row['idFile'];
 		$title      = trimDoubles(trim($row['epName']));
 		$epDesc     = trimDoubles(trim($row['epDesc']));
+		$guests     = $row['guests'];
 		$path       = $row['path'];
 		$filename   = $row['filename'];
 		$lastPlayed = $row['lastPlayed'];
@@ -186,16 +186,25 @@ include_once "./template/_SERIEN.php";
 	if (!empty($epDesc)) {
 		$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
 		
-		$tmp = '<div class="epDesc"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
+		$descDiv = '<div class="epDesc"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
 		if (!$isAdmin || ($isAdmin && empty($playCount))) {
-			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red; cursor:pointer;">spoil it!</span></div>';
+			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red; cursor:pointer; float:right;">spoil it!</span></div>';
 			echo '<span id="epDescr" style="display:none;">';
-			echo $tmp;
+			echo $descDiv;
 			echo '</span>';
 			
 		} else if (!$spProtect || !empty($playCount)) {
-			echo $tmp;
+			echo $descDiv;
 		}
+	}
+	
+	$guests = getGuests($guests);
+	if (!empty($guests)) {
+		$gString = '';
+		$len = count($guests);
+		for ($i = 0; $i < $len; $i++) { $gString .= $guests[$i].($i < $len-1 ? '<br />' : ''); }
+		echo '<div id="epGuest" class="padbot15" onclick="showGuests(); return false;"><u><i><b>Guests:</b></i></u> <span style="color:red; cursor:pointer; float:right;">show guests!</span></div>';
+		echo '<div id="epGuests" class="padbot15" style="display:none;"><u><i><b>Guests:</b></i></u><br />'.$gString.'</div>';
 	}
 	
 	$rating = substr($epRating, 0, 3);

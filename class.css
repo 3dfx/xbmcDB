@@ -1,5 +1,34 @@
+/* Large desktop */
+@media (min-width: 1200px) { }
+
+/* Portrait tablet to landscape and desktop */
+@media (min-width: 600px) and (max-width: 1024px) {
+	#adminInfo { display:none; }
+	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
+	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
+	.hideMobile { display:none; }
+	.showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0px; min-width:0px; width:0px; padding:0px !important; margin:0px !important; }
+}
+
+/* Landscape phone to portrait tablet */
+@media (max-width: 1024px) {
+	#adminInfo { display:none; }
+	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
+	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
+	.hideMobile { display:none; }
+	.showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0px; min-width:0px; width:0px; padding:0px !important; margin:0px !important; }
+}
+
+/* Landscape phones and down */
+@media (max-width: 600px) {
+	#adminInfo { display:none; }
+	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
+	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
+	.hideMobile { display:none; }
+	.showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0px; min-width:0px; width:0px; padding:0px !important; margin:0px !important; }
+}
+
 body 	{
-	zfont:12px Verdana, Arial;
 	min-device-width: 481px;
 	max-device-width: 1024px;
 	#min-width: 481px;
@@ -10,23 +39,24 @@ body 	{
 	font-family: 'Lucida Grande', 'Verdana', 'Arial';
 	font-size: 13px;
 	
-	scrollbar-face-color      : ddd;
-	scrollbar-arrow-color     : ddd;
-	scrollbar-track-color     : background-color:transparent;
-	scrollbar-shadow-color    : eee;
+	scrollbar-face-color      : #ddd;
+	scrollbar-arrow-color     : #ddd;
+	scrollbar-track-color     : transparent;
+	background-color          : transparent;
+	scrollbar-shadow-color    : #eee;
 	scrollbar-highlight-color : white;
-	scrollbar-3dlight-color   : aaa;
-	scrollbar-darkshadow-Color: 666;
+	scrollbar-3dlight-color   : #aaa;
+	scrollbar-darkshadow-Color: #666;
 }
 
-::-webkit-scrollbar { width:8px; }
-::-webkit-scrollbar-track-piece { background-color:transparent; }
-::-webkit-scrollbar-thumb { background:#ddd; }
+::-webkit-scrollbar             { width:8px; height:3px; }
+::-webkit-scrollbar-thumb       { background: #ddd; }
+::-webkit-scrollbar-track-piece { background-color: transparent; }
 
-::-webkit-input-placeholder { padding-top:0px; }
-::-moz-placeholder { padding-top:3px; }
-:-ms-input-placeholder { padding-top:3px; }
-input:-moz-placeholder { padding-top:3px; }
+::-moz-placeholder          { padding-top: 3px; }
+:-ms-input-placeholder      { padding-top: 3px; }
+input:-moz-placeholder      { padding-top: 3px; }
+::-webkit-input-placeholder { padding-top: 0px; }
 
 a, a:hover {
 	color: #000000;
@@ -36,10 +66,18 @@ a, a:hover {
 .notification {
 	position:absolute;
 	float:right;
-	right:70px;
-	top:25px;
-	width:6px;
+	right:146px;
+	top:12px;
+	width:7px;
+	height:12px;
 	z-index:1;
+}
+
+.notificationInner {
+	position:relative;
+	left:-1px;
+	top:-1px;
+	cursor:pointer;
 }
 
 .navBarBrand {
@@ -352,6 +390,30 @@ span.customStyleSelectBox.changed {
 	color:red;
 }
 
+.skewR {
+	-moz-transform: skewX(-25deg);
+	-webkit-transform: skewX(-25deg);
+	-ms-transform: skewX(-25deg);
+}
+
+.skewL {
+	-moz-transform: skewX(25deg);
+	-webkit-transform: skewX(25deg);
+	-ms-transform: skewX(25deg);
+}
+
+.radius0corner {
+	-moz-border-radius:0px;
+	-webkit-border-radius:0px;
+	border-radius:0px;
+}
+
+.radius03corner {
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+}
+
 .radius05corner {
 	-moz-border-radius:5px;
 	-webkit-border-radius:5px;
@@ -379,7 +441,7 @@ table.artists td.art {
 	overflow-x:hidden;
 }
 
-table.artists td.role {
+table.artists td.role, th.role {
 	color:black;
 	padding-left:15px;
 }

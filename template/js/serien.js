@@ -51,6 +51,9 @@ function closeNavs_(all) {
 	
 	$('#dropAdmin').removeClass('open');
 	$('#dropSearch').removeClass('open');
+	if (isAdmin) {
+		$('#dropViewmode').removeClass('open');
+	}
 	if (all) {
 		$('#dropLatestEps').removeClass('open');
 	}
@@ -153,9 +156,13 @@ function toggleEps_(id, eps, obj) {
 }
 
 function spoilIt() {
-	$( '#epDescr' ).show();
 	$( '#epSpoiler' ).hide();
-	$( '#spoiler' ).hide();
+	$( '#epDescr' ).show();
+}
+
+function showGuests() {
+	$( '#epGuest' ).hide();
+	$( '#epGuests' ).show();
 }
 
 function setFlagsBack(objId) {

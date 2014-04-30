@@ -288,7 +288,7 @@ function checkFileInfoTable($dbh = null) {
 
 function checkMyEpisodeView($dbh = null) {
 	$exist = existsTable('episodeviewMy', 'view', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy as select episode.*,files.strFileName as strFileName,path.idPath as idPath,path.strPath as strPath,files.playCount as playCount,files.lastPlayed as lastPlayed,tvshow.c00 as strTitle,tvshow.c14 as strStudio,tvshow.idShow as idShow,tvshow.c05 as premiered, tvshow.c13 as mpaa, tvshow.c16 as strShowPath from tvshow join episode on episode.idShow=tvshow.idShow join files on files.idFile=episode.idFile join path on files.idPath=path.idPath;", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy AS select episode.*,files.strFileName AS strFileName,path.idPath AS idPath,path.strPath AS strPath,files.playCount AS playCount,files.lastPlayed AS lastPlayed,tvshow.c00 AS strTitle,tvshow.c14 AS strStudio,tvshow.idShow AS idShow,tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false); }
 }
 
 function checkTvshowRunningTable($dbh = null) {
@@ -996,22 +996,16 @@ function postNavBar($isMain) {
 		}
 		echo '</ul>';
 		echo '</li>';
-		
-		$params = 'gallerymode='.($gallerymode ? 0 : 1);
-		if (!empty($which) && !empty($just)) {
-			$params .= '&which='.$which.'&just='.$just;
-			unset($_SESSION['newmode']);
-		} else {
-			$params .= '&mode='.$mode.'&unseen='.$unseen.'&newmode='.$newmode.'&newAddedCount='.$newAddedCount;
-		}
-		
+	} //$isMain
+	
+	if ($isMain || $gallerymode && $isAdmin) { # || $isTvshow && $isAdmin) {
 		echo '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
 		echo '<ul class="dropdown-menu">';
 		echo '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
 		echo '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
 		echo '</ul>';
 		echo '</li>';
-	} //$isMain
+	}
 	
 	if ($SEARCH_ENABLED && $isMain) {
 		createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
@@ -1051,18 +1045,20 @@ function postNavBar($isMain) {
 		$playing = $run != 0 ? cleanedPlaying(xbmcGetNowPlaying())  : '';
 		$state   = $run != 0 ? intval(xbmcGetPlayerstate()) : '';
 		$state   = ($state == 1 ? 'playing' : ($state == 0 ? 'paused' : ''));
+		echo '<span id="xbmControlWrap" style="float:left;">';
 		echo '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
-			echo '<span style="color:black; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
-			echo '<a class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
+			echo '<span id="xbmcPlayerState_" style="color:black; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
+			echo '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
 			echo '<span id="xbmcPlayerFile" style="top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
 			echo '</a> ';
 			echo '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
 			echo '<a class="navbar" onclick="playNext(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/next.png" style="width:24px; height:24px;" /></a>';
 			echo '<a class="navbar" onclick="playPrev(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/prev.png" style="width:24px; height:24px;" /></a>';
 		echo '</li>';
+		echo '</span>';
 		
-		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
-		echo '<li style="font-weight:bold;">';
+		echo '<li id="plaYTdivide" class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+		echo '<li id="plaYoutube_" style="font-weight:bold;">';
 		echo '<span style="position:relative; top:3px;">';
 		echo '<input id="plaYoutube" name="plaYoutube" class="search-query span2" style="margin:4px 5px; width:200px; height:23px; display:none;" type="text" placeholder="play youTube / vimeo" onfocus="this.select();" onkeyup="return playItemPrompt(this, event); return false;" onmouseover="focus(this);" />';
 		echo '<img id="ytIcon" src="./img/yt.png" style="width:32px; height:32px;" onmousmove=""; onmouseout=""; />';
@@ -1075,9 +1071,11 @@ function postNavBar($isMain) {
 	if ($isAdmin) {
 		$msgs = checkNotifications();
 		$selected = '';
+		$msgStr   = '';
 		if ($msgs > 0) {
 			$selected = ' selectedItem';
-			echo '<span class="notification badge badge-important"><span style="margin:-2px;">'.$msgs.'</span></span>';
+			echo '<span class="notification badge badge-important skewR radius03corner fancy_sets" href="orderViewer.php" onmouseover="closeNavs();"><div class="notificationInner skewL">'.$msgs.'</div></span>';
+			#$msgStr = '<span style="padding-left:15px; color:silver;"><sub>['.$msgs.']</sub></span>';
 		}
 		echo '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
 		echo '<a tabindex="60" href="#" class="dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
@@ -1087,7 +1085,12 @@ function postNavBar($isMain) {
 			echo '<li class="divider"></li>';
 		}
 		
-		echo '<li><a class="fancy_sets'.$selected.'" href="orderViewer.php">Order Viewer</a></li>';
+		echo '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
+		echo '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
+		echo '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
+		echo '<li class="divider"></li>';
+		
+		echo '<li><a class="fancy_sets'.$selected.'" href="orderViewer.php">Order Viewer'.$msgStr.'</a></li>';
 		
 		$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
 		if ($USESETS) {
@@ -1095,15 +1098,11 @@ function postNavBar($isMain) {
 		}
 		
 		echo '<li class="divider"></li>';
-		echo '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
-		echo '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
-		echo '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
-		
-		echo '<li class="divider"></li>';
 		echo '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
 		if (xbmcRunning() != 0) {
 			echo '<li><a href="" onclick="scanLib(); return false;">Scan Library</a></li>';
 		}
+		echo '<li><a class="fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
 		
 		/*
 		echo '<li class="divider"></li>';
@@ -1736,8 +1735,7 @@ function fetchAndUpdateAirdate($idShow, $dbh = null) {
 
 function clearAirdateInDb($idShow, $dbh = null) {
 	if (!checkAirDate()) { return; }
-	$SQL = "DELETE FROM nextairdate WHERE idShow = [idShow];";
-	$SQL = str_replace('[idShow]', $idShow, $SQL);
+	$SQL = "DELETE FROM nextairdate WHERE idShow = ".$idShow.";";
 	execSQL_($dbh, $SQL, false, false);
 }
 
@@ -1810,6 +1808,26 @@ function getFormattedSE($sNum, $eNum, $epDelta = 0) {
 	$res = str_replace('[season#]',  $sNum, $res);
 	$res = str_replace('[episode#]', $eNum, $res);
 	return $res;
+}
+
+function getGuests($guests) {
+	if (empty($guests)) { return null; }
+	$guests = str_replace(',',  ' / ', $guests);
+	$ex = explode(" / ", $guests);
+	$gs = array();
+	foreach($ex as $g) {
+		if (substr_count($g, 'Autor') > 0) { continue; }
+		if (substr_count($g, 'Gast') == 0 && substr_count($g, 'Guest') == 0) { continue; }
+		
+		$g = str_replace('(Gast Star)',  '', $g);
+		$g = str_replace('(Guest Star)', '', $g);
+		$g = str_replace('(Gast)',  '', $g);
+		$g = str_replace('(Guest)', '', $g);
+		$g = str_replace('  ', ' ', $g);
+		$g = trim($g);
+		$gs[] = $g;
+	}
+	return $gs;
 }
 
 function getToday() {
