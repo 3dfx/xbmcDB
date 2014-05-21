@@ -10,6 +10,8 @@ include_once "globals.php";
 
 	$isAdmin = isAdmin();
 	$isDemo  = isDemo();
+	$maself  = getEscServer('PHP_SELF');
+	$isMain  = (substr($maself, -9) == 'index.php');
 	
 	$mode        = isset($_SESSION['mode'])        ? $_SESSION['mode']        : 0;
 	$newmode     = isset($_SESSION['newmode'])     ? $_SESSION['newmode']     : 0;
@@ -30,15 +32,18 @@ include_once "globals.php";
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
 	echo "\t\t".'var newMovies = '.(checkLastHighest() && $newsort != 2 ? 'true' : 'false').";\r\n";
 ?>
+		
+		$(document).ready(function() {
+			$('#myNavbar').load( 'navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { initNavbarFancies(); } );
+		});
 	</script>
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
-	$maself = $_SERVER['PHP_SELF'];
-	$isMain = (substr($maself, -9) == 'index.php');
-	postNavBar($isMain);
+	postNavBar();
 	
 	echo '<div class="tabDiv" onmouseover="closeNavs();">';
+#	echo '<div class="tabDiv_" onmouseover="closeNavs();">';
 	echo "\r\n";
 	echo '<table class="'.($gallerymode ? 'gallery' : 'film').'" cellspacing="0">';
 	echo "\r\n";
@@ -66,10 +71,9 @@ include_once "globals.php";
 	}
 	
 	echo '</form>';
-	echo "\r\n";
-   	echo '</table>';
-	echo "\r\n";
-	echo '</div>';
+	echo "\r\n".'</table>';
+#	echo "\r\n".'</div>';
+	echo "\r\n".'</div>';
 	
 	if (!$isAdmin && !$isDemo) {
 		if ($gallerymode != 1) {

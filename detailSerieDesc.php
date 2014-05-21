@@ -8,41 +8,7 @@ include_once "./template/_SERIEN.php";
 	$isAdmin = isAdmin();
 	$id = getEscGet('id');
 	if (empty($id) || $id < 0) { return; }
-?>
-<script type="text/javascript">
-	jQuery(document).ready(function() {
-		$("#tvBanner").fancybox({
-			'width'				: '63%',
-			'height'			: '94%',
-			'autoScale'			: true,
-			'centerOnScroll'		: true,
-			'enableEscapeButton'		: true,
-			'padding'			: 5,
-			'margin'			: 10,
-			'transitionIn'			: 'elastic',
-			'transitionOut'			: 'none',
-			'type'				: 'iframe'
-		});
-	});
 	
-	$(".fancy_msgbox").fancybox({
-		'width'				: 300,
-		'height'			: 50,
-		'overlayColor'			: '#000',
-		'overlayOpacity'		: 0.55,
-		'padding'			: 1,
-		'autoScale'			: true,
-		'centerOnScroll'		: true,
-		'scrolling'			: 'no',
-		'transitionIn'			: 'elastic',
-		'transitionOut'			: 'none',
-		'enableEscapeButton'		: true,
-		'type'				: 'iframe',
-		'titleShow'       		: false,
-		'borderBgs'			: false
-	});
-</script>
-<?php
 	$serien  = fetchSerien($GLOBALS['SerienSQL'], null);
 	$serie   = $serien->getSerie($id);
 	$idShow  = $serie->getIdShow();
@@ -65,9 +31,10 @@ include_once "./template/_SERIEN.php";
 		if (loadImage($imgURL, $imgFile) == -1) { $imgFile = null; }
 		wrapItUp('banner', $idTvdb, $imgFile);
 		$banner = empty($imgFile) ? $imgURL : getImageWrap($imgFile, $idTvdb, 'banner', 0);
-		echo '<img id="tvBanner" class="innerCoverImg" src="'.$banner.'" href="'.$tvdbURL.'" />';
+		echo '<img id="tvBanner" class="openTvdb" src="'.$banner.'" href="'.$tvdbURL.'" />';
 	}
 	
+	echo '<div class="fClose" onclick="closeShow();" />';
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
 		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$idShow.'</span></div>';

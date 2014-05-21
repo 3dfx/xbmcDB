@@ -6,6 +6,9 @@ include_once "./template/config.php";
 include_once "./template/functions.php";
 include_once "./template/_MVID.php";
 include_once "globals.php";
+
+$maself = getEscServer('PHP_SELF');
+$isMain = (substr($maself, -9) == 'index.php');
 ?>
 
 <head>
@@ -13,14 +16,7 @@ include_once "globals.php";
 	<script type="text/javascript">
 		$(document).ready(function() {
 			$('.dropdown-toggle').dropdown();
-
-			if (bindF) { $(document).keydown(function(event) {
-				if(event.ctrlKey && event.keyCode == '70') {
-					event.preventDefault();
-					openNav('#dropSearch');
-					$('#searchDBfor').focus();
-				}
-			}); }
+			$('#myNavbar').load( 'navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { initNavbarFancies(); } );
 		});
 
 		function openNav(objId) {
@@ -50,8 +46,7 @@ include_once "globals.php";
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
 #main
-	$maself = getEscServer('PHP_SELF');
-	postNavBar($maself == '/index.php');
+	postNavBar();
 	
 	echo "\r\n\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
 	fillTable();

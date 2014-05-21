@@ -6,30 +6,11 @@ include_once "./template/config.php";
 include_once "./template/functions.php";
 include_once "./template/_SERIEN.php";
 include_once "globals.php";
-?>
 
-<head>
-<?php include("head.php"); ?>
-	<script type="text/javascript">
-<?php
-	$bindF = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
-	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
-	echo "\t\t".'var isAdmin = '.(isAdmin() ? '1' : '0').";\r\n";
-	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
-	echo "\t\t".'var newMovies = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
-?>
-
-		$(document).ready(function() { $('.knob-dyn').knob(); });
-	</script>
-</head>
-<body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
-<?php
-#main
 	$isAdmin = isAdmin();
 	$isDemo  = isDemo();
-	
-	$maself = $_SERVER['PHP_SELF'];
-	postNavBar($maself == '/index.php');
+	$maself  = getEscServer('PHP_SELF');
+	$isMain  = (substr($maself, -9) == 'index.php');
 	
 	$dbh    = getPDO();
 	$SQL    = $GLOBALS['SerienSQL'].';';
@@ -41,32 +22,65 @@ include_once "globals.php";
 	fetchNextEpisodesFromDB($dbh);
 	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
 	
-	echo "\r\n\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
+	if (getEscGet('data')) {
+		if (false && $gallerymode && $isAdmin) {
+			return fillTableGal($serien, $dbh);
+		} else {
+			return fillTable($serien, $dbh);
+		}
+	}
+?>
+
+<head>
+<?php include("head.php"); ?>
+	<script type="text/javascript">
+<?php
+	$bindF = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
+	echo "\t\t".'var bindF = '.($bindF ? 'true' : 'false').";\r\n";
+	echo "\t\t".'var isAdmin = '.($isAdmin ? '1' : '0').";\r\n";
+	echo "\t\t".'var xbmcRunning = '.($isAdmin && xbmcRunning() ? '1' : '0').";\r\n";
+	echo "\t\t".'var newMovies = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
+?>
+		
+		$(document).ready(function() {
+			$('#showsDiv').load( 'serien_.php?data=1', function() { $('.knob-dyn').knob(); initShowFancies(); } );
+			$('#myNavbar').load( 'navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { initNavbarFancies(); } );
+		});
+	</script>
+</head>
+<body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
+<?php
+	postNavBar();
+	
+#main
+	echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
+	/*
 	if (false && $gallerymode && $isAdmin) {
 		fillTableGal($serien, $dbh);
 	} else {
 		fillTable($serien, $dbh);
 	}
+	*/
+	echo "\t\t".'<div id="showsDiv" onmouseover="closeNavs();"></div>'."\r\n";
 	echo "\t".'</div>'."\r\n";
 ?>
 	<div id="showDesc" onmouseover="closeNavs();"></div>
 	<div id="showInfo" onmouseover="closeNavs();"></div>
 	<div id="showEpDesc" onmouseover="closeNavs();"></div>
-	
 <?php
 	if (!$isAdmin && !$isDemo) {
 		echo "\r\n";
-		echo '<div id="movieList" class="lefto" style="padding-left:15px; z-order=1; height:60px; display:none;">'."\r\n";
-		echo "\t".'<div>';
+		echo "\t".'<div id="movieList" class="lefto" style="padding-left:15px; z-order=1; height:60px; display:none;">'."\r\n";
+		echo "\t\t".'<div>';
 		if ($COPYASSCRIPT_ENABLED && !$isAdmin) {
-			echo "\t<input type='checkbox' id='copyAsScript' onClick='doRequest(".$isAdmin."); return true;' style='float:left;'/><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
+			echo "<input type='checkbox' id='copyAsScript' onClick='doRequest(".$isAdmin."); return true;' style='float:left;'/><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
 			echo "<br/>";
 		}
 		echo "<input type='button' name='orderBtn' id='orderBtn' onclick='saveSelection(".$isAdmin."); return true;' value='save'/>";
 		echo '</div>';
-
-		echo "\r\n\t".'<div id="result" class="selectedfield"></div>'."\r\n";
-		echo '</div>'."\r\n";
+		
+		echo "\r\n\t\t".'<div id="result" class="selectedfield"></div>'."\r\n";
+		echo "\t".'</div>'."\r\n";
 	}
 ?>
 </body>

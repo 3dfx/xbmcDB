@@ -826,7 +826,12 @@ function getNewAddedCount() {
 	return $newAddedCount;
 }
 
-function postNavBar($isMain) {
+function postNavBar() {
+	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
+	echo "\t".'<div id="myNavbar" class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;"></div>'."\r\n";
+}
+
+function postNavBar_($isMain) {
 	$isAdmin     = isAdmin();
 	$saferSearch = null;
 	
@@ -849,7 +854,6 @@ function postNavBar($isMain) {
 	$just                = isset($_SESSION['just'])        ? $_SESSION['just']        : '';
 	$filter_name         = isset($_SESSION['name'])        ? $_SESSION['name']        : '';
 	
-	$INVERSE             = isset($GLOBALS['NAVBAR_INVERSE'])      ? $GLOBALS['NAVBAR_INVERSE']      : false;
 	$SEARCH_ENABLED      = isset($GLOBALS['SEARCH_ENABLED'])      ? $GLOBALS['SEARCH_ENABLED']      : true;
 	$CUTSENABLED         = isset($GLOBALS['CUTS_ENABLED'])        ? $GLOBALS['CUTS_ENABLED']        : true;
 	$DREIDENABLED        = isset($GLOBALS['DREID_ENABLED'])       ? $GLOBALS['DREID_ENABLED']       : true;
@@ -865,19 +869,21 @@ function postNavBar($isMain) {
 	
 	$bs211 = ' padding-top:7px; height:18px !important;';
 	
-	echo '<div class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;">';
-	echo '<div class="navbar-inner" style="height:30px;">';
-	echo '<div class="container" style="margin:0px auto; width:auto;">';
+	$res = '';
 	
-	echo '<a class="brand navBarBrand" href="#" onmouseover="closeNavs();">xbmcDB</a>';
+#	echo '<div class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;">';
+	$res .= '<div class="navbar-inner" style="height:30px;">';
+	$res .= '<div class="container" style="margin:0px auto; width:auto;">';
 	
-	echo '<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a>';
-	echo '<div class="nav-collapse">';
-	echo '<ul class="nav" style="padding-top:2px;">';
-	echo '<li class="divider-vertical" style="height:36px;"></li>';
-	echo '<li'.($isMain ? ' class="active"' : '').'>';
-	echo '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
-	echo '</li>';
+	$res .= '<a class="brand navBarBrand" href="#" onmouseover="closeNavs();">xbmcDB</a>';
+	
+	$res .= '<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a>';
+	$res .= '<div class="nav-collapse">';
+	$res .= '<ul class="nav" style="padding-top:2px;">';
+	$res .= '<li class="divider-vertical" style="height:36px;"></li>';
+	$res .= '<li'.($isMain ? ' class="active"' : '').'>';
+	$res .= '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
+	$res .= '</li>';
 	
 	if (!empty($dbSearch)) {
 		$saferSearch = strtolower(trim(SQLite3::escapeString($dbSearch)));
@@ -933,18 +939,18 @@ function postNavBar($isMain) {
 			$selectedIs = '3D';
 		}
 		
-		echo '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.$selectedIs.' <b class="caret"></b></a>';
-		echo '<ul class="dropdown-menu">';
+		$res .= '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.$selectedIs.' <b class="caret"></b></a>';
+		$res .= '<ul class="dropdown-menu">';
 		$all = ((!isset($unseen) || $unseen == 3) && $newmode != 1 && empty($just) && empty($mode) && empty($saferSearch) && empty($country) ? ' class="selectedItem"' : '');
-		echo '<li><a href="?show=filme&newmode=0&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.$all.'>all</a></li>';
+		$res .= '<li><a href="?show=filme&newmode=0&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.$all.'>all</a></li>';
 		
-		echo '<li class="dropdown-submenu">';
-		echo '<a tabindex="-1" href="#"'.($newmode && empty($just) ? ' class="selectedItem"' : '').'>'.(!$newmode ? 'newly added' : ($newsort == 2 ? 'sort by id' : 'sort by date')).'</a>';
-		echo '<ul class="dropdown-menu">';
-		echo '<li><a tabindex="-1" href="?show=filme&newmode=1&newsort=2&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.($newmode && $newsort == 2 && empty($just) ? ' class="selectedItem"' : '').'>sort by id</a></li>';
-		echo '<li><a tabindex="-1" href="?show=filme&newmode=1&newsort=1&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.($newmode && $newsort == 1 && empty($just) ? ' class="selectedItem"' : '').'>sort by date</a></li>';
-		echo '</ul>';
-		echo '</li>';
+		$res .= '<li class="dropdown-submenu">';
+		$res .= '<a tabindex="-1" href="#"'.($newmode && empty($just) ? ' class="selectedItem"' : '').'>'.(!$newmode ? 'newly added' : ($newsort == 2 ? 'sort by id' : 'sort by date')).'</a>';
+		$res .= '<ul class="dropdown-menu">';
+		$res .= '<li><a tabindex="-1" href="?show=filme&newmode=1&newsort=2&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.($newmode && $newsort == 2 && empty($just) ? ' class="selectedItem"' : '').'>sort by id</a></li>';
+		$res .= '<li><a tabindex="-1" href="?show=filme&newmode=1&newsort=1&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.($newmode && $newsort == 1 && empty($just) ? ' class="selectedItem"' : '').'>sort by date</a></li>';
+		$res .= '</ul>';
+		$res .= '</li>';
 		
 		if ($CHOOSELANGUAGES) {
 			$COUNTRIES = isset($GLOBALS['COUNTRIES']) ? $GLOBALS['COUNTRIES'] : array();
@@ -970,103 +976,103 @@ function postNavBar($isMain) {
 				$langMenu .= '</li>';
 				
 				$langMenu = str_replace('[MENUCOUNTRY]', $menuCountry, $langMenu);
-				echo $langMenu;
+				$res .= $langMenu;
 			}
 		}
 		
 		if ($CUTSENABLED || $DREIDENABLED) {
-			echo '<li class="divider"></li>';
+			$res .= '<li class="divider"></li>';
 		}
 		
 		if ($CUTSENABLED) {
-			echo '<li><a href="?show=filme&mode=3'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 3 && empty($just) ? ' class="selectedItem"' : '').'>directors cut</a></li>';
-			echo '<li><a href="?show=filme&mode=4'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 4 && empty($just) ? ' class="selectedItem"' : '').'>extended cut</a></li>';
-			echo '<li><a href="?show=filme&mode=5'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 5 && empty($just) ? ' class="selectedItem"' : '').'>uncut</a></li>';
-			echo '<li><a href="?show=filme&mode=6'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 6 && empty($just) ? ' class="selectedItem"' : '').'>unrated</a></li>';
+			$res .= '<li><a href="?show=filme&mode=3'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 3 && empty($just) ? ' class="selectedItem"' : '').'>directors cut</a></li>';
+			$res .= '<li><a href="?show=filme&mode=4'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 4 && empty($just) ? ' class="selectedItem"' : '').'>extended cut</a></li>';
+			$res .= '<li><a href="?show=filme&mode=5'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 5 && empty($just) ? ' class="selectedItem"' : '').'>uncut</a></li>';
+			$res .= '<li><a href="?show=filme&mode=6'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 6 && empty($just) ? ' class="selectedItem"' : '').'>unrated</a></li>';
 		}
 		
 		if ($DREIDENABLED) {
-			echo '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
+			$res .= '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
 		}
 		
 		if ($isAdmin) {
-			echo '<li class="divider"></li>';
-			echo '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) ? ' class="selectedItem"' : '').'>unseen</a></li>';
-			echo '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
+			$res .= '<li class="divider"></li>';
+			$res .= '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) ? ' class="selectedItem"' : '').'>unseen</a></li>';
+			$res .= '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
 		}
-		echo '</ul>';
-		echo '</li>';
+		$res .= '</ul>';
+		$res .= '</li>';
 	} //$isMain
 	
 	if ($isMain || $gallerymode && $isAdmin) { # || $isTvshow && $isAdmin) {
-		echo '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
-		echo '<ul class="dropdown-menu">';
-		echo '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
-		echo '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
-		echo '</ul>';
-		echo '</li>';
+		$res .= '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
+		$res .= '<ul class="dropdown-menu">';
+		$res .= '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
+		$res .= '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
+		$res .= '</ul>';
+		$res .= '</li>';
 	}
 	
 	if ($SEARCH_ENABLED && $isMain) {
 		createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
 	}
 	
-	echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+	$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	if ($isTvshow) {
-		echo '<li class="dropdown" id="dropLatestEps" onmouseover="openNav(\'#dropLatestEps\');">';
-		echo '<a tabindex="2" href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'" onfocus="openNav(\'#dropLatestEps\');">tv-shows <b class="caret"></b></a>';
-		echo '<ul class="dropdown-menu">';
-		createEpisodeSubmenu(fetchLastSerien());
-		echo '</ul>';
-		echo '</li>';
+		$res .= '<li class="dropdown" id="dropLatestEps" onmouseover="openNav(\'#dropLatestEps\');">';
+		$res .= '<a tabindex="2" href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'" onfocus="openNav(\'#dropLatestEps\');">tv-shows <b class="caret"></b></a>';
+		$res .= '<ul class="dropdown-menu">';
+		$res .= createEpisodeSubmenu(fetchLastSerien());
+		$res .= '</ul>';
+		$res .= '</li>';
 	} else {
-		echo '<li style="font-weight:bold;">';
-		echo '<a href="?show=serien" onmouseover="closeNavs();" onclick="return checkForCheck();" style="font-weight:bold;'.($bs211).'">tv-shows</a>';
-		echo '</li>';
+		$res .= '<li style="font-weight:bold;">';
+		$res .= '<a href="?show=serien" onmouseover="closeNavs();" onclick="return checkForCheck();" style="font-weight:bold;'.($bs211).'">tv-shows</a>';
+		$res .= '</li>';
 	}
 	
 	if ($SEARCH_ENABLED && $isTvshow) {
-		createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
+		$res .= createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
 	}
 	
 	if ($MUSICVIDS_ENABLED) {
-		echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
-		echo '<li'.($isMVids ? ' class="active"' : '').' style="font-weight:bold;">';
-		echo '<a tabindex="51" href="?show=mvids" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMVids ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">music-videos</a>';
-		echo '</li>';
+		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+		$res .= '<li'.($isMVids ? ' class="active"' : '').' style="font-weight:bold;">';
+		$res .= '<a tabindex="51" href="?show=mvids" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMVids ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">music-videos</a>';
+		$res .= '</li>';
 	}
 	
-	echo '</ul>'; //after this menu on right-side
+	$res .= '</ul>'; //after this menu on right-side
 	
-	echo '<ul class="nav pull-right" style="padding-top:2px;">';
+	$res .= '<ul class="nav pull-right" style="padding-top:2px;">';
 	if ($isAdmin && $XBMCCONTROL_ENABLED) {
 		$run = xbmcRunning();
 		if ($run != 0) {
 		$playing = $run != 0 ? cleanedPlaying(xbmcGetNowPlaying())  : '';
 		$state   = $run != 0 ? intval(xbmcGetPlayerstate()) : '';
 		$state   = ($state == 1 ? 'playing' : ($state == 0 ? 'paused' : ''));
-		echo '<span id="xbmControlWrap" style="float:left;">';
-		echo '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
-			echo '<span id="xbmcPlayerState_" style="color:black; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
-			echo '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
-			echo '<span id="xbmcPlayerFile" style="top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
-			echo '</a> ';
-			echo '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
-			echo '<a class="navbar" onclick="playNext(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/next.png" style="width:24px; height:24px;" /></a>';
-			echo '<a class="navbar" onclick="playPrev(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/prev.png" style="width:24px; height:24px;" /></a>';
-		echo '</li>';
-		echo '</span>';
+		$res .= '<span id="xbmControlWrap" style="float:left;">';
+		$res .= '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
+			$res .= '<span id="xbmcPlayerState_" style="color:black; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
+			$res .= '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
+			$res .= '<span id="xbmcPlayerFile" style="top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
+			$res .= '</a> ';
+			$res .= '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
+			$res .= '<a class="navbar" onclick="playNext(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/next.png" style="width:24px; height:24px;" /></a>';
+			$res .= '<a class="navbar" onclick="playPrev(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/prev.png" style="width:24px; height:24px;" /></a>';
+		$res .= '</li>';
+		$res .= '</span>';
 		
-		echo '<li id="plaYTdivide" class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
-		echo '<li id="plaYoutube_" style="font-weight:bold;">';
-		echo '<span style="position:relative; top:3px;">';
-		echo '<input id="plaYoutube" name="plaYoutube" class="search-query span2" style="margin:4px 5px; width:200px; height:23px; display:none;" type="text" placeholder="play youTube / vimeo" onfocus="this.select();" onkeyup="return playItemPrompt(this, event); return false;" onmouseover="focus(this);" />';
-		echo '<img id="ytIcon" src="./img/yt.png" style="width:32px; height:32px;" onmousmove=""; onmouseout=""; />';
-		echo '</span>';
-		echo '</li>';
+		$res .= '<li id="plaYTdivide" class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+		$res .= '<li id="plaYoutube_" style="font-weight:bold;">';
+		$res .= '<span style="position:relative; top:3px;">';
+		$res .= '<input id="plaYoutube" name="plaYoutube" class="search-query span2" style="margin:4px 5px; width:200px; height:23px; display:none;" type="text" placeholder="play youTube / vimeo" onfocus="this.select();" onkeyup="return playItemPrompt(this, event); return false;" onmouseover="focus(this);" />';
+		$res .= '<img id="ytIcon" src="./img/yt.png" style="width:32px; height:32px;" onmousmove=""; onmouseout=""; />';
+		$res .= '</span>';
+		$res .= '</li>';
 		}
 	}
-	echo '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
+	$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	
 	if ($isAdmin) {
 		$msgs = checkNotifications();
@@ -1074,91 +1080,97 @@ function postNavBar($isMain) {
 		$msgStr   = '';
 		if ($msgs > 0) {
 			$selected = ' selectedItem';
-			echo '<span class="notification badge badge-important skewR radius03corner fancy_sets" href="orderViewer.php" onmouseover="closeNavs();"><div class="notificationInner skewL">'.$msgs.'</div></span>';
+			$res .= '<span class="notification badge badge-important skewR radius03corner fancy_sets" href="orderViewer.php" onmouseover="closeNavs();"><div class="notificationInner skewL">'.$msgs.'</div></span>';
 			#$msgStr = '<span style="padding-left:15px; color:silver;"><sub>['.$msgs.']</sub></span>';
 		}
-		echo '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
-		echo '<a tabindex="60" href="#" class="dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
-		echo '<ul class="dropdown-menu">';
+		$res .= '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
+		$res .= '<a tabindex="60" href="#" class="dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
+		$res .= '<ul class="dropdown-menu">';
 		if (file_exists('fExplorer.php')) {
-			echo '<li><a class="fancy_explorer" href="fExplorer.php">File Explorer</a></li>';
-			echo '<li class="divider"></li>';
+			$res .= '<li><a class="fancy_explorer" href="fExplorer.php">File Explorer</a></li>';
+			$res .= '<li class="divider"></li>';
 		}
 		
-		echo '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
-		echo '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
-		echo '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
-		echo '<li class="divider"></li>';
+		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
+		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
+		$res .= '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
+		$res .= '<li class="divider"></li>';
 		
-		echo '<li><a class="fancy_sets'.$selected.'" href="orderViewer.php">Order Viewer'.$msgStr.'</a></li>';
+		$res .= '<li><a class="fancy_sets'.$selected.'" href="orderViewer.php">Order Viewer'.$msgStr.'</a></li>';
 		
 		$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
 		if ($USESETS) {
-			echo '<li><a class="fancy_sets" href="setEditor.php">Set Editor</a></li>';
+			$res .= '<li><a class="fancy_sets" href="setEditor.php">Set Editor</a></li>';
 		}
 		
-		echo '<li class="divider"></li>';
-		echo '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
+		$res .= '<li class="divider"></li>';
+		$res .= '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
 		if (xbmcRunning() != 0) {
-			echo '<li><a href="" onclick="scanLib(); return false;">Scan Library</a></li>';
+			$res .= '<li><a href="" onclick="scanLib(); return false;">Scan Library</a></li>';
 		}
-		echo '<li><a class="fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
+		$res .= '<li><a class="fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
 		
 		/*
-		echo '<li class="divider"></li>';
-		echo '<li><a href="?show=export">DB-Export</a></li>';
-		echo '<li><a href="?show=import">DB-Import</a></li>';
-		echo '</li>';
+		$res .= '<li class="divider"></li>';
+		$res .= '<li><a href="?show=export">DB-Export</a></li>';
+		$res .= '<li><a href="?show=import">DB-Import</a></li>';
+		$res .= '</li>';
 		*/
 		
 		$NAS_CONTROL = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
 		if ($NAS_CONTROL) {
-			echo '<li class="divider"></li>';
-			echo '<li><a class="fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
+			$res .= '<li class="divider"></li>';
+			$res .= '<li><a class="fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
 		}
 		
-		echo '</ul>';
-		echo '</li>';
+		$res .= '</ul>';
+		$res .= '</li>';
 	}
-	echo '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="this.blur(); return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
+	$res .= '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="this.blur(); return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
 	
-	echo '</ul>';
-	echo '</div>';
-	echo '</div></div></div>'."\r\n\r\n";
-}
+	$res .= '</ul>';
+	$res .= '</div>';
+	$res .= '</div></div>';
+#	$res .= '</div>'."\r\n\r\n";
+	
+	return $res;
+} //navbar_
 
 function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211) {
-	echo '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
-	echo '<a tabindex="50" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'" onclick="this.blur();" onfocus="openNav(\'#dropSearch\');">search <b class="caret"></b></a>';
-	echo '<ul class="dropdown-menu">';
-		echo '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
-		echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
-		echo '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/fancy-close.png" /></a>';
-		echo '</li>';
+	$res = '';
+	$res .= '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
+	$res .= '<a tabindex="50" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'" onclick="this.blur();" onfocus="openNav(\'#dropSearch\');">search <b class="caret"></b></a>';
+	$res .= '<ul class="dropdown-menu">';
+		$res .= '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
+		$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
+		$res .= '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/gnome_close.png" /></a>';
+		$res .= '</li>';
 		
 		if ($isTvshow && !empty($saferSearch)) {
-			createEpisodeSubmenu(fetchSearchSerien($saferSearch));
+			$res .= createEpisodeSubmenu(fetchSearchSerien($saferSearch));
 		}
 		
 		if (!$isTvshow) {
-			echo '<li class="navbar-search" style="margin:0px;">';
-			echo '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchfor" name="searchfor" placeholder="filter..." onfocus="this.select();" onkeyup="searchForString(this, event); return false;" onmouseover="focus(this);"'.($gallerymode || !$isMain ? ' disabled' : '').' />';
-			echo '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/fancy-close.png" /></a>';
-			echo '</li>';
+			$res .= '<li class="navbar-search" style="margin:0px;">';
+			$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchfor" name="searchfor" placeholder="filter..." onfocus="this.select();" onkeyup="searchForString(this, event); return false;" onmouseover="focus(this);"'.($gallerymode || !$isMain ? ' disabled' : '').' />';
+			$res .= '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/gnome_close.png" /></a>';
+			$res .= '</li>';
 		}
-	echo '</ul>';
-	echo '</li>';
+	$res .= '</ul>';
+	$res .= '</li>';
+	return $res;
 }
 
 function createEpisodeSubmenu($result) {
 	$isAdmin = isAdmin();
 	$counter = 2;
+	$res = '';
 	foreach($result as $key => $show) {
 		$lId = 'sub_'.str_replace(' ', '_', $key);
-		echo '<li class="dropdown-submenu" id="'.$lId.'">';
+		$res .= '<li class="dropdown-submenu" id="'.$lId.'">';
 		$count = count($show);
-		echo '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#" style="cursor:pointer;"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
-		echo '<ul class="dropdown-menu">';
+		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#" style="cursor:pointer;"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
+		$res .= '<ul class="dropdown-menu">';
 		
 		foreach($show as $row) {
 			$idShow    = $row['idShow'];    $serie = $row['serie'];   $season  = $row['season'];
@@ -1173,12 +1185,14 @@ function createEpisodeSubmenu($result) {
 			$SE = '<span style="padding-right:10px; color:silver;"><b><sub>S'.$season.'.E'.$episode.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
 			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
-			echo '<li _href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
+			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 		}
 		
-		echo '</ul>';
-		echo '</li>';
+		$res .= '</ul>';
+		$res .= '</li>';
 	}
+	
+	return $res;
 }
 
 function xbmcGetPlayerId() {
@@ -1407,7 +1421,9 @@ function storeSession() {
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['refferLogged'], $_SESSION['overrideFetch'],
 	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['dbName'], 
 	       $_SESSION['angemeldet'], $_SESSION['demo'],  $_SESSION['thumbs'],   $_SESSION['existsTable'],  $_SESSION['TvDbCache'], 
-	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['OS'],           $_SESSION['lastMovie']
+	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['reffer'],       $_SESSION['lastMovie'],
+	       $_SESSION['OS']
+	       
 	     ); //remove values that should be determined at login
 	
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');

@@ -45,29 +45,29 @@ function clearSelectBoxes(obj) {
 	var node_list = document.getElementsByTagName('input');
 	var chk = obj != null ? obj.checked : false;
 	if (obj == null) { $('#clearSelectAll').attr('checked', false); }
-
+	
 	for (i = 0; i < node_list.length; i++) {
 		var a = node_list[i];
 		if (a == null) {
 			continue;
 		}
-
+		
 		if (a.id == 'copyAsScript' || a.id == 'clearSelectAll') {
 			continue;
 		}
-
+		
 		if (a.type == 'checkbox' && a.checked != chk && !a.disabled) {
 			a.checked = chk;
 			selected(a, false, false, isAdmin);
 		}
 	}
-
+	
 	var resBox  = document.getElementById('result');
 	var listDiv = document.getElementById('movieList');
 	if (listDiv == null) { return; }
-
+	
 	doRequest(isAdmin);
-
+	
 	listDiv.style.display = chk ? 'block' : 'none';
 	if (!chk) {
 		resBox.innerHTML = '';

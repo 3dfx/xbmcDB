@@ -103,6 +103,10 @@ a, a:hover {
 	z-index: 1103;
 	padding:0px !important;
 }
+.dropdown-menu>li>a.search-close:hover {
+	background-image:none;
+	background-color:rgba(0,0,0,0.0);
+}
 
 .selectedMainItemInverse:hover { color: #FFFFFF !important; }
 .selectedMainItemInverse { font-weight: bold !important; color: #880A0F !important; }
@@ -133,6 +137,30 @@ a, a:hover {
 	text-align:center;
 	clear:both;
 	height:auto;
+}
+
+.tabDiv {
+	padding-top:60px;
+	text-align:center;
+	clear:both;
+	height:auto;
+}
+
+.tabDiv_ {
+	clear: both;
+	display: inline-block;
+	padding: 15px 0px 0px 0px;
+	z-index: 10;
+	position: relative;
+	min-width: 1200px;
+	max-width: 1200px;
+	overflow: hidden;
+	
+//	width:550px;
+//	margin-top: 0px;
+	margin-bottom: 25px;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .optTD {
@@ -578,8 +606,9 @@ input[type=checkbox] {
 	border-radius:8px;
 }
 
-.innerCoverImg, .tvRandomBanner {
+.innerCoverImg, .tvRandomBanner, .openTvdb {
 	position:relative;
+	width:300px;
 	left:2px;
 	top:2px;
 	-moz-border-radius:8px;
@@ -971,20 +1000,22 @@ a.showlink {
 .sInfoRating   { float:right; padding-left:10px; }
 .galleryImage  { width:16px !important; height:16px !important; z-index:50; }
 .selectedShow  { font-weight: bold !important; }
+.unselectedShow  { font-weight: normal !important; }
 
 .tableDesc  { width:350px; padding:0px; margin:0px; z-index:1; }
 #tvBanner   { cursor:default; height:54px; }
 .showDescTD { padding:10px 25px 20px 25px; text-align:justify; white-space:pre-line !important; }
 .descDiv    { width:300px; margin-top:15px; }
+.fClose     { position:absolute; float:right; top:-10px; right:-10px; width:22px; height:22px; background: url("./img/gnome_close.png") no-repeat scroll 0 0px transparent; }
 
-#serieTable   { width: 385px; padding:0px; margin-left:0px; z-index:1; }
+#serieTable   { width: 360px; padding:0px; margin-left:0px; z-index:1; }
 #descTR       { cursor:default; height:20px; }
 .descTRd1     { padding:0px 0px 0px 25px; }
 .seasonTR     { cursor:default; height:20px; }
 .seasonTRd1   { padding:0 0 0 10px; }
 .seasonTRd2   { padding-right:2px !important; }
 .epTR         { cursor:default; height:20px; }
-.epTRd1       { padding:0px 0px 0px 25px; min-width:180px; max-width:180px; overflow:hidden; }
+.epTRd1       { padding:0px 0px 0px 25px; min-width:160px; max-width:160px; overflow:hidden; }
 .padTD        { padding-left:10px; }
 .vSpan        { color:silver; }
 .showPlayItem,

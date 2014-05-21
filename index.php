@@ -27,7 +27,7 @@ include_once "./template/functions.php";
 	$idShow = isset($_SESSION['idShow']) && empty($idShow) ? $_SESSION['idShow'] : null;
 	
 	if ( !empty($_GET) || !empty($_POST) ) { redirectPage('', true); } //breaks the browsers back button, who gives a fuck??
-?>	
+?>
 <html><?php
 	if (empty($show)) { $show = 'filme'; }
 	

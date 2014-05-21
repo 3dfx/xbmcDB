@@ -30,7 +30,7 @@ function postSerien($serien) {
 		if (!is_object($serie)) {
 			continue;
 		}
-
+		
 		postSerie($serie);
 	}
 }
@@ -68,19 +68,14 @@ function postSerie($serie) {
 			$showEmpty = true;
 		}
 		
-		if ($showEmpty) {
-			echo ' <img src="./img/empty.png" class="galleryImage" /> ';
-		}
+		if ($showEmpty) { echo ' <img src="./img/empty.png" class="galleryImage" /> '; }
 	}
 	echo '</th>';
 	echo '</tr>';
 	echo "\r\n";
 	
 	foreach ($serie->getStaffeln() as $staffel) {
-		if (!is_object($staffel)) {
-			continue;
-		}
-
+		if (!is_object($staffel)) { continue; }
 		postStaffel($staffel);
 	}
 }
@@ -167,7 +162,6 @@ function postStaffel($staffel) {
 				echo '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setUnseen&idFile='.$epi->getIdFile().'">';
 				echo '<img src="./img/check.png" class="galleryImage" title="watched" /> ';
 				echo '</a>';
-
 			} else {
 				echo '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setSeen&idFile='.$epi->getIdFile().'">';
 				echo '<img src="./img/checkR.png" class="galleryImage" title="set watched" /> ';

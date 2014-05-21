@@ -1,5 +1,16 @@
 $(document).ready(function() {
 	if (newMovies) { newMoviesAvailable(); }
+	$(document).keydown(function(event) {
+		if(event.ctrlKey && event.keyCode == '65') {
+			event.preventDefault();
+			if (!$('#clearSelectAll').length) { return; }
+			var clearSelectAll = $('#clearSelectAll');
+			var chk = $(clearSelectAll).prop('checked');
+			$(clearSelectAll).attr('checked', !chk);
+			clearSelectAll.checked = !chk;
+			clearSelectBoxes(clearSelectAll);
+		}
+	});
 });
 
 function newMoviesAvailable() {

@@ -41,16 +41,12 @@ include_once "./template/functions.php";
 function shoutImage($img = null) {
 	header('Content-Type: image/jpeg');
 	if (!empty($img) && file_exists($img)) {
-		if (!setHeaders($img)) {
-			exit;
-		}
+		if (!setHeaders($img)) { exit; }
 		try {
 			readfile($img);
-			
 		} catch (Exception $e) {
 			shoutImage(null);
 		}
-		
 	} else {
 		$img = imagecreatetruecolor(1, 1);
 		imagejpeg($img, NULL, 1);
