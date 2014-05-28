@@ -43,8 +43,8 @@ include_once "globals.php";
 ?>
 		
 		$(document).ready(function() {
-			$('#showsDiv').load( 'serien_.php?data=1', function() { $('.knob-dyn').knob(); initShowFancies(); } );
-			$('#myNavbar').load( 'navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { initNavbarFancies(); } );
+			$('#myNavbar').load( './navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { if (isAdmin) { initNavbarFancies(); } } );
+			$('#showsDiv').load( './serien_.php?data=1', function() { $('.knob-dyn').knob(); initShowFancies(); } );
 		});
 	</script>
 </head>
@@ -212,7 +212,7 @@ function postSerie($serie, $counter) {
 		echo '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
 		echo '</td>';
 	}
-	$run1 = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="cursor:default;" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
+	$run1 = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
 	$run2 = $isAdmin ? '</a>' : '';
 	$strCounter = $counter;
 	echo '<td class="showShowInfo1 righto">'.$run1.$strCounter.$run2.'</td>';

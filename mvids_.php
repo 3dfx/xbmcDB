@@ -16,7 +16,7 @@ $isMain = (substr($maself, -9) == 'index.php');
 	<script type="text/javascript">
 		$(document).ready(function() {
 			$('.dropdown-toggle').dropdown();
-			$('#myNavbar').load( 'navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { initNavbarFancies(); } );
+			$('#myNavbar').load( './navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { initNavbarFancies(); } );
 		});
 
 		function openNav(objId) {

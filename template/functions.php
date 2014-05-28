@@ -836,10 +836,6 @@ function postNavBar_($isMain) {
 	$saferSearch = null;
 	
 	$show                = isset($_SESSION['show'])        ? $_SESSION['show']        : 'filme';
-	$isMain              = $show == 'filme'  ? true : false;
-	$isTvshow            = $show == 'serien' ? true : false;
-	$isMVids             = $show == 'mvids'  ? true : false;
-	
 	$country             = isset($_SESSION['country'])     ? $_SESSION['country']     : '';
 	$mode                = isset($_SESSION['mode'])        ? $_SESSION['mode']        : 0;
 	$sort                = isset($_SESSION['sort'])        ? $_SESSION['sort']        : 0;
@@ -853,7 +849,8 @@ function postNavBar_($isMain) {
 	$which               = isset($_SESSION['which'])       ? $_SESSION['which']       : '';
 	$just                = isset($_SESSION['just'])        ? $_SESSION['just']        : '';
 	$filter_name         = isset($_SESSION['name'])        ? $_SESSION['name']        : '';
-	
+
+	$INVERSE             = isset($GLOBALS['NAVBAR_INVERSE'])      ? $GLOBALS['NAVBAR_INVERSE']      : false;
 	$SEARCH_ENABLED      = isset($GLOBALS['SEARCH_ENABLED'])      ? $GLOBALS['SEARCH_ENABLED']      : true;
 	$CUTSENABLED         = isset($GLOBALS['CUTS_ENABLED'])        ? $GLOBALS['CUTS_ENABLED']        : true;
 	$DREIDENABLED        = isset($GLOBALS['DREID_ENABLED'])       ? $GLOBALS['DREID_ENABLED']       : true;
@@ -863,6 +860,10 @@ function postNavBar_($isMain) {
 	$countryLabel        = $CHOOSELANGUAGES ? 'language' : '';
 	$newAddedCount       = getNewAddedCount();
 	
+	$isMain              = $show == 'filme'  ? true : false;
+	$isTvshow            = $show == 'serien' ? true : false;
+	$isMVids             = $show == 'mvids'  ? true : false;
+	
 	$unsetParams  = '&dbSearch&which&just&sort';
 	$unsetMode    = '&mode=1';
 	$unsetCountry = '&country';
@@ -870,8 +871,7 @@ function postNavBar_($isMain) {
 	$bs211 = ' padding-top:7px; height:18px !important;';
 	
 	$res = '';
-	
-#	echo '<div class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;">';
+	//--echo $res .= '<div class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;">';
 	$res .= '<div class="navbar-inner" style="height:30px;">';
 	$res .= '<div class="container" style="margin:0px auto; width:auto;">';
 	
@@ -1014,7 +1014,7 @@ function postNavBar_($isMain) {
 	}
 	
 	if ($SEARCH_ENABLED && $isMain) {
-		createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
+		$res .= createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
 	}
 	
 	$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
@@ -1131,7 +1131,7 @@ function postNavBar_($isMain) {
 	$res .= '</ul>';
 	$res .= '</div>';
 	$res .= '</div></div>';
-#	$res .= '</div>'."\r\n\r\n";
+	//--$res .= '</div>'."\r\n\r\n";
 	
 	return $res;
 } //navbar_
@@ -1321,14 +1321,20 @@ function xbmcRunning() {
 }
 
 function checkNotifications() {
-	if (existsOrdersTable()) {
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	$orders = isset($_SESSION['param_orders']) ? $_SESSION['param_orders'] : -1;
+	if (($orders < 0 || $overrideFetch) && existsOrdersTable()) {
 		$res = querySQL("SELECT COUNT(fresh) AS count FROM orders WHERE fresh = 1;");
-		if (empty($res)) { return 0; }
-		$row = $res->fetch();
-		return $row['count'];
+		$orders = 0;
+		if (!empty($res)) {
+			$row    = $res->fetch();
+			$orders = $row['count'];
+		}
+		unset( $_SESSION['overrideFetch'] );
+		$_SESSION['param_orders'] = $orders;
+		return $orders;
 	}
-	
-	return 0;
+	return $orders < 0 ? 0 : $orders;
 }
 
 function logc($val, $noadmin = false) { if (isAdmin() || $noadmin) { echo '<script type="text/javascript">console.log( \''.$val.'\' );</script>'."\r\n"; } }

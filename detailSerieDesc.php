@@ -34,7 +34,7 @@ include_once "./template/_SERIEN.php";
 		echo '<img id="tvBanner" class="openTvdb" src="'.$banner.'" href="'.$tvdbURL.'" />';
 	}
 	
-	echo '<div class="fClose" onclick="closeShow();" />';
+	echo '<div class="fClose" onclick="closeShow();"><img src="./img/gnome_close.png" /></div>';
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
 		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$idShow.'</span></div>';

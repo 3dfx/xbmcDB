@@ -152,7 +152,6 @@ include_once "globals.php";
 	
 	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
 	if (empty($id)) { die('<br/>no param!<br/>'); }
-		
 		$isAdmin = isAdmin();
 		$idFile  = -1;
 	
@@ -635,7 +634,7 @@ include_once "globals.php";
 		$counter = 1;
 		$acLimit = 5;
 		$schauspTblOut = array();
-		$artCovers = fetchArtCovers($existArtTable, $dbh);
+		$artCovers = fetchArtCovers($existArtTable);
 		foreach($result2_ as $row2) { $actCnt++; }
 		if ($actCnt-1 == $acLimit) { $acLimit++; }
 		foreach($result2 as $row2) {
@@ -645,7 +644,7 @@ include_once "globals.php";
 			
 			$actorimg = getActorThumb($artist, $actorpicURL, false);
 			if (!file_exists($actorimg) && $existArtTable) {
-				if (!empty($artCovers)) {
+				if (!empty($artCovers) && isset($artCovers['actor'][$idActor])) {
 					$actorimg = $artCovers['actor'][$idActor]['cover'];
 				} else {
 					$row3 = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';");

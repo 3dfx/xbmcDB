@@ -731,15 +731,11 @@ table.login {
 	font-weight: normal;
 }
 
-.fancyimage1 {
-	cursor:pointer;
+.fancy_msgbox {
+	cursor:default;
 }
 
-.fancy_iframe2 {
-	cursor:pointer;
-}
-
-.fancy_iframe3 {
+.fancyimage1, .fancy_iframe2, .fancy_iframe3 {
 	cursor:pointer;
 }
 
@@ -1006,7 +1002,7 @@ a.showlink {
 #tvBanner   { cursor:default; height:54px; }
 .showDescTD { padding:10px 25px 20px 25px; text-align:justify; white-space:pre-line !important; }
 .descDiv    { width:300px; margin-top:15px; }
-.fClose     { position:absolute; float:right; top:-10px; right:-10px; width:22px; height:22px; background: url("./img/gnome_close.png") no-repeat scroll 0 0px transparent; }
+.fClose     { display:none; position:absolute; float:right; top:-5px; right:-5px; width:11px; height:11px; }
 
 #serieTable   { width: 360px; padding:0px; margin-left:0px; z-index:1; }
 #descTR       { cursor:default; height:20px; }

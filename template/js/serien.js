@@ -207,6 +207,7 @@ function cursorBusy(state) {
 	$('#showInfo').css('cursor', state);
 	$('td').css('cursor', state);
 	$('a').css('cursor', state == '' ? 'pointer' : state);
+	$('a.fancy_msgbox').css('cursor', state == '' ? 'default' : state);
 }
 
 function loadLatestShowInfo(obj, sId, epId, trClass, eps) {
@@ -423,6 +424,7 @@ function loadDesc_(obj) {
 				function() {
 					checkShowInfo('#showDesc', 0);
 					$("#showDesc").css({ "width" : "351px", "left" : divLeft });
+					$(".fClose").show();
 					initShowDescFancies();
 				}
 			);

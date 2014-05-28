@@ -6,7 +6,8 @@ include_once "./template/config.php";
 include_once "globals.php";
 
 	if (!isAdmin()) { die; }
-	echo '<span style="font:12px Verdana, Arial;">'.getCount().' SQL-Statements were executed!</span>'."\r\n";
+	$count = getCount();
+	echo '<span style="font:12px Verdana, Arial;">'.$count.' SQL-Statement'.($count != 1 ? 's were' : ' was').' executed!</span>'."\r\n";
 
 function getCount() {
 	$count = 0;
