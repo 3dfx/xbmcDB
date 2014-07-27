@@ -24,14 +24,14 @@ if (!isAdmin()) { exit; }
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
 #main
-	$maself = $_SERVER['PHP_SELF'];
-	postNavBar($maself == '/index.php');
+	#$maself = $_SERVER['PHP_SELF'];
+	#postNavBar($maself == '/index.php');
 	$dbh    = getPDO();
 	$SQL    = $GLOBALS['SerienSQL'].';';
 	$serien = fetchSerien($SQL, null, $dbh);
-	echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
+	#echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
 	fillTable($serien, $dbh);
-	echo "\t".'</div>'."\r\n";
+	#echo "\t".'</div>'."\r\n";
 ?>
 </body>
 

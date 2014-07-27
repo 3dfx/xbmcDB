@@ -101,7 +101,8 @@ function createTable() {
 		$existArtTable = existsArtTable($dbh);
 		checkFileInfoTable($dbh);
 		checkFileMapTable($dbh);
-		existsOrdersTable($dbh);
+		#existsOrdersTable($dbh);
+		existsOrderzTable($dbh);
 		
 		$SkQL        = getSessionKeySQL();
 		$SQL         = $SkQL['SQL'];
@@ -292,13 +293,10 @@ function generateRows($dbh, $result, $sessionKey) {
 	$actorImgs     = fetchActorCovers($dbh);
 	$directorImgs  = fetchDirectorCovers($dbh);
 	
-	$lastHighest   = $isDemo ? null : $_SESSION['lastHighest'];
+	$lastHighest   = $isDemo ? null : (isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null);
 	$pronoms       = array('the ', 'der ', 'die ', 'das ');
 	$counter       = 0;
 	$counter2      = 0;
-	//--$moviesTotal   = 0;
-	//--$moviesSeen    = 0;
-	//--$moviesUnseen  = 0;
 	
 	$_just            = $GLOBALS['just'];
 	$_which           = $GLOBALS['which'];
@@ -655,10 +653,6 @@ function postRows($dbh, $zeilen, $saferSearch) {
 	$sort          = isset($_SESSION['sort'])        ? $_SESSION['sort']        : 0;
 	$unseen        = isset($_SESSION['unseen'])      ? $_SESSION['unseen']      : 0;
 	$gallerymode   = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
-	
-	//--$moviesTotal   = 0;
-	//--$moviesSeen    = 0;
-	//--$moviesUnseen  = 0;
 	
 	if ($gallerymode) {
 		generateForm();

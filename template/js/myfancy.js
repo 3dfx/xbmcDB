@@ -257,6 +257,32 @@ function initShowFancies() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
+	
+	$(".fancy_addEpisode").fancybox({
+		'width'			: 560,
+		'height'		: 430,
+		'transitionIn'		: 'elastic',
+		'transitionOut'		: 'elastic',
+		'overlayColor'		: '#000',
+		'overlayOpacity'	: 0.9,
+		'speedIn'		: 500,
+		'speedOut'		: 250,
+		'padding'		: 5,
+		'autoScale'		: false,
+		'centerOnScroll'	: true,
+		'enableEscapeButton'	: true,
+		'scrolling'		: 'no',
+		'type'			: 'iframe',
+		'titleShow'       	: false,
+		'onComplete'		: function() {
+			$('body').css('cursor', 'default');
+			$('td').css('cursor', 'default');
+			$('a').css('cursor', 'default');
+			$('.addBoxx').css('cursor', 'default');
+			$('#showSelectTable').css('cursor', 'default');
+			$('#episodeAdd').css('cursor', 'default');
+		}
+	});
 } //initShowFancies
 
 function initShowEpFancies() {

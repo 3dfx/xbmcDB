@@ -221,6 +221,7 @@ function loadLatestShowInfo(obj, sId, epId, trClass, eps) {
 	epsPositioned = false;
 	moveDivR(3);
 	$('#showInfo').show();
+	closeNavs();
 }
 
 function loadShowInfo(obj, id) {

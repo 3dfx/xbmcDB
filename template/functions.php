@@ -288,7 +288,7 @@ function checkFileInfoTable($dbh = null) {
 
 function checkMyEpisodeView($dbh = null) {
 	$exist = existsTable('episodeviewMy', 'view', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy AS select episode.*,files.strFileName AS strFileName,path.idPath AS idPath,path.strPath AS strPath,files.playCount AS playCount,files.lastPlayed AS lastPlayed,tvshow.c00 AS strTitle,tvshow.c14 AS strStudio,tvshow.idShow AS idShow,tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy AS SELECT episode.*,files.strFileName AS strFileName,path.idPath AS idPath,path.strPath AS strPath,files.playCount AS playCount,files.lastPlayed AS lastPlayed,tvshow.c00 AS strTitle,tvshow.c14 AS strStudio,tvshow.idShow AS idShow,tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false); }
 }
 
 function checkTvshowRunningTable($dbh = null) {
@@ -301,10 +301,23 @@ function checkNextAirDateTable($dbh = null) {
 	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate (idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 }
 
+function existsOrderzTable($dbh = null) {
+	$saveOrderInDB = isset($GLOBALS['SAVE_ORDER_IN_DB']) ? $GLOBALS['SAVE_ORDER_IN_DB'] : false;
+	if (!$saveOrderInDB) { return false; }
+	
+	$exist = existsTable('orderz', 'table', $dbh);
+	if (!$exist) {
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderz (idOrder INTEGER primary key, dateAdded INTEGER, user TEXT, fresh INTEGER, CONSTRAINT 'C01_idOrder' UNIQUE (idOrder));", false, false);
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderItemz (idOrder INTEGER, idElement INTEGER, movieOrShow INTEGER, CONSTRAINT 'C01_ids' UNIQUE (idOrder, idElement), CONSTRAINT 'C02_idOrder' FOREIGN KEY (idOrder) REFERENCES orderz (idOrder) ON DELETE CASCADE);", false, false);
+		$exist = existsTable('orderz', 'table', $dbh);
+	}
+	return $exist;
+}
+
 function existsOrdersTable($dbh = null) {
 	$exist = existsTable('orders', 'table', $dbh);
 	if (!$exist) {
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orders (strFilename text primary key, dateAdded text, user text, fresh integer);", false, false);
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orders (strFilename TEXT primary key, dateAdded INTEGER, user TEXT, fresh INTEGER);", false, false);
 		$exist = existsTable('orders', 'table', $dbh);
 	}
 	return $exist;
@@ -326,6 +339,15 @@ function existsTable($tableName, $type = 'table', $dbh = null) {
 	} catch(PDOException $e) { }
 	
 	return false;
+}
+
+function getIdOrder($dbh = null) {
+	$GETID_SQL = 'SELECT idOrder FROM orderz ORDER BY idOrder DESC LIMIT 0, 1;';
+	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	$lastId    = $row['idOrder'];
+	$idFile    = $lastId + 1;
+	
+	return $idFile;
 }
 
 function checkFileMapTable($dbh) {
@@ -1075,12 +1097,14 @@ function postNavBar_($isMain) {
 	$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	
 	if ($isAdmin) {
-		$msgs = checkNotifications();
-		$selected = '';
+		$saveOrderInDB = isset($GLOBALS['SAVE_ORDER_IN_DB']) ? $GLOBALS['SAVE_ORDER_IN_DB'] : false;
+		$viewerPage    = $saveOrderInDB ? 'orderViewer2.php' : 'orderViewer.php';
+		$msgs     = checkNotifications();
 		$msgStr   = '';
+		$selected = '';
 		if ($msgs > 0) {
 			$selected = ' selectedItem';
-			$res .= '<span class="notification badge badge-important skewR radius03corner fancy_sets" href="orderViewer.php" onmouseover="closeNavs();"><div class="notificationInner skewL">'.$msgs.'</div></span>';
+			$res .= '<span class="notification badge badge-important skewR radius03corner fancy_sets" href="'.$viewerPage.'" onmouseover="closeNavs();"><div class="notificationInner skewL">'.$msgs.'</div></span>';
 			#$msgStr = '<span style="padding-left:15px; color:silver;"><sub>['.$msgs.']</sub></span>';
 		}
 		$res .= '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
@@ -1096,7 +1120,7 @@ function postNavBar_($isMain) {
 		$res .= '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
 		$res .= '<li class="divider"></li>';
 		
-		$res .= '<li><a class="fancy_sets'.$selected.'" href="orderViewer.php">Order Viewer'.$msgStr.'</a></li>';
+		$res .= '<li><a class="fancy_sets'.$selected.'" href="'.$viewerPage.'">Order Viewer'.$msgStr.'</a></li>';
 		
 		$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
 		if ($USESETS) {
@@ -1185,7 +1209,7 @@ function createEpisodeSubmenu($result) {
 			$SE = '<span style="padding-right:10px; color:silver;"><b><sub>S'.$season.'.E'.$episode.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
 			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
-			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
+			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 		}
 		
 		$res .= '</ul>';
@@ -1323,8 +1347,14 @@ function xbmcRunning() {
 function checkNotifications() {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	$orders = isset($_SESSION['param_orders']) ? $_SESSION['param_orders'] : -1;
-	if (($orders < 0 || $overrideFetch) && existsOrdersTable()) {
-		$res = querySQL("SELECT COUNT(fresh) AS count FROM orders WHERE fresh = 1;");
+	
+	$whichTable = 0;
+	if (empty($whichTable) && existsOrderzTable()) { $whichTable = 1; }
+	if (empty($whichTable) && existsOrdersTable()) { $whichTable = 2; }
+	
+	if (($orders < 0 || $overrideFetch) && !empty($whichTable)) {
+		$tableName = ($whichTable == 1 ? 'orderz' : 'orders');
+		$res = querySQL("SELECT COUNT(fresh) AS count FROM ".$tableName." WHERE fresh = 1;");
 		$orders = 0;
 		if (!empty($res)) {
 			$row    = $res->fetch();
@@ -2108,6 +2138,175 @@ function escapeArray($val) {
 	else { for ($i = 0; $i < count($val); $i++) { $val[$i] = escapeArray($val[$i]); } return $val; }
 }
 
+function generateOnDemandCopyScript($idOrder) {
+	$srcLetter = isset($GLOBALS['srcDrive']) ? $GLOBALS['srcDrive'] : '';
+	$dstLetter = isset($GLOBALS['selDrive']) ? $GLOBALS['selDrive'] : '';
+	if (empty($srcLetter)) { $srcLetter = isset($GLOBALS['COPYASSCRIPT_COPY_FROM_LETTER']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM_LETTER'] : $srcLetter; }
+	if (empty($dstLetter)) { $dstLetter = isset($GLOBALS['COPYASSCRIPT_COPY_TO_LETTER'])   ? $GLOBALS['COPYASSCRIPT_COPY_TO_LETTER']   : $dstLetter; }
+	
+	$res = querySQL("SELECT * FROM orderItemz WHERE idOrder = ".$idOrder." ORDER BY movieOrShow, idElement;");
+	$idShows  = array();
+	$idMovies = array();
+	foreach($res as $row) {
+		if ($row['movieOrShow'] == 0) { $idShows[] = $row['idElement']; }
+		else { $idMovies[] = $row['idElement']; }
+	}
+	$idShows  = implode(',', $idShows);
+	$idMovies = implode(',', $idMovies);
+	
+	$shows  = getItemsForRequest($idShows, true);
+	$movies = getItemsForRequest($idMovies, false);
+	
+	$res  = '';
+	$res .= doTheStuffTvShow($shows, true, false, $srcLetter, $dstLetter);
+	$res .= doTheStuffMovie($movies, true, true, $srcLetter, $dstLetter);
+	return $res;
+}
+
+function getItemsForRequest($ids, $isShow) {
+	$SQL = '';
+	if ($isShow) {
+		$SQL =  "SELECT strPath, c00 AS name FROM tvshowview WHERE idShow IN (".$ids.") ORDER BY name;";
+	} else {
+		$SQL =  "SELECT c00 AS filmname, B.strFilename AS filename, c.strPath AS path, d.filesize FROM movie a, files b, path c, fileinfo d ".
+			"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".
+			"ORDER BY filename;";
+	}
+	return querySQL($SQL, false);
+}
+
+function doTheStuffTvShow($result, $forOrder = false, $append = false, $srcLetter = '', $dstLetter = '') {
+	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED'])        ? $GLOBALS['COPYASSCRIPT_ENABLED']   : false;
+	$copyAsScript        = isset($GLOBALS['copyAsScript'])                ? $GLOBALS['copyAsScript']           : false;
+	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN'])       ? $GLOBALS['COPYASSCRIPT_COPY_WIN']  : false;
+	$tvShowDir           = isset($GLOBALS['TVSHOWDIR'])                   ? $GLOBALS['TVSHOWDIR']              : $scriptCopyFrom;
+	$scriptCopyFrom      = isset($GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW'] : null;
+	$scriptCopyTo        = isset($GLOBALS['COPYASSCRIPT_COPY_TO_SHOW'])   ? $GLOBALS['COPYASSCRIPT_COPY_TO_SHOW']   : '/mnt/hdd/';
+	
+	$scriptCopyFrom = $srcLetter.$scriptCopyFrom;
+	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
+	
+	$newLine = $forOrder ? "\n" : '<br />';
+	$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	foreach($result as $row) {
+		if ($forOrder || ($copyAsScript && $copyAsScriptEnabled)) {
+			$path = $row['strPath'];
+			$path = str_replace($tvShowDir, $srcLetter.$scriptCopyFrom, $path);
+			
+			$newFoldername = '';
+			if ($scriptCopyWin) {
+				$newFoldername = str_replace($scriptCopyFrom, '', $path);
+				if (substr($path, -1) == '/') {
+					$path = substr($path, 0, strlen($path)-1);
+				}
+				
+				$path = str_replace("/", "\\", $path);
+				$newFoldername = str_replace("/", "\\", $newFoldername);
+				
+			} else {
+				$newFoldername = str_replace($scriptCopyFrom, '', $path);
+			}
+			
+			$path = $forOrder ? decodeString(encodeString($path)) : $path;
+			
+			$res .= $scriptCopyWin ? 'xcopy /S /J /Y ' : 'cp -r ';
+			$res .= '"'.$path.'" "'.$scriptCopyTo.($scriptCopyWin ? $newFoldername : '').'"'.$newLine;
+		} else {
+			$name = $row['name'];
+			$res .= $name.$newLine;
+		}
+	}
+	
+	return $res;
+}
+
+function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter = '', $dstLetter = '') {
+	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED'])   ? $GLOBALS['COPYASSCRIPT_ENABLED']   : false;
+	$copyAsScript        = isset($GLOBALS['copyAsScript'])           ? $GLOBALS['copyAsScript']           : false;
+	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN'])  ? $GLOBALS['COPYASSCRIPT_COPY_WIN']  : false;
+	$scriptCopyFrom      = isset($GLOBALS['COPYASSCRIPT_COPY_FROM']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM'] : null;
+	$scriptCopyTo        = isset($GLOBALS['COPYASSCRIPT_COPY_TO'])   ? $GLOBALS['COPYASSCRIPT_COPY_TO']   : '/mnt/hdd/';
+	
+	$scriptCopyFrom = $srcLetter.$scriptCopyFrom;
+	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
+	
+	$oldPath   = '';
+	$newLine = $forOrder ? "\n" : '<br />';
+	$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	$totalsize = 0;
+	foreach($result as $row) {
+		$path       = $row['path'];
+		$filename   = $row['filename'];
+		$filmname   = $row['filmname'];
+		$size       = $row['filesize'];
+		$totalsize += $size;
+		
+		$name = $forOrder ? decodeString(encodeString($filename)) : $filmname;
+		
+		$pos1 = strpos($name, 'smb://');
+		$pos2 = strpos($name, 'stack:');
+		if ($pos1 > -1 || $pos2 > -1) {
+			$name = null;
+		}
+		
+		if (!empty($name) && ($forOrder || !isAdmin())) {
+			if ($forOrder || ($copyAsScript && $copyAsScriptEnabled)) {
+				#$res .= getScriptString($path, $res, $formattedName);
+				if (!empty($scriptCopyFrom)) {
+					$path = $scriptCopyFrom;
+				}
+				
+				$formattedName = $name;
+				if (!$scriptCopyWin) {
+					$formattedName = str_replace(" ", "\ ", $formattedName);
+					$formattedName = str_replace("(", "\(", $formattedName);
+					$formattedName = str_replace(")", "\)", $formattedName);
+					$formattedName = str_replace("[", "\[", $formattedName);
+					$formattedName = str_replace("]", "\]", $formattedName);
+					
+					$path = mapSambaDirs($path);
+					$path = str_replace(' ', '\ ', $path);
+				}
+				
+				$res .= $scriptCopyWin ? 'xcopy /S /J /Y ' : 'cp ';
+				$res .= ($scriptCopyWin ? '"' : '').$path.$formattedName.($scriptCopyWin ? '"' : '').' '.$scriptCopyTo.' ';
+				$res .= $newLine;
+				$oldPath = $path;
+				
+			} else {
+				$res .= $name.$newLine;
+			}
+		}
+	}
+	
+	if (!$forOrder && !empty($totalsize)) {
+		$s = _format_bytes($totalsize);
+		$res .= $newLine.$newLine.'Total size: '.$s;
+	}
+	
+	return $res;
+}
+
+/*
+function getScriptString($path, $names, $formattedName) {
+	$scriptCopyTo = $GLOBALS['scriptCopyTo'];
+	$oldPath = '';
+	
+	$path = mapSambaDirs($path);
+	$path = str_replace(' ', '\ ', $path);
+	if ($oldPath != $path) {
+		$names .= 'cd '.$path.'<br>';
+	}
+	$names .= 'cp ';
+	$names .= $formattedName;
+	$names .= ' '.$scriptCopyTo.' ';
+	$names .= '<br>';
+	$oldPath = $path;
+	
+	return $names;
+}
+*/
+
 $dbConnection = getPD0();
 function getPDO() { return $GLOBALS['dbConnection']; /* return DB_CONN::getConnection(); */ }
 function getPD0() {
@@ -2116,6 +2315,7 @@ function getPD0() {
 		/*** make it or break it ***/
 		error_reporting(E_ALL);
 		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$dbh->exec("PRAGMA foreign_keys = ON;");
 	} catch(Exception $e) { }
 	return $dbh;
 }
@@ -2123,7 +2323,7 @@ function getPD0() {
 function getEscServer($key, $defVal = null) { return isset($_SERVER[$key]) ? htmlspecialchars($_SERVER[$key], ENT_QUOTES, 'UTF-8') : $defVal; }
 function getEscGet($key, $defVal = null)    { return isset($_GET[$key])  ? escapeArray($_GET[$key])  : $defVal; }
 function getEscPost($key, $defVal = null)   { return isset($_POST[$key]) ? escapeArray($_POST[$key]) : $defVal; }
-function getEscGPost($key, $defVal = null) {
+function getEscGPost($key, $defVal = null)  {
 	$res = getEscGet($key);
 	if (isset($res)) { return $res; }
 	$res = getEscPost($key);

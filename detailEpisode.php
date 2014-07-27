@@ -220,26 +220,15 @@ include_once "./template/_SERIEN.php";
 	if (!empty($airDate)) {
 		$dayOfWk = dayOfWeekShort($airDate);
 		$airDate = toEuropeanDateFormat($airDate);
-		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:35px;"><font color="silver">(</font>'.$dayOfWk.'<font color="silver">)</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
+		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
 	}
 	
 	if ($isAdmin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
 			$dayOfWk    = dayOfWeekShort($airDate);
 			$lastPlayed = toEuropeanDateFormat(substr($lastPlayed, 0, 10));
-			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:35px;"><font color="silver">(</font>'.$dayOfWk.'<font color="silver">)</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
+			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
 		}
-	}
-	
-	if (!$isDemo) {
-		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
-	}
-	
-	if ($isAdmin) {
-		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />';
-		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
-		echo encodeString($path).$filename;
-		echo '</div>';
 	}
 	
 	if (!$isDemo) {
@@ -260,7 +249,18 @@ include_once "./template/_SERIEN.php";
 		}
 	}
 	
+	if (!$isDemo) {
+		if ($isAdmin) {
+			echo '<hr style="position:absolute; left:5px; width:335px; margin:8px 0px 0px 0px; border-bottom-width:0px; border-color:#BBCCDD;" />';
+		}
+		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
+	}
 	if ($isAdmin) {
+		echo '<div style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />';
+		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
+		echo encodeString($path).$filename;
+		echo '</div>';
+		
 		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>idEpisode:</b></i></u><span class="flalright">'.$id.'</span></div>';
 	}
 	echo '</div>';

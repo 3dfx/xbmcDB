@@ -93,7 +93,7 @@ function logLogin() {
 	$HOMENETWORK  = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
 	$asAdmin      = $GLOBALS['asAdmin'];
 	$loggedInAs   = $GLOBALS['loggedInAs'];
-	$FAIL_        = $GLOBALS['FAIL_'];
+	$FAIL_        = 'FAiL';
 	if ($loggedInAs == $FAIL_) { addBlacklist(); }
 	else { removeBlacklist(); }
 	

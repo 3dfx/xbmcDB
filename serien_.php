@@ -20,6 +20,8 @@ include_once "globals.php";
 	#$serien->sortSerienRatingAsc();
 	#$serien->sortSerienRatingDesc();
 	fetchNextEpisodesFromDB($dbh);
+	#existsOrdersTable($dbh);
+	existsOrderzTable($dbh);
 	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
 	
 	if (getEscGet('data')) {
