@@ -76,11 +76,11 @@ include_once "./template/functions.php";
 					if (isset($eintraege[5])) {
 						if ($eintraege[5] == 'FAiL') {
 							$exit  = true;
-							$color = ' color:red;';
+							$color = ' color:red';
 							
 						} else if ($eintraege[5] == 'ADMiN') {
 							$admin = true;
-							$color = ' color:#6699CC;';
+							$color = ' color:#6699CC';
 						}
 					}
 				}
@@ -107,8 +107,8 @@ include_once "./template/functions.php";
 				
 				if ($which == 2) {
 					echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[5])."</td>";
-					echo "<td class='maxWidth30' style='padding:2px 10px;".$color."'>".trim($eintraege[6])."</td>";
-					echo "<td class='maxWidth30' style='padding:2px 10px;".$color."'>".trim($eintraege[7])."</td>";
+					echo "<td class='maxWidth30' style='padding:2px 10px;".$color.";'>".trim($eintraege[6])."</td>";
+					echo "<td class='maxWidth30' style='padding:2px 10px; color:rgba(0,0,0,0);'>".(!$admin ? trim($eintraege[7]) : '')."</td>";
 				}
 				echo "</tr>\r\n";
 				

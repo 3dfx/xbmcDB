@@ -18,7 +18,9 @@ if (!isAdmin()) { exit; }
 	echo "\t\t".'var xbmcRunning = '.(isAdmin() && xbmcRunning() ? '1' : '0').";\r\n";
 	echo "\t\t".'var newMovies = false;'.";\r\n";
 ?>
-
+		$(document).ready(function() {
+			initShowFancies();
+		});
 	</script>
 </head>
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
@@ -29,6 +31,7 @@ if (!isAdmin()) { exit; }
 	$dbh    = getPDO();
 	$SQL    = $GLOBALS['SerienSQL'].';';
 	$serien = fetchSerien($SQL, null, $dbh);
+	$serien->sortSerienAirdateAsc();
 	#echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
 	fillTable($serien, $dbh);
 	#echo "\t".'</div>'."\r\n";

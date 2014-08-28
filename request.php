@@ -1,6 +1,4 @@
 <?php
-include_once "check.php";
-
 include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "globals.php";
@@ -8,6 +6,7 @@ include_once "globals.php";
 	if (isDemo()) { exit; }
 	$ids = getEscGPost('ids');
 	if (empty($ids)) { exit; }
+	if (!isLoggedIn()) { echo '-3'; return; }
 	
 	$saveOrderInDB = isset($GLOBALS['SAVE_ORDER_IN_DB']) ? $GLOBALS['SAVE_ORDER_IN_DB'] : false;
 	$username      = isset($_SESSION['user'])            ? $_SESSION['user']            : null;

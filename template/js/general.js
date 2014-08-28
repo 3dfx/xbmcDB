@@ -13,6 +13,11 @@ $(document).ready(function() {
 	});
 });
 
+function getKeyCode(event) {
+	event = event || window.event;
+	return event.keyCode;
+}
+
 function newMoviesAvailable() {
 	if (!gotoConfirmation()) { return; }
 	
@@ -22,4 +27,44 @@ function newMoviesAvailable() {
 
 function gotoConfirmation() {
 	return confirm("New Movies in DB since last visit!\nDo yout want to check them now?");
+}
+
+function doRequest__(isShow, ids) {
+	var resBox = document.getElementById('result');
+	if (resBox == null) { return; }
+	
+	var copyAsScript = document.getElementById('copyAsScript');
+	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
+	
+	$.ajax({
+		type: "POST",
+		url: "request.php",
+		data: "contentpage="+(isShow ? "&isShow=1" : "")+"&ids=" + ids + "&copyAsScript=" + asscript,
+		success: function(data) {
+			if (data == '-3') { alert('Session expired!'); setTimeout("location.reload(true);", 150); }
+			$("#result").html(data);
+		}
+	});
+}
+
+function saveSelection__(isShow, ids) {
+	var resBox = document.getElementById('result');
+	if (resBox == null) { return; }
+	
+	var copyAsScript = document.getElementById('copyAsScript');
+	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
+	
+	$.ajax({
+		type: "POST",
+		url: "request.php",
+		data: "contentpage="+(isShow ? "&isShow=1" : "")+"&ids=" + ids + "&copyAsScript=" + asscript + "&forOrder=1",
+		success: function(data) {
+			if (data == '1') { alert('Selection saved!'); }
+			else if (data == '2') { alert('Selection appended!'); }
+			else if (data == '-3') { alert('Session expired!'); setTimeout("location.reload(true);", 150); }
+			else { alert('Error saving!'); }
+			
+			if (data != '-1') { clearSelectBoxes(null); }
+		}
+	});
 }

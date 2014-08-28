@@ -537,7 +537,7 @@ function clearSelectBoxes(obj) {
 	var listDiv = document.getElementById('movieList');
 	if (listDiv == null) { return; }
 	
-	doRequest(isAdmin);
+	doRequest();
 	
 	listDiv.style.display = chk ? 'block' : 'none';
 	if (!chk) {
@@ -584,46 +584,11 @@ function selected(obj, changeMaster, postRequest, admin) {
 	}
 	
 	if (postRequest) {
-		doRequest(admin);
+		doRequest();
 	}
 	
 	return true;
 }
 
-function doRequest(admin) {
-	var resBox = document.getElementById('result');
-	if (resBox == null) { return; }
-	
-	var copyAsScript = document.getElementById('copyAsScript');
-	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
-	
-	$.ajax({
-		type: "POST",
-		url: "request.php",
-		data: "contentpage="+"&isShow=1&ids=" + ids + "&copyAsScript=" + asscript + "&admin="+admin,
-		success: function(data){
-			$("#result").html(data);
-		}
-	});
-}
-
-function saveSelection(admin) {
-	var resBox = document.getElementById('result');
-	if (resBox == null) { return; }
-	
-	var copyAsScript = document.getElementById('copyAsScript');
-	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
-	
-	$.ajax({
-		type: "POST",
-		url: "request.php",
-		data: "contentpage="+"&isShow=1&ids=" + ids + "&copyAsScript=" + asscript + "&admin="+admin + "&forOrder=1",
-		success: function(data) {
-			if (data == '1') { alert('Selection saved!'); }
-			else if (data == '2') { alert('Selection appended!'); }
-			else { alert('Error saving!'); }
-			
-			if (data != '-1') { clearSelectBoxes(null); }
-		}
-	});
-}
+function doRequest() { doRequest__(true, ids); }
+function saveSelection() { saveSelection__(true, ids); }
