@@ -11,7 +11,7 @@ include_once "globals.php";
 	$isDemo  = isDemo();
 	$maself  = getEscServer('PHP_SELF');
 	$isMain  = (substr($maself, -9) == 'index.php');
-	
+
 	$dbh    = getPDO();
 	$SQL    = $GLOBALS['SerienSQL'].';';
 	$serien = fetchSerien($SQL, null, $dbh);
@@ -23,7 +23,7 @@ include_once "globals.php";
 	#existsOrdersTable($dbh);
 	existsOrderzTable($dbh);
 	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
-	
+
 	if (getEscGet('data')) {
 		if (false && $gallerymode && $isAdmin) {
 			return fillTableGal($serien, $dbh);
@@ -43,7 +43,7 @@ include_once "globals.php";
 	echo "\t\t".'var xbmcRunning = '.($isAdmin && xbmcRunning() ? '1' : '0').";\r\n";
 	echo "\t\t".'var newMovies = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
 ?>
-		
+
 		$(document).ready(function() {
 			$('#myNavbar').load( './navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { if (isAdmin) { initNavbarFancies(); } } );
 			$('#showsDiv').load( './serien_.php?data=1', function() { $('.knob-dyn').knob(); initShowFancies(); } );
@@ -53,7 +53,7 @@ include_once "globals.php";
 <body id="xbmcDB" style="overflow-x:hidden; overflow-y:auto;">
 <?php
 	postNavBar();
-	
+
 #main
 	echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">'."\r\n";
 	/*
@@ -80,7 +80,7 @@ include_once "globals.php";
 		}
 		echo "<input type='button' name='orderBtn' id='orderBtn' onclick='saveSelection(".$isAdmin."); return true;' value='save'/>";
 		echo '</div>';
-		
+
 		echo "\r\n\t\t".'<div id="result" class="selectedfield"></div>'."\r\n";
 		echo "\t".'</div>'."\r\n";
 	}
@@ -96,7 +96,7 @@ function fillTableGal($serien, $dbh) {
 function postSerienGal($serien) {
 	echo '<tr class="emptyTR" id="emptyTR" style="border-top:0px;">';
 	echo '</tr>'."\r\n";
-	
+
 	$counter = 1;
 	echo '<tr>'."\r\n";
 	foreach ($serien->getSerien() as $serie) {
@@ -115,7 +115,7 @@ function postSerieGal($serie, $counter) {
 	#echo $serie->getDesc();
 	#echo '</span>';
 	echo '</td>';
-	
+
 	if ($counter % 3 == 0) {
 		echo "\n</tr>\r\n<tr>";
 	}
@@ -141,16 +141,16 @@ function fillTable($serien, $dbh) {
 	$runCount = $isAdmin ? fetchRuncount($dbh) : null;
 	$colspan1 = $isDemo  ? 0 : 1;
 	$colspan2 = $isAdmin ? 1 : 0;
-	
+
 	echo "\t".'<table id="showsTable" class="film">'."\r\n";
 	echo "\t".'<tbody id="showsBody">'."\r\n";
-	
+
 	echo "\t\t".'<tr class="emptyTR" style="border-bottom:0px;">';
 	echo '<th colspan="'.(6 + $colspan1).'" style="padding:0px;">';
 	echo '<div id="showBanner"><img class="tvRandomBanner" src="'.getRandomBanner().'" style="height:54px;" /></div>';
 	echo '</th>';
 	echo '</tr>'."\r\n";
-	
+
 	echo "\t\t".'<tr class="emptyTR" id="emptyTR" style="border-top:0px;">';
 	if (!$isAdmin && !$isDemo) {
 		echo '<th class="checkaCheck righto">';
@@ -170,7 +170,7 @@ function fillTable($serien, $dbh) {
 	echo '</th>';
 	echo '<th colspan="'.(4 + $colspan2).'"></th>';
 	echo '</tr>'."\r\n";
-	
+
 	postSerien($serien);
 	echo "\t".'</tbody>'."\r\n";
 	echo "\t".'</table>'."\r\n";
@@ -188,26 +188,23 @@ function postSerie($serie, $counter) {
 	$isAdmin  = isAdmin();
 	$isDemo   = isDemo();
 	$info     = '';
-	$fcol     = '';
+	$fCol     = '';
 	$airDate  = null;
 	$daysLeft = -1;
-	$missed   = false;
 	$idShow   = $serie->getIdShow();
 	$idTvDb   = $serie->getIdTvdb();
 	$running  = $serie->isRunning();
 	$spanId   = 'iDS'.$idShow;
-	
+
 	$checkAirDate = isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
 	if ($checkAirDate && $running) {
 		$airDate  = $serie->getNextAirDateStr();
 		$daysLeft = daysLeft(addRlsDiffToDate($airDate));
-		$missed   = dateMissed($airDate) && !empty($airDate);
-		$tomorrow = $daysLeft <= 1 && $daysLeft > -1;
+		$fCol     = getDateColor($airDate, $daysLeft);
 		$airDate  = toEuropeanDateFormat(addRlsDiffToDate($airDate));
-		$fCol     = 'color:'.($isAdmin && $missed ? 'red' : ($isAdmin && $tomorrow ? 'green' : 'silver')).';';
 		$info     = '<b style="'.$fCol.'" title="'.(!empty($airDate) ? $airDate : 'running...').'">...</b>';
 	}
-	
+
 	echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
 	if (!$isAdmin && !$isDemo) {
 		echo '<td class="checkaCheck righto">';
@@ -219,7 +216,7 @@ function postSerie($serie, $counter) {
 	$strCounter = $counter;
 	echo '<td class="showShowInfo1 righto">'.$run1.$strCounter.$run2.'</td>';
 	echo '<td id="epl_'.$idShow.'" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'">';
-	echo '<span class="showName">'.($running ? '<i>' : '').$serie->getName().$info.($running ? '</i>' : '').'</span>';
+	echo '<span class="showName airdHidden">'.($running ? '<i>' : '').$serie->getName().$info.($running ? '</i>' : '').'</span>';
 	if (!$isDemo) {
 		echo '<span class="sInfoSize">'._format_bytes($serie->getSize()).'</span>';
 	}
@@ -231,26 +228,27 @@ function postSerie($serie, $counter) {
 			$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
 			$epSearch   = null;
 			if (!empty($EP_SEARCH)) {
-				$name     = str_replace ("'",  "", $serie->getName());
+				$name     = str_replace("'",  "", $serie->getName());
+				if (substr_count($name, ', The') > 0) {
+					$name = 'The '.str_replace(", The",  "", $name);
+				}
 				$nextEp   = $daysLeft <= 1  ? fetchNextEpisodeFromDB($idShow) : null;
 				$enNum    = !empty($nextEp) ? getFormattedSE($nextEp['s'], $nextEp['e']) : null;
 				$epSearch = !empty($enNum)  ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
 			}
 			
-			$fSize = ' font-size:11px;';
-			$fSize = ($daysLeft > 30 ? ' font-size:9px;' : $fSize);
-			$fSize = ($daysLeft > 60 ? ' font-size:8px;' : $fSize);
-			#$fSize = ($daysLeft > 90 ? ' font-size:7px;' : $fSize);
-			$title = ($daysLeft < 0 ? 'Missed episode' : ($daysLeft == 0 ? 'Today' : 'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : '')));
-			$eSrch1 = $isAdmin && !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
-			$eSrch2 = $isAdmin && !empty($epSearch) ? '</a>' : '';
-			echo $eSrch1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default; '.$fCol.$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2;
+			$title = $daysLeft > 0 ?
+				($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days') :
+				($daysLeft  < 0 ? 'Missed episode' : 'Today');
+			$eSrch1 = !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
+			$eSrch2 = !empty($epSearch) ? '</a>' : '';
+			echo $eSrch1.'<span class="airdate sInfoSize" style="display:none; vertical-align:middle; cursor:default; '.$fCol.getDateFontsize($daysLeft).'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2;
 		}
 		echo '</td>';
 	}
-	
+
 	echo '<td class="showRating"><span class="hideMobile sInfoRating">'.$serie->getRating().'</span></td>';
-	
+
 	$stCount  = $serie->getStaffelCount();
 	$strCount = ($stCount < 10 ? '0' : '').$stCount;
 	echo '<td class="showSeasons"><span class="hideMobile">'.$strCount.' Season'.($stCount > 1 ? 's' : '').'</span></td>';
@@ -261,7 +259,7 @@ function postSerie($serie, $counter) {
 		echo '<a tabindex="-1" class="fancy_addEpisode" href="./addEpisode.php?idShow='.$idShow.'&idTvdb='.$idTvDb.'">';
 		echo '<img src="./img/add.png" class="galleryImage" title="add Episode" />';
 		echo '</a> ';
-		
+
 		$showEmpty = false;
 		if ($serie->isWatched() || (!isWatchedAnyHiddenInMain($idShow) && $serie->isWatchedAny())) {
 			if ($serie->isWatched()) {
@@ -278,7 +276,7 @@ function postSerie($serie, $counter) {
 		} else {
 			$showEmpty = true;
 		}
-		
+
 		if ($showEmpty) {
 			echo ' <img src="./img/empty.png" class="galleryImage" />';
 		}
@@ -286,6 +284,30 @@ function postSerie($serie, $counter) {
 	echo '</span></td>';
 	echo '</tr>';
 	echo "\r\n";
+}
+
+function getDateColor($airDate, $daysLeft) {
+	$color = 'silver';
+	if (isAdmin()) {
+		$missed = !empty($airDate) && dateMissed($airDate);
+		if ($missed) { $color = 'red'; }
+		else if ($daysLeft > -1) {
+			if ($daysLeft <= 3) { $color = 'lightblue'; }
+			if ($daysLeft <= 2) { $color = 'purple';    }
+			if ($daysLeft <= 1) { $color = 'brown';     }
+		}
+	}
+	return 'color:'.$color.';';
+}
+
+function getDateFontsize($daysLeft) {
+	$fSize = ' font-size:8pt;';
+	$fSize = ($daysLeft >= 1 ? ' font-size:7pt;' : $fSize);
+	$fSize = ($daysLeft >= 2 ? ' font-size:6pt;' : $fSize);
+	$fSize = ($daysLeft > 30 ? ' font-size:5pt;' : $fSize);
+	$fSize = ($daysLeft > 60 ? ' font-size:4pt;' : $fSize);
+	$fSize = ($daysLeft > 90 ? ' font-size:3pt;' : $fSize);
+	return $fSize;
 }
 
 function fetchRuncount($dbh = null) {
@@ -305,13 +327,13 @@ function getRandomBanner() {
 		$res = array();
 		while (false !== ($entry = $d->read())) { if ($entry == '..' || $entry == '.') {continue;} $res[] = $entry; }
 		$d->close();
-		
+
 		if (count($res) == 0) { return; }
 		$img = './img/banners/'.$res[ rand(1, count($res)-1) ];
 		if (!file_exists($img)) { return; }
 		wrapItUp('banner', 'random', $img);
 	}
-	
+
 	return getImageWrap($img, 'random', 'banner', 0);
 }
 ?>

@@ -991,7 +991,10 @@ a.showlink {
 .showShowInfo  { cursor:default; width:1px; white-space:nowrap; height:20px; width:550px; min-width:550px; max-width:550px !important; }
 .checkaCheck   { padding-left:4px; padding-right:0px !important; }
 .showShowInfo1 { color:silver; padding:2px 4px 2px 0px; }
-.showName      { float:left; overflow-x:hidden; width:150px; }
+.showName      { float:left; overflow-x:hidden; }
+.airdShown     { width:150px; }
+.airdShownM    { width:90px; }
+.airdHidden    { width:130px; }
 .sInfoSize     { float:right; color:silver; padding-left:10px; }
 .sInfoRating   { float:right; padding-left:10px; }
 .galleryImage  { width:16px !important; height:16px !important; z-index:50; }

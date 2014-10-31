@@ -1140,10 +1140,17 @@ function postNavBar_($isMain) {
 		$res .= '</li>';
 		*/
 
+		$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
+		$upgrLog = isLinux() && file_exists($privateFolder.'/upgradeLog.php') && file_exists('./myScripts/upgrade.log');
 		$NAS_CONTROL = isset($GLOBALS['NAS_CONTROL']) ? $GLOBALS['NAS_CONTROL'] : false;
-		if ($NAS_CONTROL) {
+		if ($NAS_CONTROL || $upgrLog) {
 			$res .= '<li class="divider"></li>';
+		}
+		if ($NAS_CONTROL) {
 			$res .= '<li><a class="fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
+		}
+		if ($upgrLog) {
+			$res .= '<li><a class="fancy_logs" href="'.$privateFolder.'/upgradeLog.php">Upgrade-Log</a></li>';
 		}
 
 		$res .= '</ul>';

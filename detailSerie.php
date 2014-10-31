@@ -158,15 +158,10 @@ function postStaffel($staffel) {
 		echo '</td>';
 		echo '<td class="righto">';
 		if ($isAdmin) {
-			if ($epi->isWatched()) {
-				echo '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setUnseen&idFile='.$epi->getIdFile().'">';
-				echo '<img src="./img/check.png" class="galleryImage" title="watched" /> ';
-				echo '</a>';
-			} else {
-				echo '<a tabindex="-1" class="fancy_movieEdit" href="./dbEdit.php?act=setSeen&idFile='.$epi->getIdFile().'">';
-				echo '<img src="./img/checkR.png" class="galleryImage" title="set watched" /> ';
-				echo '</a>';
-			}
+			$watched = $epi->isWatched();
+			echo '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act='.($watched ? 'setUnseen' : 'setSeen').'&idFile='.$epi->getIdFile().'">';
+			echo '<img src="./img/check'.($watched ? '' : 'R').'.png" class="galleryImage" title="'.($watched ? 'watched' : 'set watched').'" /> ';
+			echo '</a>';
 		}
 		echo '</td>';
 		echo '</tr>';

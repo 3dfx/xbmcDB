@@ -88,7 +88,7 @@ include_once "./template/_SERIEN.php";
 			$daysLeft  = daysLeft($airDate);
 			$missed    = dateMissed($airDate);
 			$info1     = $daysLeft > 0 ?
-					'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : '').' on '.$dayOfWeek :
+					(($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days').' on '.$dayOfWeek) :
 					($isAdmin ? ($missed ? 'Missed episode' : 'Today') : '');
 			
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
