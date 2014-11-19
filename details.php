@@ -346,9 +346,9 @@ include_once "globals.php";
 			$run = 1;
 		}
 		if (!empty($row['c11'])) {
-			$secs = $row['c11'];
+			$secs    = $row['c11'];
 			$minutes = floor($secs/60);
-			$hours = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
+			$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
 			$minutes = $minutes.'\'';
 			$run = 1;
 		}
@@ -396,6 +396,14 @@ include_once "globals.php";
 			
 			$tmp = $row3['strSubtitleLanguage'];
 			if (!empty($tmp) && !isDemo()) { $sLang[count($sLang)] = strtoupper($tmp); }
+			
+			$tmp = $row3['iVideoDuration'];
+			if (!empty($tmp)) {
+				$secs    = $tmp;
+				$minutes = floor($secs/60);
+				$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
+				$minutes = $minutes.'\'';
+			}
 			
 			$run++;
 		}

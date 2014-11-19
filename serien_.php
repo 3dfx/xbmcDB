@@ -138,7 +138,7 @@ function postSerieImg($serie) {
 function fillTable($serien, $dbh) {
 	$isAdmin  = isAdmin();
 	$isDemo   = isDemo();
-	$runCount = $isAdmin ? fetchRuncount($dbh) : null;
+	$runCount = $isAdmin ? fetchRunCount($dbh) : null;
 	$colspan1 = $isDemo  ? 0 : 1;
 	$colspan2 = $isAdmin ? 1 : 0;
 
@@ -204,23 +204,28 @@ function postSerie($serie, $counter) {
 		$airDate  = toEuropeanDateFormat(addRlsDiffToDate($airDate));
 		$info     = '<b style="'.$fCol.'" title="'.(!empty($airDate) ? $airDate : 'running...').'">...</b>';
 	}
-
-	echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
-	if (!$isAdmin && !$isDemo) {
-		echo '<td class="checkaCheck righto">';
-		echo '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
-		echo '</td>';
+	
+	$chkBoxTD = '';
+	$sizeSpan = '';
+	if (!$isDemo) {
+		if (!$isAdmin) {
+			$chkBoxTD  = '<td class="checkaCheck righto">';
+			$chkBoxTD .= '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
+			$chkBoxTD .= '</td>';
+		}
+		
+		$sizeSpan = '<span class="sInfoSize">'._format_bytes($serie->getSize()).'</span>';
 	}
 	$run1 = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">' : '';
 	$run2 = $isAdmin ? '</a>' : '';
 	$strCounter = $counter;
+	
+	echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
+	echo $chkBoxTD;
 	echo '<td class="showShowInfo1 righto">'.$run1.$strCounter.$run2.'</td>';
 	echo '<td id="epl_'.$idShow.'" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'">';
-	echo '<span class="showName airdHidden">'.($running ? '<i>' : '').$serie->getName().$info.($running ? '</i>' : '').'</span>';
-	if (!$isDemo) {
-		echo '<span class="sInfoSize">'._format_bytes($serie->getSize()).'</span>';
-	}
-	echo '</td>';
+	echo '<span class="showName airdHidden">'.($running ? '<i>' : '').$serie->getName().$info.($running ? '</i>' : '').'</span>'.$sizeSpan.'</td>';
+	
 	if ($isAdmin) {
 		echo '<td style="padding:0px; margin:0px;">';
 		if (!empty($airDate)) {
@@ -237,7 +242,7 @@ function postSerie($serie, $counter) {
 				$epSearch = !empty($enNum)  ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
 			}
 			
-			$title = $daysLeft > 0 ?
+			$title = $daysLeft  > 0 ?
 				($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days') :
 				($daysLeft  < 0 ? 'Missed episode' : 'Today');
 			$eSrch1 = !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
@@ -286,31 +291,7 @@ function postSerie($serie, $counter) {
 	echo "\r\n";
 }
 
-function getDateColor($airDate, $daysLeft) {
-	$color = 'silver';
-	if (isAdmin()) {
-		$missed = !empty($airDate) && dateMissed($airDate);
-		if ($missed) { $color = 'red'; }
-		else if ($daysLeft > -1) {
-			if ($daysLeft <= 3) { $color = 'lightblue'; }
-			if ($daysLeft <= 2) { $color = 'purple';    }
-			if ($daysLeft <= 1) { $color = 'brown';     }
-		}
-	}
-	return 'color:'.$color.';';
-}
-
-function getDateFontsize($daysLeft) {
-	$fSize = ' font-size:8pt;';
-	$fSize = ($daysLeft >= 1 ? ' font-size:7pt;' : $fSize);
-	$fSize = ($daysLeft >= 2 ? ' font-size:6pt;' : $fSize);
-	$fSize = ($daysLeft > 30 ? ' font-size:5pt;' : $fSize);
-	$fSize = ($daysLeft > 60 ? ' font-size:4pt;' : $fSize);
-	$fSize = ($daysLeft > 90 ? ' font-size:3pt;' : $fSize);
-	return $fSize;
-}
-
-function fetchRuncount($dbh = null) {
+function fetchRunCount($dbh = null) {
 	$runCount = isset($_SESSION['param_runCount']) ? $_SESSION['param_runCount'] : null;
 	if (empty($runCount)) {
 		$runCount = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM tvshowrunning;");

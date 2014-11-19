@@ -68,23 +68,12 @@ function postSerie($serie, $counter) {
 	if ($checkAirDate) {
 		$airDate  = $serie->getNextAirDateStr();
 		$daysLeft = daysLeft(addRlsDiffToDate($airDate));
-		$missed   = dateMissed($airDate) && !empty($airDate);
-		$tomorrow = $daysLeft <= 1 && $daysLeft > -1;
+		$fCol     = getDateColor($airDate, $daysLeft);
 		$airDate  = toEuropeanDateFormat(addRlsDiffToDate($airDate));
-		$fCol     = 'color:'.($missed ? 'red' : ($tomorrow ? 'green' : 'silver')).';';
 	}
 	
 	if (empty($airDate)) { return $counter; }
-	
-	echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
-	
-	echo '<td class="righto">'.$counter.'</td>';
-	
-	echo '<td id="epl_'.$idShow.'">';
-	echo '<span class="showName">'.$serie->getName().'</span>';
-	echo '</td>';
-	
-	echo '<td style="padding-right:15px; margin:0px;">';
+
 	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
 	$epSearch   = null;
@@ -95,16 +84,16 @@ function postSerie($serie, $counter) {
 		$epSearch = !empty($enNum)  ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
 	}
 	
-	$fSize = ' font-size:11px;';
-	$fSize = ($daysLeft > 30 ? ' font-size:9px;' : $fSize);
-	$fSize = ($daysLeft > 60 ? ' font-size:8px;' : $fSize);
-	#$fSize = ($daysLeft > 90 ? ' font-size:7px;' : $fSize);
-	$title = ($daysLeft < 0 ? 'Missed episode' : ($daysLeft == 0 ? 'Today' : 'In '.$daysLeft.' day'.($daysLeft > 1 ? 's' : '')));
+	$title = $daysLeft  > 0 ?
+		($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days') :
+		($daysLeft  < 0 ? 'Missed episode' : 'Today');
 	$eSrch1 = !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
 	$eSrch2 = !empty($epSearch) ? '</a>' : '';
-	echo $eSrch1.'<span class="airdate sInfoSize" style="vertical-align:middle; cursor:default; '.$fCol.$fSize.'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2;
-	echo '</td>';
 	
+	echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
+	echo '<td class="righto">'.$counter.'</td>';
+	echo '<td id="epl_'.$idShow.'"><span class="showName">'.$serie->getName().'</span></td>';
+	echo '<td style="padding-right:15px; margin:0px;">'.$eSrch1.'<span class="airdate sInfoSize" style="vertical-align:middle; cursor:default; '.$fCol.getDateFontsize($daysLeft).'" title="'.$title.'">'.$airDate.'</span>'.$eSrch2.'</td>';
 	echo '</tr>'."\r\n";
 	return ++$counter;
 }

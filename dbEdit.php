@@ -63,13 +63,13 @@ include_once "globals.php";
 			$dbh->exec($SQLfile);
 			
 			$SQLepi = 'UPDATE episode SET c00="[TITLE]",c01="[DESC]",c03="[RATING]",c04="[GUEST_AUTOR]",c05="[AIRED]",c10="[REGIE]",c18="[FILENAME]" WHERE idEpisode=[idEpisode];';
-			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
-			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
-			$SQLepi = str_replace('[DESC]', $desc, $SQLepi);
-			$SQLepi = str_replace('[RATING]', $rating, $SQLepi);
+			$SQLepi = str_replace('[idEpisode]',   $idEpisode,  $SQLepi);
+			$SQLepi = str_replace('[TITLE]',       $title,      $SQLepi);
+			$SQLepi = str_replace('[DESC]',        $desc,       $SQLepi);
+			$SQLepi = str_replace('[RATING]',      $rating,     $SQLepi);
 			$SQLepi = str_replace('[GUEST_AUTOR]', $gast_autor, $SQLepi);
-			$SQLepi = str_replace('[AIRED]', $airdate, $SQLepi);
-			$SQLepi = str_replace('[REGIE]', $regie, $SQLepi);
+			$SQLepi = str_replace('[AIRED]',       $airdate,    $SQLepi);
+			$SQLepi = str_replace('[REGIE]',       $regie,      $SQLepi);
 			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
 			$dbh->exec($SQLepi);
 			
@@ -162,10 +162,18 @@ include_once "globals.php";
 			
 			$params = null;
 			if (!empty($file)) {
-				$file   = str_replace("''", "'", $file);
-				$params = "strFilename='".$file."'";
+				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
+				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);
+				$row     = fetchFromDB_($dbh, $SQLpth, false);
+				$strPath = $row['strPath'];
+				
+				$file    = str_replace("''", "'", $file);
+				$params  = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
 				$dbh->exec('UPDATE fileinfo SET filesize=NULL WHERE idFile='.$idFile.';');
+				if (!empty($strPath)) {
+					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
+				}
 			}
 			
 			if (!empty($dateAdded)) {
@@ -242,6 +250,7 @@ include_once "globals.php";
 			}
 			echo 'Setcover was set!<br />';
 			
+			#<OLD CODE>
 			if (false) {
 			if (!empty($url)) {
 				$docRoot = getEscServer('DOCUMENT_ROOT');
@@ -304,7 +313,8 @@ include_once "globals.php";
 				
 				exit;
 			} //empty url
-			}
+			} //if false
+			#</OLD CODE>
 		}
 		
 		if ($act == 'addset' && !empty($name)) {

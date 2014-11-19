@@ -206,6 +206,8 @@ function getSessionKeySQL() {
 	if (!empty($sort)) {
 		     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY A.c07 DESC, dateAdded DESC";      }
 		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY A.c07 ASC, dateAdded ASC";        }
+		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";      }
+		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";       }
 		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY A.c05 DESC";      }
 		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY A.c05 ASC";       }
 		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC"; }
@@ -246,7 +248,7 @@ function getSessionKeySQL() {
 			break;
 			
 		case 4:
-			$uncut = " AND (lower(B.strFilename) LIKE '%extended%' OR lower(A.c00) LIKE '%extended%') ";
+			$uncut = " AND (lower(B.strFilename) LIKE '%extended%' OR lower(A.c00) LIKE '%extended%' OR lower(B.strFilename) LIKE '%see%' OR lower(A.c00) LIKE '%see%') ";
 			$sessionKey .= 'extendedCut';
 			break;
 			
@@ -761,9 +763,9 @@ function postRows($dbh, $zeilen, $saferSearch) {
 			echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 		}
 		
-		echo '<a tabindex="-1" style="font-weight:bold;" href="?show=filme&sort'.($saferSearch).'">Title</a>'.$titleInfo.'</th>';
-		echo '<th class="th0"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr' || $sort=='jahra') ? 'color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
-		echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? 'color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
+		echo '<a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='title' || $sort=='titlea')   ? ' color:red;' : '').'" href="?show=filme&sort='.($sort=='titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
+		echo '<th class="th0"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr'   || $sort=='jahra')   ? ' color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
+		echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? ' color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
 		echo '<th class="th2">Actor</th>';
 		echo '<th class="th2">Genre</th>';
 		echo '<th class="th2">Director</th>';

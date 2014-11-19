@@ -1888,14 +1888,36 @@ function getGuests($guests) {
 	return $gs;
 }
 
+function getDateColor($airDate, $daysLeft) {
+	$color = 'silver';
+	if (isAdmin()) {
+		if (dateMissed($airDate))   { $color = 'red';       }
+		else if ($daysLeft > -1) {
+			if ($daysLeft <= 3) { $color = 'lightblue'; }
+			if ($daysLeft <= 2) { $color = 'purple';    }
+			if ($daysLeft <= 1) { $color = 'brown';     }
+		}
+	}
+	return 'color:'.$color.';';
+}
+
+function getDateFontsize($daysLeft) {
+	$fSize = ' font-size:8pt;';
+	$fSize = ($daysLeft >= 1 ? ' font-size:7pt;' : $fSize);
+	$fSize = ($daysLeft >= 2 ? ' font-size:6pt;' : $fSize);
+	$fSize = ($daysLeft > 30 ? ' font-size:5pt;' : $fSize);
+	$fSize = ($daysLeft > 60 ? ' font-size:4pt;' : $fSize);
+	$fSize = ($daysLeft > 90 ? ' font-size:3pt;' : $fSize);
+	return $fSize;
+}
+
 function getToday() {
 	return strtotime(date('Y-m-d', strtotime('now')));
 }
 
 function dateMissed($given) {
-	if (empty($given)) { return false; }
-
-	return (strtotime($given)) < getToday();
+	#return empty($given) ? false : (strtotime($given)) < getToday();
+	return (empty($given) ? false : daysLeft($given) < 0);
 }
 
 function daysLeft($given) {
@@ -1914,17 +1936,13 @@ function dayOfWeekShort($given) {
 function toEuropeanDateFormatWDay($given) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
 	$strFormat = $eurDateFormat ? 'd.m.y \(D\)' : 'Y-m-d \(D\)';
-
-	if (empty($given)) { return $given; }
-	return date($strFormat, strtotime($given));
+	return (empty($given) ? $given : date($strFormat, strtotime($given)));
 }
 
 function toEuropeanDateFormat($given) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
 	$strFormat = $eurDateFormat ? 'd.m.y' : 'Y-m-d';
-
-	if (empty($given)) { return $given; }
-	return date($strFormat, strtotime($given));
+	return (empty($given) ? $given : date($strFormat, strtotime($given)));
 }
 
 function addRlsDiffToDate($given) {
