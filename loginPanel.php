@@ -9,11 +9,9 @@ include_once "./template/functions.php";
 	$which  = getEscGet('which');
 	$filter = getEscPost('filter');
 	
-	if (isset($which)) {
-		if ($which == 2) {
-			$file  = 'logs/loginLog.php';
-			$title = 'Login-log';
-		}
+	if (isset($which) && $which == 2) {
+		$file  = 'logs/loginLog.php';
+		$title = 'Login-log';
 	}
 ?>
 <html>
@@ -25,9 +23,9 @@ include_once "./template/functions.php";
 <body>
 <?php
 	if ($which == 2) {
-		echo '<div style="position:relative; right:7px;"><span style="float:right;">'."\r\n";
+		echo '<div style="position:absolute; top:5px; right:25px;"><span style="float:right;">'."\r\n";
 		echo '<form name="loginPanel" action="loginPanel.php?which=2" method="post" style="margin-bottom:5px;">'."\r\n";
-		echo "\t".'<button type="submit" name="filter" value="'.(empty($filter) ? '1' : ($filter == '1' ? '2' : '')).'" class="key okButton" onclick="this.blur();" style="width:120px;'.(empty($filter) ? '' : ' background-color:'.($filter == '1' ? 'green' : 'red').'; color:white;').'">Filter'.(empty($filter) ? '' : ($filter == '1' ? ' fails' : ' success')).'</button>'."\r\n";
+		echo "\t".'<button type="submit" name="filter" value="'.(empty($filter) ? '1' : ($filter == '1' ? '2' : '')).'" class="key okButton" onclick="this.blur();" style="border-radius:0px; width:135px;'.(empty($filter) ? '' : ' border:1px solid '.($filter == '1' ? 'darkgreen' : 'darkred').';').(empty($filter) ? '' : ' background-color:'.($filter == '1' ? 'green' : 'red').'; color:#fafafa;').'">Filter'.(empty($filter) ? '' : ($filter == '1' ? ' fails' : ' success')).'</button>'."\r\n";
 		echo '</form>'."\r\n";
 		echo '</span></div>'."\r\n";
 	}
@@ -76,11 +74,11 @@ include_once "./template/functions.php";
 					if (isset($eintraege[5])) {
 						if ($eintraege[5] == 'FAiL') {
 							$exit  = true;
-							$color = ' color:red;';
+							$color = ' color:red';
 							
 						} else if ($eintraege[5] == 'ADMiN') {
 							$admin = true;
-							$color = ' color:#6699CC;';
+							$color = ' color:#6699CC';
 						}
 					}
 				}
@@ -107,8 +105,8 @@ include_once "./template/functions.php";
 				
 				if ($which == 2) {
 					echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[5])."</td>";
-					echo "<td class='maxWidth30' style='padding:2px 10px;".$color."'>".trim($eintraege[6])."</td>";
-					echo "<td class='maxWidth30' style='padding:2px 10px;".$color."'>".trim($eintraege[7])."</td>";
+					echo "<td class='maxWidth30' style='padding:2px 10px;".$color.";'>".trim($eintraege[6])."</td>";
+					echo "<td class='maxWidth30' style='padding:2px 10px; color:rgba(0,0,0,0);'>".(!$admin ? trim($eintraege[7]) : '')."</td>";
 				}
 				echo "</tr>\r\n";
 				

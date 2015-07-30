@@ -13,6 +13,13 @@ if (!isAdmin()) { return; }
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
+	
+	<script type="text/javascript">
+		function confirm() {
+			var frage = unescape("Are you sure to shutdown server?");
+			return confirm(frage);
+		}
+	</script>
 </head>
 <html>
 <body style="padding:0px;">
@@ -28,16 +35,16 @@ if (!isAdmin()) { return; }
 		
 		if (isset($shutdownBtn)) {
 			shutdownNAS();
-		} else
-		if (isset($restartBtn)) {
+		
+		} else if (isset($restartBtn)) {
 			startNAS();
-		} else
-		if (isset($delay_shutdownBtn)) {
+		
+		} else if (isset($delay_shutdownBtn)) {
 			if (isset($delay_shutdown)) {
 				delayShutdown($delay_shutdown);
 			}
-		} else
-		if (isset($delay_restartBtn)) {
+		
+		} else if (isset($delay_restartBtn)) {
 			if (isset($delay_restart)) {
 				delayRestart($delay_restart);
 			}
@@ -69,7 +76,7 @@ if (!isAdmin()) { return; }
 <?php
 			} else {
 ?>
-				<input type="submit" id="shutdownBtn" name="shutdownBtn" value="shutdown NAS" class="okButton" />
+				<input type="submit" id="shutdownBtn" name="shutdownBtn" value="shutdown NAS" class="okButton" onclick="return confirm();" />
 <?php
 			}
 ?>

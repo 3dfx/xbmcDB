@@ -45,11 +45,14 @@
 	<script type="text/javascript" src="./template/js/filme.min.js"></script>
 <?php 		} ?>
 <?php } else if($isTvshow) { ?>
-	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
 <?php 		if(isAdmin()) { ?>
+	<script type="text/javascript" src="./template/js/chart.js"></script>
 	<script type="text/javascript" src="./template/js/serien.js"></script>
+	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
 <?php 		} else { ?>
+	<script type="text/javascript" src="./template/js/chart.min.js"></script>
 	<script type="text/javascript" src="./template/js/serien.min.js"></script>
+	<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
 <?php 		} ?>
 <?php } ?>
 <?php if(isAdmin() && $xbmControl) { ?>

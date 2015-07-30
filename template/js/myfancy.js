@@ -19,7 +19,7 @@ jQuery(document).ready(function() {
 		},
 		'onComplete'		: function() {
 			$("#fancybox-title").show();
-			
+
 			$("#fancybox-wrap").hover(function() {
 				$("#fancybox-title").hide();
 			}, function() {
@@ -27,7 +27,7 @@ jQuery(document).ready(function() {
 			});
 		}
 	});
-	
+
 /*
 	$("img[href$='.jpg'],img[href$='.png']").fancybox({
 		'autoScale'		: true,
@@ -48,7 +48,7 @@ jQuery(document).ready(function() {
 		},
 		'onComplete'		: function() {
 			$("#fancybox-title").show();
-			
+
 			$("#fancybox-wrap").hover(function() {
 				$("#fancybox-title").hide();
 			}, function() {
@@ -71,7 +71,7 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".openImdbDetail").fancybox({
 		'width'			: '95%',
 		'height'		: '94%',
@@ -85,11 +85,11 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancyimage1").fancybox({
 		'centerOnScroll'	: true
 	});
-	
+
 	$(".fancy_iframe").fancybox({
 		'width'			: 1280,
 		'height'		: 720,
@@ -107,7 +107,7 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_iframe2").fancybox({
 		'width'			: '80%',
 		'height'		: '90%',
@@ -119,10 +119,10 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_iframe3").fancybox({
-		'width'			: 325,
-		'height'		: 150,	
+		'width'			: 350,
+		'height'		: 150,
 		'overlayColor'		: '#000',
 		'overlayOpacity'	: 0.98,
 		'autoScale'		: true,
@@ -135,7 +135,7 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_explorer").fancybox({
 		'width'			: 700,
 		'height'		: 650,
@@ -153,7 +153,7 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_movieset").fancybox({
 		'width'			: 325,
 		'height'		:  50,
@@ -169,7 +169,7 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_movieEdit").fancybox({
 		'width'			: 380,
 		'height'		: 215,
@@ -186,7 +186,7 @@ jQuery(document).ready(function() {
 		'titleShow'       	: false,
 		'borderBgs'		: false
 	});
-	
+
 	// these 2 variable determine popup's distance from the cursor
 	// you might want to adjust to get the right result
 	xHoverPicOffset = 30;
@@ -196,7 +196,7 @@ jQuery(document).ready(function() {
 		function(e){
 			this.t = this.title;
 			this.title = "";
-			
+
 			var c = (this.t != "") ? "<br/>" + this.t : "";
 			$("body").append("<p id='hoverpic'><img src='"+ this.rel +"'/>"+ c +"</p>");
 			$("#hoverpic")
@@ -214,21 +214,21 @@ jQuery(document).ready(function() {
 			.css("top",(e.pageY - correctYoffset(e, $(this).offset().top)) + "px")
 			.css("left",(e.pageX + xHoverPicOffset) + "px");
 	});
-	
+
 	function correctYoffset(e, offsetTop) {
 		var CWOffset = $(window).height();
 		var res = 0;
-		
+
 		if (enterPos == null) { enterPos = $("#hoverpic").offset().top; }
 		var val  = enterPos - (offsetTop - CWOffset);
 		var val2 = CWOffset - val;
-		
+
 		//console.log( enterPos + ', ' + val + ', ' + (CWOffset - val) + ', ' + $("#hoverpic").height() + ', ' + offsetTop + ', ' + e.pageY + ', ' + CWOffset );
-		
+
 		if (CWOffset - val < $("#hoverpic").height()) { res = 0; }
 		else if (CWOffset - val2 > $("#hoverpic").height()) { res = $("#hoverpic").height() / 2; }
 		else { res = $("#hoverpic").height(); }
-		
+
 		/*if (offsetTop - enterPos < $("#hoverpic").height()) { console.log('a'); res = 0; }
 		else if (CWOffset - offsetTop - enterPos < 150) { console.log('b'); res = $("#hoverpic").height(); }
 		else if (CWOffset > yHoverPicOffset) { console.log('c'); res = 90; }*/
@@ -239,7 +239,7 @@ jQuery(document).ready(function() {
 
 function initShowFancies() {
 	initFancyMsgbox();
-	
+
 	$(".fancy_iframe4").fancybox({
 		'width'			: 1280,
 		'height'		: 720,
@@ -256,6 +256,32 @@ function initShowFancies() {
 		'scrolling'		: 'auto',
 		'titleShow'       	: false,
 		'type'			: 'iframe'
+	});
+
+	$(".fancy_addEpisode").fancybox({
+		'width'			: 560,
+		'height'		: 430,
+		'transitionIn'		: 'elastic',
+		'transitionOut'		: 'elastic',
+		'overlayColor'		: '#000',
+		'overlayOpacity'	: 0.9,
+		'speedIn'		: 500,
+		'speedOut'		: 250,
+		'padding'		: 5,
+		'autoScale'		: false,
+		'centerOnScroll'	: true,
+		'enableEscapeButton'	: true,
+		'scrolling'		: 'no',
+		'type'			: 'iframe',
+		'titleShow'       	: false,
+		'onComplete'		: function() {
+			$('body').css('cursor', 'default');
+			$('td').css('cursor', 'default');
+			$('a').css('cursor', 'default');
+			$('.addBoxx').css('cursor', 'default');
+			$('#showSelectTable').css('cursor', 'default');
+			$('#episodeAdd').css('cursor', 'default');
+		}
 	});
 } //initShowFancies
 
@@ -289,7 +315,7 @@ function initShowEpFancies() {
 
 function initShowDescFancies() {
 	initFancyMsgbox();
-	
+
 	$("#tvBanner").fancybox({
 		'width'			: '63%',
 		'height'		: '94%',
@@ -325,8 +351,26 @@ function initFancyMsgbox() {
 
 function initNavbarFancies() {
 	initFancyMsgbox();
-	
+
 	$(".fancy_logs").fancybox({
+		'width'			: 900,
+		'height'		: 500,
+		'transitionIn'		: 'elastic',
+		'transitionOut'		: 'elastic',
+		'overlayColor'		: '#000',
+		'overlayOpacity'	: 0.9,
+		'speedIn'		: 500,
+		'speedOut'		: 250,
+		'padding'		: 5,
+		'autoScale'		: true,
+		'centerOnScroll'	: true,
+		'enableEscapeButton'	: true,
+		'scrolling'		: 'no',
+		'titleShow'       	: false,
+		'type'			: 'iframe'
+	});
+
+	$(".fancy_cpu").fancybox({
 		'width'			: 900,
 		'height'		: 460,
 		'transitionIn'		: 'elastic',
@@ -343,7 +387,7 @@ function initNavbarFancies() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_blocks").fancybox({
 		'width'			: 400,
 		'height'		: 460,
@@ -361,7 +405,7 @@ function initNavbarFancies() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_sets").fancybox({
 		'width'			: 480,
 		'height'		: 650,
@@ -379,10 +423,10 @@ function initNavbarFancies() {
 		'titleShow'       	: false,
 		'type'			: 'iframe'
 	});
-	
+
 	$(".fancy_iframe3").fancybox({
-		'width'			: 325,
-		'height'		: 150,	
+		'width'			: 350,
+		'height'		: 150,
 		'overlayColor'		: '#000',
 		'overlayOpacity'	: 0.98,
 		'autoScale'		: true,

@@ -77,7 +77,7 @@ include_once "globals.php";
 	<table id="serieSet" class="film" style="width:350px; padding:0px; margin-left:13px !important; z-index:1;">
 		<tr><th class="righto" style="padding:0 0 0 15px;">id</th><th colspan="2" style="padding-left:10px !important;">Setname</th></tr>
 <?php postSets(); ?>
-		<tr><td class="righto" colspan="3" style="cursor:pointer;" onclick="addSet(); return false;"><img src="./img/add.png" style="height:24px; width:24px;" title="add set"></td></tr>
+		<tr><td class="righto" colspan="3" style="cursor:pointer; padding-right:10px;" onclick="addSet(); return false;"><img src="./img/add.png" style="height:16px; width:16px;" title="add set"></td></tr>
 	</table>
 	</body>
 </html>
@@ -138,7 +138,7 @@ function postSet($id, $name) {
 	echo '<td class="righto" style="padding-right:0px !important;">'.$id.'</td>';
 	$jsName = str_replace("'", "\'", $name);
 	echo '<td style="cursor:pointer; padding-left:10px !important;" onclick="setSetName(\''.$id.'\', \''.$jsName.'\'); return false;">'.$name.'</td>';
-	echo '<td class="righto" style="cursor:pointer;" onclick="deleteSet(\''.$id.'\', \''.$jsName.'\'); return false;"><img src="./img/del.png" style="height:18px; width:18px;" title="delete"></td>';
+	echo '<td class="righto" style="cursor:pointer; padding-right:8px;" onclick="deleteSet(\''.$id.'\', \''.$jsName.'\'); return false;"><img src="./img/del.png" style="height:18px; width:18px;" title="delete"></td>';
 	echo '</tr>';
 	echo "\r\n";
 }

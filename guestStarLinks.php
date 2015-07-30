@@ -6,10 +6,10 @@ include_once "./template/config.php";
 include_once "globals.php";
 
 	if (!isAdmin()) { die; }
-	$count = getCount();
+	$count = startImport();
 	echo '<span style="font:12px Verdana, Arial;">'.$count.' SQL-Statement'.($count != 1 ? 's were' : ' was').' executed!</span>'."\r\n";
 
-function getCount() {
+function startImport() {
 	$count = 0;
 	$dbh   = getPDO();
 	try {
@@ -22,6 +22,7 @@ function getCount() {
 			$key = strtolower($str);
 			$key = str_replace('.', '', $key);
 			$key = str_replace(' ', '', $key);
+			
 			$actors[$key]['str'] = $str;
 			$actors[$key]['id']  = $id;
 		}
@@ -35,7 +36,7 @@ function getCount() {
 			$tmp    = $row['c04'];
 			$tmp    = str_replace(',',  ' / ', $tmp);
 			$tmp    = explode(" / ", $tmp);
-			$gs     = array();
+			#$gs     = array();
 			foreach($tmp as $g) {
 				if (substr_count($g, 'Autor') > 0) { continue; }
 				if (substr_count($g, 'Gast') == 0 && substr_count($g, 'Guest') == 0) { continue; }
@@ -45,6 +46,7 @@ function getCount() {
 				$g = str_replace('(Gast)',  '', $g);
 				$g = str_replace('(Guest)', '', $g);
 				$g = trim($g);
+				
 				$key = strtolower($g);
 				$key = str_replace('.', '', $key);
 				$key = str_replace(' ', '', $key);

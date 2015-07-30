@@ -79,9 +79,11 @@ function postMVids($mvids) {
 	$xbmcRunning = xbmcRunning();
 	
 	foreach ($mvids as $mvid) {
-		$strCount = $count;
-		while(strlen($strCount) < $lmLen) { $strCount = '0'.$strCount; }
-		$count++;
+		#$strCount = $count;
+		#while(strlen($strCount) < $lmLen) { $strCount = '0'.$strCount; }
+		#$count++;
+		$frmt = '%0'.$lmLen.'d';
+		$strCount = sprintf($frmt, $count++);
 		
 		$filename = $isAdmin && $xbmcRunning ? prepPlayFilename($mvid->getFilename()) : null;
 		$playItem = empty($filename) ? null : ' onclick="playItem(\''.$filename.'\'); return false;"';

@@ -5,92 +5,20 @@ include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "globals.php";
 	
-	function getNeededColspan($res, $spalte) {
-		$colspan = 1;
-		if ($spalte == 5) {
-			return $colspan;
-		}
-		
-		for ($j = $spalte; $j < count($res); $j++) {
-			$val = trim($res[$j]);
-			if ($val != null || $val != '') {
-				break;
-			}
-			
-			$colspan++;
-		}
-		
-		if ($spalte == 1) {
-			return ($colspan > 5 ? 5 : $colspan);
-		}
-		
-		return $colspan;
-	}
-	
-	function getCovers($fnam, $cover, $idMovie) {
-		$existArtTable = $GLOBALS['existArtTable'];
-		
-		$res = array();
-		if (file_exists(getCoverMid($fnam, $cover, false))) {
-			$res[0] = getCoverMid($fnam, $cover, false); //cover
-			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
-			
-		} else if ($existArtTable) {
-			$res2 = querySQL("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
-			foreach($res2 as $row2) {
-				$type = $row2['type'];
-				$url  = $row2['url'];
-				if (!empty($url)) {
-					$res[0] = getCoverMid($url, $url, true); //cover
-					$res[1] = getCoverBig($url, $url, true); //cover_big
-					if ($type == 'poster') { break; }
-				}
-			}
-		}
-		
-		return $res;
-	}
-	
-	function getCountry($idMovie) {
-		$SQL = "SELECT c.strCountry FROM countrylinkmovie cl, country c, movie m WHERE m.idMovie = cl.idMovie AND cl.idCountry = c.idCountry AND m.idMovie = '".$idMovie."';";
-		$res = querySQL($SQL, false);
-		$row = $res->fetch();
-		return $row['strCountry'];
-	}
-	
-	function getFanartCover($fnam, $idMovie) {
-		$existArtTable = $GLOBALS['existArtTable'];
-		
-		$crc = thumbnailHash($fnam);
-		$fanart = "./img/Thumbnails/Fanart/".$crc.".jpg";
-		
-		$fanartExists = file_exists($fanart);
-		if ($fanartExists) {
-			$ftime = '';
-			try {
-				$ftime = filemtime($fanart);
-			} catch (Exception $e) { }
-
-			$fanartThumb = "./img/fanart/".$crc."-fanart_".$ftime.".jpg";
-			return getFanart0($fanart, $fanartThumb);
-			
-		} else if ($existArtTable) {
-			$row2 = fetchFromDB("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '".$idMovie."';");
-			$url  = $row2['url'];
-			if (!empty($url)) {
-				return getFanart($url, $url, true);
-			}
-		}
-		
-		return null;
-	}
+	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
+	#if (empty($id)) { $id = getEscGPost('idShow'); }
+	if (empty($id)) { die('<br/>no param!<br/>'); }
 ?>
 
 <head>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
+<?php if (isAdmin()) { ?>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
+<?php } else { ?>
+	<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
+<?php } ?>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="class.css" />
 	<style> body {background-color:#<?php echo ($DETAILFANART) ? 'FFFFFF' : 'D9E8FA'; ?>;} </style>
@@ -146,12 +74,10 @@ include_once "globals.php";
 	$ANONYMIZER       = $GLOBALS['ANONYMIZER'];
 	$IMDB             = $GLOBALS['IMDB'];
 	$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
+	$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
 	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
 	$DETAILFANART     = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
-	$ENCODE           = isset($GLOBALS['ENCODE_IMAGES']) ? $GLOBALS['ENCODE_IMAGES'] : false;
 	
-	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
-	if (empty($id)) { die('<br/>no param!<br/>'); }
 		$isAdmin = isAdmin();
 		$idFile  = -1;
 	
@@ -206,29 +132,23 @@ include_once "globals.php";
 		$fanartExists = false;
 		if ($DETAILFANART) {
 			$fanart = getFanartCover($fnam, $idMovie);
-			$fanartExists = !empty($fanart);
 			wrapItUp('fanart', $idMovie, $fanart);
+			$fanartExists = !empty($fanart);
 		}
 ?>
 <body>
 <?php
-		if ($DETAILFANART && $fanartExists) {
+		if ($fanartExists) {
 			$fanart  = getImageWrap($fanart, $idMovie, 'fanart', 0);
-			if ($ENCODE) { $fanart = base64_encode_image($fanart); }
-			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>';
-			echo "\r\n";
+			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>'."\r\n";
 		}
 		
-		$pos1 = strpos($filename, '.3D.');
-		if ( $pos1 == true) {
+		$is3D = strpos($filename, '.3D.');
+		if ($is3D == true) {
 			$titel .= ' (3D)';
 		}
 		
 		if (!empty($cover)) {
-			if ($ENCODE) {
-				$cover     = base64_encode_image($cover);
-				$cover_big = base64_encode_image($cover_big);
-			}
 			echo "\r\n";
 			echo '<div class="coverDiv">';
 			echo '<div class="innerCoverDiv">';
@@ -246,19 +166,18 @@ include_once "globals.php";
 		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$ANONYMIZER.$IMDBFILMTITLE.$row['imdbId'].'">'.$titel.' ('.$jahr.')'.'</a>';
 		$trailer = $row['trailer'];
 		if ($SHOW_TRAILER && !empty($trailer)) {
-			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>';
-			echo "\r\n";
+			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>'."\r\n";
 		}
 		
 		$cmpTitel = strtolower($titel);
 		$cmpTitel = str_replace('and', '', $cmpTitel);
 		$cmpTitel = str_replace('und', '', $cmpTitel);
-		$cmpTitel = str_replace('&', '', $cmpTitel);
+		$cmpTitel = str_replace('&',   '', $cmpTitel);
 		
 		$cmpOrTit = strtolower($orTitel);
 		$cmpOrTit = str_replace('and', '', $cmpOrTit);
 		$cmpOrTit = str_replace('und', '', $cmpOrTit);
-		$cmpOrTit = str_replace('&', '', $cmpOrTit);
+		$cmpOrTit = str_replace('&',   '', $cmpOrTit);
 		$orTitleShown = false;
 		if (!empty($cmpOrTit) && $cmpTitel != $cmpOrTit) {
 			$orTitleShown = true;
@@ -278,11 +197,14 @@ include_once "globals.php";
 			echo "\r\n";
 		}
 		
-		if ($isAdmin && !empty($percent)) {
-			echo '<span class="epCheckSpan" title="'.$pausedAt.' ('.$percent.'%)" style="top:'.($orTitleShown ? '-30' : '0').'px; right:-8px;">';
-			#if ($watched > 0) { echo '<img src="./img/check.png" class="galleryImage thumbCheck" style="position:relative; bottom:4px;" title="watched" />'; }
+		if ($isAdmin) {
+			$hint = empty($percent) ? '' : ' title="'.$pausedAt.' ('.$percent.'%)"';
+			echo '<span class="epCheckSpan"'.$hint.' style="top:'.($orTitleShown ? '-64' : '-32').'px; right:-16px;">';
 			if (!empty($percent)) {
 				echo '<input type="text" class="knob-dyn" data-width="25" data-height="25" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
+			}
+			else if ($watched > 0) {
+				echo '<img src="./img/check.png" class="icon32" title="watched" />';
 			}
 			echo '</span>';
 		}
@@ -346,14 +268,14 @@ include_once "globals.php";
 			$run = 1;
 		}
 		if (!empty($row['c11'])) {
-			$secs = $row['c11'];
+			$secs    = $row['c11'];
 			$minutes = floor($secs/60);
-			$hours = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
+			$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
 			$minutes = $minutes.'\'';
 			$run = 1;
 		}
 		if (substr($row['c05'], 0, 1) != "0") {
-			$rating = substr($row['c05'], 0, 3);
+			$rating  = substr($row['c05'], 0, 3);
 			$stimmen = $row['c04'];
 			$run = 1;
 		}
@@ -383,7 +305,7 @@ include_once "globals.php";
 			if (!empty($tmp)) { $height = $tmp; }
 
 			$tmp = $row3['strVideoCodec'];
-			if (!empty($tmp) && !isDemo()) { $vCodec = strtoupper($tmp); }
+			if (!empty($tmp) && !isDemo()) { $vCodec = trim($tmp); }
 
 			$tmp = $row3['strAudioCodec'];
 			if (!empty($tmp) && !isDemo()) { $aCodec[count($aCodec)] = strtoupper($tmp); }
@@ -396,6 +318,14 @@ include_once "globals.php";
 			
 			$tmp = $row3['strSubtitleLanguage'];
 			if (!empty($tmp) && !isDemo()) { $sLang[count($sLang)] = strtoupper($tmp); }
+			
+			$tmp = $row3['iVideoDuration'];
+			if (!empty($tmp)) {
+				$secs    = $tmp;
+				$minutes = floor($secs/60);
+				$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
+				$minutes = $minutes.'\'';
+			}
 			
 			$run++;
 		}
@@ -440,7 +370,7 @@ include_once "globals.php";
 			}
 
 			if ($g < count($aCodec)) {
-				$res[$g][8] = postEditCodec($aCodec[$g]);
+				$res[$g][8] = postEditACodec($aCodec[$g]);
 			}
 
 			if ($g < count($aChannels)) {
@@ -459,7 +389,7 @@ include_once "globals.php";
 		if (!empty($width) && !empty($height)) {
 			$res[0][5] = $width.'x'.$height;
 		}
-		$res[0][6] = $vCodec;
+		$res[0][6] = postEditVCodec($vCodec);
 		
 		$res[1][0] = $minutes;
 		$res[1][5] = $ar;
@@ -491,10 +421,7 @@ include_once "globals.php";
 				for ($j = 0; $j < count($res[$i]); $j++) {
 					$val = $res[$i][$j];
 					if (count($genre) == 0 && $j == 4) {
-						if ($emptyGenreFilled) {
-							continue;
-						}
-
+						if ($emptyGenreFilled) { continue; }
 					} else if ($val == null && $j > 0 && $j != 5) {
 						continue;
 					}
@@ -553,7 +480,10 @@ include_once "globals.php";
 							break;
 					}
 
-					echo '>'.($val == null || $val == '' ? '&nbsp;' : $val);
+					echo '>';
+					#if ($i == 0 && $j == 1) { echo '<a href="'.$ANONYMIZER.$IMDBFILMTITLE.$row['imdbId'].'">'; }
+					echo ($val == null || $val == '' ? '&nbsp;' : $val);
+					#if ($i == 0 && $j == 1) { echo '</a>'; }
 					echo '</td>';
 				}
 				echo '</tr>';
@@ -590,7 +520,6 @@ include_once "globals.php";
 			if ($smb || $stacked) {
 				$filename = '';
 			}
-			
 			
 			echo '<tr class="abstand"><td colspan="10"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
@@ -714,6 +643,89 @@ include_once "globals.php";
 		
 		echo '</div>';
 		echo "\r\n";
-
+		
 	unset( $_SESSION['show'], $_SESSION['idShow'] );
+
+
+//- FUNCTIONS -//
+	function getNeededColspan($res, $spalte) {
+		$colspan = 1;
+		if ($spalte == 5) {
+			return $colspan;
+		}
+		
+		for ($j = $spalte; $j < count($res); $j++) {
+			$val = trim($res[$j]);
+			if ($val != null || $val != '') {
+				break;
+			}
+			
+			$colspan++;
+		}
+		
+		if ($spalte == 1) {
+			return ($colspan > 5 ? 5 : $colspan);
+		}
+		
+		return $colspan;
+	}
+	
+	function getCovers($fnam, $cover, $idMovie) {
+		$existArtTable = $GLOBALS['existArtTable'];
+		
+		$res = array();
+		if (file_exists(getCoverMid($fnam, $cover, false))) {
+			$res[0] = getCoverMid($fnam, $cover, false); //cover
+			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
+			
+		} else if ($existArtTable) {
+			$res2 = querySQL("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
+			foreach($res2 as $row2) {
+				$type = $row2['type'];
+				$url  = $row2['url'];
+				if (!empty($url)) {
+					$res[0] = getCoverMid($url, $url, true); //cover
+					$res[1] = getCoverBig($url, $url, true); //cover_big
+					if ($type == 'poster') { break; }
+				}
+			}
+		}
+		
+		return $res;
+	}
+	
+	function getCountry($idMovie) {
+		$SQL = "SELECT c.strCountry FROM countrylinkmovie cl, country c, movie m WHERE m.idMovie = cl.idMovie AND cl.idCountry = c.idCountry AND m.idMovie = '".$idMovie."';";
+		$res = querySQL($SQL, false);
+		$row = $res->fetch();
+		return $row['strCountry'];
+	}
+	
+	function getFanartCover($fnam, $idMovie) {
+		$existArtTable = $GLOBALS['existArtTable'];
+		
+		$crc = thumbnailHash($fnam);
+		$fanart = "./img/Thumbnails/Fanart/".$crc.".jpg";
+		
+		$fanartExists = file_exists($fanart);
+		if ($fanartExists) {
+			$ftime = '';
+			try {
+				$ftime = filemtime($fanart);
+			} catch (Exception $e) { }
+			
+			$fanartThumb = "./img/fanart/".$crc."-fanart_".$ftime.".jpg";
+			return getFanart0($fanart, $fanartThumb);
+			
+		} else if ($existArtTable) {
+			$row2 = fetchFromDB("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '".$idMovie."';");
+			$url  = $row2['url'];
+			if (!empty($url)) {
+				return getFanart($url, $url, true);
+			}
+		}
+		
+		return null;
+	}
+//- FUNCTIONS -//
 ?>

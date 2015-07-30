@@ -14,6 +14,7 @@ include_once "globals.php";
 	$act        = getEscGPost('act',         '');
 	$id         = getEscGPost('id',          -1);
 	$idFile     = getEscGPost('idFile',      -1);
+	$idFiles    = getEscGPost('idFiles',     '');
 	$idMovie    = getEscGPost('idMovie',     -1);
 	$idGenre    = getEscGPost('idGenre',     -1);
 	$idShow     = getEscGPost('idShow',      -1);
@@ -46,6 +47,16 @@ include_once "globals.php";
 			$dbh->exec('UPDATE files SET playCount='.($act == 'setSeen' ? '1' : '0').' WHERE idFile = '.$idFile.';');
 			clearMediaCache();
 			
+		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
+			$dbh->exec('DELETE FROM fileinfo WHERE idFile IN ('.$idFiles.');');
+			$dbh->exec('DELETE FROM streamdetails WHERE idFile IN ('.$idFiles.');');
+			clearMediaCache();
+			
+		} else if ($idFile != -1 && $act == 'clearFileSize')  {
+			$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+			$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+			clearMediaCache();
+			
 		} else if ($act == 'updateEpisode' && $idEpisode != -1 && $idPath != -1 && $idFile != -1 && !empty($file) && !empty($strPath)) {
 			$strPath  = str_replace("''", "'", $strPath);
 			$file     = str_replace("''", "'", $file);
@@ -63,19 +74,18 @@ include_once "globals.php";
 			$dbh->exec($SQLfile);
 			
 			$SQLepi = 'UPDATE episode SET c00="[TITLE]",c01="[DESC]",c03="[RATING]",c04="[GUEST_AUTOR]",c05="[AIRED]",c10="[REGIE]",c18="[FILENAME]" WHERE idEpisode=[idEpisode];';
-			$SQLepi = str_replace('[idEpisode]', $idEpisode, $SQLepi);
-			$SQLepi = str_replace('[TITLE]', $title, $SQLepi);
-			$SQLepi = str_replace('[DESC]', $desc, $SQLepi);
-			$SQLepi = str_replace('[RATING]', $rating, $SQLepi);
+			$SQLepi = str_replace('[idEpisode]',   $idEpisode,  $SQLepi);
+			$SQLepi = str_replace('[TITLE]',       $title,      $SQLepi);
+			$SQLepi = str_replace('[DESC]',        $desc,       $SQLepi);
+			$SQLepi = str_replace('[RATING]',      $rating,     $SQLepi);
 			$SQLepi = str_replace('[GUEST_AUTOR]', $gast_autor, $SQLepi);
-			$SQLepi = str_replace('[AIRED]', $airdate, $SQLepi);
-			$SQLepi = str_replace('[REGIE]', $regie, $SQLepi);
+			$SQLepi = str_replace('[AIRED]',       $airdate,    $SQLepi);
+			$SQLepi = str_replace('[REGIE]',       $regie,      $SQLepi);
 			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
 			$dbh->exec($SQLepi);
 			
-			$SQLfile = 'UPDATE fileinfo SET filesize=NULL WHERE idFile=[idFile];';
-			$SQLfile = str_replace('[idFile]', $idFile, $SQLfile);
-			$dbh->exec($SQLfile);
+			$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+			$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 			
 			clearMediaCache();
 			
@@ -162,10 +172,19 @@ include_once "globals.php";
 			
 			$params = null;
 			if (!empty($file)) {
-				$file   = str_replace("''", "'", $file);
-				$params = "strFilename='".$file."'";
+				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
+				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);
+				$row     = fetchFromDB_($dbh, $SQLpth, false);
+				$strPath = $row['strPath'];
+				
+				$file    = str_replace("''", "'", $file);
+				$params  = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
-				$dbh->exec('UPDATE fileinfo SET filesize=NULL WHERE idFile='.$idFile.';');
+				$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+				if (!empty($strPath)) {
+					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
+					$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+				}
 			}
 			
 			if (!empty($dateAdded)) {
@@ -195,11 +214,13 @@ include_once "globals.php";
 
 		if (($act == 'linkInsert' || $act == 'linkUpdate') && $id != -1 && $idMovie != -1) {
 			$SQL = 'UPDATE movie SET idSet='.$id.' WHERE idMovie = '.$idMovie.';';
+			$dbh->exec($SQL);
 			clearMediaCache();
 		}
 		
 		if ($act == 'linkDelete' && $idMovie != -1) {
 			$SQL = 'UPDATE movie SET idSet=NULL WHERE idMovie = '.$idMovie.';';
+			$dbh->exec($SQL);
 			clearMediaCache();
 		}
 		
@@ -207,6 +228,7 @@ include_once "globals.php";
 			$name = str_replace('_AND_', '&', $name);
 			$name = str_replace("''", "'", $name);
 			$SQL = 'UPDATE sets SET strSet="'.$name.'" WHERE idSet = '.$id.';';
+			$dbh->exec($SQL);
 			clearMediaCache();
 		}
 		
@@ -242,6 +264,7 @@ include_once "globals.php";
 			}
 			echo 'Setcover was set!<br />';
 			
+			#<OLD CODE>
 			if (false) {
 			if (!empty($url)) {
 				$docRoot = getEscServer('DOCUMENT_ROOT');
@@ -304,7 +327,8 @@ include_once "globals.php";
 				
 				exit;
 			} //empty url
-			}
+			} //if false
+			#</OLD CODE>
 		}
 		
 		if ($act == 'addset' && !empty($name)) {
@@ -314,6 +338,7 @@ include_once "globals.php";
 			$id = $lastId + 1;
 			
 			$SQL = 'REPLACE INTO sets VALUES('.$id.', "'.$name.'");';
+			$dbh->exec($SQL);
 		}
 		
 		if ($act == 'delete' && $id != -1) {
@@ -321,43 +346,37 @@ include_once "globals.php";
 			$dbh->exec('UPDATE movie SET idSet=NULL WHERE idSet = '.$id.';');
 		}
 		
-		if (!empty($SQL)) {
-			$dbh->exec($SQL);
-		}
-		
 		if (!empty($dbh) && $dbh->inTransaction()) {
 			$dbh->commit();
 		}
 		
-		if ($act == 'setSeen' || $act == 'setUnseen') {
+		$clsFrame = false;
+		if ($act == 'clearFileSize' || $act == 'clearFileSizes') {
+			echo '<span style="font:12px Verdana, Arial;">Streamdetails / Filesize(s) cleared!</span>';
+			
+		} else if ($act == 'setSeen' || $act == 'setUnseen') {
 			echo '<span style="font:12px Verdana, Arial;">Episode is set to '.($act == 'setUnseen' ? 'not ' : '').'watched!</span>';
-		
+			
 		} else if ($act == 'setRunning' && $idShow != -1 && $val != -1) {
 			echo '<span style="font:12px Verdana, Arial;">TV-Show is set to '.($val == 1 ? 'running' : 'not running').'!</span>';
-		
+			
 		} else if ($act == 'clearAirdate' && $idShow != -1) {
 			echo '<span style="font:12px Verdana, Arial;">Next airdate was cleared!</span>';
-		
-		} else if ($act == 'updateEpisode') {
-			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 			
-		} else if ($act == 'addEpisode') {
-			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
-			
-		} else if ($act == 'linkInsert' || $act == 'linkUpdate' || $act == 'linkDelete') {
-			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
-			
-		} else if ($act == 'setmovieinfo') {
-			header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
-			
-		} else {
+		} else if ($act == 'addset' || $act == 'delete' || $act == 'setname' || $act == 'setMoviesetCover' || $act == 'setMoviesetCover') {
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');
+			
+		} else if ($act == 'linkInsert' || $act == 'linkUpdate'    || $act == 'linkDelete' ||
+			   $act == 'addEpisode' || $act == 'updateEpisode' || $act == 'setmovieinfo') {
+			
+			$clsFrame = true;
 		}
+		
+		if ($clsFrame) { header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php'); }
 		
 	} catch(PDOException $e) {
 		echo $e;
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
-		#header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php');
 	}
 	
 	exit;

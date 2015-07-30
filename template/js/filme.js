@@ -125,43 +125,8 @@ function selected(obj, changeMaster, postRequest, admin) {
 	}
 }
 
-function doRequest() {
-	var resBox = document.getElementById('result');
-	if (resBox == null) { return; }
-	
-	var copyAsScript = document.getElementById('copyAsScript');
-	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
-	
-	$.ajax({
-		type: "POST",
-		url: "request.php",
-		data: "contentpage="+"&ids=" + ids + "&copyAsScript=" + asscript,
-		success: function(data){
-			$("#result").html(data);
-		}
-	});
-}
-
-function saveSelection() {
-	var resBox = document.getElementById('result');
-	if (resBox == null) { return; }
-	
-	var copyAsScript = document.getElementById('copyAsScript');
-	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
-	
-	$.ajax({
-		type: "POST",
-		url: "request.php",
-		data: "contentpage="+"&ids=" + ids + "&copyAsScript=" + asscript + "&forOrder=1",
-		success: function(data) {
-			if (data == '1') { alert('Selection saved!'); }
-			else if (data == '2') { alert('Selection appended!'); }
-			else { alert('Error saving!'); }
-			
-			if (data != '-1') { clearSelectBoxes(null); }
-		}
-	});
-}
+function doRequest() { doRequest__(false, ids); }
+function saveSelection() { saveSelection__(false, ids); }
 
 function collectIds() {
 	ids = '';
@@ -255,9 +220,4 @@ function resetDbSearch() {
 function resetFilter() {
 	$('#searchfor').val('');
 	searchForString(null, null);
-}
-
-function getKeyCode(event) {
-	event = event || window.event;
-	return event.keyCode;
 }

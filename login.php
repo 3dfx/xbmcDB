@@ -93,7 +93,7 @@ function logLogin() {
 	$HOMENETWORK  = isset($GLOBALS['HOMENETWORK']) ? $GLOBALS['HOMENETWORK'] : false;
 	$asAdmin      = $GLOBALS['asAdmin'];
 	$loggedInAs   = $GLOBALS['loggedInAs'];
-	$FAIL_        = $GLOBALS['FAIL_'];
+	$FAIL_        = 'FAiL';
 	if ($loggedInAs == $FAIL_) { addBlacklist(); }
 	else { removeBlacklist(); }
 	
@@ -107,7 +107,7 @@ function logLogin() {
 		$ip             = $_SERVER['REMOTE_ADDR'];
 		$host           = gethostbyaddr($ip);
 		
-		if (noLog($username, $host) && $loggedInAs != $FAIL_) { return; }
+		if (noLog($username, $host, $ip) && $loggedInAs != $FAIL_) { return; }
 		
 		$datum = strftime("%d.%m.%Y");
 		$time  = strftime("%X");
@@ -139,14 +139,13 @@ function logLogin() {
 	}
 }
 
-function noLog($username, $host) {
+function noLog($username, $host, $ip) {
 	$NO_LOG_FROM = isset($GLOBALS['NO_LOG_FROM']) ? $GLOBALS['NO_LOG_FROM'] : array();
-	
 	if (count($NO_LOG_FROM) > 0) {
 		$hosts = isset($NO_LOG_FROM[$username]) ? $NO_LOG_FROM[$username] : null;
 		if (!empty($hosts)) {
 			for ($i = 0; $i < count($hosts); $i++) {
-				if (substr_count($host, $hosts[$i]) >= 1) { return true; }
+				if ($ip == $hosts[$i] || substr_count($host, $hosts[$i]) >= 1) { return true; }
 			}
 		}
 	}

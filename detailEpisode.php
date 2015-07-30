@@ -67,13 +67,20 @@ include_once "./template/_SERIEN.php";
 		}
 	}
 	
-	$coverP = $path;
+	$result = fetchFromDB("SELECT delta AS delta FROM episodelinkepisode WHERE idFile = '".$idFile."';");
+	$delta  = empty($result['delta']) ? null : $result['delta'];
 	
-	if ($season  < 10) { $season  = '0'.$season;  }
-	if ($episode < 10) { $episode = '0'.$episode; }
-	
-	$path  = mapSambaDirs($path);
-	$fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
+	$coverP  = $path;
+	$episod_ = $episode;
+	$season  = sprintf("%02d", $season);
+	$episode = sprintf("%02d", $episode);
+	if (!empty($delta)) {
+		$delta   += $episod_;
+		$delta    = '-E'.sprintf("%02d", $delta);
+		$episode  = $episode.$delta;
+	}
+	$path    = mapSambaDirs($path);
+	$fsize   = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
 	
 	$duration   = 0;
 	$ar         = null;
@@ -91,7 +98,9 @@ include_once "./template/_SERIEN.php";
 		if (!empty($tmp)) {
 			if ($tmp != '') {
 				$tmp  = round($tmp, 2);
-				$tmp .= (strlen($tmp) < 4 ? '0' : '').':1';
+				if ($tmp-1 != 1 && $tmp-1 != 0)
+					$tmp .= (strlen($tmp) < 4 ? '0' : '');
+				$tmp .= ':1';
 			}
 			$ar = $tmp;
 		}
@@ -106,7 +115,7 @@ include_once "./template/_SERIEN.php";
 		if (!empty($tmp)) { $duration = $tmp; }
 
 		$tmp = $stRow['strVideoCodec'];
-		if (!empty($tmp)) { $vCodec = strtoupper($tmp); }
+		if (!empty($tmp)) { $vCodec = $tmp; }
 
 		$tmp = $stRow['strAudioCodec'];
 		if (!empty($tmp)) { $aCodec[count($aCodec)] = strtoupper($tmp); }
@@ -123,7 +132,7 @@ include_once "./template/_SERIEN.php";
 	
 	$thumbImg   = null;
 	$sessionImg = null;
-	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS']) ? $GLOBALS['TVSHOW_THUMBS'] : false;
+	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS'])        ? $GLOBALS['TVSHOW_THUMBS']        : false;
 	$ENCODE   = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
 	
 	if ($thumbsUp) {
@@ -136,13 +145,13 @@ include_once "./template/_SERIEN.php";
 			$smb = (substr($sessionImg, 0, 6) == 'smb://');
 			
 			if (file_exists($sessionImg)) {
-				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encode' : null);
+				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encoded' : null);
 			}
 		}
 		
 		if (empty($sessionImg) || !file_exists($sessionImg)) {
 			$sessionImg = getTvShowThumb($coverP.$filename);
-			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
+			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0);
 			
 			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
 				$SQL  = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';";
@@ -151,7 +160,7 @@ include_once "./template/_SERIEN.php";
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
 					if (file_exists($img)) {
-						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE ? 'encode' : null);
+						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0);
 					}
 				}
 			}
@@ -220,51 +229,65 @@ include_once "./template/_SERIEN.php";
 	if (!empty($airDate)) {
 		$dayOfWk = dayOfWeekShort($airDate);
 		$airDate = toEuropeanDateFormat($airDate);
-		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:35px;"><font color="silver">(</font>'.$dayOfWk.'<font color="silver">)</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
+		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
 	}
 	
 	if ($isAdmin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
-			$dayOfWk    = dayOfWeekShort($airDate);
+			$dayOfWk    = dayOfWeekShort($lastPlayed);
 			$lastPlayed = toEuropeanDateFormat(substr($lastPlayed, 0, 10));
-			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:35px;"><font color="silver">(</font>'.$dayOfWk.'<font color="silver">)</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
+			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
 		}
 	}
 	
 	if (!$isDemo) {
-		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
-	}
-	
-	if ($isAdmin) {
-		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />';
-		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
-		echo encodeString($path).$filename;
-		echo '</div>';
-	}
-	
-	if (!$isDemo) {
-		if (!empty($width) && !empty($height)) {
-			echo '<div class="padtop15"><span><u><i><b>Video:</b></i></u></span><span class="flalright">'.$width.'x'.$height.(!empty($ar) ? ' <font color="silver">[</font> '.$ar.' <font color="silver">]</font>' : '').'</span></div>';
+		if (!empty($vCodec) || (!empty($width) && !empty($height))) {
+			echo '<div class="padtop15">';
+			echo '<span><u><i><b>Video:</b></i></u></span>';
+			if (!empty($width) && !empty($height))
+				echo '<span class="flalright">'.$width.'x'.$height.(!empty($ar) ? ' <font color="silver">[</font> '.$ar.' <font color="silver">]</font>' : '').'</span>';
+			if (!empty($vCodec))
+				echo '<span class="flalright">'.postEditVCodec($vCodec).'&nbsp;<font color="silver"><b>|</b></font>&nbsp;</span>';
+			echo '</div>';
 		}
 		if (!empty($aCodec)) {
 			$codecs = '';
 			$countyMap = getCountyMap();
-			for($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditCodec($aCodec[$i]).getLanguage($countyMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver">|</font> ' : ''); }
+			for($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditACodec($aCodec[$i]).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countyMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : ''); }
 			echo '<div style="overflow-x:hidden;"><span><u><i><b>Audio:</b></i></u></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
 		if (!empty($subtitle)) {
 			$codecs = '';
+			$cCount = 0;
 			$countyMap = getCountyMap();
-			for($i = 0; $i < count($subtitle); $i++) { $codecs .= getLanguage($countyMap, $subtitle, $i, false).($i < count($subtitle)-1 && !empty($subtitle[$i]) ? ' <font color="silver">|</font> ' : ''); }
-			echo '<div style="overflow-x:hidden;"><span><u><i><b>Sub:</b></i></u></span><span class="flalright">'.count($subtitle).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
+			for($i = 0; $i < count($subtitle); $i++) {
+				$codec = getLanguage($countyMap, $subtitle, $i, false);
+				if (!empty($codec)) {
+					$codecs .= $codec.($i < count($subtitle)-1 && !empty($subtitle[$i]) ? ' <font color="silver"><b>|</b></font> ' : '');
+					$cCount++;
+				}
+			}
+			echo '<div style="overflow-x:hidden;"><span><u><i><b>Sub:</b></i></u></span><span class="flalright">'.$cCount.' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
 	}
 	
+	if (!$isDemo) {
+		if ($isAdmin) {
+			echo '<div class="padtop15"><hr style="position:width:335px; margin:0px; border-bottom-width:0px; border-color:#BBCCDD;" /></div>';
+		}
+		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
+	}
 	if ($isAdmin) {
-		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>idEpisode:</b></i></u><span class="flalright">'.$id.'</span></div>';
+		echo '<div style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />';
+		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
+		echo encodeString($path).$filename;
+		echo '</div>';
+		
+		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>idEpisode</b>/<b>idFile:</b></i></u><span class="flalright">'.$id.' <b>|</b> '.$idFile.'</span></div>';
 	}
 	echo '</div>';
-	echo '</div></td>';
+	echo '</div>';
+	echo '</td>';
 	echo '</tr>';
 	echo '</table>';
 	
