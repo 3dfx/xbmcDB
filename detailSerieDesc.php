@@ -1,6 +1,7 @@
 <?php
 include_once "check.php";
 
+include_once "globals.php";
 include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "./template/_SERIEN.php";
@@ -25,6 +26,8 @@ include_once "./template/_SERIEN.php";
 	#$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 
+	$cols = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+/*
 	$cols = array(
 		0 => '#000000',
 		1 => '#00FF00',
@@ -32,7 +35,8 @@ include_once "./template/_SERIEN.php";
 		3 => '#FF0000',
 		4 => '#550000',
 	);
-	
+*/
+
 	$data   = getEscGet('data');
 	$sum    = 0;
 	$codecs = array();
@@ -51,8 +55,9 @@ include_once "./template/_SERIEN.php";
 			$prc   = round($count / $sum * 100, 0);
 			$codec = postEditVCodec($codec);
 			$perf  = decodingPerf($codec);
+			$color = $cols == null ? '#000000' : $cols[$perf];
 			
-			$result .= "\t".'{ "value":'.$prc.', "color":"'.$cols[$perf].'", "highlight":"'.$cols[$perf].'", "label":"'.$codec.'" }';
+			$result .= "\t".'{ "value":'.$prc.', "color":"'.$color.'", "highlight":"'.$color.'", "label":"'.$codec.'" }';
 			if (++$idx < $end) { $result .= ','; }
 			$result .= "\n\r";
 		}
@@ -73,7 +78,7 @@ include_once "./template/_SERIEN.php";
 		echo '<img id="tvBanner" class="openTvdb" src="'.$banner.'" href="'.$tvdbURL.'" />';
 	}
 	
-	echo '<div class="fClose" onclick="closeShow();"><img src="./img/gnome_close.png" /></div>';
+	echo '<div class="fClose" onclick="closeShow();"><img src="./img/close.png" style="cursor:pointer;"/></div>';
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
 		$episodes = getShowInfo($idTvdb);

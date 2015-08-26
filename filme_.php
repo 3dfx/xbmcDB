@@ -144,11 +144,13 @@ function getSessionKeySQL() {
 	}
 	$sessionKey .= 'unseen_'.$unseen.'_';
 	
+	$filter      = '';
 	if (!empty($dbSearch)) {
 		$mode = $newmode = 0;
 		$saferSearch = strtolower(SQLite3::escapeString($dbSearch));
 		$sessionKey .= 'search_'.str_replace(' ', '-', $saferSearch).'_';
 		$filter      =  " AND (".
+				" lower(B.strFilename) LIKE '%".$saferSearch."%' OR".
 				" lower(A.c00) LIKE '%".$saferSearch."%' OR".
 				" lower(A.c01) LIKE '%".$saferSearch."%' OR".
 				" lower(A.c03) LIKE '%".$saferSearch."%' OR".
@@ -316,7 +318,7 @@ function generateRows($dbh, $result, $sessionKey) {
 	
 	$zeile  = 0;
 	$zeilen = array();
-	for($rCnt = 0; $rCnt < count($result); $rCnt++) {
+	for ($rCnt = 0; $rCnt < count($result); $rCnt++) {
 		$zeilenSpalte = 0;
 		$row       = $result[$rCnt];
 		$idFile    = $row['idFile'];
@@ -335,7 +337,6 @@ function generateRows($dbh, $result, $sessionKey) {
 		$rating    = $row['c05'];
 		$imdbId    = $row['imdbId'];
 		$genres    = $row['c14'];
-		$filename  = $row['filename'];
 		$vRes      = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
 		$fnam      = $path.$filename;
 		$cover     = null;
@@ -629,10 +630,16 @@ function generateRows($dbh, $result, $sessionKey) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 #resolution
 			if (!$isDemo) {
-				$resInfo = (!empty($vRes) ? ($vRes[0] >= 1900 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
-				$resTip  = (!empty($vRes) ? $vRes[0].'x'.$vRes[1] : '');
-				$codec   = (!empty($vRes) ? postEditVCodec($vRes[2]) : '');
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'"><span class="searchField">'.$resInfo.' / '.$codec.'</span></td>';
+				$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+				$resInfo   = (!empty($vRes)  ? ($vRes[0] >= 1900 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
+				$resTip    = (!empty($vRes)  ? $vRes[0].'x'.$vRes[1]    : '');
+				$codec     = (!empty($vRes)  ? postEditVCodec($vRes[2]) : '');
+				$perf      = (!empty($codec) ? decodingPerf($codec)     : 0);
+				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
+				$codec     = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$codec.'</span>' : $codec);
+				$codecInfo = !empty($resInfo) && !empty($codec);
+				$codecTD   = $codecInfo ? '<span class="searchField">'.$resInfo.(!empty($resInfo) || !empty($codec) ? ' / ' : '').$codec.'</span>' : '';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'">'.$codecTD.'</td>';
 #filesize
 				$filename = prepPlayFilename($path.$filename);
 				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;

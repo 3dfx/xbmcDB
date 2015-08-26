@@ -200,7 +200,7 @@ function searchForString(obj, event) {
 
 function searchDbForString(obj, event) {
 	if (obj == null) { return false; }
-	var search = $.trim(obj.value).toLowerCase();
+	var search = $.trim(obj.value);
 	
 	var kC = getKeyCode(event);
 	if (kC != 13) { return false; }

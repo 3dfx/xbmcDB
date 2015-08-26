@@ -915,7 +915,7 @@ function postNavBar_($isMain) {
 	$res .= '</li>';
 
 	if (!empty($dbSearch)) {
-		$saferSearch = strtolower(trim(SQLite3::escapeString($dbSearch)));
+		$saferSearch = trim(SQLite3::escapeString($dbSearch));
 	}
 
 	if ($isMain) {
@@ -1181,7 +1181,7 @@ function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs
 	$res .= '<ul class="dropdown-menu">';
 		$res .= '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
 		$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
-		$res .= '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/gnome_close.png" /></a>';
+		$res .= '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/close.png" /></a>';
 		$res .= '</li>';
 
 		if ($isTvshow && !empty($saferSearch)) {
@@ -1191,7 +1191,7 @@ function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs
 		if (!$isTvshow) {
 			$res .= '<li class="navbar-search" style="margin:0px;">';
 			$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchfor" name="searchfor" placeholder="filter..." onfocus="this.select();" onkeyup="searchForString(this, event); return false;" onmouseover="focus(this);"'.($gallerymode || !$isMain ? ' disabled' : '').' />';
-			$res .= '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/gnome_close.png" /></a>';
+			$res .= '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/close.png" /></a>';
 			$res .= '</li>';
 		}
 	$res .= '</ul>';
@@ -1207,7 +1207,7 @@ function createEpisodeSubmenu($result) {
 		$lId = 'sub_'.str_replace(' ', '_', $key);
 		$res .= '<li class="dropdown-submenu" id="'.$lId.'">';
 		$count = count($show);
-		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#" style="cursor:pointer;"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
+		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
 		$res .= '<ul class="dropdown-menu">';
 
 		foreach($show as $row) {

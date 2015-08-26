@@ -171,7 +171,7 @@ function fillTable($serien, $dbh) {
 	echo "\t".'</table>'."\r\n";
 	
 	if ($isAdmin) {
-		$miss = $missed == 0 ? 'next airdates' : sprintf("%02d", $missed).' episode'.($missed > 1 ? 's' : '').' missed';
+		$miss = $missed == 0 ? 'next airdates' : sprintf("%02d", $missed).' missed'.' episode'.($missed > 1 ? 's' : '');
 		echo '<script type="text/javascript">missedEps = \''.$miss.'\';</script>'."\r\n";
 	}
 }

@@ -246,8 +246,13 @@ include_once "./template/_SERIEN.php";
 			echo '<span><u><i><b>Video:</b></i></u></span>';
 			if (!empty($width) && !empty($height))
 				echo '<span class="flalright">'.$width.'x'.$height.(!empty($ar) ? ' <font color="silver">[</font> '.$ar.' <font color="silver">]</font>' : '').'</span>';
-			if (!empty($vCodec))
-				echo '<span class="flalright">'.postEditVCodec($vCodec).'&nbsp;<font color="silver"><b>|</b></font>&nbsp;</span>';
+			if (!empty($vCodec)) {
+				$cols   = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+				$vCodec = postEditVCodec($vCodec);
+				$perf   = decodingPerf($vCodec);
+				$color  = $cols == null ? '#000000' : $cols[$perf];
+				echo '<span class="flalright"><font color="'.$color.'">'.$vCodec.'</font>&nbsp;<font color="silver"><b>|</b></font>&nbsp;</span>';
+			}
 			echo '</div>';
 		}
 		if (!empty($aCodec)) {

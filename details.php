@@ -389,7 +389,12 @@ include_once "globals.php";
 		if (!empty($width) && !empty($height)) {
 			$res[0][5] = $width.'x'.$height;
 		}
-		$res[0][6] = postEditVCodec($vCodec);
+		$vCodec  = postEditVCodec($vCodec);
+		$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+		$perf    = (!empty($vCodec) ? decodingPerf($vCodec)     : 0);
+		$color   = ($cols == null || $perf < 4 ? null : $cols[$perf]);
+		$vCodec  = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.'</span>' : $vCodec);
+		$res[0][6] = $vCodec;
 		
 		$res[1][0] = $minutes;
 		$res[1][5] = $ar;

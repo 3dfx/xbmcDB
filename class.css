@@ -1006,11 +1006,11 @@ a.showlink {
 .checka         { position:relative; top:-2px; }
 .checkaCheck    { padding-left:4px; padding-right:0px !important; }
 .showShowInfo1  { color:silver; padding:2px 4px 2px 0px; }
-.showName       { float:left; overflow-x:hidden; }
+.showName       { float:left; overflow-x:hidden; cursor:pointer; }
 .airdShown      { width:150px; }
 .airdShownM     { width:90px; }
 .airdHidden     { width:130px; }
-.sInfoSize      { float:right; color:silver; padding-left:10px; }
+.sInfoSize      { float:right; color:silver; padding-left:10px; cursor:pointer; }
 .sInfoRating    { float:right; padding-left:10px; }
 .galleryImage   { width:16px !important; height:16px !important; z-index:50; }
 .selectedShow   { font-weight: bold !important; }
@@ -1023,7 +1023,7 @@ a.showlink {
 #tvBanner   { cursor:default; height:54px; }
 .showDescTD { padding:10px 25px 20px 25px; text-align:justify; white-space:pre-line !important; }
 .descDiv    { width:300px; margin-top:15px; }
-.fClose     { display:none; position:absolute; float:right; top:-20px; right:-25px; width:40px; height:40px; }
+.fClose     { display:none; position:absolute; float:right; top:-20px; right:-35px; width:50px; height:40px; }
 .fClose img { position:absolute; width:11px; top:15px; left:9px; }
 
 #serieTable   { width: 360px; padding:0px; margin-left:0px; z-index:1; }
