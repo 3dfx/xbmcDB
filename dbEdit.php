@@ -35,6 +35,8 @@ include_once "globals.php";
 	$airdate    = getEscGPost('airdate',     '');
 	$desc       = getEscGPost('desc',        '');
 	$val        = getEscGPost('val',         -1);
+	$clrStream  = getEscGPost('clrStream',    0);
+	$clrSize    = getEscGPost('clrSize',      0);
 	
 	$dbh = getPDO();
 	try {
@@ -49,12 +51,16 @@ include_once "globals.php";
 			
 		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
 			$dbh->exec('DELETE FROM fileinfo WHERE idFile IN ('.$idFiles.');');
-			$dbh->exec('DELETE FROM streamdetails WHERE idFile IN ('.$idFiles.');');
+			if ($clrStream == 1)
+				$dbh->exec('DELETE FROM streamdetails WHERE idFile IN ('.$idFiles.');');
+			
 			clearMediaCache();
 			
 		} else if ($idFile != -1 && $act == 'clearFileSize')  {
 			$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
-			$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+			if ($clrStream == 1)
+				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+			
 			clearMediaCache();
 			
 		} else if ($act == 'updateEpisode' && $idEpisode != -1 && $idPath != -1 && $idFile != -1 && !empty($file) && !empty($strPath)) {
@@ -84,8 +90,10 @@ include_once "globals.php";
 			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
 			$dbh->exec($SQLepi);
 			
-			$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
-			$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+			if ($clrSize == 1)
+				$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+			if ($clrStream == 1)
+				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 			
 			clearMediaCache();
 			

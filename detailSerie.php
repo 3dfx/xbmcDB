@@ -94,7 +94,7 @@ function postStaffel($staffel) {
 	echo '<td class="seasonTRd2 righto">'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
 	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
-	echo '<td class="righto vSpan">'.(isDemo() ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
+	echo '<td class="righto vSpan">'.(isDemo() ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($isAdmin) {
 		$showEmpty = false;
@@ -157,7 +157,7 @@ function postStaffel($staffel) {
 		$fSize     = _format_bytes($epi->getSize());
 		#$xbmcRunning=1;
 		$playItem  = isAdmin() && !empty($path) && !empty($filename) && $xbmcRunning ? '<a tabindex="-1" class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.$fRating.'</a>' : '<span class="showPlayItem">'.$fRating.'</span>';
-		$clearSize = isAdmin() && !empty($path) && !empty($filename) ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSize&idFile='.$epi->getIdFile().'">'.(isDemo() ? '' : $fSize).'</a>' : '<span class="clearFileSize">'.(isDemo() ? '' : $fSize).'</span>';
+		$clearSize = isAdmin() && !empty($path) && !empty($filename) ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$epi->getIdFile().'">'.(isDemo() ? '' : $fSize).'</a>' : '<span class="clearFileSize">'.(isDemo() ? '' : $fSize).'</span>';
 		
 		echo '<tr class="epTR '.$seasonId.'" id="'.$idEpisode.'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
 		echo '<td class="epTRd1'.(empty($epDlt) ? '' : ' epTRd2').'" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.'  </span><span class="searchField">'.$epTitle.'</span></td>';

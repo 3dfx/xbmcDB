@@ -207,7 +207,7 @@ function cursorBusy(state) {
 	$('#showInfo').css('cursor', state);
 	$('td').css('cursor', state);
 	$('a').css('cursor', state == '' ? 'pointer' : state);
-	$('a.fancy_msgbox, a.fancy_addEpisode').css('cursor', state == '' ? 'default' : state);
+	$('a.fancy_msgbox, a.fancy_addEpisode, li.dropdown-submenu>a').css('cursor', state == '' ? 'default' : state);
 }
 
 function loadLatestShowInfo(obj, sId, epId, trClass, eps) {
@@ -305,7 +305,8 @@ function moveDivEpDesc(resizeOffset) {
 	var left     = $(posElem).position().left;
 	var top      = $("#showDesc").position().top + $(".showDesc").height() + yOffset;
 	var width    = $("#showDesc").width();
-	var height   = "5px";
+	//var height   = "5px";
+	var height   = "auto";
 	var divTop   = top + "px";
 	var divLeft  = Math.floor(left + resizeOffset + xOffset) + "px";
 
@@ -364,7 +365,8 @@ function loadEplistPlus_(obj, trClass, eps) {
 				{ "width": "+=385px" },
 				"slow",
 				function() {
-					var height = $('#serieTable').height() + "px";
+					//var height = $('#serieTable').height() + "px";
+					var height = "auto";
 					checkShowInfo('#showInfo', 0);
 					$("#showInfo").css({ "width" : "385px", "height" : height });
 					if ($.browser.mozilla) { $("#showInfo").css({ "left" : "+=1px" }); }
@@ -443,7 +445,8 @@ function moveDivL(resizeOffset) {
 	var left     = $(posElem).position().left;
 	var top      = $(posElem).position().top + yOffset;
 	var width    = $("tbody:first").width();
-	var height   = "350px";
+	//var height   = "350px";
+	var height   = "auto";
 	var divTop   = top + "px";
 	var divLeft  = Math.floor(left + resizeOffset + xOffset) + "px";
 
@@ -472,7 +475,8 @@ function moveDivR(resizeOffset) {
 	var left     = $(posElem).position().left;
 	var top      = $(posElem).position().top + yOffset;
 	var width    = $("tbody:first").width();
-	var height   = $('#serieTable').height() + "px";
+	//var height   = $('#serieTable').height() + "px";
+	var height   = "auto";
 	var divTop   = top + "px";
 	var divLeft   = Math.floor(left + width + xOffset + resizeOffset) + "px";
 

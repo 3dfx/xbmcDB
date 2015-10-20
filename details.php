@@ -79,6 +79,7 @@ include_once "globals.php";
 	$DETAILFANART     = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
 	
 		$isAdmin = isAdmin();
+		$dbVer   = fetchDbVer();
 		$idFile  = -1;
 	
 		$existArtTable = existsArtTable();
@@ -90,7 +91,7 @@ include_once "globals.php";
 		
 		if (empty($row)) { die('not found...'); }
 		
-		$SQL2     = "SELECT B.strActor, A.strRole, A.idActor, B.strThumb AS actorimage FROM actorlinkmovie A, actors B WHERE A.idActor = B.idActor AND A.idMovie = '".$id."' ORDER BY A.iOrder;";
+		$SQL2     = "SELECT B.".($dbVer >= 93 ? 'name' : 'strActor').", A.".($dbVer >= 93 ? 'role' : 'strRole').", A.".($dbVer >= 93 ? 'actor_id' : 'idActor').", B.".($dbVer >= 93 ? 'art_urls' : 'strThumb')." AS actorimage FROM ".($dbVer >= 93 ? "actor_link" : "actorlinkmovie")." A, ".($dbVer >= 93 ? "actor" : "actors")." B WHERE A.".($dbVer >= 93 ? 'actor_id' : 'idActor')." = B.".($dbVer >= 93 ? 'actor_id' : 'idActor')." AND A.".($dbVer >= 93 ? 'media_id' : 'idMovie')." = '".$id."' AND A.media_type='movie' ORDER BY A.".($dbVer >= 93 ? 'cast_order' : 'iOrder').";";
 		$result2  = querySQL($SQL2);
 		$result2_ = querySQL($SQL2);
 		
@@ -334,12 +335,12 @@ include_once "globals.php";
 		$resultG = querySQL($sqlG);
 		$idGenre = array();
 		foreach($resultG as $rowG) {
-			$str = ucwords(strtolower(trim($rowG['strGenre'])));
+			$str = ucwords(strtolower(trim($dbVer >= 93 ? $rowG['name'] : $rowG['strGenre'])));
 			if ($str == null || $str == '') {
 				continue;
 			}
 
-			$idGenre[$str] = $rowG['idGenre'];
+			$idGenre[$str] = $dbVer >= 93 ? $rowG['genre_id'] : $rowG['idGenre'];
 		}
 		
 		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre)), 1);
@@ -572,8 +573,8 @@ include_once "globals.php";
 		foreach($result2_ as $row2) { $actCnt++; }
 		if ($actCnt-1 == $acLimit) { $acLimit++; }
 		foreach($result2 as $row2) {
-			$artist      = $row2['strActor'];
-			$idActor     = $row2['idActor'];
+			$artist      = $dbVer >= 93 ? $row2['name']     : $row2['strActor'];
+			$idActor     = $dbVer >= 93 ? $row2['actor_id'] : $row2['idActor'];
 			$actorpicURL = $row2['actorimage'];
 			
 			$actorimg = getActorThumb($artist, $actorpicURL, false);
@@ -604,8 +605,8 @@ include_once "globals.php";
 
 			$schauspTblOut[$actors] .= '</td>';
 			$schauspTblOut[$actors] .= '<td class="role">';
-			if (!empty($row2['strRole'])) {
-				$strRole = $row2['strRole'];
+			if (!empty($dbVer >= 93 ? $row2['role'] : $row2['strRole'])) {
+				$strRole = $dbVer >= 93 ? $row2['role'] : $row2['strRole'];
 				$schauspTblOut[$actors] .= str_replace('/', ' / ', $strRole);
 			} else {
 				$schauspTblOut[$actors] .= '&nbsp;';
@@ -700,10 +701,11 @@ include_once "globals.php";
 	}
 	
 	function getCountry($idMovie) {
-		$SQL = "SELECT c.strCountry FROM countrylinkmovie cl, country c, movie m WHERE m.idMovie = cl.idMovie AND cl.idCountry = c.idCountry AND m.idMovie = '".$idMovie."';";
+		$dbVer = $GLOBALS['dbVer'];
+		$SQL = "SELECT c.".($dbVer >= 93 ? 'name' : 'strCountry')." FROM ".($dbVer >= 93 ? 'country_link' : 'countrylinkmovie')." cl, country c, movie m WHERE m.idMovie = cl.".($dbVer >= 93 ? 'media_id' : 'idMovie')." AND cl.".($dbVer >= 93 ? 'country_id' : 'idCountry')." = c.".($dbVer >= 93 ? 'country_id' : 'idCountry')." AND m.idMovie = '".$idMovie."';";
 		$res = querySQL($SQL, false);
 		$row = $res->fetch();
-		return $row['strCountry'];
+		return $dbVer >= 93 ? $row['name'] : $row['strCountry'];
 	}
 	
 	function getFanartCover($fnam, $idMovie) {

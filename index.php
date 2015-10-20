@@ -13,6 +13,8 @@ include_once "./template/functions.php";
 	$show   = getEscGPost('show');
 	$idShow = getEscGPost('idShow');
 	
+#if (isAdmin()) { echo fetchDbVer(); }
+
 	if ( isAdmin() && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST) ) {
 		$what       = getEscGPost('aktion');
 		$checkFilme = getEscGPost('checkFilme');
@@ -30,7 +32,7 @@ include_once "./template/functions.php";
 ?>
 <html><?php
 	if (empty($show)) { $show = 'filme'; }
-	
+
 	     if ($show == 'logout')                     { include "./logout.php";   }
 	else if ($show == 'export')                     { include "./dbExport.php"; }
 	else if ($show == 'import')                     { include "./dbImport.php"; }
@@ -39,6 +41,7 @@ include_once "./template/functions.php";
 	else if ($show == 'airdate')                    { include "./airdates.php"; }
 	else if ($show == 'mvids')                      { include "./mvids_.php";   }
 	else if ($show == 'filme')                      { include "./filme_.php";   }
+	else if ($show == 'mpExp' && file_exists('fExplorer.php')) { include "./fExplorer.php"; }
 	
 	adminInfo($start, $show);
 ?>

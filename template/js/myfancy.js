@@ -19,7 +19,7 @@ jQuery(document).ready(function() {
 		},
 		'onComplete'		: function() {
 			$("#fancybox-title").show();
-
+			
 			$("#fancybox-wrap").hover(function() {
 				$("#fancybox-title").hide();
 			}, function() {
@@ -48,7 +48,7 @@ jQuery(document).ready(function() {
 		},
 		'onComplete'		: function() {
 			$("#fancybox-title").show();
-
+			
 			$("#fancybox-wrap").hover(function() {
 				$("#fancybox-title").hide();
 			}, function() {
@@ -196,7 +196,7 @@ jQuery(document).ready(function() {
 		function(e){
 			this.t = this.title;
 			this.title = "";
-
+			
 			var c = (this.t != "") ? "<br/>" + this.t : "";
 			$("body").append("<p id='hoverpic'><img src='"+ this.rel +"'/>"+ c +"</p>");
 			$("#hoverpic")
@@ -218,17 +218,17 @@ jQuery(document).ready(function() {
 	function correctYoffset(e, offsetTop) {
 		var CWOffset = $(window).height();
 		var res = 0;
-
+		
 		if (enterPos == null) { enterPos = $("#hoverpic").offset().top; }
 		var val  = enterPos - (offsetTop - CWOffset);
 		var val2 = CWOffset - val;
-
+		
 		//console.log( enterPos + ', ' + val + ', ' + (CWOffset - val) + ', ' + $("#hoverpic").height() + ', ' + offsetTop + ', ' + e.pageY + ', ' + CWOffset );
-
+		
 		if (CWOffset - val < $("#hoverpic").height()) { res = 0; }
 		else if (CWOffset - val2 > $("#hoverpic").height()) { res = $("#hoverpic").height() / 2; }
 		else { res = $("#hoverpic").height(); }
-
+		
 		/*if (offsetTop - enterPos < $("#hoverpic").height()) { console.log('a'); res = 0; }
 		else if (CWOffset - offsetTop - enterPos < 150) { console.log('b'); res = $("#hoverpic").height(); }
 		else if (CWOffset > yHoverPicOffset) { console.log('c'); res = 90; }*/
@@ -274,13 +274,19 @@ function initShowFancies() {
 		'scrolling'		: 'no',
 		'type'			: 'iframe',
 		'titleShow'       	: false,
-		'onComplete'		: function() {
+		'onStart'	        : function() {
+			cursorBusy('progress');
+		},
+		'onCleanup'		: function() {
+			/*
 			$('body').css('cursor', 'default');
 			$('td').css('cursor', 'default');
 			$('a').css('cursor', 'default');
 			$('.addBoxx').css('cursor', 'default');
 			$('#showSelectTable').css('cursor', 'default');
 			$('#episodeAdd').css('cursor', 'default');
+			*/
+			cursorBusy('');
 		}
 	});
 } //initShowFancies
@@ -302,13 +308,19 @@ function initShowEpFancies() {
 		'scrolling'		: 'no',
 		'type'			: 'iframe',
 		'titleShow'       	: false,
-		'onComplete'		: function() {
+		'onStart'	        : function() {
+			cursorBusy('progress');
+		},
+		'onCleanup'		: function() {
+			/*
 			$('body').css('cursor', 'default');
 			$('td').css('cursor', 'default');
 			$('a').css('cursor', 'default');
 			$('.addBoxx').css('cursor', 'default');
 			$('#showSelectTable').css('cursor', 'default');
 			$('#episodeAdd').css('cursor', 'default');
+			*/
+			cursorBusy('');
 		}
 	});
 } //initShowEpFancies

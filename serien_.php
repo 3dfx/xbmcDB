@@ -39,16 +39,16 @@ include_once "globals.php";
 	<script type="text/javascript">
 <?php
 	$bindF = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
-	echo "\t\t".'var bindF       = '.($bindF ? 'true' : 'false').";\r\n";
-	echo "\t\t".'var newMovies   = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
-	echo "\t\t".'var isAdmin     = '.($isAdmin ? '1' : '0').";\r\n";
-	echo "\t\t".'var xbmcRunning = '.($isAdmin && xbmcRunning() ? '1' : '0').";\r\n";
-	echo "\t\t".'var missedEps   = \'\';'."\r\n";
+	echo "\t\t".'var bindF        = '.($bindF ? 'true' : 'false').";\r\n";
+	echo "\t\t".'var newMovies    = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
+	echo "\t\t".'var isAdmin      = '.($isAdmin ? '1' : '0').";\r\n";
+	echo "\t\t".'var xbmcRunning  = '.($isAdmin && xbmcRunning() ? '1' : '0').";\r\n";
+	echo "\t\t".'var missedEpsStr = \'\';'."\r\n";
+	echo "\t\t".'var missedEps    = 0;'."\r\n";
 ?>
-
 		$(document).ready(function() {
 			$('#myNavbar').load( './navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { if (isAdmin) { initNavbarFancies(); } } );
-			$('#showsDiv').load( './serien_.php?data=1', function() { $('#missEps').html(missedEps); $('.knob-dyn').knob(); initShowFancies(); } );
+			$('#showsDiv').load( './serien_.php?data=1', function() { if (missedEps > 0) { $('#missEps').css("color", "red"); } $('#missEps').html(missedEpsStr); $('.knob-dyn').knob(); initShowFancies(); } );
 		});
 	</script>
 </head>
@@ -153,9 +153,7 @@ function fillTable($serien, $dbh) {
 		echo '</th>';
 	}
 	echo '<th class="righto">';
-	echo '<span class="showshowinfo1" style="cursor:default;"'.(!empty($runCount) ? ' title="'.$runCount.' running"' : '').'>';
-	echo $serien->getSerienCount();
-	echo '</span>';
+	echo '<span class="showshowinfo1" style="cursor:default;"'.(!empty($runCount) ? ' title="'.$runCount.' running"' : '').'>&nbsp;'.$serien->getSerienCount().'</span>';
 	echo '</th>';
 	echo '<th>';
 	echo '<span class="showshowinfo1" style="float:left; margin-left:-10px; cursor:default;"'.(!empty($runCount) ? ' title="'.$runCount.' running"' : '').'> tv-shows</span>';
@@ -163,7 +161,9 @@ function fillTable($serien, $dbh) {
 		echo '<span class="sInfoSize" style="padding-top:3px; cursor:default;">'._format_bytes($serien->getSize()).'</span>';
 	}
 	echo '</th>';
-	echo '<th colspan="'.(4 + $colspan2).'" style="cursor:default;"><span onclick="toggleAirdates();" class="sInfoSize" style="padding-top:1px; float:left; color:red;" id="missEps"></span></th>';
+
+	$missed = 0;
+	echo '<th colspan="'.(4 + $colspan2).'" style="cursor:default;"><span id="missEps" class="sInfoSize" onclick="toggleAirdates();" style="padding-top:1px; float:left;'.($missed == 0 ? '' : ' color:red;').'"></span></th>';
 	echo '</tr>'."\r\n";
 	
 	$missed = postSerien($serien);
@@ -172,7 +172,7 @@ function fillTable($serien, $dbh) {
 	
 	if ($isAdmin) {
 		$miss = $missed == 0 ? 'next airdates' : sprintf("%02d", $missed).' missed'.' episode'.($missed > 1 ? 's' : '');
-		echo '<script type="text/javascript">missedEps = \''.$miss.'\';</script>'."\r\n";
+		echo '<script type="text/javascript">missedEpsStr = \''.$miss.'\'; missedEps = \''.$missed.'\';</script>'."\r\n";
 	}
 }
 

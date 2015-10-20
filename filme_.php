@@ -125,6 +125,7 @@ function createTable() {
 function getSessionKeySQL() {
 	$res = array();
 	
+	$dbVer       = fetchDbVer();
 	$_just       = $GLOBALS['just'];
 	$_which      = $GLOBALS['which'];
 	$mode        = isset($_SESSION['mode'])        ? $_SESSION['mode']        : 0;
@@ -160,11 +161,11 @@ function getSessionKeySQL() {
 				")";
 				
 	} else if ($_which == 'artist') {
-		$filter = " AND E.idActor = '".$_just."' AND E.idMovie = A.idMovie";
+		$filter = " AND E.".($dbVer >= 93 ? 'actor_id' : 'idActor')." = '".$_just."' AND E.idMovie = A.idMovie";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'regie') {
-		$filter = " AND D.idDirector = '".$_just."' AND D.idMovie = A.idMovie";
+		$filter = " AND D.".($dbVer >= 93 ? 'actor_id' : 'idDirector')." = '".$_just."' AND D.idMovie = A.idMovie";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'genre') {
@@ -200,9 +201,9 @@ function getSessionKeySQL() {
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
 		"LEFT JOIN filemap M ON B.strFilename = M.strFilename ".
 		(isset($mode) && ($mode == 2) ? "LEFT JOIN streamdetails SD ON (B.idFile = SD.idFile AND SD.strAudioLanguage IS NOT NULL) " : '').
-		(isset($filter, $_which) && ($_which == 'artist') ? ", actorlinkmovie E" : '').
-		(isset($filter, $_which) && ($_which == 'regie') ? ", directorlinkmovie D" : '').
-		(isset($filter, $_which) && ($_which == 'genre') ? ", genrelinkmovie G" : '').
+		(isset($filter, $_which) && ($_which == 'artist') ? ($dbVer >= 93 ? ', actor_link E' : ', actorlinkmovie E') : '').
+		(isset($filter, $_which) && ($_which == 'regie') ? ($dbVer >= 93 ? ', director_link D' : ', directorlinkmovie D') : '').
+		(isset($filter, $_which) && ($_which == 'genre') ? ($dbVer >= 93 ? ', genre_link G' : ', genrelinkmovie G') : '').
 		" WHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
 		
 	if (!empty($sort)) {
@@ -285,6 +286,7 @@ function getSessionKeySQL() {
 function generateRows($dbh, $result, $sessionKey) {
 	$isAdmin       = isAdmin();
 	$isDemo        = isDemo();
+	$dbVer         = fetchDbVer();
 	
 	$xbmcRunning   = xbmcRunning();
 	$newAddedCount = getNewAddedCount();
@@ -492,11 +494,11 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstartist = $actorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.strActor, B.strRole, B.idActor, A.strThumb AS actorimage FROM actorlinkmovie B, actors A WHERE A.idActor = B.idActor AND B.iOrder = 0 AND B.idMovie = '".$idMovie."';";
+				$SQL_ = "SELECT A.".($dbVer >= 93 ? "name" : "strActor").", B.role, B.".($dbVer >= 93 ? 'actor_id' : 'idActor').", A.".($dbVer >= 93 ? "art_urls" : "strThumb")." AS actorimage FROM ".($dbVer >= 93 ? "actor_link" : "actorlinkmovie")." B, ".($dbVer >= 93 ? "actor" : "actors")." A WHERE A.".($dbVer >= 93 ? 'actor_id' : 'idActor')." = B.".($dbVer >= 93 ? 'actor_id' : 'idActor')." AND B.".($dbVer >= 93 ? 'cast_order' : 'iOrder')." = 0 AND B.".($dbVer >= 93 ? 'media_id' : 'idMovie')." = '".$idMovie."' AND B.media_type='movie';";
 				$result2 = querySQL_($dbh, $SQL_, false);
 				foreach($result2 as $row2) {
-					$artist      = $row2['strActor'];
-					$idActor     = $row2['idActor'];
+					$artist      = $dbVer >= 93 ? $row2['name']     : $row2['strActor'];
+					$idActor     = $dbVer >= 93 ? $row2['actor_id'] : $row2['idActor'];
 					$actorpicURL = $row2['actorimage'];
 					
 					if (empty($firstartist)) {
@@ -578,11 +580,11 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstdirector = $directorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.strActor, B.idDirector, A.strThumb AS actorimage FROM directorlinkmovie B, actors A WHERE B.idDirector = A.idActor AND B.idMovie = '".$idMovie."';";
+				$SQL_ = "SELECT A.".($dbVer >= 93 ? "name" : "strActor").", B.".($dbVer >= 93 ? 'actor_id' : 'idDirector').", A.".($dbVer >= 93 ? "art_urls" : "strThumb")." AS actorimage FROM ".($dbVer >= 93 ? "director_link" : "directorlinkmovie")." B, ".($dbVer >= 93 ? "actor" : "actors")." A WHERE B.".($dbVer >= 93 ? "actor_id" : "idDirector")." = A.".($dbVer >= 93 ? 'actor_id' : 'idActor')." AND B.".($dbVer >= 93 ? 'media_id' : 'idMovie')." = '".$idMovie."' AND B.media_type='movie';";
 				$result3 = querySQL_($dbh, $SQL_, false);
 				foreach($result3 as $row3) {
-					$artist      = $row3['strActor'];
-					$idActor     = $row3['idDirector'];
+					$artist      = $dbVer >= 93 ? $row3['name']     : $row3['strActor'];
+					$idActor     = $dbVer >= 93 ? $row3['actor_id'] : $row3['idDirector'];
 					$actorpicURL = $row3['actorimage'];
 					
 					if (empty($firstdirector)) {
@@ -630,15 +632,18 @@ function generateRows($dbh, $result, $sessionKey) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 #resolution
 			if (!$isDemo) {
-				$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 				$resInfo   = (!empty($vRes)  ? ($vRes[0] >= 1900 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
-				$resTip    = (!empty($vRes)  ? $vRes[0].'x'.$vRes[1]    : '');
+				$resTip    = (!empty($vRes)  ? $vRes[0].'x'.$vRes[1] : '');
 				$codec     = (!empty($vRes)  ? postEditVCodec($vRes[2]) : '');
 				$perf      = (!empty($codec) ? decodingPerf($codec)     : 0);
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
-				$codec     = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$codec.'</span>' : $codec);
+				$codecST   = (!empty($color) ? ' style="color:'.$color.'; font-weight:bold;"' : 'style="padding-left:4px;"');
 				$codecInfo = !empty($resInfo) && !empty($codec);
-				$codecTD   = $codecInfo ? '<span class="searchField">'.$resInfo.(!empty($resInfo) || !empty($codec) ? ' / ' : '').$codec.'</span>' : '';
+				$codecTD   = '';
+				$codecTD  .= $codecInfo ? '<span class="searchField">'.$resInfo.'</span>' : '';
+				$codecTD  .= (!empty($codec) ? ' <b>|</b> ' : '');
+				$codecTD  .= $codecInfo ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '';
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'">'.$codecTD.'</td>';
 #filesize
 				$filename = prepPlayFilename($path.$filename);
@@ -784,7 +789,7 @@ function postRows($dbh, $zeilen, $saferSearch) {
 		echo '<th class="th2">Genre</th>';
 		echo '<th class="th2">Director</th>';
 		if (!$isDemo) {
-			echo '<th class="th5">Res</th>';
+			echo '<th class="th5">Res | Codec</th>';
 			echo '<th class="th5"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
 		}
 		echo "\r\n";

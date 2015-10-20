@@ -776,7 +776,7 @@ function fetchActorCovers($dbh = null) {
 	if ($overrideFetch == 0 && isset($_SESSION['covers']['actors'])) { return $_SESSION['covers']['actors']; }
 
 	$result = array();
-	$SQL    = "SELECT B.idMovie AS idMovie, A.strActor, B.idActor, A.strThumb AS actorimage FROM actorlinkmovie B, actors A WHERE A.idActor = B.idActor AND B.iOrder = 0;";
+	$SQL    = "SELECT B.idMovie AS idMovie, A.strActor, B.idActor, A.strThumb AS actorimage FROM ".($dbVer >= 93 ? "actor_link" : "actorlinkmovie")." B, actors A WHERE A.idActor = B.idActor AND B.iOrder = 0;";
 	$res    = querySQL_($dbh, $SQL, false);
 
 	foreach($res as $row) {
@@ -801,7 +801,7 @@ function fetchDirectorCovers($dbh = null) {
 	if ($overrideFetch == 0 && isset($_SESSION['covers']['directors'])) { return $_SESSION['covers']['directors']; }
 
 	$result = array();
-	$SQL    = "SELECT B.idMovie AS idMovie, A.strActor, B.idDirector, A.strThumb AS actorimage FROM directorlinkmovie B, actors A WHERE B.idDirector = A.idActor;";
+	$SQL    = "SELECT B.idMovie AS idMovie, A.strActor, B.idDirector, A.strThumb AS actorimage FROM ".($dbVer >= 93 ? "director_link" : "directorlinkmovie")." B, actors A WHERE B.idDirector = A.idActor;";
 	$res    = querySQL_($dbh, $SQL, false);
 
 	foreach($res as $row) {
@@ -904,7 +904,7 @@ function postNavBar_($isMain) {
 	$res .= '<div class="navbar-inner" style="height:30px;">';
 	$res .= '<div class="container" style="margin:0px auto; width:auto; height:40px;">';
 
-	$res .= '<a class="brand navBarBrand" href="#" onmouseover="closeNavs();">xbmcDB</a>';
+	$res .= '<a class="brand navBarBrand" href="#" onmouseover="closeNavs();" onfocus="this.blur();">xbmcDB</a>';
 
 	$res .= '<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a>';
 	$res .= '<div class="nav-collapse">';
@@ -1073,12 +1073,12 @@ function postNavBar_($isMain) {
 
 	$res .= '</ul>'; //after this menu on right-side
 
+	$xbmcRunning = $isAdmin && $XBMCCONTROL_ENABLED && xbmcRunning();
 	$res .= '<ul class="nav pull-right" style="padding-top:2px;">';
 	if ($isAdmin && $XBMCCONTROL_ENABLED) {
-		$run = xbmcRunning();
-		if ($run != 0) {
-		$playing = $run != 0 ? cleanedPlaying(xbmcGetNowPlaying())  : '';
-		$state   = $run != 0 ? intval(xbmcGetPlayerstate()) : '';
+		if ($xbmcRunning != 0) {
+		$playing = $xbmcRunning != 0 ? cleanedPlaying(xbmcGetNowPlaying())  : '';
+		$state   = $xbmcRunning != 0 ? intval(xbmcGetPlayerstate()) : '';
 		$state   = ($state == 1 ? 'playing' : ($state == 0 ? 'paused' : ''));
 		$res .= '<span id="xbmControlWrap" style="float:left;">';
 		$res .= '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
@@ -1151,8 +1151,9 @@ function postNavBar_($isMain) {
 		if ($upgrLog || $NAS_CONTROL || $MP3_EXPLORER) {
 			$res .= '<li class="divider"></li>';
 		}
-		if ($MP3_EXPLORER && file_exists('fExplorer.php')) {
-			$res .= '<li><a class="fancy_explorer" href="fExplorer.php">MP3 Explorer</a></li>';
+		if ($xbmcRunning && $MP3_EXPLORER && file_exists('fExplorer.php')) {
+			$res .= '<li><a href="?show=mpExp">MP3 Explorer</a></li>';
+			#$res .= '<li><a class="fancy_explorer" href="?show=mpExp">MP3 Explorer</a></li>';
 		}
 		if ($NAS_CONTROL) {
 			$res .= '<li><a class="fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
@@ -1163,6 +1164,8 @@ function postNavBar_($isMain) {
 
 		$res .= '</ul>';
 		$res .= '</li>';
+
+		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	} //if ($isAdmin)
 	$res .= '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="this.blur(); return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
 
@@ -1205,7 +1208,7 @@ function createEpisodeSubmenu($result) {
 	$res = '';
 	foreach($result as $key => $show) {
 		$lId = 'sub_'.str_replace(' ', '_', $key);
-		$res .= '<li class="dropdown-submenu" id="'.$lId.'">';
+		$res .= '<li class="dropdown-submenu" id="'.$lId.'" style="cursor:default;">';
 		$count = count($show);
 		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
 		$res .= '<ul class="dropdown-menu">';
@@ -1223,7 +1226,7 @@ function createEpisodeSubmenu($result) {
 			$SE = '<span style="padding-right:10px; color:silver;"><b><sub>S'.$season.'.E'.$episode.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
 			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
-			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
+			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'" class="elem"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 		}
 
 		$res .= '</ul>';
@@ -1469,7 +1472,7 @@ function storeSession() {
 	setLastHighest();
 	clearMediaCache();
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['refferLogged'], $_SESSION['overrideFetch'],
-	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['dbName'],
+	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['dbName'], $_SESSION['dbVer'],
 	       $_SESSION['angemeldet'], $_SESSION['demo'],  $_SESSION['thumbs'],   $_SESSION['existsTable'],  $_SESSION['TvDbCache'],
 	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['reffer'],       $_SESSION['lastMovie'],
 	       $_SESSION['OS']
@@ -2295,6 +2298,8 @@ function doTheStuffTvShow($result, $forOrder = false, $append = false, $srcLette
 
 	$newLine = $forOrder ? "\n" : '<br />';
 	$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	if (count($result) == 0)
+		return $res;
 	foreach($result as $row) {
 		if ($forOrder || ($copyAsScript && $copyAsScriptEnabled)) {
 			$path = $row['strPath'];
