@@ -2,39 +2,39 @@
 	include_once "functions.php";
 	function fetchMVids($sessionKey, $sortBy = null) {
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-		$overrideFetch = 1;
+		#$overrideFetch = 1;
 		
-		#$res = array();
 		$MVids = new MusicVideos();
 		if (!empty($sortBy)) { $sessionKey .= '_ORDER_'.$sortBy; }
-		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0) {
-			$MVids = unserialize($_SESSION[$sessionKey]);
+		if (isset($_SESSION['MVid'][$sessionKey]) && $overrideFetch == 0) {
+			$MVids = unserialize($_SESSION['MVid'][$sessionKey]);
 			
 		} else {
 			$SQL = "SELECT * FROM musicvideo";
-			if (!empty($sortBy)) {
-				$SQL .= ' ORDER BY ';
-				switch ($sortBy) {
-					case 1:
-						$SQL .= 'c10';
+			$SQL .= ' ORDER BY ';
+			switch ($sortBy) {
+				case 1:
+				default:
+					$MVids->turnSort(true);
+					$SQL .= 'c10';
 					break;
-
-					case 2:
-						$SQL .= 'c00';
+				case 2:
+					$MVids->turnSort(false);
+					$SQL .= 'c00';
 					break;
-					
-					case 3:
-						$SQL .= 'c09';
+				case 3:
+					$MVids->turnSort(false);
+					$SQL .= 'c09';
 					break;
-					
-					default:
-						$SQL .= 'idMVideo';
-				}
+				case 4:
+					$MVids->turnSort(false);
+					$SQL .= 'idMVideo';
+					break;
 			}
-			$SQL .= ';';
+			$SQL .= ' ASC;';
 			
 			$dbh = getPDO();
-			$result = fetchFromDB_($dbh, $SQL);
+			$result = querySQL_($dbh, $SQL);
 			
 			$count = 0;
 			foreach($result as $row) {
@@ -50,7 +50,7 @@
 				$MVids->addMVid(new MVid($item));
 			}
 			
-			$_SESSION[$sessionKey] = serialize($MVids);
+			$_SESSION['MVid'][$sessionKey] = serialize($MVids);
 			unset( $_SESSION['overrideFetch'] );
 		}
 		
@@ -60,8 +60,11 @@
 	class MusicVideos {
 		private $MVids = array();
 		private $count = 0;
+		private $doSort = false;
 		
 		public function addMVid(&$MVid) {
+			if (empty($MVid->getArtist()) && empty($MVid->getTitle()))
+				return;
 			$this->MVids[$this->count++] = $MVid;
 		}
 		
@@ -69,8 +72,13 @@
 			$this->sort();
 			return $this->MVids;
 		}
+		
+		public function turnSort($val) {
+			$this->doSort = $val;
+		}
 
 		public function sort() {
+			if (!$this->doSort) { return; }
 			usort($this->MVids, function($a, $b) {
 				$strA = $a->getArtist().' '.$a->getTitle();
 				$strB = $b->getArtist().' '.$b->getTitle();
@@ -122,6 +130,7 @@
 			
 			if (count($tmp) > 1) {
 				unset($tmp[0]);
+				$tmp = array_reverse($tmp);
 				$this->feat = ucwords(trim(implode(', ', $tmp)));
 			}
 		}

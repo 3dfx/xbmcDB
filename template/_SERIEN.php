@@ -1,34 +1,37 @@
 <?php
-	#$LastSerienSQL ="SELECT * FROM (SELECT idShow,idEpisode,strTitle,c12 AS season,c13 as episode,c00 AS title,playCount FROM episodeviewMy ORDER BY idEpisode DESC LIMIT 30) ORDER BY idShow";
-	#$LastSerienSQL ="SELECT V.idShow, V.idEpisode, V.strTitle, V.c12 AS season, V.c13 as episode, V.c00 AS title, V.playCount, T.c12 AS idTvdb FROM episodeviewMy V, tvshow T WHERE T.idSHow = V.idShow ORDER BY idEpisode DESC LIMIT 30";
 	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, V.c03 AS rating, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount FROM episodeviewMy V";
 	$LastSerienSQL   = $MenuSerienSQL." ORDER BY idEpisode DESC LIMIT 30";
-	$SearchSerienSQL = $MenuSerienSQL." WHERE lower(V.c01) LIKE '%[SEARCH]%' OR lower(V.c00) LIKE '%[SEARCH]%' ORDER BY V.strTitle ASC";
+	$SearchSerienSQL = $MenuSerienSQL." WHERE lower(V.c04) LIKE '%[SEARCH]%' OR lower(V.c01) LIKE '%[SEARCH]%' OR lower(V.c00) LIKE '%[SEARCH]%' ORDER BY V.strTitle ASC";
 	$SQLrunning      = "SELECT R.idShow AS idShow, R.running AS running, A.airdate AS airdate FROM tvshowrunning R LEFT JOIN nextairdate A ON R.idShow = A.idShow;";
-	#$SQLrunning      = "SELECT * FROM tvshowrunning;";
+	$SeasonDirSQL    = "SELECT idShow, strPath FROM seasonview;";
+	$ShowCodecSQL    = "SELECT E.idShow AS idShow, SD.strVideoCodec AS codec, COUNT(SD.strVideoCodec) AS count FROM streamdetails AS SD, episode AS E WHERE SD.strVideoCodec IS NOT NULL AND SD.idfile = E.idFile AND E.idShow=[IDSHOW] GROUP BY E.idShow, SD.strVideoCodec ORDER BY count DESC;";
+	$episodeLinkSQL  = "SELECT * FROM episodelinkepisode";
 	$SerienSQL       = "SELECT V.*, ".
 			   "V.c00 AS epName, ".
 			   "V.c01 AS epDesc, ".
 			   "V.c03 AS epRating, ".
+			   "V.c04 AS guests, ".
 			   "V.c05 AS airDate, ".
 			   "V.c09 AS duration, ".
 			   "V.c12 AS season, ".
 			   "V.c13 AS episode, ".
-			   "T.c16 AS showPath, ".
+			   #"T.c16 AS showPath, ".
 			   "V.strTitle AS serie, ".
 			   "V.idFile AS idFile, ".
 			   "V.strFilename AS filename, ".
 			   "V.strPath AS path, ".
 			   "T.c01 AS showDesc, ".
+			   "T.c08 AS genre, ".
 			   "T.c12 AS idTvdb, ".
+			   "T.c13 AS fsk, ".
+			   "T.c14 AS studio, ".
 			   "P.idPath AS idPath, ".
 			   "F.filesize AS filesize ".
-			   "FROM episodeview V".
-			   ", tvshow T ".
+			   "FROM episodeview V, tvshow T ".
 			   "LEFT JOIN fileinfo F ON V.idFile = F.idFile ".
 			   "LEFT JOIN files FS ON V.idFile=FS.idFile ".
 			   "LEFT JOIN path P ON P.idPath=FS.idPath ".
-			   "WHERE T.idSHow = V.idShow";
+			   "WHERE T.idShow = V.idShow";
 	
 	function fetchSearchSerien($search) {
 		$SQL = $GLOBALS['SearchSerienSQL'].';';
@@ -47,32 +50,25 @@
 		$result = array();
 		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0) {
 			$result = unserialize($_SESSION[$sessionKey]);
-
+			
 		} else {
-			$dbh = getPDO();
-			try {
-				$sqlResult = $dbh->query($SQL);
-				foreach($sqlResult as $row) {
-					$result[$row['strTitle']][] = array(
-					'idShow' => $row['idShow'], 'serie'     => $row['strTitle'],  'episode' => $row['episode'],
-					'season' => $row['season'], 'idEpisode' => $row['idEpisode'], 'title'   => $row['title'], 
-					'sCount' => $row['sCount'], 'playCount' => $row['playCount'], 'rating'  => $row['rating']
-					);
-				}
-				
-				$_SESSION[$sessionKey] = serialize($result);
-				unset( $_SESSION['overrideFetch'] );
-				
-			} catch(PDOException $e) {
-				echo $e->getMessage();
-				exit;
+			$sqlResult = querySQL($SQL, false);
+			foreach($sqlResult as $row) {
+				$result[$row['strTitle']][] = array(
+				'idShow' => $row['idShow'], 'serie'     => $row['strTitle'],  'episode' => $row['episode'],
+				'season' => $row['season'], 'idEpisode' => $row['idEpisode'], 'title'   => $row['title'], 
+				'sCount' => $row['sCount'], 'playCount' => $row['playCount'], 'rating'  => $row['rating']
+				);
 			}
+			
+			$_SESSION[$sessionKey] = serialize($result);
+			unset( $_SESSION['overrideFetch'] );
 		}
 		
 		return $result;
 	}
 	
-	function fetchSerien($SQL, $id) {
+	function fetchSerien($SQL, $id, $dbh = null) {
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 		
 		if (empty($SQL)) { $SQL = $GLOBALS['SerienSQL'].';'; }
@@ -83,7 +79,7 @@
 			$SSerien = unserialize($_SESSION['SSerien'.$id]);
 			
 		} else {
-			$SSerien = fetchSerien__($SQL);
+			$SSerien = fetchSerien__($SQL, $dbh);
 			$SSerien->getSize();
 			$SSerien->fetchRating();
 			$_SESSION['SSerien'.$id] = serialize($SSerien);
@@ -92,62 +88,98 @@
 		return $SSerien;
 	}
 
-	function fetchSerien__($SQL) {
-		/*** make it or break it ***/
-		error_reporting(E_ALL);
-		
+	function fetchSerien__($SQL, $dbh = null) {
 		$runs   = array();
 		$serien = new Serien();
-		$dbh = getPDO();
-		try {
-			checkMyEpisodeView($dbh);
-			checkNextAirDateTable($dbh);
-			checkTvshowRunningTable($dbh);
-			
-			$SQLrunning  = $GLOBALS['SQLrunning'];
-			$resF        = $dbh->query($SQLrunning);
-			foreach($resF as $run_) {
-				$running     = isset($run_['running']) ? true : false;
-				$nextAirDate = isset($run_['airdate']) ? $run_['airdate'] : null;
-				$runs[$run_['idShow']]['running'] = $running;
-				$runs[$run_['idShow']]['nextairdate'] = $nextAirDate;
-			}
-			
-			$result = $dbh->query($SQL);
-			foreach($result as $row) {
-				$idFile      = $row['idFile'];
-				$idShow      = $row['idShow'];
-				$idEpisode   = $row['idEpisode'];
-				$idPath      = $row['idPath'];
-				$airDate     = $row['airDate'];
-				$serienname  = $row['serie'];
-				$epName      = $row['epName'];
-				$duration    = $row['duration'];
-				$epDesc      = '';
-				$showDesc    = $row['showDesc'];
-				$season      = $row['season'];
-				$idTvdb      = $row['idTvdb'];
-				$rating      = $row['epRating'];
-				$playcount   = $row['playCount'];
-				$episodeNum  = $row['episode'];
-				$filename    = $row['filename'];
-				$path        = $row['path'];
-				$showPath    = $row['showPath'];
-				$filesize    = $row['filesize'];
-				$running     = (!empty($runs) && isset($runs[$idShow]['running']) ? true : false);
-				$nextAirDate = (!empty($runs) && isset($runs[$idShow]['nextairdate']) ? $runs[$idShow]['nextairdate'] : null);
-				
-				$ep = new Episode($episodeNum, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize);
-				if (is_object($serien) && is_object($ep)) {
-					$serien->addEpisode($ep, $showDesc, $showPath, $running, $nextAirDate);
-				}
-			}
-			
-		} catch(PDOException $e) {
-			echo $e->getMessage();
+		
+		checkEpLinkEpTable($dbh);
+		checkMyEpisodeView($dbh);
+		checkNextAirDateTable($dbh);
+		checkTvshowRunningTable($dbh);
+		
+		$SQLepLnk= $GLOBALS['episodeLinkSQL'];
+		$resL    = querySQL_($dbh, $SQLepLnk, false);
+		$links   = array();
+		foreach($resL as $row) { $links[$row['idFile']] = $row['delta']; }
+		
+		$SQLrunning = $GLOBALS['SQLrunning'];
+		$resF       = querySQL_($dbh, $SQLrunning, false);
+		foreach($resF as $run_) {
+			$idShow      = $run_['idShow'];
+			$running     = isset($run_['running']) ? true : false;
+			$nextAirDate = isset($run_['airdate']) ? $run_['airdate'] : null;
+			$runs[$idShow]['running']     = $running;
+			$runs[$idShow]['nextairdate'] = $nextAirDate;
 		}
+		
+/*
+		$SQLcodec = $GLOBALS['ShowCodecSQL'];
+		$resC     = querySQL_($dbh, $SQLcodec, false);
+		$codecs   = array();
+		foreach($resC as $row) {
+			$idShow = $row['idShow'];
+			$codecs[$idShow][$row['codec']] = $row['count'];
+		}
+*/
 
+		$SQLdirs = $GLOBALS['SeasonDirSQL'];
+		$resD    = querySQL_($dbh, $SQLdirs, false);
+		$dirs    = array();
+		foreach($resD as $row) {
+			$idShow  = $row['idShow'];
+			$strPath = $row['strPath'];
+			if (empty($dirs[$idShow])) { $dirs[$idShow] = $strPath; }
+		}
+		
+		$result = querySQL_($dbh, $SQL, false);
+		foreach($result as $row) {
+			$idFile      = $row['idFile'];
+			$idShow      = $row['idShow'];
+			$idEpisode   = $row['idEpisode'];
+			$idPath      = $row['idPath'];
+			$airDate     = $row['airDate'];
+			$serienname  = $row['serie'];
+			$epName      = $row['epName'];
+			$duration    = $row['duration'];
+			$showDesc    = $row['showDesc'];
+			$season      = $row['season'];
+			$idTvdb      = $row['idTvdb'];
+			$rating      = $row['epRating'];
+			$playcount   = $row['playCount'];
+			$genre       = $row['genre'];
+			$fsk         = $row['fsk'];
+			$studio      = $row['studio'];
+			$episodeNum  = $row['episode'];
+			$delta       = isset($links[$idFile]) ? $links[$idFile] : null;
+			$filename    = $row['filename'];
+			$path        = $row['path'];
+			$showPath    = isset($dirs[$idShow]) ? $dirs[$idShow] : '';
+			$filesize    = $row['filesize'];
+			$epDesc      = '';
+			$running     = (!empty($runs) && isset($runs[$idShow]['running']) ? true : false);
+			$nextAirDate = (!empty($runs) && isset($runs[$idShow]['nextairdate']) ? $runs[$idShow]['nextairdate'] : null);
+			
+			$ep = new Episode($episodeNum, $delta, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize);
+			if (is_object($serien) && is_object($ep)) {
+				#$serien->addEpisode($ep, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate, $codecs[$idShow]);
+				$serien->addEpisode($ep, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate);
+			}
+		}
+		
 		return $serien;
+	}
+
+	function fetchShowCodecs($idShow, $dbh = null) {
+		$SQLcodec = $GLOBALS['ShowCodecSQL'];
+		$SQLcodec = str_replace('[IDSHOW]', $idShow, $SQLcodec);
+		$resC     = querySQL_($dbh, $SQLcodec, false);
+		$codecs   = array();
+		foreach($resC as $row) {
+			#$idShow = $row['idShow'];
+			$codecs[$row['codec']] = $row['count'];
+		}
+		
+		return $codecs;
 	}
 
 	class Episode {
@@ -161,6 +193,7 @@
 		private $idPath;
 		private $path;
 		private $episode;
+		private $delta;
 		private $season;
 		private $duration;
 		private $playcount;
@@ -170,7 +203,7 @@
 		private $filesize;
 		private $size;
 		
-		public function Episode($episode, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize) {
+		public function Episode($episode, $delta, $season, $idShow, $idTvdb, $idEpisode, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize) {
 			$pr = strtolower(substr($serienname, 0, 4));
 			$pronoms = array('the ', 'der ', 'die ', 'das ');
 			for ($prs = 0; $prs < count($pronoms); $prs++) {
@@ -180,6 +213,7 @@
 			}
 			
 			$this->episode    = $episode;
+			$this->delta      = $delta;
 			$this->season     = $season;
 			$this->idShow     = $idShow;
 			$this->idTvdb     = $idTvdb;
@@ -209,9 +243,21 @@
 		public function getEpNum() {
 			return $this->episode;
 		}
-
+		
+		public function getDelta() {
+			return empty($this->delta) ? null : (intval($this->episode) + intval($this->delta));
+		}
+		
+		public function getDelta_() {
+			return empty($this->delta) ? null : intval($this->delta);
+		}
+		
 		public function getSeason() {
 			return $this->season;
+		}
+		
+		public function getSE($epDelta) {
+			return getFormattedSE($this->season, $this->episode, $epDelta);
 		}
 
 		public function getIdShow() {
@@ -268,11 +314,13 @@
 			if ($this->size > 0) { return $this->size; }
 			
 			$size = 0;
-			$idFile = $this->getIdFile();
-			$filesize = $this->getFilesize();
-			$path = mapSambaDirs($this->getPath());
-			$filename = $this->getFilename();
-			$size = fetchFileSize($idFile, $path, $filename, $filesize, null);
+			$size = fetchFileSize(
+					$this->getIdFile(), 
+					mapSambaDirs($this->getPath()), 
+					$this->getFilename(), 
+					$this->getFilesize(), 
+					null
+				);
 
 			$this->size = $size;
 			return $size;
@@ -290,6 +338,8 @@
 	class Staffel {
 		private $episoden       = array();
 		private $staffelNum     = -1;
+		private $deltas         = 0;
+		private $parted         = 0;
 		private $epCount        = 0;
 		private $epCountWatched = 0;
 		private $lastEpNum      = 0;
@@ -298,18 +348,32 @@
 		private $watched        = true;
 		private $watchedAny     = false;
 		private $size           = 0;
+		private $fileIds        = null;
 		private $rating         = 0.0;
 		private $ratingEps      = 0;
+		private $isSorted       = false;
 
 		public function Staffel($staffelNum) {
 			$this->staffelNum = $staffelNum;
 		}
 
 		public function sortEpisoden() {
+			if ($this->isSorted) { return; }
 			usort($this->episoden, function($a, $b) {
-				if($a->getEpNum() == $b->getEpNum()) return 0;
+				if($a->getEpNum() == $b->getEpNum()) return $this->compEpisodesByIdEpisode($a, $b);
 				return ($a->getEpNum() < $b->getEpNum()) ? -1 : 1;
 			});
+			$this->isSorted = true;
+		}
+
+		public function compEpisodesByIdEpisode($a, $b) {
+			if($a->getIdEpisode() == $b->getIdEpisode()) return 0;
+			return ($a->getIdEpisode() < $b->getIdEpisode()) ? -1 : 1;
+		}
+
+		public function compEpisodesByAirDate($a, $b) {
+			if($a->getAirDate() == $b->getAirDate()) return 0;
+			return ($a->getAirDate() < $b->getAirDate()) ? -1 : 1;
 		}
 
 		public function getStaffelNum() {
@@ -317,11 +381,15 @@
 		}
 
 		public function getEpisodeCount() {
-			return count($this->episoden);
+			return count($this->episoden) + $this->deltas - $this->parted;
 		}
 		
 		public function getEpCountWatched() {
 			return $this->epCountWatched;
+		}
+		
+		public function getEpCountUnwatched() {
+			return $this->getEpisodeCount() - $this->getEpCountWatched();
 		}
 		
 		public function getWatchedPercent() {
@@ -335,8 +403,12 @@
 			return $this->lastEpNum;
 		}
 		
+		public function getParted() {
+			return $this->parted;
+		}
+		
 		public function getEpisoden() {
-			$this->sortEpisoden();
+			#$this->sortEpisoden();
 			return $this->episoden;
 		}
 		
@@ -410,6 +482,24 @@
 			$this->size = $size;
 			return $size;
 		}
+		
+		public function getIdFiles() {
+			if ($this->fileIds != null) { return $this->fileIds; }
+			
+			$ids   = '';
+			$count = 0;
+			foreach ($this->getEpisoden() as $epi) {
+				if (!is_object($epi)) { continue; }
+				$ids .= $epi->getIdFile().',';
+				$count++;
+			}
+			$ids = trim($ids);
+			if ($count > 1)
+				$ids = substr($ids, 0, count($ids)-2);
+			
+			$this->fileIds = $ids;
+			return $ids;
+		}
 
 		public function addEpisode(&$episode) {
 			if ($this->idShow == -1) {
@@ -426,8 +516,17 @@
 				$this->epCountWatched++;
 			}
 			
+			$delta = $episode->getDelta();
+			if (!empty($delta))
+				$this->deltas += $episode->getDelta_();
+			
 			if ($episode->getEpNum() > $this->lastEpNum) {
-				$this->lastEpNum = $episode->getEpNum();
+				$this->lastEpNum = $episode->getEpNum() + (empty($delta) ? 0 : $delta);
+			}
+			
+			if (!empty($this->episoden[$episode->getEpNum()-1]) && 
+			           $this->episoden[$episode->getEpNum()-1]->getEpNum() == $episode->getEpNum()) {
+				$this->parted++;
 			}
 			
 			$this->addRating($episode->getRatingVal());
@@ -437,6 +536,7 @@
 
 	class Serie {
 		private $serienname      = null;
+		private $allEpisodeDeltas= 0;
 		private $allEpisodeCount = 0;
 		private $epCountWatched  = 0;
 		private $staffeln        = array();
@@ -447,10 +547,17 @@
 		private $watchedAny      = false;
 		private $desc            = null;
 		private $size            = 0;
+		private $fileIds         = null;
 		private $rating          = 0.0;
+		private $fsk             = null;
+		private $genre           = null;
+		private $studio          = null;
 		private $running         = false;
 		private $nextAirDate     = null;
 		private $showPath        = null;
+		private $isSorted        = false;
+		private $parted          = 0;
+		#private $codecStats      = null;
 		
 		public function __toString() {
 			return (string) strtolower($this->serienname);
@@ -462,10 +569,12 @@
 		}
 
 		public function sortStaffeln() {
+			if ($this->isSorted) { return; }
 			usort($this->staffeln, function($a, $b) {
 				if($a->getStaffelNum() == $b->getStaffelNum()) return 0;
 				return ($a->getStaffelNum() < $b->getStaffelNum()) ? -1 : 1;
 			});
+			$this->isSorted = true;
 		}
 
 		public function getIdShow() {
@@ -524,6 +633,30 @@
 			return $this->desc;
 		}
 
+		public function getFsk() {
+			return $this->fsk;
+		}
+		
+		public function setFsk($fsk) {
+			$this->fsk = $fsk;
+		}
+
+		public function getGenre() {
+			return $this->genre;
+		}
+
+		public function setGenre($genre) {
+			$this->genre = $genre;
+		}
+
+		public function getStudio() {
+			return $this->studio;
+		}
+
+		public function setStudio($studio) {
+			$this->studio = $studio;
+		}
+
 		public function getStaffeln() {
 			$this->sortStaffeln();
 			return $this->staffeln;
@@ -546,18 +679,40 @@
 			return $size;
 		}
 		
+		public function getIdFiles() {
+			if ($this->fileIds != null) { return $this->fileIds; }
+			
+			$ids   = '';
+			$count = 0;
+			foreach ($this->getStaffeln() as $staffel) {
+				if (!is_object($staffel)) { continue; }
+				$ids .= $staffel->getIdFiles().',';
+				$count++;
+			}
+			$ids = trim($ids);
+			if ($count > 1)
+				$ids = substr($ids, 0, count($ids)-2);
+			
+			$this->fileIds = $ids;
+			return $ids;
+		}
+		
 		public function getAllEpisodeCount() {
-			return $this->allEpisodeCount;
+			return $this->allEpisodeCount + $this->allEpisodeDeltas - $this->getPartedSize();
 		}
 		
 		public function getEpCountWatched() {
 			return $this->epCountWatched;
 		}
 		
+		public function getEpCountUnwatched() {
+			return $this->getAllEpisodeCount() - $this->getEpCountWatched();
+		}
+		
 		public function getWatchedPercent() {
 			if (!$this->isWatchedAny()) { return null; }
-			$watched = $this->getEpCountWatched();
-			$epCount = $this->getAllEpisodeCount();
+			$watched = $this->epCountWatched;
+			$epCount = $this->allEpisodeCount;
 			return round($watched / $epCount * 100, 0);
 		}
 		
@@ -571,6 +726,10 @@
 		
 		public function getLastStaffel() {
 			return $this->getStaffel($this->lastStNum - 1);
+		}
+
+		public function getLastEpisode() {
+			return $this->getLastStaffel()->getLastEpisode();
 		}
 
 		public function setShowpath($path) {
@@ -591,6 +750,19 @@
 				}
 			}
 			return $res;
+		}
+		
+		public function getPartedSize() {
+			if ($this->parted > 0) { return $this->parted; }
+			
+			$parted = 0;
+			foreach ($this->getStaffeln() as $staffel) {
+				if (!is_object($staffel)) { continue; }
+				$parted += $staffel->getParted();
+			}
+			
+			$this->parted = $parted;
+			return $parted;
 		}
 
 		public function isWatched() {
@@ -645,16 +817,34 @@
 				$this->desc = $showDesc;
 			}
 			
+			$delta = $episode->getDelta();
+			if (!empty($delta))
+				$this->allEpisodeDeltas += $episode->getDelta_();
+			
 			$staffel->addEpisode($episode);
 			$this->allEpisodeCount++;
 		}
+		
+		/*
+		function addCodecStats($codecStats) {
+			if ($this->codecStats == null)
+				$this->codecStats = $codecStats;
+		}
+		
+		function getCodecStats() {
+			return $this->codecStats;
+		}
+		*/
 	}
 	
 	class Serien {
-		private $serien = array();
-		private $tvdbIds = array();
-		private $size = 0;
-
+		private $serien   = array();
+		private $tvdbIds  = array();
+		private $isSorted = false;
+		private $size     = 0;
+		private $o1       = -1;
+		private $o2       = 1;
+		
 		public function Serien() { }
 
 		public function getSerien() {
@@ -662,7 +852,53 @@
 		}
 
 		public function sortSerien() {
+			if ($this->isSorted) { return; }
 			usort($this->serien, "strcasecmp");
+			$this->isSorted = true;
+			$_SESSION['SSerien'] = serialize($this);
+		}
+		
+		public function sortSerienRatingAsc() {
+			$this->sortSerienRating(1, -1);
+		}
+		
+		public function sortSerienRatingDesc() {
+			$this->sortSerienRating(-1, 1);
+		}
+		
+		public function sortSerienRating($o1, $o2) {
+			if ($this->isSorted) { return; }
+			
+			$this->o1 = $o1;
+			$this->o2 = $o2;
+			usort($this->serien, function($a, $b) {
+				if($a->getRatingVal() == $b->getRatingVal()) return 0;
+				return ($a->getRatingVal() < $b->getRatingVal()) ? $this->o1 : $this->o2;
+			});
+			
+			$this->isSorted = true;
+			$_SESSION['SSerien'] = serialize($this);
+		}
+		
+		public function sortSerienAirdateAsc() {
+			$this->sortSerienAirdate(-1, 1, 'asc');
+		}
+		
+		public function sortSerienAirdateDesc() {
+			$this->sortSerienAirdate(1, -1, 'desc');
+		}
+		
+		public function sortSerienAirdate($o1, $o2, $order) {
+			$this->o1 = $o1;
+			$this->o2 = $o2;
+			usort($this->serien, function($a, $b) {
+				if($a->getNextAirDate() == $b->getNextAirDate()) return 0;
+				return ($a->getNextAirDate() < $b->getNextAirDate()) ? $this->o1 : $this->o2;
+			});
+		}
+		
+		public function setUnsorted() {
+			$this->isSorted = false;
 		}
 
 		public function getSerienCount() {
@@ -714,7 +950,8 @@
 			return $res;
 		}
 		
-		public function addEpisode($episode, $showDesc, $showPath, $running, $nextAirDate) {
+		public function addEpisode($episode, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate) {
+		#public function addEpisode($episode, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate, $codecStats) {
 			$idShow = $episode->getIdShow();
 			$serienname = $episode->getSerienname();
 			$season = $episode->getSeason();
@@ -725,11 +962,15 @@
 			$serie = $this->getSerie($idShow);
 			if (empty($serie)) {
 				$serie = $this->addSerie($idShow, $serienname);
+				$serie->setFsk($fsk);
+				$serie->setGenre($genre);
+				$serie->setStudio($studio);
+				$serie->setRunning($running);
+				$serie->setNextAirDate($nextAirDate);
+				$serie->setShowpath($showPath);
 			}
 			$serie->addEpisode($episode, $showDesc);
-			$serie->setRunning($running);
-			$serie->setNextAirDate($nextAirDate);
-			$serie->setShowpath($showPath);
+			#$serie->addCodecStats($codecStats);
 		}
 	}
 ?>
