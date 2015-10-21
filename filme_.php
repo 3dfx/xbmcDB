@@ -161,15 +161,15 @@ function getSessionKeySQL() {
 				")";
 				
 	} else if ($_which == 'artist') {
-		$filter = " AND E.".($dbVer >= 93 ? 'actor_id' : 'idActor')." = '".$_just."' AND E.idMovie = A.idMovie";
+		$filter = " AND E.".mapDBC('idActor')." = '".$_just."' AND E.".mapDBC('idMovie')." = A.idMovie";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'regie') {
-		$filter = " AND D.".($dbVer >= 93 ? 'actor_id' : 'idDirector')." = '".$_just."' AND D.idMovie = A.idMovie";
+		$filter = " AND D.".mapDBC('idDirector')." = '".$_just."' AND D.".mapDBC('idMovie')." = A.idMovie";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'genre') {
-		$filter = " AND G.idGenre = '".$_just."' AND G.idMovie = A.idMovie";
+		$filter = " AND G.idGenre = '".$_just."' AND G.".mapDBC('idMovie')." = A.idMovie";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'year') {
@@ -201,9 +201,9 @@ function getSessionKeySQL() {
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
 		"LEFT JOIN filemap M ON B.strFilename = M.strFilename ".
 		(isset($mode) && ($mode == 2) ? "LEFT JOIN streamdetails SD ON (B.idFile = SD.idFile AND SD.strAudioLanguage IS NOT NULL) " : '').
-		(isset($filter, $_which) && ($_which == 'artist') ? ($dbVer >= 93 ? ', actor_link E' : ', actorlinkmovie E') : '').
-		(isset($filter, $_which) && ($_which == 'regie') ? ($dbVer >= 93 ? ', director_link D' : ', directorlinkmovie D') : '').
-		(isset($filter, $_which) && ($_which == 'genre') ? ($dbVer >= 93 ? ', genre_link G' : ', genrelinkmovie G') : '').
+		(isset($filter, $_which) && ($_which == 'artist') ? ', '.mapDBC('actorlinkmovie').' E' : '').
+		(isset($filter, $_which) && ($_which == 'regie') ? ', '.mapDBC('directorlinkmovie').' D' : '').
+		(isset($filter, $_which) && ($_which == 'genre') ? ', '.mapDBC('genrelinkmovie').' G' : '').
 		" WHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
 		
 	if (!empty($sort)) {
@@ -494,11 +494,11 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstartist = $actorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.".($dbVer >= 93 ? "name" : "strActor").", B.role, B.".($dbVer >= 93 ? 'actor_id' : 'idActor').", A.".($dbVer >= 93 ? "art_urls" : "strThumb")." AS actorimage FROM ".($dbVer >= 93 ? "actor_link" : "actorlinkmovie")." B, ".($dbVer >= 93 ? "actor" : "actors")." A WHERE A.".($dbVer >= 93 ? 'actor_id' : 'idActor')." = B.".($dbVer >= 93 ? 'actor_id' : 'idActor')." AND B.".($dbVer >= 93 ? 'cast_order' : 'iOrder')." = 0 AND B.".($dbVer >= 93 ? 'media_id' : 'idMovie')." = '".$idMovie."' AND B.media_type='movie';";
+				$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.".mapDBC('iOrder')." = 0 AND B.".mapDBC('idMovie')." = '".$idMovie."' AND B.media_type='movie';";
 				$result2 = querySQL_($dbh, $SQL_, false);
 				foreach($result2 as $row2) {
-					$artist      = $dbVer >= 93 ? $row2['name']     : $row2['strActor'];
-					$idActor     = $dbVer >= 93 ? $row2['actor_id'] : $row2['idActor'];
+					$artist      = $row2[mapDBC('strActor')];
+					$idActor     = $row2[mapDBC('idActor')];
 					$actorpicURL = $row2['actorimage'];
 					
 					if (empty($firstartist)) {
@@ -580,11 +580,11 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstdirector = $directorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.".($dbVer >= 93 ? "name" : "strActor").", B.".($dbVer >= 93 ? 'actor_id' : 'idDirector').", A.".($dbVer >= 93 ? "art_urls" : "strThumb")." AS actorimage FROM ".($dbVer >= 93 ? "director_link" : "directorlinkmovie")." B, ".($dbVer >= 93 ? "actor" : "actors")." A WHERE B.".($dbVer >= 93 ? "actor_id" : "idDirector")." = A.".($dbVer >= 93 ? 'actor_id' : 'idActor')." AND B.".($dbVer >= 93 ? 'media_id' : 'idMovie')." = '".$idMovie."' AND B.media_type='movie';";
+				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.".mapDBC('idMovie')." = '".$idMovie."' AND B.media_type='movie';";
 				$result3 = querySQL_($dbh, $SQL_, false);
 				foreach($result3 as $row3) {
-					$artist      = $dbVer >= 93 ? $row3['name']     : $row3['strActor'];
-					$idActor     = $dbVer >= 93 ? $row3['actor_id'] : $row3['idDirector'];
+					$artist      = $row3[mapDBC('strActor')];
+					$idActor     = $row3[mapDBC('idDirector')];
 					$actorpicURL = $row3['actorimage'];
 					
 					if (empty($firstdirector)) {

@@ -83,4 +83,38 @@
 		3 => '#FF0000',
 		4 => '#550000',
 	);
+	
+	$DB_MAPPING_93 = array(
+		'actorlinkmovie'    => 'actor_link',
+		'actorlinkepisode'  => 'actor_link',
+		'actorlinktvshow'   => 'actor_link',
+		'directorlinkmovie' => 'director_link',
+		'genrelinkmovie'    => 'genre_link',
+		'countrylinkmovie'  => 'country_link',
+		
+		'actors'            => 'actor',
+		'iOrder'            => 'cast_order',
+		'idActor'           => 'actor_id',
+		'idCountry'         => 'country_id',
+		'idDirector'        => 'actor_id',
+		'idGenre'           => 'genre_id',
+		'idMovie'           => 'media_id',
+		'strActor'          => 'name',
+		'strCountry'        => 'name',
+		'strRole'           => 'role',
+		'strThumb'          => 'art_urls',
+
+		'episodeview'       => 'episode_view',
+	);
+
+function mapDBC($str) {
+	$dbVer = $GLOBALS['db_ver'];
+	if ($dbVer >= 93) {
+		$map = $GLOBALS['DB_MAPPING_93'];
+		return isset($map[$str]) ? $map[$str] : $str;
+	}
+	
+	return $str;
+}
+	
 ?>

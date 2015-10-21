@@ -11,14 +11,16 @@ include_once "globals.php";
 
 function startImport() {
 	$count = 0;
+	$dbVer = fetchDbVer();
 	$dbh   = getPDO();
 	try {
-		$actorsSQL = 'SELECT idActor,strActor FROM actors WHERE strActor NOT LIKE "%Gast Star%" AND strActor NOT LIKE "%Guest Star%" AND strActor NOT LIKE "%Autor%";';
+		//$actorsSQL = 'SELECT idActor, strActor FROM actors WHERE strActor NOT LIKE "%Gast Star%" AND strActor NOT LIKE "%Guest Star%" AND strActor NOT LIKE "%Autor%";';
+		$actorsSQL = "SELECT ".mapDBC('idActor').", ".mapDBC('strActor')." FROM ".mapDBC('actors')." WHERE ".mapDBC('strActor')." NOT LIKE '%Gast Star%' AND ".mapDBC('strActor')." NOT LIKE '%Guest Star%' AND ".mapDBC('strActor')." NOT LIKE '%Autor%';";
 		$res = querySQL_($dbh, $actorsSQL);
 		$actors = array();
 		foreach($res as $row) {
-			$id  = $row['idActor'];
-			$str = trim($row['strActor']);
+			$id  = $row[mapDBC('idActor')];
+			$str = trim($row[mapDBC('strActor')]);
 			$key = strtolower($str);
 			$key = str_replace('.', '', $key);
 			$key = str_replace(' ', '', $key);
@@ -69,7 +71,7 @@ function startImport() {
 			}
 		}
 		
-		$countBefore = fetchActorlinkCount($dbh);
+		$countBefore = fetchActorlinkCount($dbh, $dbVer);
 		
 		if (!empty($dbh) && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 		foreach ($actors as $key => $actor) {
@@ -80,16 +82,16 @@ function startImport() {
 			$actLink  = $linkActs[$key];
 			
 			foreach($actLink['idEp'] as $idEp) {
-				$SQL = 'INSERT OR IGNORE INTO actorlinkepisode VALUES('.$idActor.', '.$idEp.', "Gast Star", 1337);';
+				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinkepisode').' VALUES('.$idActor.', '.$idEp.', '.($dbVer >= 93 ? '"episode", ' : '').'"Gast Star", 1337);';
 				execSQL_($dbh, $SQL);
 			}
 			foreach($actLink['idShow'] as $idShow) {
-				$SQL = 'INSERT OR IGNORE INTO actorlinktvshow VALUES('.$idActor.', '.$idShow.', "Gast Star", 1337);';
+				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", 1337);';
 				execSQL_($dbh, $SQL);
 			}
 		}
 		
-		$countAfter = fetchActorlinkCount($dbh);
+		$countAfter = fetchActorlinkCount($dbh, $dbVer);
 		$count = $countAfter - $countBefore;
 		
 		if (!empty($dbh) && $dbh->inTransaction()) {
@@ -105,12 +107,12 @@ function startImport() {
 	return $count;
 }
 
-function fetchActorlinkCount($dbh) {
+function fetchActorlinkCount($dbh, $dbVer) {
 	$count  = 0;
-	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM actorlinkepisode;");
+	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM ".mapDBC('actorlinkepisode').";");
 	$count += $res['count'];
 	
-	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM actorlinktvshow;");
+	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM ".mapDBC('actorlinktvshow').";");
 	$count += $res['count'];
 	return $count;
 }

@@ -357,8 +357,8 @@ function getIdOrder($dbh = null) {
 }
 
 function checkFileMapTable($dbh) {
-	$db_name = $GLOBALS['db_name'];
-	if (substr($db_name, -5) == '60.db') {
+	$dbVer = $GLOBALS['db_ver'];
+	if ($dbVer >= 60) {
 		$dateAddedFound = false;
 		$res = $dbh->query("PRAGMA TABLE_INFO('files');");
 		foreach($res as $row) {
