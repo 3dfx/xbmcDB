@@ -13,6 +13,10 @@ $(document).ready(function() {
 	});
 });
 
+function darkSideOfTheForce() {
+	$('*').addClass('darkSide');
+}
+
 function getKeyCode(event) {
 	event = event || window.event;
 	return event.keyCode;

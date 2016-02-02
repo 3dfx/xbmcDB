@@ -40,7 +40,6 @@ include_once "globals.php";
 	postNavBar();
 	
 	echo '<div class="tabDiv" onmouseover="closeNavs();">';
-//--	echo '<div class="tabDiv_" onmouseover="closeNavs();">';
 	echo "\r\n";
 	echo '<table class="'.($gallerymode ? 'gallery' : 'film').'" cellspacing="0">';
 	echo "\r\n";
@@ -69,7 +68,6 @@ include_once "globals.php";
 	
 	echo '</form>';
 	echo "\r\n".'</table>';
-//--	echo "\r\n".'</div>';
 	echo "\r\n".'</div>';
 	
 	if (!$isAdmin && !$isDemo) {
@@ -169,7 +167,7 @@ function getSessionKeySQL() {
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'genre') {
-		$filter = " AND G.idGenre = '".$_just."' AND G.".mapDBC('idMovie')." = A.idMovie";
+		$filter = " AND G.".mapDBC('idGenre')." = '".$_just."' AND G.".mapDBC('idMovie')." = A.idMovie";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'year') {
@@ -227,7 +225,6 @@ function getSessionKeySQL() {
 	
 	switch ($mode) {
 		case 2:
-			//--$country = $GLOBALS['country'];
 			$LANGMAP = isset($GLOBALS['LANGMAP']) ? $GLOBALS['LANGMAP'] : array();
 			$_country = '';
 			if (!empty($country)) {
@@ -276,6 +273,8 @@ function getSessionKeySQL() {
 	
 	$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
 	$SQL .= $params.";";
+	
+	#echo $SQL;
 	
 	$res['SQL']         = $SQL;
 	$res['sessionKey']  = $sessionKey;
@@ -440,17 +439,6 @@ function generateRows($dbh, $result, $sessionKey) {
 				$spalTmp .= $chk ? '<img src="img/check.png" class="check10v1">' : ' ';
 				$spalTmp .= '</span> ';
 			}
-			/* //--
-			if ($isAdmin) {
-				if ($playCount >= 1) {
-					$spalTmp .= ' <img src="img/check.png" class="check10">';
-					$moviesSeen++;
-				} else {
-					$moviesUnseen++;
-				}
-				$moviesTotal++;
-			}
-			*/
 #title
 			$suffix = '';
 			if (is3d($filename)) { $suffix = ' (3D)'; }
@@ -494,7 +482,7 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstartist = $actorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.".mapDBC('iOrder')." = 0 AND B.".mapDBC('idMovie')." = '".$idMovie."' AND B.media_type='movie';";
+				$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie." ORDER BY B.".mapDBC('iOrder').";";
 				$result2 = querySQL_($dbh, $SQL_, false);
 				foreach($result2 as $row2) {
 					$artist      = $row2[mapDBC('strActor')];
@@ -502,6 +490,8 @@ function generateRows($dbh, $result, $sessionKey) {
 					$actorpicURL = $row2['actorimage'];
 					
 					if (empty($firstartist)) {
+						if (empty($artist) || empty($idActor))
+							continue;
 						$firstartist = $artist;
 						$firstId     = $idActor;
 						break;
@@ -580,7 +570,7 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstdirector = $directorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.".mapDBC('idMovie')." = '".$idMovie."' AND B.media_type='movie';";
+				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
 				$result3 = querySQL_($dbh, $SQL_, false);
 				foreach($result3 as $row3) {
 					$artist      = $row3[mapDBC('strActor')];
@@ -633,18 +623,16 @@ function generateRows($dbh, $result, $sessionKey) {
 #resolution
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-				$resInfo   = (!empty($vRes)  ? ($vRes[0] >= 1900 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
+				$resInfo   = (!empty($vRes)  ? ($vRes[0] >= 1800 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
 				$resTip    = (!empty($vRes)  ? $vRes[0].'x'.$vRes[1] : '');
 				$codec     = (!empty($vRes)  ? postEditVCodec($vRes[2]) : '');
 				$perf      = (!empty($codec) ? decodingPerf($codec)     : 0);
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
-				$codecST   = (!empty($color) ? ' style="color:'.$color.'; font-weight:bold;"' : 'style="padding-left:4px;"');
-				$codecInfo = !empty($resInfo) && !empty($codec);
-				$codecTD   = '';
-				$codecTD  .= $codecInfo ? '<span class="searchField">'.$resInfo.'</span>' : '';
-				$codecTD  .= (!empty($codec) ? ' <b>|</b> ' : '');
-				$codecTD  .= $codecInfo ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'">'.$codecTD.'</td>';
+				$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : 'style="padding-left:4px;"');
+				$resTD     = !empty($resInfo) ? '<span class="searchField">'.$resInfo.'</span>' : '';
+				$codecTD   = !empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'">'.$resTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right">'.$codecTD.'</td>';
 #filesize
 				$filename = prepPlayFilename($path.$filename);
 				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;
@@ -762,18 +750,6 @@ function postRows($dbh, $zeilen, $saferSearch) {
 		
 	} else { // if ($galleryMode)
 		$titleInfo = '';
-		/*
-		if ($isAdmin && !$gallerymode && (!empty($unseen) || $unseen == 3)) {
-			$percUnseen = '';
-			$percSeen = '';
-			
-			if ($moviesTotal > 0 && $moviesTotal >= $moviesSeen && $moviesTotal >= $moviesUnseen) {
-				$percUnseen = round($moviesUnseen / $moviesTotal * 100, 0).'%';
-				$percSeen = round($moviesSeen / $moviesTotal * 100, 0).'%';
-			}
-		}
-		*/
-		
 		if (!empty($saferSearch)) { $saferSearch = '&dbSearch='.$saferSearch; }
 		echo "\t";
 		echo '<tr><th class="th0"> </th>';
@@ -782,14 +758,15 @@ function postRows($dbh, $zeilen, $saferSearch) {
 			echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 		}
 		
-		echo '<a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='title' || $sort=='titlea')   ? ' color:red;' : '').'" href="?show=filme&sort='.($sort=='titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
+		echo '<span style="padding-right:10px;"> </span><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='title' || $sort=='titlea')   ? ' color:red;' : '').'" href="?show=filme&sort='.($sort=='titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
 		echo '<th class="th0"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr'   || $sort=='jahra')   ? ' color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
 		echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? ' color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
 		echo '<th class="th2">Actor</th>';
 		echo '<th class="th2">Genre</th>';
 		echo '<th class="th2">Director</th>';
 		if (!$isDemo) {
-			echo '<th class="th5">Res | Codec</th>';
+			echo '<th class="th5">Res</th>';
+			echo '<th class="th5">Codec</th>';
 			echo '<th class="th5"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
 		}
 		echo "\r\n";
@@ -843,7 +820,7 @@ function generateForm() {
 	$newsort     = isset($_SESSION['newsort'])     ? $_SESSION['newsort']     : 0;
 	
 	echo "\t";
-	echo '<form action="index.php" name="moviefrm" method="post">';
+	echo '<form action="" name="moviefrm" method="post">';
 	echo "\r\n";
 	
 	if ($newmode) {
@@ -855,7 +832,7 @@ function generateForm() {
 			echo "\t";
 			echo '<tr>';
 			echo '<th class="newAddedTH" colspan="'.getColSpan().'">';
-			echo '<div style="float:right; padding-top:1px; margin-right:55px;">';
+			echo '<div style="float:right; padding-top:1px; margin-right:0px;">';
 			echo '<select class="styled-select" name="newAddedCount" size="1" onChange="newlyChange();">';
 			for ($i = 0; $i < count($sizes); $i++) {
 				$size = $sizes[$i];

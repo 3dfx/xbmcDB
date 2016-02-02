@@ -146,7 +146,7 @@ function fillTable($serien, $dbh) {
 	echo '</th>';
 	echo '</tr>'."\r\n";
 
-	echo "\t\t".'<tr class="emptyTR" id="emptyTR" style="border-top:0px;">';
+	echo "\t\t".'<tr class="emptyTR" id="emptyTR" style="border-top:0px; border-bottom:3px double #6699cc;">';
 	if (!$isAdmin && !$isDemo) {
 		echo '<th class="checkaCheck righto">';
 		echo '<input type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
@@ -181,6 +181,7 @@ function postSerien($serien) {
 	$counter = 1;
 	$missed  = 0;
 	foreach ($serien->getSerien() as $serie) {
+		# || !$serie->isRunning()
 		if (!is_object($serie)) { continue; }
 		$missed += postSerie($serie, $counter++, $runningItalic);
 	}
@@ -199,7 +200,7 @@ function postSerie($serie, $counter, $runningItalic = false) {
 	$idTvDb   = $serie->getIdTvdb();
 	$running  = $serie->isRunning();
 	$spanId   = 'iDS'.$idShow;
-
+	
 	$checkAirDate = isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
 	if ($checkAirDate && $running) {
 		$airDate  = $serie->getNextAirDateStr();
@@ -242,12 +243,15 @@ function postSerie($serie, $counter, $runningItalic = false) {
 				$name = str_replace("(",  "", $name);
 				$name = str_replace(")",  "", $name);
 				$name = str_replace("&",  "and", $name);
+				$name = str_replace("&#44; ",  " ", $name);
+				logc( $name );
+				$name = str_replace(",",  "", $name);
 				if (substr_count($name, ', The') > 0) {
 					$name = 'The '.str_replace(", The",  "", $name);
 				}
 				$nextEp   = fetchNextEpisodeFromDB($idShow);
 				$enNum    = !empty($nextEp) ? getFormattedSE($nextEp['s'], $nextEp['e']) : null;
-				$epSearch = !empty($enNum) && $daysLeft <= 1 ? $ANONYMIZER.$EP_SEARCH.$name.'+'.$enNum : null;
+				$epSearch = !empty($enNum) && $daysLeft <= 1 ? $ANONYMIZER.$EP_SEARCH.$name.' '.$enNum : null;
 			}
 
 			$title = $daysLeft  > 0 ?

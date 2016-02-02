@@ -44,7 +44,7 @@ include_once "./template/functions.php";
 		echo "<th style='padding:2px 10px;'>Refferer</th>";
 		
 	} else if ($which == 2) {
-		echo "<th style='padding:2px 10px;'>Logged in as</th>";
+		echo "<th style='padding:2px 10px;'>Acc. Type</th>";
 		echo "<th style='padding:2px 10px;'>Username</th>";
 		echo "<th style='padding:2px 10px;'>Password</th>";
 	}
@@ -97,7 +97,7 @@ include_once "./template/functions.php";
 				
 				if ($which == 1) {
 					if (substr_count($eintraege[4], "http") || substr_count($eintraege[4], "www")) {
-						echo "<td style='padding:2px 5px;".$color."'><a style='font: 11px Verdana, Arial' href='".(substr_count($eintraege[4], "http") ? '' : 'http://').$eintraege[4]."' target='_blank'".($show_p != $eintraege[4] ? " title='".$eintraege[4]."'" : "").">".$show_p."</a></td>";
+						echo "<td style='padding:2px 10px;".$color."'><a style='font: 11px Verdana, Arial' href='".(substr_count($eintraege[4], "http") ? '' : 'http://').$eintraege[4]."' target='_blank'".($show_p != $eintraege[4] ? " title='".$eintraege[4]."'" : "").">".$show_p."</a></td>";
 					} else {
 						echo "<td style='padding:2px 5px;".$color."'>".$show_p."</td>";
 					}

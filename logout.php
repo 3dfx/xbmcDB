@@ -4,7 +4,7 @@
 	if (isset($_SESSION)) {
 		storeSession();
 		session_destroy();
-		DB_CONN::destruct();
+		#DB_CONN::destruct();
 	}
 	
 	startSession();

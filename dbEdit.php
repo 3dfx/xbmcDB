@@ -188,13 +188,15 @@ include_once "globals.php";
 				$file    = str_replace("''", "'", $file);
 				$params  = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
+				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 				$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+				$dbh->exec('DELETE FROM filemap  WHERE idFile='.$idFile.';');
 				if (!empty($strPath)) {
 					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
-					$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+					#$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 				}
 			}
-			
+			else
 			if (!empty($dateAdded)) {
 				$dateValue = strtotime($dateAdded);
 				if (!empty($params)) { $params .= ', '.$params; }

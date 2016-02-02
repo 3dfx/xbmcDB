@@ -33,6 +33,9 @@
 			$gast_users     = isset($GLOBALS['GAST_USERS'])     ? $GLOBALS['GAST_USERS']     : array();
 			$demo_users     = isset($GLOBALS['DEMO_USERS'])     ? $GLOBALS['DEMO_USERS']     : array();
 			$demo_enabled   = isset($GLOBALS['DEMO_ENABLED'])   ? $GLOBALS['DEMO_ENABLED']   : false;
+			$hashed         = isset($GLOBALS['PASSES_HASHED'])  ? $GLOBALS['PASSES_HASHED']  : false;
+			
+			$input_passwort = $hashed ? sha1($input_passwort) : $input_passwort;
 			
 			// check username und password
 			if (!empty($login_username) && !empty($login_passwort) && $input_username == $login_username && $input_passwort == $login_passwort) {
@@ -157,7 +160,7 @@ function noLog($username, $host, $ip) {
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>XBMC Database</title>
-	<link rel="shortcut icon" href="favicon.ico" />
+	<link rel="icon" type="image/png" href="img/favicon15.png">
 	<link rel="stylesheet" type="text/css" href="class.css" />
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>

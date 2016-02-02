@@ -91,7 +91,7 @@ include_once "globals.php";
 		
 		if (empty($row)) { die('not found...'); }
 		
-		$SQL2     = "SELECT B.".mapDBC('strActor').", A.".mapDBC('strRole').", A.".mapDBC('idActor').", B.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC("actorlinkmovie")." A, ".mapDBC("actors")." B WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND A.".mapDBC('idMovie')." = '".$id."' AND A.media_type='movie' ORDER BY A.".mapDBC('iOrder').";";
+		$SQL2     = "SELECT B.".mapDBC('strActor').", A.".mapDBC('strRole').", A.".mapDBC('idActor').", B.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC("actorlinkmovie")." A, ".mapDBC("actors")." B WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND A.media_type='movie' AND A.".mapDBC('idMovie')." = '".$id."' ORDER BY A.".mapDBC('iOrder').";";
 		$result2  = querySQL($SQL2);
 		$result2_ = querySQL($SQL2);
 		
@@ -290,44 +290,20 @@ include_once "globals.php";
 		}
 		
 		foreach($result3 as $row3) {
-			$tmp = $row3['fVideoAspect'];
-			if ($tmp != null) {
-				if ($tmp != '') {
-					$tmp  = round($tmp, 2);
-					$tmp .= (strlen($tmp) < 4 ? '0' : '').':1';
-				}
-				$ar = $tmp;
-			}
-			
-			$tmp = $row3['iVideoWidth'];
-			if (!empty($tmp)) { $width = $tmp; }
-
-			$tmp = $row3['iVideoHeight'];
-			if (!empty($tmp)) { $height = $tmp; }
-
-			$tmp = $row3['strVideoCodec'];
-			if (!empty($tmp) && !isDemo()) { $vCodec = trim($tmp); }
-
-			$tmp = $row3['strAudioCodec'];
-			if (!empty($tmp) && !isDemo()) { $aCodec[count($aCodec)] = strtoupper($tmp); }
-
-			$tmp = $row3['iAudioChannels'];
-			if (!empty($tmp) && !isDemo()) { $aChannels[count($aChannels)] = $tmp; }
-
-			$tmp = $row3['strAudioLanguage'];
-			if (!empty($tmp) && !isDemo()) { $aLang[count($aLang)] = strtoupper($tmp); }
-			
-			$tmp = $row3['strSubtitleLanguage'];
-			if (!empty($tmp) && !isDemo()) { $sLang[count($sLang)] = strtoupper($tmp); }
-			
-			$tmp = $row3['iVideoDuration'];
-			if (!empty($tmp)) {
+			if (!empty($tmp = $row3['fVideoAspect'])) { $ar = sprintf ("%01.2f", round($tmp, 1)).':1'; }
+			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
+			if (!empty($tmp = $row3['iVideoHeight'])) { $height = $tmp; }
+			if (!empty($tmp = $row3['strVideoCodec']) && !isDemo()) { $vCodec = trim($tmp); }
+			if (!empty($tmp = $row3['strAudioCodec']) && !isDemo()) { $aCodec[count($aCodec)] = strtoupper($tmp); }
+			if (!empty($tmp = $row3['iAudioChannels']) && !isDemo()) { $aChannels[count($aChannels)] = $tmp; }
+			if (!empty($tmp = $row3['strAudioLanguage']) && !isDemo()) { $aLang[count($aLang)] = strtoupper($tmp); }
+			if (!empty($tmp = $row3['strSubtitleLanguage']) && !isDemo()) { $sLang[count($sLang)] = strtoupper($tmp); }
+			if (!empty($tmp = $row3['iVideoDuration'])) {
 				$secs    = $tmp;
 				$minutes = floor($secs/60);
 				$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
 				$minutes = $minutes.'\'';
 			}
-			
 			$run++;
 		}
 		
@@ -335,10 +311,10 @@ include_once "globals.php";
 		$resultG = querySQL($sqlG);
 		$idGenre = array();
 		foreach($resultG as $rowG) {
+			if (!isset($rowG[mapDBC('strGenre')])) { continue; }
 			$str = ucwords(strtolower(trim($rowG[mapDBC('strGenre')])));
-			if ($str == null || $str == '') {
-				continue;
-			}
+			if (empty($str)) { continue; }
+			if (!isset($rowG[mapDBC('idGenre')])) { continue; }
 
 			$idGenre[$str] = $rowG[mapDBC('idGenre')];
 		}
@@ -605,7 +581,7 @@ include_once "globals.php";
 
 			$schauspTblOut[$actors] .= '</td>';
 			$schauspTblOut[$actors] .= '<td class="role">';
-			if (!empty($row2[mapDBC('strRole')])) {
+			if (isset($row2[mapDBC('strRole')])) {
 				$strRole = $row2[mapDBC('strRole')];
 				$schauspTblOut[$actors] .= str_replace('/', ' / ', $strRole);
 			} else {

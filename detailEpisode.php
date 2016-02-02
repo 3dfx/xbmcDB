@@ -33,6 +33,7 @@ include_once "./template/_SERIEN.php";
 	$filesize   = 0;
 	$fsize      = 0;
 	
+	$dbh = getPDO();
 	$existArtTable = existsArtTable();
 	
 	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
@@ -159,7 +160,7 @@ include_once "./template/_SERIEN.php";
 				$url = $row2['url'];
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
-					if (file_exists($img)) {
+					if (file_exists($sessionImg)) {
 						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0);
 					}
 				}

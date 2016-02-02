@@ -5,7 +5,9 @@ include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "./template/_SERIEN.php";
 ?>
+<?php /*
 <script type="text/javascript" src="./template/js/myfancy.js"></script>
+*/ ?>
 <?php
 	$isAdmin = isAdmin();
 	$id = getEscGPost('id');

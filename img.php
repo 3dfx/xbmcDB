@@ -22,7 +22,7 @@ include_once "./template/functions.php";
 	else if (isset($banner))   { $arr = 'banner';   }
 	
 	if (empty($id) || empty($arr)) { shoutImage(); }
-	$img = $_SESSION['thumbs'][$arr][$id];
+	$img = empty($_SESSION['thumbs']) || empty($_SESSION['thumbs'][$arr]) ? null : $_SESSION['thumbs'][$arr][$id];
 	
 	if (!empty($movie)) {
 		if ($movie == 1) {

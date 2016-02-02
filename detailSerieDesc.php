@@ -160,7 +160,7 @@ include_once "./template/_SERIEN.php";
 			
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			$info      = $info1.$info2;
-			$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
+			$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
 			$clear2    = $isAdmin ? '</a>' : '';
 			
 			echo 'Next airdate:<br />'.$clear1.$info.$clear2.'<br /><br />';
