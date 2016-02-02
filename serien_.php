@@ -244,7 +244,6 @@ function postSerie($serie, $counter, $runningItalic = false) {
 				$name = str_replace(")",  "", $name);
 				$name = str_replace("&",  "and", $name);
 				$name = str_replace("&#44; ",  " ", $name);
-				logc( $name );
 				$name = str_replace(",",  "", $name);
 				if (substr_count($name, ', The') > 0) {
 					$name = 'The '.str_replace(", The",  "", $name);
