@@ -79,34 +79,54 @@
 		4 => '#550000',
 	);
 	
-	$DB_MAPPING_93 = array(
-		'actorlinkmovie'    => 'actor_link',
-		'actorlinkepisode'  => 'actor_link',
-		'actorlinktvshow'   => 'actor_link',
-		'directorlinkmovie' => 'director_link',
-		'genrelinkmovie'    => 'genre_link',
-		'countrylinkmovie'  => 'country_link',
-		
-		'actors'            => 'actor',
-		'iOrder'            => 'cast_order',
-		'idActor'           => 'actor_id',
-		'idCountry'         => 'country_id',
-		'idDirector'        => 'actor_id',
-		'idGenre'           => 'genre_id',
-		'idMovie'           => 'media_id',
-		'strActor'          => 'name',
-		'strCountry'        => 'name',
-		'strGenre'          => 'name',
-		'strRole'           => 'role',
-		'strThumb'          => 'art_urls',
+	$DB_MAPPINGS = array(
+		93 => array(
+			'actorlinkmovie'    => 'actor_link',
+			'actorlinkepisode'  => 'actor_link',
+			'actorlinktvshow'   => 'actor_link',
+			'directorlinkmovie' => 'director_link',
+			'genrelinkmovie'    => 'genre_link',
+			'countrylinkmovie'  => 'country_link',
 
-		'episodeview'       => 'episode_view',
+			'actors'            => 'actor',
+			'iOrder'            => 'cast_order',
+			'idActor'           => 'actor_id',
+			'idCountry'         => 'country_id',
+			'idDirector'        => 'actor_id',
+			'idGenre'           => 'genre_id',
+			'idMovie'           => 'media_id',
+			'strActor'          => 'name',
+			'strCountry'        => 'name',
+			'strGenre'          => 'name',
+			'strRole'           => 'role',
+			'strThumb'          => 'art_urls',
+
+			'episodeview'       => 'episode_view',
+		),
+		99 => array(
+			'seasonview'        => 'season_view',
+			'tvshowview'        => 'tvshow_view',
+		)
 	);
+
+function mergeMapping($dbVer) {
+	if (isset($_SESSION['DB_MAPPING'])) { return $_SESSION['DB_MAPPING']; }
+	
+	$merged   = array();
+	$mappings = $GLOBALS['DB_MAPPINGS'];
+	foreach($mappings as $key => $value) {
+		if ($key > $dbVer) { continue; }
+		$merged = array_merge($merged, $value);
+	}
+	
+	$_SESSION['DB_MAPPING'] = $merged;
+	return $merged;
+}
 
 function mapDBC($str) {
 	$dbVer = $GLOBALS['db_ver'];
 	if ($dbVer >= 93) {
-		$map = $GLOBALS['DB_MAPPING_93'];
+		$map = mergeMapping($dbVer);
 		return isset($map[$str]) ? $map[$str] : $str;
 	}
 	

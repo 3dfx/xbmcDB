@@ -4,6 +4,7 @@
 	include_once "globals.php";
 	
 	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
+	$TITLE   = isset($GLOBALS['NAV_TITLE'])      ? $GLOBALS['NAV_TITLE']      : 'xbmcDB';
 	
 	$blacklisted = restoreBlacklist();
 	$hostname    = $_SERVER['HTTP_HOST'];
@@ -183,7 +184,7 @@ function noLog($username, $host, $ip) {
 		<div class='navbar-inner' style='height:30px;'>
 <?php if (!$noMoreLogin) { ?>
 			<div class='container' style='margin:0px auto; width:auto;'>
-				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:4px; position: absolute;' href='#'>xbmcDB</a></div>
+				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:4px; position: absolute;' href='#'><?php echo $TITLE; ?></a></div>
 				<form action='login.php' method='post' class='navbar-search pull-right' style='height:25px;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF;'>
 					<li style='margin:0px;'>

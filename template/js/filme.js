@@ -155,16 +155,19 @@ function searchForString(obj, event) {
 	
 	$('span').removeHighlight();
 	
-	if (search.length < 3) {
+	if (search == '' || search.length < 3) {
 		$('TR.searchFlag').show();
 		$('TR').find('.checka').removeAttr('disabled');
 		return false;
 	}
 	
+	var srch = search.split(' ');
+	
 	var trs = $('TR.searchFlag');
 	for (var r = 0; r < trs.length; r++) {
 		var tr = trs[r];
 		
+		var foundSplits = 0;
 		var foundString = false;
 		var spans = $( tr ).find('.searchField');
 		for (var s = 0; s < spans.length; s++) {
@@ -174,8 +177,20 @@ function searchForString(obj, event) {
 			var string = $.trim(span.innerHTML).toLowerCase();
 			if (string == null || string == '') { continue; }
 			
-			foundString = (string.indexOf(search) >= 0 ? true : false);
-			if (foundString) { break; }
+			for (var i = 0; i < srch.length; i++) {
+				if (string.indexOf(srch[i]) >= 0) {
+					foundSplits++;
+					break;
+				}
+			}
+			
+			//foundString = (string.indexOf(search) >= 0 ? true : false);
+			//if (foundString) { break; }
+			
+			if (foundSplits >= srch.length) {
+				foundString = true;
+				break;
+			}
 		}
 		
 		if (foundString) {
@@ -191,7 +206,9 @@ function searchForString(obj, event) {
 		if (foundString) { continue; }
 	}
 	
-	if (search != null && search != '') { $('span').highlight(search); }
+	for (var i = 0; i < srch.length; i++) {
+		$('span').highlight(srch[i]);
+	}
 	searchLength = search.length;
 	
 	collectIds();

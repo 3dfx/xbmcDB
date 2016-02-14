@@ -982,13 +982,13 @@ function postNavBar_($isMain) {
 		}
 
 		$res .= '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.$selectedIs.' <b class="caret"></b></a>';
-		$res .= '<ul class="dropdown-menu">';
+		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 		$all = ((!isset($unseen) || $unseen == 3) && $newmode != 1 && empty($just) && empty($mode) && empty($saferSearch) && empty($country) ? ' class="selectedItem"' : '');
 		$res .= '<li><a href="?show=filme&newmode=0&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.$all.'>all</a></li>';
 
 		$res .= '<li class="dropdown-submenu">';
 		$res .= '<a tabindex="-1" href="#"'.($newmode && empty($just) ? ' class="selectedItem"' : '').'>'.(!$newmode ? 'recently added' : ($newsort == 2 ? 'sort by id' : 'sort by date')).'</a>';
-		$res .= '<ul class="dropdown-menu">';
+		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 		$res .= '<li><a tabindex="-1" href="?show=filme&newmode=1&newsort=2&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.($newmode && $newsort == 2 && empty($just) ? ' class="selectedItem"' : '').'>sort by id</a></li>';
 		$res .= '<li><a tabindex="-1" href="?show=filme&newmode=1&newsort=1&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.($newmode && $newsort == 1 && empty($just) ? ' class="selectedItem"' : '').'>sort by date</a></li>';
 		$res .= '</ul>';
@@ -1003,7 +1003,7 @@ function postNavBar_($isMain) {
 
 				$langMenu  = '<li class="dropdown-submenu">';
 				$langMenu .= '<a tabindex="-1" href="#"'.(!empty($country) && $country != $COUNTRIES[0] ? ' class="selectedItem"' : '').' style="height:20px;">'.($countryLabel).'</a>';
-				$langMenu .= '<ul class="dropdown-menu">';
+				$langMenu .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 				$menuCountry = 'international';
 				$thisCountry = false;
@@ -1048,7 +1048,7 @@ function postNavBar_($isMain) {
 
 	if ($isMain || ($isTvshow && $TVSHOW_GAL_ENABLED)) {
 		$res .= '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
-		$res .= '<ul class="dropdown-menu">';
+		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 		$res .= '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
 		$res .= '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
 		$res .= '</ul>';
@@ -1064,7 +1064,7 @@ function postNavBar_($isMain) {
 		if ($isTvshow) {
 			$res .= '<li class="dropdown" id="dropLatestEps" onmouseover="openNav(\'#dropLatestEps\');">';
 			$res .= '<a tabindex="2" href="?show=serien&dbSearch" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'" onfocus="openNav(\'#dropLatestEps\');">tv-shows <b class="caret"></b></a>';
-			$res .= '<ul class="dropdown-menu">';
+			$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 			$res .= createEpisodeSubmenu(fetchLastSerien());
 			$res .= '</ul>';
 			$res .= '</li>';
@@ -1097,9 +1097,9 @@ function postNavBar_($isMain) {
 		$state   = ($state == 1 ? 'playing' : ($state == 0 ? 'paused' : ''));
 		$res .= '<span id="xbmControlWrap" style="float:left;">';
 		$res .= '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
-			$res .= '<span id="xbmcPlayerState_" style="color:black; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
+			$res .= '<span id="xbmcPlayerState_" style="color:'.($INVERSE ? 'white' : 'black').'; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
 			$res .= '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
-			$res .= '<span id="xbmcPlayerFile" style="top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
+			$res .= '<span id="xbmcPlayerFile" style="color:'.($INVERSE ? 'white' : 'black').'; top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
 			$res .= '</a> ';
 			$res .= '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
 			$res .= '<a class="navbar" onclick="playNext(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/next.png" style="width:24px; height:24px;" /></a>';
@@ -1131,7 +1131,7 @@ function postNavBar_($isMain) {
 		}
 		$res .= '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
 		$res .= '<a tabindex="60" href="#" class="dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
-		$res .= '<ul class="dropdown-menu">';
+		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 		$res .= '<li><a class="fancy_sets'.$selected.'" href="'.$viewerPage.'">Order Viewer'.$msgStr.'</a></li>';
 
@@ -1151,6 +1151,7 @@ function postNavBar_($isMain) {
 		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
 		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
 		$res .= '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
+		$res .= '<li><a class="fancy_logs" href="./_hash.php">Pass Generator</a></li>';
 
 		/*
 		$res .= '<li class="divider"></li>';
@@ -1183,6 +1184,7 @@ function postNavBar_($isMain) {
 		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	} //if ($isAdmin)
 	
+	#if ($INVERSE)
 	#$res .= '<li><a tabindex="69" onmouseover="closeNavs();" onclick="this.blur(); darkSideOfTheForce();" style="font-weight:bold;'.($bs211).'" href="#">dark side</a></li>';
 	$res .= '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="this.blur(); return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
 
@@ -1195,10 +1197,11 @@ function postNavBar_($isMain) {
 } //navbar_
 
 function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211) {
+	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
 	$res = '';
 	$res .= '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
 	$res .= '<a tabindex="50" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'" onclick="this.blur();" onfocus="openNav(\'#dropSearch\');">search <b class="caret"></b></a>';
-	$res .= '<ul class="dropdown-menu">';
+	$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 		$res .= '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
 		$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
 		$res .= '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/close.png" /></a>';
@@ -1220,6 +1223,7 @@ function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs
 }
 
 function createEpisodeSubmenu($result) {
+	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
 	$isAdmin = isAdmin();
 	$counter = 2;
 	$res = '';
@@ -1228,7 +1232,7 @@ function createEpisodeSubmenu($result) {
 		$res .= '<li class="dropdown-submenu" id="'.$lId.'" style="cursor:default;">';
 		$count = count($show);
 		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
-		$res .= '<ul class="dropdown-menu">';
+		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 		foreach($show as $row) {
 			$idShow    = $row['idShow'];    $serie = $row['serie'];   $season  = $row['season'];
@@ -1499,10 +1503,10 @@ function storeSession() {
 	setLastHighest();
 	clearMediaCache();
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['refferLogged'], $_SESSION['overrideFetch'],
-	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['dbName'], $_SESSION['dbVer'],
+	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['OS'],
 	       $_SESSION['angemeldet'], $_SESSION['demo'],  $_SESSION['thumbs'],   $_SESSION['existsTable'],  $_SESSION['TvDbCache'],
-	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['reffer'],       $_SESSION['lastMovie'],
-	       $_SESSION['OS']
+	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['reffer'],       $_SESSION['DB_MAPPING'],
+	       $_SESSION['dbName'],     $_SESSION['dbVer']
 
 	     ); //remove values that should be determined at login
 
@@ -1896,6 +1900,8 @@ function getNextEpisode($serie) {
 	if (!$running) { return null; }
 	$episodes = getShowInfo($idTvDb);
 	$staffel  = $serie->getLastStaffel();
+	#echo $staffel->getStaffelNum();
+	
 	$epCount  = is_object($staffel) ? $staffel->getLastEpNum() : null;
 	if (empty($epCount))
 		return null;
@@ -2308,7 +2314,7 @@ function generateOnDemandCopyScript($idOrder) {
 function getItemsForRequest($ids, $isShow) {
 	$SQL = '';
 	if ($isShow) {
-		$SQL =  "SELECT strPath, c00 AS name FROM tvshowview WHERE idShow IN (".$ids.") ORDER BY name;";
+		$SQL =  "SELECT strPath, c00 AS name FROM ".mapDBC('tvshowview')." WHERE idShow IN (".$ids.") ORDER BY name;";
 	} else {
 		$SQL =  "SELECT c00 AS filmname, B.strFilename AS filename, c.strPath AS path, d.filesize FROM movie a, files b, path c, fileinfo d ".
 			"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".

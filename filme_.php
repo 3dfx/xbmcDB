@@ -631,12 +631,12 @@ function generateRows($dbh, $result, $sessionKey) {
 				$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : 'style="padding-left:4px;"');
 				$resTD     = !empty($resInfo) ? '<span class="searchField">'.$resInfo.'</span>' : '';
 				$codecTD   = !empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right" title="'.$resTip.'">'.$resTD.'</td>';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right">'.$codecTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD hideMobile" align="right">'.$codecTD.'</td>';
 #filesize
 				$filename = prepPlayFilename($path.$filename);
 				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD" align="right"'.$playItem.'>'.$moviesize.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD hideMobile" align="right"'.$playItem.'>'.$moviesize.'</td>';
 			}
 			
 			$zeile++;
@@ -765,9 +765,9 @@ function postRows($dbh, $zeilen, $saferSearch) {
 		echo '<th class="th2">Genre</th>';
 		echo '<th class="th2">Director</th>';
 		if (!$isDemo) {
-			echo '<th class="th5">Res</th>';
-			echo '<th class="th5">Codec</th>';
-			echo '<th class="th5"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
+			echo '<th class="th5 hideMobile">Res</th>';
+			echo '<th class="th5 hideMobile">Codec</th>';
+			echo '<th class="th5 hideMobile"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
 		}
 		echo "\r\n";
 		

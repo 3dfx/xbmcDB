@@ -1,5 +1,7 @@
 /* Large desktop */
-@media (min-width: 1200px) { }
+@media (max-width: 1350px) {
+	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
+}
 
 /* Portrait tablet to landscape and desktop */
 @media (min-width: 600px) and (max-width: 1024px) {
@@ -11,7 +13,7 @@
 }
 
 /* Landscape phone to portrait tablet */
-@media (max-width: 1024px) {
+@media (max-width: 1300px) {
 	#adminInfo { display:none; }
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
@@ -104,6 +106,20 @@ a, a:hover {
 	cursor: pointer;
 	z-index: 1103;
 	padding:0px !important;
+}
+
+.navbar-inverse.dropdown-menu, 
+.navbar-inverse.dropdown-menu > li > a, 
+.navbar-inverse.dropdown-submenu, 
+.navbar-inverse.dropdown-submenu > a,
+.navbar-inverse.dropdown-menu > li > a > div > span {
+  color: #ffffff;
+}
+
+.navbar-inverse.dropdown-menu, 
+.navbar-inverse.dropdown-submenu, 
+.navbar-inverse.dropdown-submenu > a {
+  background-color: #1b1b1b;
 }
 
 .dropdown-menu_epTitle { padding-right:10px; color:#d7d7d7; }

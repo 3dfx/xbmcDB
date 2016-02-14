@@ -23,6 +23,7 @@ include_once "./template/_SERIEN.php";
 	$codecs_  = fetchShowCodecs($idShow);
 	$banner   = null;
 	$imgURL   = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
+	$imgURL2  = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g2.jpg';
 	#$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 
@@ -72,7 +73,9 @@ include_once "./template/_SERIEN.php";
 	echo '<td class="showDescTD">';
 	if (!empty($idTvdb) && $idTvdb != -1) {
 		$imgFile = './img/banners/'.$idTvdb.'.jpg';
-		if (loadImage($imgURL, $imgFile) == -1) { $imgFile = null; }
+		if (loadImage($imgURL, $imgFile) == -1 || loadImage($imgURL2, $imgFile) == -1) {
+			$imgFile = null;
+		}
 		wrapItUp('banner', $idTvdb, $imgFile);
 		$banner = empty($imgFile) ? $imgURL : getImageWrap($imgFile, $idTvdb, 'banner', 0);
 		echo '<img id="tvBanner" class="openTvdb" src="'.$banner.'" href="'.$tvdbURL.'" />';

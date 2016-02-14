@@ -14,7 +14,10 @@ $(document).ready(function() {
 });
 
 function darkSideOfTheForce() {
-	$('*').addClass('darkSide');
+	$('.tabDiv').addClass('darkSide');
+	//$('#showDesc').addClass('darkSide');
+	//$('#showInfo').addClass('darkSide');
+	//$('#showEpDesc').addClass('darkSide');
 }
 
 function getKeyCode(event) {
