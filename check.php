@@ -2,7 +2,7 @@
 include_once "./template/functions.php";
 
 	startSession();
-	if ( !isLogedIn() ) {
+	if (!isLogedIn()) {
 		#echo '<div style="padding:20px;">invalid session...</div>';
 		exit;
 	}

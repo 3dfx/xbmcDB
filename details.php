@@ -1,10 +1,9 @@
 <?php
 include_once "check.php";
-
-include_once "./template/functions.php";
-include_once "./template/config.php";
 include_once "globals.php";
-	
+include_once "./template/config.php";
+include_once "./template/functions.php";
+
 	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
 	#if (empty($id)) { $id = getEscGPost('idShow'); }
 	if (empty($id)) { die('<br/>no param!<br/>'); }
@@ -78,6 +77,34 @@ include_once "globals.php";
 	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
 	$DETAILFANART     = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
 	
+		$COLS = array(
+			'DUR'    =>  0, 
+			'RATE'   =>  1, 
+
+
+			'YEAR'   =>  2, 
+			'GENRE'  =>  3, 
+			'VIDEO1' =>  4, 
+			'VIDEO2' =>  5, 
+			'AUDIO1' =>  6, 
+			'AUDIO2' =>  7, 
+			'AUDIO3' =>  8, 
+			'SUB'    =>  9
+
+/*
+			'VOTE'   =>  2, 
+			'YEAR'   =>  3, 
+			'GENRE'  =>  4, 
+			'VIDEO1' =>  5, 
+			'VIDEO2' =>  6, 
+			'AUDIO1' =>  7, 
+			'AUDIO2' =>  8, 
+			'AUDIO3' =>  9, 
+			'SUB'    => 10
+*/
+
+		);
+		
 		$isAdmin = isAdmin();
 		$dbVer   = fetchDbVer();
 		$idFile  = -1;
@@ -85,7 +112,7 @@ include_once "globals.php";
 		$existArtTable = existsArtTable();
 		
 		$SQL = "SELECT c00, c01, c02, idMovie, c07 AS jahr, c08 AS thumb, c09 AS imdbId, B.strFilename AS filename, A.c19 AS trailer, c04, c05, c11, c14, c16, ".
-			"C.strPath AS path, D.filesize, A.idFile, B.playCount AS playCount ".
+			"C.strPath AS path, D.filesize, D.fps, A.idFile, B.playCount AS playCount ".
 			"FROM movie A, files B, path C LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE A.idFile = B.idFile AND C.idPath = B.idPath AND idMovie = '".$id."' ";
 		$row = fetchFromDB($SQL, false);
 		
@@ -100,6 +127,7 @@ include_once "globals.php";
 		
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
+		$fps          = $row['fps'];
 		$idMovie      = $row['idMovie'];
 		$path         = $row['path'];
 		$filename     = $row['filename'];
@@ -110,6 +138,10 @@ include_once "globals.php";
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['c01'];
 		$country      = getCountry($idMovie);
+		
+		if (empty($fps)) {
+			$fps = fetchFps($idFile, $path, $filename, $fps, getPDO());
+		}
 		
 		$percent;
 		$timeAt;
@@ -320,7 +352,7 @@ include_once "globals.php";
 		}
 		
 		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre)), 1);
-		$spalten = 11;
+		$spalten = count($COLS);
 		for ($g = 0; $g < $max; $g++) {
 			for ($x = 0; $x < $spalten; $x++) {
 				$res[$g][$x] = null;
@@ -329,59 +361,65 @@ include_once "globals.php";
 			if ($g < count($genre)) {
 				$genreId = -1;
 				$strGenre = ucwords(strtolower(trim($genre[$g])));
-				if ($strGenre != null && $strGenre != '') {
+				if (!empty($strGenre)) {
 					if (isset($idGenre[$strGenre])) {
 						$genreId = $idGenre[$strGenre];
 					}
 				}
 
 				if ($genreId != -1) {
-					$res[$g][4] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
+					$res[$g][$COLS['GENRE']] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
 				} else {
-					$res[$g][4] = $strGenre;
+					$res[$g][$COLS['GENRE']] = $strGenre;
 				}
 			}
 
 			if ($g < count($aLang)) {
-				$res[$g][7] = postEditLanguage($aLang[$g]);
+				$res[$g][$COLS['AUDIO1']] = postEditLanguage($aLang[$g]);
 			}
 
 			if ($g < count($aCodec)) {
-				$res[$g][8] = postEditACodec($aCodec[$g]);
+				$res[$g][$COLS['AUDIO2']] = postEditACodec($aCodec[$g]);
 			}
 
 			if ($g < count($aChannels)) {
-				$res[$g][9] = postEditChannels($aChannels[$g]);
+				$res[$g][$COLS['AUDIO3']] = postEditChannels($aChannels[$g]);
 			}
 			
 			if ($g < count($sLang)) {
-				$res[$g][10] = postEditLanguage($sLang[$g], false);
+				$res[$g][$COLS['SUB']] = postEditLanguage($sLang[$g], false);
 			}
 		}
 		
-		$res[0][0] = $hours;
-		$res[0][1] = $rating;
-		$res[0][2] = $stimmen;
-		$res[0][3] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
+		$res[0][$COLS['DUR']]  = $hours;
+		$res[1][$COLS['DUR']]  = $minutes;
+		$res[0][$COLS['RATE']] = $rating;
+		$res[1][$COLS['RATE']] = '<span title="votes">'.$stimmen.'</span>';
+		#$res[0][$COLS['VOTE']] = $stimmen;
+		$res[0][$COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
 		if (!empty($width) && !empty($height)) {
-			$res[0][5] = $width.'x'.$height;
+			$res[0][$COLS['VIDEO1']] = $width.'x'.$height;
 		}
+		$res[1][$COLS['VIDEO1']] = $ar;
+		
 		$vCodec  = postEditVCodec($vCodec);
 		$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 		$perf    = (!empty($vCodec) ? decodingPerf($vCodec)     : 0);
 		$color   = ($cols == null || $perf < 4 ? null : $cols[$perf]);
 		$vCodec  = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.'</span>' : $vCodec);
-		$res[0][6] = $vCodec;
-		
-		$res[1][0] = $minutes;
-		$res[1][5] = $ar;
+		$res[0][$COLS['VIDEO2']] = $vCodec;
+
+		if (!empty($fps)) {
+			$res[1][$COLS['VIDEO2']] = $fps.' fps';
+		}
 		
 		if ($run > 0) {
 			echo '<div class="stream">';
 			echo '<table cellspacing="0" class="streaminfo">';
 			echo "\r\n";
 			echo '<tr>';
-			echo '<th>Duration</th><th>Rating</th><th>Votes</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
+			echo '<th>Duration</th><th>Rating</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
+			#<th>Votes</th>
 			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th>';
 			if (!empty($aCodec)) {
 				echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
@@ -391,26 +429,26 @@ include_once "globals.php";
 			} else { $spalten--; }
 			echo '</tr>';
 			echo "\r\n";
-			echo '<tr class="abstand"><td colspan="10"></td></tr>';
+			echo '<tr class="abstand"><td colspan="'.count($COLS).'"></td></tr>';
 			echo "\r\n";
 
 			$zeilen = 0;
 			$hiddenGenres = count($genre)-2;
-			$hiddenSubs = count($sLang)-2;
+			$hiddenSubs   = count($sLang)-2;
 			for ($i = 0; $i < $max; $i++) {
 				echo '<tr'.($i >= 2 && ($hiddenGenres > 1 || $hiddenSubs > 1) ? ' name="genres" style="display:none;"' : '').'>';
 				$emptyGenreFilled = false;
 				for ($j = 0; $j < count($res[$i]); $j++) {
 					$val = $res[$i][$j];
-					if (count($genre) == 0 && $j == 4) {
+					if (count($genre) == 0 && $j == $COLS['GENRE']) {
 						if ($emptyGenreFilled) { continue; }
-					} else if ($val == null && $j > 0 && $j != 5) {
+					} else if ($val == null && $j > 0 && $j != $COLS['GENRE']+1) {
 						continue;
 					}
 
 					echo '<td';
-					$colspan = getNeededColspan($res[$i], $j+1);
-					if ($j == 3 && count($genre) == 0) {
+					$colspan = getNeededColspan($COLS, $res[$i], $j+1);
+					if (count($genre) == 0 && $j == $COLS['YEAR']) {
 						$colspan = 1;
 					}
 					if ($colspan > 1) {
@@ -418,83 +456,92 @@ include_once "globals.php";
 					}
 
 					switch ($j) {
-						case 0:
-							if ($i > 0 && $i >= count($genre)) {
+						case $COLS['DUR']:
+							if ($i > 0 && $i >= count($genre) && $colspan > 1) {
 								echo ' class="streaminfoGenre"';
 								$emptyGenreFilled = true;
 							}
 							break;
 
-						case 2:
-							if ($colspan > 1) {
+						case $COLS['RATE']:
+							if (!$emptyGenreFilled && $i > 0 && $i >= count($genre)) {
 								echo ' class="streaminfoGenre"';
 								$emptyGenreFilled = true;
 							}
 							break;
 
-						case 3:
-							if ($colspan > 1) {
+						case $COLS['YEAR']:
+							if (!$emptyGenreFilled && $colspan > 1) {
 								echo ' class="streaminfoGenre"';
 								$emptyGenreFilled = true;
 							}
 							break;
 
-						case 4:
+						case $COLS['GENRE']:
 							if (!$emptyGenreFilled) {
 								echo ' class="streaminfoGenre"';
 							}
 							break;
 
-						case 5:
+						case $COLS['VIDEO1']:
 							echo ' class="streaminfoAV"';
 							break;
 
-						case 7:
+						case $COLS['VIDEO2']:
 							echo ' class="streaminfoAV"';
 							break;
 
-						case 9:
+						case $COLS['AUDIO1']:
+							echo ' class="streaminfoAV"';
+							break;
+
+						case $COLS['AUDIO2']:
+							echo ' class="streaminfoAV"';
+							break;
+
+						case $COLS['AUDIO3']:
 							echo ' class="'.(empty($sLang) ? 'streaminfoLasTD' : 'streaminfoAV').'"';
 							break;
-							
-						case 10:
+
+						case $COLS['SUB']:
 							echo ' class="streaminfoLasTD"';
 							break;
 					}
 
 					echo '>';
-					#if ($i == 0 && $j == 1) { echo '<a href="'.$ANONYMIZER.$IMDBFILMTITLE.$row['imdbId'].'">'; }
 					echo ($val == null || $val == '' ? '&nbsp;' : $val);
-					#if ($i == 0 && $j == 1) { echo '</a>'; }
 					echo '</td>';
 				}
 				echo '</tr>';
 				$zeilen++;
 			}
 			
-			if ($zeilen > 2 && ($hiddenGenres >= 1 || $hiddenSubs >= 1)) {
-				if ($hiddenGenres > 1) {
-					echo '<tr id="genreDots"><td colspan="4"></td><td class="streaminfoGenre lefto">';
-					echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
-					echo '</td>';
-					echo '<td colspan="'.($hiddenSubs >= 1 ? 5 : 4).'"></td>';
-					if ($hiddenSubs >= 1) {
-						echo '<td><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
-					}
-					echo '</tr>';
-					echo "\r\n";
-					
-				} else if ($hiddenSubs > 1) {
-					echo '<tr id="genreDots"><td colspan="4"></td><td class="streaminfoGenre lefto">';
+			if ($zeilen > 2 && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
+//				if ($hiddenGenres > 1) {
+					echo '<tr id="genreDots"><td colspan="'.($COLS['GENRE']).'"></td><td class="streaminfoGenre lefto">';
 					if ($hiddenGenres >= 1) {
 						echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
 					}
 					echo '</td>';
-					echo '<td colspan="5"></td>';
-					echo '<td><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
+					echo '<td colspan="'.($hiddenSubs >= 1 ? count($COLS)-($COLS['GENRE']+2) : count($COLS)-($COLS['GENRE']+1)).'"></td>';
+					if ($hiddenSubs >= 1) {
+						echo '<td class="streaminfoLasTD"><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
+					}
+					echo '</tr>';
+					echo "\r\n";
+/*
+				} else if ($hiddenSubs > 1) {
+					echo '<tr id="genreDots"><td colspan="'.($COLS['GENRE']).'"></td><td class="streaminfoGenre lefto">';
+					if ($hiddenGenres >= 1) {
+						echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
+					}
+					echo '</td>';
+					echo '<td colspan="'.(count($COLS)-$COLS['GENRE']).'"></td>';
+					echo '<td class="streaminfoLasTD"><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
 					echo '</tr>';
 					echo "\r\n";
 				}
+*/
 			}
 			
 			$smb = (substr($filename, 0, 6) == 'smb://');
@@ -503,7 +550,7 @@ include_once "globals.php";
 				$filename = '';
 			}
 			
-			echo '<tr class="abstand"><td colspan="10"></td></tr>';
+			echo '<tr class="abstand"><td colspan="'.count($COLS).'"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
 			if (!isDemo()) {
 			echo '<span class="filename lefto"'.($isAdmin ? ' title="'.$path.'"' : '').'>'.encodeString($filename).'</span>';
@@ -570,7 +617,7 @@ include_once "globals.php";
 			
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
 			$schauspTblOut[$actors] .= '<td class="art">';
-			$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.str_replace(' ', '+', $artist).'">[i] </a>';
+			#$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.str_replace(' ', '+', $artist).'">[i] </a>';
 			$schauspTblOut[$actors] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
 			if (file_exists($actorimg)) {
 				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
@@ -601,7 +648,8 @@ include_once "globals.php";
 			echo "\r\n";
 			echo '<tr>';
 			echo '<th>';
-			echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
+			#echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
+			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
 			echo '</th>';
 			echo '<th class="role">';
 			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Role</span>';
@@ -615,7 +663,8 @@ include_once "globals.php";
 			
 			if ($actors > $acLimit) {
 				echo '<tr id="doTr"><td colspan="2">';
-				echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
+				#echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
+				echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
 				echo '</td></tr>';
 				echo "\r\n";
 			}
@@ -630,9 +679,9 @@ include_once "globals.php";
 
 
 //- FUNCTIONS -//
-	function getNeededColspan($res, $spalte) {
+	function getNeededColspan($COLS, $res, $spalte) {
 		$colspan = 1;
-		if ($spalte == 5) {
+		if ($spalte == $COLS['VIDEO1']) {
 			return $colspan;
 		}
 		
@@ -646,7 +695,7 @@ include_once "globals.php";
 		}
 		
 		if ($spalte == 1) {
-			return ($colspan > 5 ? 5 : $colspan);
+			return ($colspan > $COLS['GENRE']+1 ? $COLS['GENRE']+1 : $colspan);
 		}
 		
 		return $colspan;

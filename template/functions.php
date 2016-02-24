@@ -132,12 +132,12 @@ function getGenres($dbh) {
 		$sqlG = "SELECT * FROM genre";
 		$resultG = $dbh->query($sqlG);
 		foreach($resultG as $rowG) {
-			if (empty($rowG['strGenre'])) { continue; }
-			$str = ucwords(strtolower(trim($rowG['strGenre'])));
+			if (empty($rowG[mapDBC('strGenre')])) { continue; }
+			$str = ucwords(strtolower(trim($rowG[mapDBC('strGenre')])));
 			if (empty($str)) { continue; }
-			
-			if (empty($rowG['idGenre'])) { continue; }
-			$idGenre[$str][0] = $rowG['idGenre'];
+
+			if (empty($rowG[mapDBC('idGenre')])) { continue; }
+			$idGenre[$str][0] = $rowG[mapDBC('idGenre')];
 			$idGenre[$str][1] = 0;
 		}
 
@@ -290,12 +290,26 @@ function existsSetTable($dbh = null) {
 
 function checkEpLinkEpTable($dbh = null) {
 	$exist = existsTable('episodelinkepisode', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS episodelinkepisode (idFile INTEGER NOT NULL, delta INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS episodelinkepisode(idFile INTEGER NOT NULL, delta INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
 }
 
 function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo (idFile INTEGER NOT NULL, filesize LONGINT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
+	else {
+		if (isset($_SESSION['param_fpsColChecked']))
+			return;
+		$colFound = false;
+		$res = $dbh->query("PRAGMA TABLE_INFO('fileinfo');");
+		foreach($res as $row) {
+			if ($row[1] == 'fps') {
+				$colFound = true;
+				break;
+			}
+		}
+		if (!$colFound) { $dbh->exec("ALTER TABLE fileinfo ADD fps FLOAT;"); }
+		$_SESSION['param_fpsColChecked'] = true;
+	}
 }
 
 function checkMyEpisodeView($dbh = null) {
@@ -305,12 +319,12 @@ function checkMyEpisodeView($dbh = null) {
 
 function checkTvshowRunningTable($dbh = null) {
 	$exist = existsTable('tvshowrunning', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS tvshowrunning (idShow INTEGER NOT NULL, running INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS tvshowrunning(idShow INTEGER NOT NULL, running INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 }
 
 function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate (idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 }
 
 function existsOrderzTable($dbh = null) {
@@ -319,8 +333,8 @@ function existsOrderzTable($dbh = null) {
 
 	$exist = existsTable('orderz', 'table', $dbh);
 	if (!$exist) {
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderz (idOrder INTEGER primary key, dateAdded INTEGER, user TEXT, fresh INTEGER, CONSTRAINT 'C01_idOrder' UNIQUE (idOrder));", false, false);
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderItemz (idOrder INTEGER, idElement INTEGER, movieOrShow INTEGER, CONSTRAINT 'C01_ids' UNIQUE (idOrder, idElement), CONSTRAINT 'C02_idOrder' FOREIGN KEY (idOrder) REFERENCES orderz (idOrder) ON DELETE CASCADE);", false, false);
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderz(idOrder INTEGER primary key, dateAdded INTEGER, user TEXT, fresh INTEGER, CONSTRAINT 'C01_idOrder' UNIQUE (idOrder));", false, false);
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderItemz(idOrder INTEGER, idElement INTEGER, movieOrShow INTEGER, CONSTRAINT 'C01_ids' UNIQUE (idOrder, idElement), CONSTRAINT 'C02_idOrder' FOREIGN KEY (idOrder) REFERENCES orderz (idOrder) ON DELETE CASCADE);", false, false);
 		$exist = existsTable('orderz', 'table', $dbh);
 	}
 	return $exist;
@@ -329,7 +343,7 @@ function existsOrderzTable($dbh = null) {
 function existsOrdersTable($dbh = null) {
 	$exist = existsTable('orders', 'table', $dbh);
 	if (!$exist) {
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orders (strFilename TEXT primary key, dateAdded INTEGER, user TEXT, fresh INTEGER);", false, false);
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orders(strFilename TEXT primary key, dateAdded INTEGER, user TEXT, fresh INTEGER);", false, false);
 		$exist = existsTable('orders', 'table', $dbh);
 	}
 	return $exist;
@@ -414,14 +428,50 @@ function fetchPaths() {
 	return $paths;
 }
 
+function fetchFps($idFile, $path, $filename, $fps, $dbh) {
+	$fpsEnabled = isset($GLOBALS['FETCH_FPS']) ? $GLOBALS['FETCH_FPS'] : false;
+	if (!$fpsEnabled)
+		return null;
+	
+	if ($fps == null || $fps == 0) {
+		$stacked = (substr($filename, 0, 8) == "stack://");
+		if ($stacked) {
+			$fps = null; #getStackedFps($filename);
+		} else {
+			$fps = getFps($path.$filename);
+		}
+
+		if (empty($fps)) { return 0; }
+
+		$dbhIsNull = ($dbh == null);
+		try {
+			if ($dbhIsNull) { $dbh = getPDO(); }
+
+			$sqli = "UPDATE fileinfo SET fps = '$fps' WHERE idFile = '$idFile';";
+			if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
+
+			$dbh->exec($sqli);
+
+			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->commit(); }
+
+			clearMediaCache();
+
+		} catch(PDOException $e) {
+			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
+			if (isAdmin()) { echo $e->getMessage(); }
+		}
+	} // if fsize == null...
+
+	return $fps;
+}
+
 function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 	if ($fsize == null || $fsize == 0) {
 		$stacked = (substr($filename, 0, 8) == "stack://");
 		if ($stacked) {
 			$fsize = getStackedFilesize($filename);
 		} else {
-			$fnam  = $path.$filename;
-			$fsize = getFilesize($fnam);
+			$fsize = getFilesize($path.$filename);
 		}
 
 		if (empty($fsize)) { return 0; }
@@ -430,7 +480,7 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 		try {
 			if ($dbhIsNull) { $dbh = getPDO(); }
 
-			$sqli = "REPLACE INTO fileinfo (idFile, filesize) VALUES(".$idFile.", ".$fsize.");";
+			$sqli = "REPLACE INTO fileinfo(idFile, filesize) VALUES(".$idFile.", ".$fsize.");";
 			if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 
 			$dbh->exec($sqli);
@@ -462,8 +512,45 @@ function getStackedFilesize($filename) {
 }
 
 function getFilesize($file) {
-	if (!isLinux()) { return null; }
+	#if (!isLinux()) { return null; }
+	#$file = correctFilename($file);
+	#if (empty($file)) { return null; }
+	
+	#$execString = 'stat -c %s '.$file;
+	#exec($execString, $output);
+	$output = execCommand($file, 'stat -c %s ');
+	if ($output != null && count($output) > 0) {
+		return trim($output[0]);
+	}
 
+	return null;
+}
+
+function getCreation($file) {
+	#if (!isLinux()) { return null; }
+	#$file = correctFilename($file);
+	#if (empty($file)) { return null; }
+
+	#$execString = 'stat -c %y '.$file;
+	#exec($execString, $output);
+	$output = execCommand($file, 'stat -c %y ');
+	if ($output != null && count($output) > 0) {
+		return substr(trim($output[0]), 0, 19);
+	}
+
+	return null;
+}
+
+function getFps($file) {
+	$output = execCommand($file, 'mediainfo --Inform="Video;%FrameRate%" ');
+	if ($output != null && count($output) > 0) {
+		return trim($output[0]);
+	}
+
+	return null;
+}
+
+function correctFilename($file) {
 	$ersetzen = array(
 		'Ã¤' => 'ä',
 		'Ã¶' => 'ö',
@@ -478,40 +565,17 @@ function getFilesize($file) {
 		);
 
 	$file = strtr($file, $ersetzen);
-	$execString = 'stat -c %s '.$file;
-	exec($execString, $output);
-	if ($output != null && count($output) > 0) {
-		return trim($output[0]);
-	}
-
-	return null;
+	$file = mapSambaDirs($file);
+	return $file;
 }
 
-function getCreation($file) {
+function execCommand($file, $execString) {
 	if (!isLinux()) { return null; }
+	$file = correctFilename($file);
+	if (empty($file)) { return null; }
 
-	$ersetzen = array(
-		'Ã¤' => 'ä',
-		'Ã¶' => 'ö',
-		'Ã¼' => 'ü',
-		'ß' => '%',
-		' ' => '\ ',
-		'[' => '\[',
-		']' => '\]',
-		'(' => '\(',
-		')' => '\)',
-		);
-
-	$file = strtr($file, $ersetzen);
-	$file = mapSambaDirs($file);
-
-	$execString = 'stat -c %y '.$file;
-	exec($execString, $output);
-	if ($output != null && count($output) > 0) {
-		return substr(trim($output[0]), 0, 19);
-	}
-
-	return null;
+	exec($execString.$file, $output);
+	return $output;
 }
 
 function base64_encode_image($imagefile) {
@@ -594,15 +658,15 @@ function setSeenDelMovie($what, $checkFilme) {
 				$idFile = $row['idFile'];
 
 				if ($what == 1) { // unseen
-					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile = '$idFile'");
+					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile = '$idFile';");
 
 				} else if ($what == 2) { // seen
-					$dbh->exec("UPDATE files SET playcount=1 WHERE idFile = '$idFile'");
+					$dbh->exec("UPDATE files SET playcount=1 WHERE idFile = '$idFile';");
 
 				} else if ($what == 3) { // delete
-					$dbh->exec("DELETE FROM movie WHERE idMovie = '$id'");
-					$dbh->exec("DELETE FROM fileinfo WHERE idFile = '$idFile'");
-					$dbh->exec("DELETE FROM files WHERE idFile = '$idFile'");
+					$dbh->exec("DELETE FROM movie WHERE idMovie = '$id';");
+					$dbh->exec("DELETE FROM fileinfo WHERE idFile = '$idFile';");
+					$dbh->exec("DELETE FROM files WHERE idFile = '$idFile';");
 				}
 
 				clearMediaCache();
@@ -885,11 +949,11 @@ function postNavBar_($isMain) {
 	$which               = isset($_SESSION['which'])       ? $_SESSION['which']       : '';
 	$just                = isset($_SESSION['just'])        ? $_SESSION['just']        : '';
 	$filter_name         = isset($_SESSION['name'])        ? $_SESSION['name']        : '';
-	
+
 	$countMVids          = isset($_SESSION['param_mvC'])   ? $_SESSION['param_mvC']   : 0;
 	$countTVshows        = isset($_SESSION['param_tvC'])   ? $_SESSION['param_tvC']   : 0;
 #	$countMovies         = isset($_SESSION['param_movC'])  ? $_SESSION['param_movC']  : 0;
-	
+
 	$TITLE               = isset($GLOBALS['NAV_TITLE'])           ? $GLOBALS['NAV_TITLE']           : 'xbmcDB';
 	$INVERSE             = isset($GLOBALS['NAVBAR_INVERSE'])      ? $GLOBALS['NAVBAR_INVERSE']      : false;
 	$SEARCH_ENABLED      = isset($GLOBALS['SEARCH_ENABLED'])      ? $GLOBALS['SEARCH_ENABLED']      : true;
@@ -1147,7 +1211,7 @@ function postNavBar_($isMain) {
 		$res .= '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
 		$res .= '<li><a class="fancy_msgbox" style="cursor:pointer;" href="guestStarLinks.php">Import guest links</a></li>';
 		$res .= '<li class="divider"></li>';
-		
+
 		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
 		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
 		$res .= '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
@@ -1183,7 +1247,7 @@ function postNavBar_($isMain) {
 
 		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 	} //if ($isAdmin)
-	
+
 	#if ($INVERSE)
 	#$res .= '<li><a tabindex="69" onmouseover="closeNavs();" onclick="this.blur(); darkSideOfTheForce();" style="font-weight:bold;'.($bs211).'" href="#">dark side</a></li>';
 	$res .= '<li><a tabindex="70" href="?show=logout" onmouseover="closeNavs();"'.(!$isMVids ? ' onclick="this.blur(); return checkForCheck();"' : '').' style="font-weight:bold;'.($bs211).'">logout</a></li>';
@@ -1238,7 +1302,7 @@ function createEpisodeSubmenu($result) {
 			$idShow    = $row['idShow'];    $serie = $row['serie'];   $season  = $row['season'];
 			$idEpisode = $row['idEpisode']; $title = $row['title'];   $episode = $row['episode'];
 			$playCount = $row['playCount']; $rating = $row['rating']; $sCount = $row['sCount'];
-			
+
 			$season   = sprintf("%02d", $season);
 			$episode  = sprintf("%02d", $episode);
 			$epTrId   = 'iD'.$idShow.'.S'.$season;
@@ -1571,12 +1635,12 @@ function adminInfo($start, $show) {
 }
 
 function getCPUdiv($output, $core) {
-	if (empty($output)) 
+	if (empty($output))
 		return '';
-	
+
 	$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
 	$CPU_TEMPS     = isset($GLOBALS['CPU_TEMPS'])      ? $GLOBALS['CPU_TEMPS']      : array(30,40,50);
-	
+
 	$output = $output[0];
 	$tCol = ' label-success';
 	if ($output <= $CPU_TEMPS[0]) { $tCol = ' label-success';   }
@@ -1587,12 +1651,12 @@ function getCPUdiv($output, $core) {
 }
 
 function getLoadDiv($output) {
-	if (empty($output)) 
+	if (empty($output))
 		return '';
-	
+
 	$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
 	$CPU_LOADS     = isset($GLOBALS['CPU_LOADS'])      ? $GLOBALS['CPU_LOADS']      : array(33,33,66);
-	
+
 	$output = $output[0];
 	$tCol = '';
 	if ($output <  $CPU_LOADS[0]) { $tCol = ' label-success';   }
@@ -1673,10 +1737,10 @@ function moveUploadedFile($prefix, $fileType) {
 function isLocalHost() {
 	$lhost = isset($GLOBALS['PC_NAME']) ? $GLOBALS['PC_NAME'] : null;
 	if (empty($lhost)) { return false; }
-	
+
 	$host = gethostbyaddr( $_SERVER['REMOTE_ADDR'] );
 	if (empty($host)) { return false; }
-	
+
 	return $host == $lhost;
 }
 
@@ -1701,7 +1765,7 @@ function checkOpenGuest() {
 	$OPEN_4_LH = isset($GLOBALS['OPEN_FOR_LOCALHOST']) ? $GLOBALS['OPEN_FOR_LOCALHOST'] : false;
 	if (!$OPEN_4_LH) { return false; }
 	else { $LOCALHOST = isLocalHost(); }
-	
+
 	$gast_users = $GLOBALS['GAST_USERS'];
 	if ($LOCALHOST || count($gast_users) == 0 && !isAdmin()) {
 		$_SESSION['demo'] = true;
@@ -1790,19 +1854,19 @@ function getShowInfo($idTvDb) {
 	$LANG         = isset($GLOBALS['TVDB_LANGUAGE']) ? $GLOBALS['TVDB_LANGUAGE'] : 'en';
 	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY'])  ? $GLOBALS['TVDB_API_KEY']  : null;
 	if (empty($TVDB_API_KEY)) { return null; }
-	
+
 	$rss = new rss_php;
 	$URL = 'http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$idTvDb.'/all/'.$LANG.'.xml';
-	
+
 	$rss->load($URL);
 	$items = $rss->getItems();
-	
+
 	$count    = 1;
 	$episodes = array();
 	foreach($items as $index => $item0) {
 		foreach($item0 as $jndex => $item) {
 			if (!isset($item0['Episode:'.$count])) { break; }
-			
+
 			$item = $item0['Episode:'.$count];
 			$s    = $item['SeasonNumber'];
 			$e    = $item['EpisodeNumber'];
@@ -1810,10 +1874,10 @@ function getShowInfo($idTvDb) {
 			$count++;
 		}
 	}
-	
+
 	$status = isset($items['Data']['Series:0']['Status']) ? $items['Data']['Series:0']['Status'] : null;
 	if (isset($status)) { $episodes[0][0] = (trim($status) == 'Ended' ? 'e' : 'r'); }
-	
+
 	$_SESSION['TvDbCache'][$idTvDb] = serialize($episodes);
 	return $episodes;
 }
@@ -1847,7 +1911,7 @@ function fetchAndUpdateAirdate($idShow, $dbh = null) {
 	//tvdb
 	$season  = $nextEpisode['SeasonNumber'];
 	$episode = $nextEpisode['EpisodeNumber'];
-	
+
 	if (empty($season) || empty($episode)) { return; }
 	updateAirdateInDb($idShow, $season, $episode, $airDate, $dbh);
 	clearMediaCache();
@@ -1896,16 +1960,16 @@ function getNextEpisode($serie) {
 	$stCount     = $serie->getStaffelCount();
 	$running     = $serie->isRunning();
 	$nextEpisode = null;
-	
+
 	if (!$running) { return null; }
 	$episodes = getShowInfo($idTvDb);
 	$staffel  = $serie->getLastStaffel();
 	#echo $staffel->getStaffelNum();
-	
+
 	$epCount  = is_object($staffel) ? $staffel->getLastEpNum() : null;
 	if (empty($epCount))
 		return null;
-	
+
 	if ($staffel->getStaffelNum() > $stCount)
 		$stCount = $staffel->getStaffelNum();
 
@@ -2105,7 +2169,7 @@ function postEditVCodec($str) {
 	$str = str_replace('H.265',            'x265', $str);
 	$str = str_replace('H265',             'x265', $str);
 	$str = str_replace('X265',             'x265', $str);
-	
+
 	$str = str_replace('V_MPEG4/ISO/AVC',  'x264', $str);
 	$str = str_replace('DAVC',             'x264', $str);
 	$str = str_replace('AVC1',             'x264', $str);
@@ -2114,41 +2178,41 @@ function postEditVCodec($str) {
 	$str = str_replace('H.264',            'x264', $str);
 	$str = str_replace('H264',             'x264', $str);
 	$str = str_replace('X264',             'x264', $str);
-	
+
 	$str = str_replace('XVID',             'Xvid', $str);
-	
+
 	$str = str_replace('DIVX 3 LOW',       'divX', $str);
 	$str = str_replace('DIVX 4',           'divX', $str);
 	$str = str_replace('DX50',             'divX', $str);
 	$str = str_replace('DIV3',             'divX', $str);
 	$str = str_replace('DIVX',             'divX', $str);
-	
+
 	$str = str_replace('MPEG1VIDEO',       'mpeg-1', $str);
 	$str = str_replace('MPEG2VIDEO',       'mpeg-2', $str);
 	$str = str_replace('MP4V',             'mpeg-4', $str);
-	
+
 	$str = str_replace('WVC1',             'VC-1', $str);
 	$str = str_replace('WMV3',             'wmv3', $str);
 	$str = str_replace('VP8',              'vp8',  $str);
-	
+
 	return $str;
 }
 
 function decodingPerf($str) {
 	$str = strtoupper($str);
-	
+
 	if ($str == 'MPEG-1' || $str == 'MPEG-2' || $str == 'MPEG-4')
 		return 1;
-	
+
 	if ($str == 'XVID' || $str == 'DIVX' || $str == 'WMV3')
 		return 2;
-	
+
 	if ($str == 'X264' || $str == 'VC-1' || $str == 'VP8')
 		return 3;
-	
+
 	if ($str == 'X265')
 		return 4;
-	
+
 	return 0;
 }
 

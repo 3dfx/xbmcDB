@@ -291,8 +291,9 @@ table.film td {
 
 .th0 { text-align:left; padding-top:5px; padding-bottom:5px; padding-left:10px; }
 .th1 { text-align:left; padding-top:5px; padding-bottom:5px; }
+.th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:175px; padding-left:10px; }
+.th3 { text-align:left; padding-top:5px; padding-bottom:5px; width:100px; padding-left:10px; }
 .th4 { text-align:left; padding-top:5px; padding-bottom:5px; width:400px; }
-.th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:200px; padding-left:10px; }
 .th5 { text-align:right !important; padding-right:10px; }
 
 .countTD {

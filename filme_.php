@@ -107,10 +107,12 @@ function createTable() {
 		$sessionKey  = $SkQL['sessionKey'];
 		$saferSearch = $SkQL['saferSearch'];
 		
+		$dirActorEnabled = true;
+		
 		$result = fetchMovies($dbh, $SQL, $sessionKey);
-		$zeilen = generateRows($dbh, $result, $sessionKey);
+		$zeilen = generateRows($dbh, $result, $sessionKey, $dirActorEnabled);
 		if (!$newmode && empty($sort)) { sort($zeilen); }
-		postRows($dbh, $zeilen, $saferSearch);
+		postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled);
 		
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->commit(); }
 		
@@ -159,15 +161,15 @@ function getSessionKeySQL() {
 				")";
 				
 	} else if ($_which == 'artist') {
-		$filter = " AND E.".mapDBC('idActor')." = '".$_just."' AND E.".mapDBC('idMovie')." = A.idMovie";
+		$filter = " AND E.".mapDBC('idActor')." = '".$_just."' AND E.".mapDBC('idMovie')." = A.idMovie AND E.media_type = 'movie'";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'regie') {
-		$filter = " AND D.".mapDBC('idDirector')." = '".$_just."' AND D.".mapDBC('idMovie')." = A.idMovie";
+		$filter = " AND D.".mapDBC('idDirector')." = '".$_just."' AND D.".mapDBC('idMovie')." = A.idMovie AND D.media_type = 'movie'";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'genre') {
-		$filter = " AND G.".mapDBC('idGenre')." = '".$_just."' AND G.".mapDBC('idMovie')." = A.idMovie";
+		$filter = " AND G.".mapDBC('idGenre')." = '".$_just."' AND G.".mapDBC('idMovie')." = A.idMovie AND G.media_type = 'movie'";
 		$sessionKey .= 'just_'.$filter.'_';
 		
 	} else if ($_which == 'year') {
@@ -194,25 +196,25 @@ function getSessionKeySQL() {
 	
 	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, A.c05, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, ".
 		"M.dateAdded as dateAdded, M.value as dateValue, ".
-		"A.c07 AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, A.c09 AS imdbId, C.strPath AS path, F.filesize ".
+		"A.c07 AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, A.c09 AS imdbId, C.strPath AS path, F.filesize, F.fps ".
 		"FROM movie A, files B, path C ".
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
 		"LEFT JOIN filemap M ON B.strFilename = M.strFilename ".
 		(isset($mode) && ($mode == 2) ? "LEFT JOIN streamdetails SD ON (B.idFile = SD.idFile AND SD.strAudioLanguage IS NOT NULL) " : '').
-		(isset($filter, $_which) && ($_which == 'artist') ? ', '.mapDBC('actorlinkmovie').' E' : '').
-		(isset($filter, $_which) && ($_which == 'regie') ? ', '.mapDBC('directorlinkmovie').' D' : '').
-		(isset($filter, $_which) && ($_which == 'genre') ? ', '.mapDBC('genrelinkmovie').' G' : '').
+		(isset($filter, $_which) && ($_which == 'artist') ? ', '.mapDBC('actorlinkmovie').' E'    : '').
+		(isset($filter, $_which) && ($_which == 'regie')  ? ', '.mapDBC('directorlinkmovie').' D' : '').
+		(isset($filter, $_which) && ($_which == 'genre')  ? ', '.mapDBC('genrelinkmovie').' G'    : '').
 		" WHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
 		
 	if (!empty($sort)) {
 		     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY A.c07 DESC, dateAdded DESC";      }
 		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY A.c07 ASC, dateAdded ASC";        }
-		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";      }
-		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";       }
-		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY A.c05 DESC";      }
-		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY A.c05 ASC";       }
-		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC"; }
-		else if ($sort == 'sizea')   { $sessionKey .= 'orderSizeA_';   $sqlOrder = " ORDER BY F.filesize ASC";  }
+		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                      }
+		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                       }
+		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY A.c05 DESC";                      }
+		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY A.c05 ASC";                       }
+		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC";                 }
+		else if ($sort == 'sizea')   { $sessionKey .= 'orderSizeA_';   $sqlOrder = " ORDER BY F.filesize ASC";                  }
 		
 	} else if ($newmode) {
 		$sqlOrder = " ORDER BY ".($newsort == 1 ? "dateValue" : "F.idFile")." DESC";
@@ -282,7 +284,7 @@ function getSessionKeySQL() {
 	return $res;
 } //getSessionKeySQL
 
-function generateRows($dbh, $result, $sessionKey) {
+function generateRows($dbh, $result, $sessionKey, $dirActorEnabled = true) {
 	$isAdmin       = isAdmin();
 	$isDemo        = isDemo();
 	$dbVer         = fetchDbVer();
@@ -298,6 +300,7 @@ function generateRows($dbh, $result, $sessionKey) {
 	$actorImgs     = fetchActorCovers($dbh);
 	$directorImgs  = fetchDirectorCovers($dbh);
 	
+	$filter_name   = isset($_SESSION['name']) ? $_SESSION['name'] : '';
 	$lastHighest   = $isDemo ? null : (isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null);
 	$pronoms       = array('the ', 'der ', 'die ', 'das ');
 	$counter       = 0;
@@ -333,6 +336,7 @@ function generateRows($dbh, $result, $sessionKey) {
 		$path      = $row['path'];
 		$jahr      = $row['jahr'];
 		$filesize  = $row['filesize'];
+		$fps       = $row['fps'];
 		$playCount = $row['playCount'];
 		$trailer   = $row['trailer'];
 		$rating    = $row['c05'];
@@ -383,6 +387,7 @@ function generateRows($dbh, $result, $sessionKey) {
 		if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
 		
 		$fsize     = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
+		#$fps       = fetchFps($idFile, $path, $filename, $fps, $dbh);
 		$moviesize = _format_bytes($fsize);
 		
 		$filmname0 = $filmname;
@@ -418,6 +423,7 @@ function generateRows($dbh, $result, $sessionKey) {
 				
 		} else {
 			$zeilen[$zeile][$zeilenSpalte++] = $filmname;
+
 #counter
 			$spalTmp = '<td class="countTD">';
 			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'" style="cursor:default;">'; }
@@ -427,11 +433,13 @@ function generateRows($dbh, $result, $sessionKey) {
 			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '</a>'; }
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;				
+
 #checkbox
 			$spalTmp = '<td class="titleTD"'.($isNew ? ' style="font-weight:bold;"' : '').'>';
 			if (!$isDemo) {
 			$spalTmp .= '<input tabindex="-1" type="checkbox" class="checka" name="checkFilme[]" id="opt_'.$idMovie.'" value="'.$idMovie.'" onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
 			}
+
 #seen
 			if ($isAdmin) {
 				$chk      = $playCount >= 1;
@@ -439,23 +447,27 @@ function generateRows($dbh, $result, $sessionKey) {
 				$spalTmp .= $chk ? '<img src="img/check.png" class="check10v1">' : ' ';
 				$spalTmp .= '</span> ';
 			}
+
 #title
 			$suffix = '';
 			if (is3d($filename)) { $suffix = ' (3D)'; }
 			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$id.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
 			else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
+
 #trailer
 			if ($SHOW_TRAILER && !empty($trailer)) {
 				$spalTmp .= '<a tabindex="-1" class="fancy_iframe2" href="'.$ANONYMIZER.$trailer.'"> <img src="img/filmrolle.jpg" width=15px; border=0px;></a>';
 			}
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-#jahr
+
+#year
 			$spalTmp = '<td class="yearTD';
 			$spalTmp .= !empty($jahr) ? '"><a tabindex="-1" href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" title="filter"><span class="searchField">'.$jahr.'</span></a>' : ' centro">-';
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-#bewertung
+
+#rating
 			$rating = substr($rating, 0, 4);
 			$rating = substr($rating, 0, substr($rating, 2, 1) == '.' ? 4 : 3);
 			
@@ -470,7 +482,37 @@ function generateRows($dbh, $result, $sessionKey) {
 			$spalTmp .= '</a>';
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+
+#genre
+			$spalTmp = '<td class="genreTD"';
+			$genres = explode("/", $genres);
+			$genre = count($genres) > 0 ? trim($genres[0]) : '';
+			$genreId = -1;
+			
+			if (!empty($genre)) {
+				$spalTmp .= '>';
+				$genre = ucwords(strtolower($genre));
+				if (isset($idGenre[$genre])) {
+					$genreId = $idGenre[$genre][0];
+					$idGenre[$genre][1] = $idGenre[$genre][1] + 1;
+				}
+				
+				if (isset($_just) && !empty($_just) && $_which == 'genre' && !empty($filter_name)) {
+					$spalTmp .= '<span class="searchField">'.$filter_name.'</span>';
+				}
+				else if (($genreId != -1) && (!isset($_just) || empty($_just) || $_which != 'genre' || $_just != $genreId)) {
+					$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=genre&just='.$genreId.'&name='.$genre.'" title="filter"><span class="searchField">'.$genre.'</span></a>';
+				} else {
+					$spalTmp .= '<span class="searchField">'.$genre.'</span>';
+				}
+			} else {
+				$spalTmp .= ' style="padding-left:20px;">-';
+			}
+			$spalTmp .= '</td>';
+			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+
 #artist
+if ($dirActorEnabled) {
 			$spalTmp = '<td class="actorTD"';
 			$firstId     = '';
 			$firstartist = '';
@@ -520,12 +562,12 @@ function generateRows($dbh, $result, $sessionKey) {
 				wrapItUp('actor', $firstId, $actorimg, $sessionKey);
 				
 				$spalTmp .= '>';
-				$spalTmp .= '<a tabindex="-1" class="openIMDB filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstartist.'">[i] </a>';
+				#$spalTmp .= '<a tabindex="-1" class="openIMDB filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstartist.'">[i] </a>';
 				$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=artist&just='.$firstId.'&name='.$firstartist.'"';
 				if (file_exists($actorimg)) {
 					$spalTmp .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $firstId, 'actor', 0).'" title="'.$firstartist.'"';
 				} else {
-					$spalTmp .= 'title="filter"';
+					$spalTmp .= ' title="filter"';
 				}
 				
 				$spalTmp .= '><span class="searchField">'.$firstartist.'</span></a>';
@@ -534,31 +576,8 @@ function generateRows($dbh, $result, $sessionKey) {
 			}
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-#genre
-			$spalTmp = '<td class="genreTD"';
-			$genres = explode("/", $genres);
-			$genre = count($genres) > 0 ? trim($genres[0]) : '';
-			$genreId = -1;
-			
-			if (!empty($genre)) {
-				$spalTmp .= '>';
-				$genre = ucwords(strtolower($genre));
-				if (isset($idGenre[$genre])) {
-					$genreId = $idGenre[$genre][0];
-					$idGenre[$genre][1] = $idGenre[$genre][1] + 1;
-				}
-				
-				if (($genreId != -1) && (!isset($_just) || empty($_just) || $_which != 'genre' || $_just != $genreId)) {
-					$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=genre&just='.$genreId.'&name='.$genre.'" title="filter"><span class="searchField">'.$genre.'</span></a>';
-				} else {
-					$spalTmp .= '<span class="searchField">'.$genre.'</span>';
-				}
-			} else {
-				$spalTmp .= ' style="padding-left:20px;">-';
-			}
-			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-#regie
+
+#director
 			$spalTmp = '<td class="direcTD"';
 			$firstId       = '';
 			$firstdirector = '';
@@ -570,7 +589,7 @@ function generateRows($dbh, $result, $sessionKey) {
 					$firstdirector = $directorImgs[$idMovie]['artist'];
 				}
 			} else {
-				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
+				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type = 'movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
 				$result3 = querySQL_($dbh, $SQL_, false);
 				foreach($result3 as $row3) {
 					$artist      = $row3[mapDBC('strActor')];
@@ -606,12 +625,12 @@ function generateRows($dbh, $result, $sessionKey) {
 				wrapItUp('director', $firstId, $actorimg, $sessionKey);
 				
 				$spalTmp .= '>';
-				$spalTmp .= '<a tabindex="-1" class="openImdb filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstdirector.'">[i] </a>';
+				#$spalTmp .= '<a tabindex="-1" class="openImdb filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstdirector.'">[i] </a>';
 				$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=regie&just='.$firstId.'&name='.$firstdirector.'"';
 				if (file_exists($actorimg)) {
 					$spalTmp .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $firstId, 'director', 0).'" title="'.$firstdirector.'"';
 				} else {
-					$spalTmp .= 'title="filter"';
+					$spalTmp .= ' title="filter"';
 				}
 				
 				$spalTmp .= '><span class="searchField">'.$firstdirector.'</span></a>';
@@ -620,7 +639,9 @@ function generateRows($dbh, $result, $sessionKey) {
 			}
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-#resolution
+} //$dirActorEnabled
+
+#resolution/codec(fps)
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 				$resInfo   = (!empty($vRes)  ? ($vRes[0] >= 1800 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
@@ -629,10 +650,12 @@ function generateRows($dbh, $result, $sessionKey) {
 				$perf      = (!empty($codec) ? decodingPerf($codec)     : 0);
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
 				$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : 'style="padding-left:4px;"');
-				$resTD     = !empty($resInfo) ? '<span class="searchField">'.$resInfo.'</span>' : '';
-				$codecTD   = !empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '';
+				$resTD     = (!empty($resInfo) ? '<span class="searchField">'.$resInfo.'</span>' : '');
+				$codecTD   = (!empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '');
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD hideMobile" align="right">'.$codecTD.'</td>';
+				$fpsTitle  = (!empty($fps) ? ' title="'.$fps.' fps"' : '');
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD hideMobile" align="right" '.$fpsTitle.'>'.$codecTD.'</td>';
+
 #filesize
 				$filename = prepPlayFilename($path.$filename);
 				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;
@@ -648,7 +671,7 @@ function generateRows($dbh, $result, $sessionKey) {
 	return $zeilen;
 } //generateRows
 
-function postRows($dbh, $zeilen, $saferSearch) {
+function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
 	$isAdmin       = isAdmin();
 	$isDemo        = isDemo();
 	
@@ -761,9 +784,11 @@ function postRows($dbh, $zeilen, $saferSearch) {
 		echo '<span style="padding-right:10px;"> </span><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='title' || $sort=='titlea')   ? ' color:red;' : '').'" href="?show=filme&sort='.($sort=='titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
 		echo '<th class="th0"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr'   || $sort=='jahra')   ? ' color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
 		echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? ' color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
+		echo '<th class="th3">Genre</th>';
+		if ($dirActorEnabled) {
 		echo '<th class="th2">Actor</th>';
-		echo '<th class="th2">Genre</th>';
 		echo '<th class="th2">Director</th>';
+		}
 		if (!$isDemo) {
 			echo '<th class="th5 hideMobile">Res</th>';
 			echo '<th class="th5 hideMobile">Codec</th>';

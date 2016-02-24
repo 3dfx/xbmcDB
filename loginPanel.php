@@ -93,7 +93,7 @@ include_once "./template/functions.php";
 				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[0])."</td>";
 				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[1])."</td>";
 				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[2])."</td>";
-				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[3])."</td>";
+				echo "<td style='padding:2px 10px; max-width:250px; overflow:hidden;".$color."'>".trim($eintraege[3])."</td>";
 				
 				if ($which == 1) {
 					if (substr_count($eintraege[4], "http") || substr_count($eintraege[4], "www")) {

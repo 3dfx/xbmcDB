@@ -1,5 +1,6 @@
 <?php
 include_once "auth.php";
+include_once "globals.php";
 include_once "./template/config.php";
 include_once "./template/functions.php";
 
@@ -13,8 +14,6 @@ include_once "./template/functions.php";
 	$show   = getEscGPost('show');
 	$idShow = getEscGPost('idShow');
 	
-#if (isAdmin()) { echo fetchDbVer(); }
-
 	if ( isAdmin() && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST) ) {
 		$what       = getEscGPost('aktion');
 		$checkFilme = getEscGPost('checkFilme');
