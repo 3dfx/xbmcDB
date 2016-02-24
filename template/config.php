@@ -1,37 +1,6 @@
 <?php
 	$DB_PATH = '/public';
-	$db_name = fetchDbName();
-	function fetchDbName() {
-		if (!isset($_SESSION)) { session_start(); }
-		if (isset($_SESSION['dbName']) && !empty($_SESSION['dbName'])) { return $_SESSION['dbName']; }
 
-		$dir = isset($GLOBALS['DB_PATH']) ? $GLOBALS['DB_PATH'] : '/public';
-
-		$ver = array();
-		$d = dir($dir);
-		$counter = 0;
-		while (false !== ($entry = $d->read())) {
-			if ($entry == '.' || $entry == '..')    { continue; }
-			if (substr($entry, 0, 8) != 'MyVideos') { continue; }
-			if (substr($entry, -3) != '.db')        { continue; }
-
-			$ver[$counter][0] = intval(substr($entry, 8, 2));
-			$ver[$counter++][1] = $entry;
-		}
-		$d->close();
-
-		rsort($ver);
-		$_SESSION['dbName'] = 'sqlite:'.$dir.'/'.$ver[0][1];
-		$_SESSION['dbVer']  = $ver[0][0];
-		return $_SESSION['dbName'];
-	}
-	
-	function fetchDbVer() {
-		if (!isset($_SESSION)) { session_start(); }
-		if (!isset($_SESSION['dbVer']) || empty($_SESSION['dbVer'])) { fetchDbName(); }
-		return $_SESSION['dbVer'];
-	}
-	
 	$GAST_USERS                    = array(
 #						''   => ''
 					);
