@@ -33,8 +33,8 @@ include_once "globals.php";
 	}
 	
 	$entries = array();
-	$counter = 0;
 	$res = querySQL("SELECT * FROM orderz ORDER BY idOrder DESC;");
+	$counter = 0;
 	foreach($res as $row) {
 		$entries[$counter]['idOrder']   = $row['idOrder'];
 		$entries[$counter]['dateAdded'] = $row['dateAdded'];
@@ -43,6 +43,11 @@ include_once "globals.php";
 		$entries[$counter]['counter']   = $counter;
 		$counter++;
 	}
+	
+	$counter = 0;
+	$count   = count($entries);
+	foreach($entries as $entry)
+		$entries[$counter++]['counter'] = $count--;
 ?>
 		<link rel="stylesheet" type="text/css" href="class.css" />
 <?php if (empty($idOrder)) { ?>
@@ -141,7 +146,10 @@ function postOrder($entry) {
 	$date    = $entry['dateAdded'];
 	$user    = $entry['user'];
 	$fresh   = $entry['fresh'];
-	$c       = $entry['counter']+1;
+	$c       = $entry['counter'];
+	if ($c <= 0)
+		return;
+	$c = sprintf("%02d", $c);
 	
 	$date  = date('d.m.Y H:i', $date);
 	$style = $fresh ? ' font-weight:bold;' : '';

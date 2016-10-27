@@ -1,7 +1,7 @@
 var airdateVisible   = false;
-var descLoadedOnce   = true;
-var epListLoadedOnce = true;
+var epListLoadedOnce = false;
 var epDescLoadedOnce = true;
+var descLoadedOnce   = true;
 var eplistLoading    = false;
 var epDescLoading    = false;
 var descLoading      = false;
@@ -10,17 +10,26 @@ var fromNavbar       = false;
 var lastIdShow       = -1;
 var lastIdEp         = -1;
 var ids              = '';
+var unsaved          = false;
 
 $(document).ready(function() {
 	$('.dropdown-toggle').dropdown();
 
-	if (bindF) { $(document).keydown(function(event) {
-		if(event.ctrlKey && event.keyCode == '70') {
-			event.preventDefault();
-			openNav('#dropSearch');
-			$('#searchDBfor').focus();
+	$(document).keydown(function(event) {
+		if (bindF) {
+			if (event.ctrlKey && event.keyCode == '70') {
+				event.preventDefault();
+				openNav('#dropSearch');
+				$('#searchDBfor').focus();
+			}
 		}
-	}); }
+		if (!isAdmin) {
+			if (event.ctrlKey && event.keyCode == '83') {
+				event.preventDefault();
+				saveSelection();
+			}
+		}
+	});
 });
 
 function closeShow() {
@@ -159,7 +168,9 @@ function toggleEps_(id, eps, obj) {
 		}
 	}
 
-	moveDivR(show ? 1 : 0);
+	//moveDivR(show ? 1 : 0);
+	moveDivR(0);
+
 	moveDivL(-351);
 	moveDivEpDesc(-351);
 }
@@ -226,6 +237,7 @@ function loadLatestShowInfo(obj, sId, epId, trClass, eps) {
 
 function loadShowInfo(obj, id) {
 	loadShowInfoPlus(obj, id, null, null);
+	moveDivR(-1);
 }
 
 function loadShowInfoPlus(obj, id, trClass, eps) {
@@ -517,7 +529,9 @@ function toggleAirdates() {
 }
 
 function checkForCheck() {
-	return (ids != null && ids != '' ? confirm("Attention:\nSelection will be lost!") : true);
+	if (unsaved)
+		return (ids != null && ids != '' ? confirm("Attention:\nSelection will be lost!") : true);
+	return true;
 }
 
 function clearSelectBoxes(obj) {
@@ -554,70 +568,26 @@ function clearSelectBoxes(obj) {
 	}
 }
 
-function selected(obj, changeMaster, postRequest, admin) {
-	var tr = $( obj ).parent().parent();
-
-	if (obj.checked) {
-		ids = ids + (ids.length == 0 ? '' : ', ') + obj.value;
-		$( tr ).children('TD').addClass('highLighTR');
-
-	} else {
-		$( tr ).children('TD').removeClass('highLighTR');
-
-		if (ids.indexOf(obj.value + ', ') != -1) {
-			ids = ids.replace(obj.value + ', ', '');
-
-		} else if (ids.indexOf(', ' + obj.value) != -1) {
-			ids = ids.replace(', ' + obj.value, '');
-
-		} else if (ids.indexOf(',') == -1) {
-			ids = ids.replace(obj.value, '');
-		}
-	}
-
-	var resBox  = document.getElementById('result');
-	var listDiv = document.getElementById('movieList');
-	if (listDiv == null) { return; }
-	var clearSelectAll = document.getElementById('clearSelectAll');
-	if (ids == '') {
-		listDiv.style.display = 'none';
-		resBox.innerHTML = '';
-
-	} else {
-		listDiv.style.display = 'block';
-	}
-
-	if (changeMaster) {
-		clearSelectAll.checked = ids == '' ? false : true;
-	}
-
-	if (postRequest) {
-		doRequest();
-	}
-
-	return true;
-}
-
 function doRequest() { doRequest__(true, ids); }
 function saveSelection() { saveSelection__(true, ids); }
 
 function drawDonut(id) {
 	if (id == null || id < 0) { return; }
-	
+
 	var url     = './detailSerieDesc?data&id=' + id;
 	var data    = $.ajax({ url: url, dataType:'json', async: false }).responseText;
 	var gotData = data != null && data != '';
 	if (!gotData) { return; }
-	
+
 	// Get the context of the canvas element we want to select
 	//var ctx = document.getElementById("donutChartPir").getContext("2d");
 	var ctx = null;
 	if ( $("#donutChartPir").length ) { ctx = $("#donutChartPir").get(0).getContext('2d'); }
 	else { console.log('Error: Canvas not found with selector #donutChartPir'); }
-	
+
 	var options = { percentageInnerCutout:45, showTooltips:false, animationSteps:30, animation:true, segmentShowStroke:true, segmentStrokeWidth:1 };
 	var myDoughnutChart = null;
-	
+
 	// And for a doughnut chart
 	if (ctx != null) {
 		myDoughnutChart = new Chart(ctx).Doughnut(null, options);

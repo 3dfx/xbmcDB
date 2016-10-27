@@ -10,17 +10,18 @@ include_once "./template/_SERIEN.php";
 */ ?>
 <?php
 	$isAdmin = isAdmin();
+	$isDemo  = isDemo();
 	$id = getEscGPost('id');
 	if (empty($id) || $id < 0) { return; }
-	
+
 	$_SESSION['tvShowParam']['idShow'] = $id;
-	
+
 	$SQL    = $GLOBALS['SerienSQL'];
 	$serien = fetchSerien($SQL, null);
 	$serie  = $serien->getSerie($id);
-	
+
 	if ($serie->isWatchedAny()) { echo "<script type=\"text/javascript\">$(document).ready(function() { $('.knob-dyn').knob(); });</script>"; }
-	
+
 	echo '<table id="serieTable" class="film">';
 	echo "\r\n";
 	postSerie($serie);
@@ -35,18 +36,19 @@ function postSerien($serien) {
 
 function postSerie($serie) {
 	$isAdmin = $GLOBALS['isAdmin'];
+	$isDemo  = $GLOBALS['isDemo'];
 	$USECACHE = isset($GLOBALS['USECACHE']) ? $GLOBALS['USECACHE'] : true;
-	
+
 	$stCount = $serie->getStaffelCount();
 	$allEpsCount = sprintf("%02d", $serie->getAllEpisodeCount());
-	
+
 	echo '<tr id="descTR">';
 	echo '<th class="descTRd1">'.$stCount.' Season'.($stCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
 	echo '<th class="lefto"> Episode'.($allEpsCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto">'.$serie->getRating().'</th>';
-	#echo '<th class="righto">'.(isDemo() ? '' : _format_bytes($serie->getSize())).'</th>';
-	echo '<th class="righto vSpan">'.(isDemo() ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSizes&idFiles='.$serie->getIdFiles().'">' : '')._format_bytes($serie->getSize())).($isAdmin ? '</a>' : '').'</th>';
+	#echo '<th class="righto">'.($isDemo ? '' : _format_bytes($serie->getSize())).'</th>';
+	echo '<th class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSizes&idFiles='.$serie->getIdFiles().'">' : '')._format_bytes($serie->getSize())).($isAdmin ? '</a>' : '').'</th>';
 	echo '<th class="righto" colspan="2">';
 	if ($isAdmin) {
 		$showEmpty = false;
@@ -65,13 +67,13 @@ function postSerie($serie) {
 		} else {
 			$showEmpty = true;
 		}
-		
+
 		if ($showEmpty) { echo ' <img src="./img/empty.png" class="galleryImage" /> '; }
 	}
 	echo '</th>';
 	echo '</tr>';
 	echo "\r\n";
-	
+
 	foreach ($serie->getStaffeln() as $staffel) {
 		if (is_object($staffel)) { postStaffel($staffel); }
 	}
@@ -79,24 +81,28 @@ function postSerie($serie) {
 
 function postStaffel($staffel) {
 	$isAdmin = $GLOBALS['isAdmin'];
-	
+	$isDemo  = $GLOBALS['isDemo'];
+
 	$staffel->sortEpisoden();
 	$eps = $staffel->getEpisodeCount();
 	if ($eps == 0) { return; }
-	
+
+	$sNum_     = intval($staffel->getStaffelNum());
+	$sNum      = sprintf("%02d", $sNum_);
 	$strAllEps = sprintf("%02d", $eps);
-	$sNum      = sprintf("%02d", $staffel->getStaffelNum());
-	
+
 	$idShow   = $staffel->getIdShow();
-	#$spanId   = 'iD'.$idShow.'.S'.$sNum;
 	$linkId   = 'tgl'.$idShow.'.S'.$sNum;
 	$seasonId = 'iD'.$idShow.'.S'.$sNum;
 	echo '<tr class="seasonTR">';
 	echo '<td class="seasonTRd1"><a tabindex="-1" href="#" id="'.$linkId.'" class="plmin hidelink" onclick="toggleEps(\''.$seasonId.'\', '.$eps.', this); $(this).blur(); return false;"></a>Season '.$sNum.'</td>';
-	echo '<td class="seasonTRd2 righto">'.$strAllEps.'</td>';
+	$missCount = $staffel->getMissingCount();
+	$missTitle = $isAdmin && $missCount != 0 ? ' title="'.$missCount.' episode'.($missCount > 1 ? 's' : '').' missing"' : '';
+	$mCountCol = $isAdmin && $missCount != 0 ? ' style="color:#FF0000;"' : '';
+	echo '<td class="seasonTRd2 righto"'.$mCountCol.$missTitle.'>'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
 	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
-	echo '<td class="righto vSpan">'.(isDemo() ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
+	echo '<td class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($isAdmin) {
 		$showEmpty = false;
@@ -115,7 +121,7 @@ function postStaffel($staffel) {
 		} else {
 			$showEmpty = true;
 		}
-		
+
 		if ($showEmpty) {
 			echo ' <img src="./img/empty.png" class="galleryImage" /> ';
 		}
@@ -123,12 +129,12 @@ function postStaffel($staffel) {
 	echo '</td>';
 	echo '</tr>';
 	echo "\r\n";
-	
+
 	$lastEp      = null;
 	$xbmcRunning = xbmcRunning();
 	foreach ($staffel->getEpisoden() as $epi) {
 		if (!is_object($epi)) { continue; }
-		
+
 		$chk    = intval(1);
 		$epNum_ = intval($epi->getEpNum());
 		if (!empty($lastEp)) {
@@ -136,38 +142,44 @@ function postStaffel($staffel) {
 			$chk   = !empty($delta) ? $delta : $lastEp->getEpNum();
 			$chk   = intval($chk)+1;
 		}
-		
-		if ($chk != $epNum_) {
+
+		if ($sNum_ > 0 && $chk != $epNum_) {
 			$missCount = $epNum_ - $chk;
 			for ($i = $missCount; $i > 0; $i--)
-				postMissingRow($seasonId, rand(-9999,-1), $epNum_ - $i, 'missing episode');
+				postMissingRow($staffel, $seasonId, rand(-9999,-1), $sNum_, $epNum_ - $i, 'missing episode');
 		}
-		
+
 		$delta = $epi->getDelta();
 		$epsde = sprintf("%02d", $epNum_);
 		$epDlt = !empty($delta) ? '-'.sprintf("%02d", $delta) : '';
 		$epNum = $epsde.$epDlt;
-		
+
+		$source    = $epi->getSource();
 		$idEpisode = $epi->getIdEpisode();
 		$idTvdb    = $epi->getIdTvdb();
 		$epTitle   = trimDoubles($epi->getName());
 		$hover     = (strlen($epTitle) >= 27) ? ' title="'.$epTitle.'"' : '';
-		
+
 		$path      = $epi->getPath();
 		$filename  = $epi->getFilename();
 		$fRating   = (floatval($epi->getRating()) > 0 ? $epi->getRating() : '');
+		$fRating   = !empty($fRating) ? $fRating : '&nbsp;&nbsp;&nbsp;&nbsp;';
 		$fSize     = _format_bytes($epi->getSize());
-		#$xbmcRunning=1;
-		$playItem  = isAdmin() && !empty($path) && !empty($filename) && $xbmcRunning ? '<a tabindex="-1" class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.$fRating.'</a>' : '<span class="showPlayItem">'.$fRating.'</span>';
-		$clearSize = isAdmin() && !empty($path) && !empty($filename) ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$epi->getIdFile().'">'.(isDemo() ? '' : $fSize).'</a>' : '<span class="clearFileSize">'.(isDemo() ? '' : $fSize).'</span>';
-		
+		$playItem  = $isAdmin && !empty($path) && !empty($filename) && $xbmcRunning ? '<a tabindex="-1" class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.$fRating.'</a>' : '<span class="showPlayItem">'.$fRating.'</span>';
+		$clearSize = $isAdmin && !empty($path) && !empty($filename) ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$epi->getIdFile().'">'.($isDemo ? '' : $fSize).'</a>' : '<span class="clearFileSize">'.($isDemo ? '' : $fSize).'</span>';
+
+		$srCol     = getSrcMarker($source);
+		if ($source >= 3)
+			$srCol = generateDLink($staffel, $sNum_, $epNum_, $srCol);
+
 		echo '<tr class="epTR '.$seasonId.'" id="'.$idEpisode.'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
-		echo '<td class="epTRd1'.(empty($epDlt) ? '' : ' epTRd2').'" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.'  </span><span class="searchField">'.$epTitle.'</span></td>';
+		echo '<td class="epTRd1'.(empty($epDlt) ? '' : ' epTRd2').'" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.$srCol.'  </span><span class="searchField">'.$epTitle.'</span></td>';
 		echo '<td class="righto padTD">'.$playItem.'</td>';
 		echo '<td class="righto padTD">'.$clearSize.'</td>';
 		echo '<td class="righto">';
 		if ($isAdmin) {
-			echo '<a tabindex="-1" class="fancy_addEpisode" href="./addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.'">';
+			$source = $source != null ? '&source='.$source : '';
+			echo '<a tabindex="-1" class="fancy_addEpisode" href="./addEpisode.php?update=1&idShow='.$idShow.'&idTvdb='.$idTvdb.'&idEpisode='.$idEpisode.$source.'">';
 			echo '<img src="./img/add.png" class="galleryImage" title="edit Episode" />';
 			echo '</a>';
 		}
@@ -182,15 +194,34 @@ function postStaffel($staffel) {
 		echo '</td>';
 		echo '</tr>';
 		echo "\r\n";
-		
+
 		$lastEp = $epi;
 	}
 }
 
-function postMissingRow($seasonId, $idEpisode, $epNum, $epTitle) {
-	$epNum = sprintf("%02d", $epNum);
+function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
+	$isAdmin = $GLOBALS['isAdmin'];
+	if (!$isAdmin)
+		return $linkText;
+
+	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
+	$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
+	if (!empty($EP_SEARCH)) {
+		$name     = fixNameForSearch($staffel->getSerie()->getName());
+		$enNum    = getFormattedSE($sNum_, $epNum_);
+		$epSearch = !empty($enNum) ? $ANONYMIZER.$EP_SEARCH.$name.' '.$enNum : null;
+		$link     = '<a tabindex="-1" class="fancy_iframe4" onfocus="blur();" href="'.$epSearch.'">'.$linkText.'</a>';
+		return $link;
+	}
+	return '';
+}
+
+function postMissingRow($staffel, $seasonId, $idEpisode, $sNum_, $epNum_, $epTitle) {
+	$epNum = sprintf("%02d", $epNum_);
+	$text  = '<span class="vSpan" style="color:#FF0000;">'.$epNum.'  </span><span class="searchField" style="color:#FF0000; font-weight:bold;">'.$epTitle.'</span>';
+	$link  = generateDLink($staffel, $sNum_, $epNum_, $text);
 	echo '<tr class="epTR '.$seasonId.'" id="'.$idEpisode.'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;">';
-	echo '<td class="epTRd1" colspan="3"><span class="vSpan" style="color:#FF0000;">'.$epNum.'  </span><span class="searchField" style="color:#FF0000; font-weight:bold;">'.$epTitle.'</span></td>';
+	echo '<td class="epTRd1" colspan="3">'.$link.'</td>';
 	echo '<td class="righto padTD"></td>';
 	echo '<td class="righto padTD"></td>';
 	echo '<td class="righto"></td>';

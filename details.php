@@ -59,11 +59,11 @@ include_once "./template/functions.php";
 		function Show_Image(IDS) {
 		  document.getElementById(IDS).style.display = 'block';
 		}
-		
+
 		function Hide_Image(IDS) {
 		  document.getElementById(IDS).style.display = 'none';
 		}
-		
+
 		$(document).ready(function() { $('.knob-dyn').knob(); });
 	</script>
 </head>
@@ -76,12 +76,10 @@ include_once "./template/functions.php";
 	$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
 	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
 	$DETAILFANART     = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
-	
+
 		$COLS = array(
 			'DUR'    =>  0, 
 			'RATE'   =>  1, 
-
-
 			'YEAR'   =>  2, 
 			'GENRE'  =>  3, 
 			'VIDEO1' =>  4, 
@@ -90,41 +88,28 @@ include_once "./template/functions.php";
 			'AUDIO2' =>  7, 
 			'AUDIO3' =>  8, 
 			'SUB'    =>  9
-
-/*
-			'VOTE'   =>  2, 
-			'YEAR'   =>  3, 
-			'GENRE'  =>  4, 
-			'VIDEO1' =>  5, 
-			'VIDEO2' =>  6, 
-			'AUDIO1' =>  7, 
-			'AUDIO2' =>  8, 
-			'AUDIO3' =>  9, 
-			'SUB'    => 10
-*/
-
 		);
-		
+
 		$isAdmin = isAdmin();
 		$dbVer   = fetchDbVer();
 		$idFile  = -1;
-	
+
 		$existArtTable = existsArtTable();
-		
+
 		$SQL = "SELECT c00, c01, c02, idMovie, c07 AS jahr, c08 AS thumb, c09 AS imdbId, B.strFilename AS filename, A.c19 AS trailer, c04, c05, c11, c14, c16, ".
 			"C.strPath AS path, D.filesize, D.fps, A.idFile, B.playCount AS playCount ".
 			"FROM movie A, files B, path C LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE A.idFile = B.idFile AND C.idPath = B.idPath AND idMovie = '".$id."' ";
 		$row = fetchFromDB($SQL, false);
-		
+
 		if (empty($row)) { die('not found...'); }
-		
+
 		$SQL2     = "SELECT B.".mapDBC('strActor').", A.".mapDBC('strRole').", A.".mapDBC('idActor').", B.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC("actorlinkmovie")." A, ".mapDBC("actors")." B WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND A.media_type='movie' AND A.".mapDBC('idMovie')." = '".$id."' ORDER BY A.".mapDBC('iOrder').";";
 		$result2  = querySQL($SQL2);
 		$result2_ = querySQL($SQL2);
-		
+
 		$idFile   = $row['idFile'];
 		$result3  = getStreamDetails($idFile);
-		
+
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
 		$fps          = $row['fps'];
@@ -138,11 +123,9 @@ include_once "./template/functions.php";
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['c01'];
 		$country      = getCountry($idMovie);
-		
-		if (empty($fps)) {
-			$fps = fetchFps($idFile, $path, $filename, $fps, getPDO());
-		}
-		
+
+		$fps = fetchFps($idFile, $path, $filename, $fps, getPDO());
+
 		$percent;
 		$timeAt;
 		$pausedAt;
@@ -156,12 +139,12 @@ include_once "./template/functions.php";
 				$percent   = round($timeAt / $timeTotal * 100, 0);
 			}
 		}
-		
+
   		$fanart    = '';
   		$covers    = getCovers($fnam, '', $idMovie);
   		$cover     = getImageWrap($covers[0], $idMovie, 'movie', 1);
   		$cover_big = getImageWrap($covers[1], $idMovie, 'movie', 2);
-		
+
 		$fanartExists = false;
 		if ($DETAILFANART) {
 			$fanart = getFanartCover($fnam, $idMovie);
@@ -175,12 +158,12 @@ include_once "./template/functions.php";
 			$fanart  = getImageWrap($fanart, $idMovie, 'fanart', 0);
 			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>'."\r\n";
 		}
-		
+
 		$is3D = strpos($filename, '.3D.');
 		if ($is3D == true) {
 			$titel .= ' (3D)';
 		}
-		
+
 		if (!empty($cover)) {
 			echo "\r\n";
 			echo '<div class="coverDiv">';
@@ -193,7 +176,7 @@ include_once "./template/functions.php";
 			echo '</div>';
 			echo "\r\n";
 		}
-		
+
 		echo '<div class="moviebox2">';
 		echo '<div class="movieTitle">';
 		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$ANONYMIZER.$IMDBFILMTITLE.$row['imdbId'].'">'.$titel.' ('.$jahr.')'.'</a>';
@@ -201,12 +184,12 @@ include_once "./template/functions.php";
 		if ($SHOW_TRAILER && !empty($trailer)) {
 			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>'."\r\n";
 		}
-		
+
 		$cmpTitel = strtolower($titel);
 		$cmpTitel = str_replace('and', '', $cmpTitel);
 		$cmpTitel = str_replace('und', '', $cmpTitel);
 		$cmpTitel = str_replace('&',   '', $cmpTitel);
-		
+
 		$cmpOrTit = strtolower($orTitel);
 		$cmpOrTit = str_replace('and', '', $cmpOrTit);
 		$cmpOrTit = str_replace('und', '', $cmpOrTit);
@@ -215,24 +198,33 @@ include_once "./template/functions.php";
 		if (!empty($cmpOrTit) && $cmpTitel != $cmpOrTit) {
 			$orTitleShown = true;
 			echo "\r\n";
-			echo '<span class="originalTitle">';
-			echo '<br/>';
+			echo '<div class="originalTitle" style="top:4px;">';
+			#echo '<br/>';
 			echo '<b>Original title</b>: '.$row['c16'];
-			echo '</span>';
+			echo '</div>';
 			echo "\r\n";
 		}
 		if (!empty($country)) {
 			echo "\r\n";
-			echo '<span class="originalTitle">';
-			echo '<br/>';
+			echo '<div class="originalTitle" style="top:8px;">';
+			#echo '<br/>';
 			echo '<b>Made in</b>: '.$country;
-			echo '</span>';
+			echo '</div>';
 			echo "\r\n";
 		}
-		
+		$studio = getStudio($idMovie);
+		if (!empty($studio)) {
+			echo "\r\n";
+			echo '<div class="originalTitle" style="top:12px;">';
+			#echo '<br/>';
+			echo '<b>Studio</b>: '.$studio;
+			echo '</div>';
+			echo "\r\n";
+		}
+
 		if ($isAdmin) {
 			$hint = empty($percent) ? '' : ' title="'.$pausedAt.' ('.$percent.'%)"';
-			echo '<span class="epCheckSpan"'.$hint.' style="top:'.($orTitleShown ? '-64' : '-32').'px; right:-16px;">';
+			echo '<span class="epCheckSpan fancy_movieset" href="./dbEdit.php?act=clearBookmark&idFile='.$idFile.'"'.$hint.' style="top:'.($orTitleShown ? '-80' : '-64').'px; right:-16px;">';
 			if (!empty($percent)) {
 				echo '<input type="text" class="knob-dyn" data-width="25" data-height="25" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
 			}
@@ -243,7 +235,7 @@ include_once "./template/functions.php";
 		}
 		echo '</div>';
 		echo "\r\n";
-		
+
 		if (!empty($inhalt)) {
 			$MAXLEN = isset($GLOBALS['MAXMOVIEINFOLEN']) ? $GLOBALS['MAXMOVIEINFOLEN'] : 1000;
 			$tmp_inhalt = $inhalt;
@@ -256,9 +248,11 @@ include_once "./template/functions.php";
 				$inhalt .= substr($tmp_inhalt, $MAXLEN-3, strlen($tmp_inhalt));
 				$inhalt .= '</span>';
 			}
-			
+
+			$inhalt = str_replace('\n\r', '<br/>', $inhalt);
+			$inhalt = str_replace('\r',   '<br/>', $inhalt);
+
 			$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
-			
 			if (!$spProtect || ($isAdmin && $watched >= 1)) {
 				echo '<span id="movieDescription">';
 				echo $inhalt;
@@ -270,15 +264,15 @@ include_once "./template/functions.php";
 				echo $inhalt;
 				echo '</span>';
 			}
-			
+
 		} else {
 			echo '<i>Keine Beschreibung vorhanden.</i>';
 		}
-		
+
 		echo "\r\n";
 		echo '<div style="width:700px; height:2px;"></div>';
 		echo "\r\n";
-		
+
 		$size1     = '';
 		$minutes   = '';
 		$hours     = '';
@@ -295,7 +289,7 @@ include_once "./template/functions.php";
 		$sLang     = array();
 		$res       = array();
 		$run       = 0;
-		
+
 		if ($row['c00'] != $row['c16']) {
 			$orTitle = $row['c16'];
 			$run = 1;
@@ -308,7 +302,7 @@ include_once "./template/functions.php";
 			$run = 1;
 		}
 		if (substr($row['c05'], 0, 1) != "0") {
-			$rating  = substr($row['c05'], 0, 3);
+			$rating  = formatRating($row['c05']);
 			$stimmen = $row['c04'];
 			$run = 1;
 		}
@@ -316,11 +310,11 @@ include_once "./template/functions.php";
 			$genre = explode(" / ", $row['c14']);
 			$run = 1;
 		}
-		
+
 		if (!empty($size)) {
 			$size1 = _format_bytes($size);
 		}
-		
+
 		foreach($result3 as $row3) {
 			if (!empty($tmp = $row3['fVideoAspect'])) { $ar = sprintf ("%01.2f", round($tmp, 1)).':1'; }
 			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
@@ -338,7 +332,7 @@ include_once "./template/functions.php";
 			}
 			$run++;
 		}
-		
+
 		$sqlG = "SELECT * FROM genre";
 		$resultG = querySQL($sqlG);
 		$idGenre = array();
@@ -350,8 +344,8 @@ include_once "./template/functions.php";
 
 			$idGenre[$str] = $rowG[mapDBC('idGenre')];
 		}
-		
-		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre)), 1);
+
+		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre)), 2);
 		$spalten = count($COLS);
 		for ($g = 0; $g < $max; $g++) {
 			for ($x = 0; $x < $spalten; $x++) {
@@ -385,12 +379,12 @@ include_once "./template/functions.php";
 			if ($g < count($aChannels)) {
 				$res[$g][$COLS['AUDIO3']] = postEditChannels($aChannels[$g]);
 			}
-			
+
 			if ($g < count($sLang)) {
 				$res[$g][$COLS['SUB']] = postEditLanguage($sLang[$g], false);
 			}
 		}
-		
+
 		$res[0][$COLS['DUR']]  = $hours;
 		$res[1][$COLS['DUR']]  = $minutes;
 		$res[0][$COLS['RATE']] = $rating;
@@ -401,7 +395,7 @@ include_once "./template/functions.php";
 			$res[0][$COLS['VIDEO1']] = $width.'x'.$height;
 		}
 		$res[1][$COLS['VIDEO1']] = $ar;
-		
+
 		$vCodec  = postEditVCodec($vCodec);
 		$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 		$perf    = (!empty($vCodec) ? decodingPerf($vCodec)     : 0);
@@ -412,7 +406,7 @@ include_once "./template/functions.php";
 		if (!empty($fps)) {
 			$res[1][$COLS['VIDEO2']] = $fps.' fps';
 		}
-		
+
 		if ($run > 0) {
 			echo '<div class="stream">';
 			echo '<table cellspacing="0" class="streaminfo">';
@@ -515,7 +509,7 @@ include_once "./template/functions.php";
 				echo '</tr>';
 				$zeilen++;
 			}
-			
+
 			if ($zeilen > 2 && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
 //				if ($hiddenGenres > 1) {
 					echo '<tr id="genreDots"><td colspan="'.($COLS['GENRE']).'"></td><td class="streaminfoGenre lefto">';
@@ -543,13 +537,13 @@ include_once "./template/functions.php";
 				}
 */
 			}
-			
+
 			$smb = (substr($filename, 0, 6) == 'smb://');
 			$stacked = (substr($filename, 0, 8) == 'stack://');
 			if ($smb || $stacked) {
 				$filename = '';
 			}
-			
+
 			echo '<tr class="abstand"><td colspan="'.count($COLS).'"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
 			if (!isDemo()) {
@@ -558,7 +552,7 @@ include_once "./template/functions.php";
 			}
 			echo '</td></tr>';
 			echo "\r\n";
-			
+
 			$SQL_SET = 'SELECT S.strSet, S.idSet FROM sets S, movie M WHERE M.idSet = S.idSet AND M.idMovie = '.$id.';';
 			$result = querySQL($SQL_SET);
 			if (!empty($result)) {
@@ -580,12 +574,12 @@ include_once "./template/functions.php";
 				echo '</td></tr>';
 				echo "\r\n";
 			}
-			
+
 			echo '</table>';
 			echo '</div>';
 			echo "\r\n";
 		}
-		
+
         	$artist  = '';
 		$actors  = 0;
 		$actCnt  = 0;
@@ -599,7 +593,7 @@ include_once "./template/functions.php";
 			$artist      = $row2[mapDBC('strActor')];
 			$idActor     = $row2[mapDBC('idActor')];
 			$actorpicURL = $row2['actorimage'];
-			
+
 			$actorimg = getActorThumb($artist, $actorpicURL, false);
 			if (!file_exists($actorimg) && $existArtTable) {
 				if (!empty($artCovers) && isset($artCovers['actor'][$idActor])) {
@@ -612,9 +606,9 @@ include_once "./template/functions.php";
 					}
 				}
 			}
-			
+
 			wrapItUp('actor', $idActor, $actorimg);
-			
+
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
 			$schauspTblOut[$actors] .= '<td class="art">';
 			#$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.str_replace(' ', '+', $artist).'">[i] </a>';
@@ -649,7 +643,7 @@ include_once "./template/functions.php";
 			echo '<tr>';
 			echo '<th>';
 			#echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
-			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
+			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actor</span>';
 			echo '</th>';
 			echo '<th class="role">';
 			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Role</span>';
@@ -660,7 +654,7 @@ include_once "./template/functions.php";
 			for ($i = 0; $i < count($schauspTblOut); $i++) {
 				echo $schauspTblOut[$i];
 			}
-			
+
 			if ($actors > $acLimit) {
 				echo '<tr id="doTr"><td colspan="2">';
 				#echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
@@ -671,10 +665,10 @@ include_once "./template/functions.php";
 			echo '</table>';
 			echo "\r\n";
 		}
-		
+
 		echo '</div>';
 		echo "\r\n";
-		
+
 	unset( $_SESSION['show'], $_SESSION['idShow'] );
 
 
@@ -684,31 +678,31 @@ include_once "./template/functions.php";
 		if ($spalte == $COLS['VIDEO1']) {
 			return $colspan;
 		}
-		
+
 		for ($j = $spalte; $j < count($res); $j++) {
 			$val = trim($res[$j]);
 			if ($val != null || $val != '') {
 				break;
 			}
-			
+
 			$colspan++;
 		}
-		
+
 		if ($spalte == 1) {
 			return ($colspan > $COLS['GENRE']+1 ? $COLS['GENRE']+1 : $colspan);
 		}
-		
+
 		return $colspan;
 	}
-	
+
 	function getCovers($fnam, $cover, $idMovie) {
 		$existArtTable = $GLOBALS['existArtTable'];
-		
+
 		$res = array();
 		if (file_exists(getCoverMid($fnam, $cover, false))) {
 			$res[0] = getCoverMid($fnam, $cover, false); //cover
 			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
-			
+
 		} else if ($existArtTable) {
 			$res2 = querySQL("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
 			foreach($res2 as $row2) {
@@ -721,10 +715,10 @@ include_once "./template/functions.php";
 				}
 			}
 		}
-		
+
 		return $res;
 	}
-	
+
 	function getCountry($idMovie) {
 		$dbVer = $GLOBALS['dbVer'];
 		$SQL = "SELECT c.".mapDBC('strCountry')." FROM ".mapDBC('countrylinkmovie')." cl, country c, movie m WHERE m.idMovie = cl.".mapDBC('idMovie')." AND cl.".mapDBC('idCountry')." = c.".mapDBC('idCountry')." AND m.idMovie = '".$idMovie."';";
@@ -732,23 +726,23 @@ include_once "./template/functions.php";
 		$row = $res->fetch();
 		return $row[mapDBC('strCountry')];
 	}
-	
+
 	function getFanartCover($fnam, $idMovie) {
 		$existArtTable = $GLOBALS['existArtTable'];
-		
+
 		$crc = thumbnailHash($fnam);
 		$fanart = "./img/Thumbnails/Fanart/".$crc.".jpg";
-		
+
 		$fanartExists = file_exists($fanart);
 		if ($fanartExists) {
 			$ftime = '';
 			try {
 				$ftime = filemtime($fanart);
 			} catch (Exception $e) { }
-			
+
 			$fanartThumb = "./img/fanart/".$crc."-fanart_".$ftime.".jpg";
 			return getFanart0($fanart, $fanartThumb);
-			
+
 		} else if ($existArtTable) {
 			$row2 = fetchFromDB("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '".$idMovie."';");
 			$url  = $row2['url'];
@@ -756,8 +750,16 @@ include_once "./template/functions.php";
 				return getFanart($url, $url, true);
 			}
 		}
-		
+
 		return null;
+	}
+
+	function getStudio($idMovie) {
+		$dbVer = $GLOBALS['dbVer'];
+		$res = querySQL("SELECT name FROM studio WHERE studio_id = (SELECT studio_id FROM studio_link WHERE media_type = 'movie' AND media_id = '".$idMovie."');", false);
+		$row = $res->fetch();
+		return $row['name'];
+
 	}
 //- FUNCTIONS -//
 ?>

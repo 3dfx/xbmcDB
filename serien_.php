@@ -12,8 +12,13 @@ include_once "globals.php";
 	$maself  = getEscServer('PHP_SELF');
 	$isMain  = (substr($maself, -9) == 'index.php');
 
+	$orderz = findUserOrder();
+	$orderz = $orderz[0];
+	$oItems = !$isAdmin ? count($orderz) : 0;
+
 	$dbh    = getPDO();
 	$SQL    = $GLOBALS['SerienSQL'].';';
+	checkFileInfoTable($dbh);
 	$serien = fetchSerien($SQL, null, $dbh);
 	#$serien->setUnsorted();
 	$serien->sortSerien();
@@ -39,16 +44,31 @@ include_once "globals.php";
 	<script type="text/javascript">
 <?php
 	$bindF = isset($GLOBALS['BIND_CTRL_F']) ? $GLOBALS['BIND_CTRL_F'] : true;
-	echo "\t\t".'var bindF        = '.($bindF ? 'true' : 'false').";\r\n";
-	echo "\t\t".'var newMovies    = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
-	echo "\t\t".'var isAdmin      = '.($isAdmin ? '1' : '0').";\r\n";
-	echo "\t\t".'var xbmcRunning  = '.($isAdmin && xbmcRunning() ? '1' : '0').";\r\n";
-	echo "\t\t".'var missedEpsStr = \'\';'."\r\n";
-	echo "\t\t".'var missedEps    = 0;'."\r\n";
+	echo "\t\t".'var bindF          = '.($bindF ? 'true' : 'false').";\r\n";
+	echo "\t\t".'var newMovies      = '.(checkLastHighest() ? 'true' : 'false').";\r\n";
+	echo "\t\t".'var isAdmin        = '.($isAdmin ? '1' : '0').";\r\n";
+	echo "\t\t".'var xbmcRunning    = '.($isAdmin && xbmcRunning() ? '1' : '0').";\r\n";
+	echo "\t\t".'var missedEps      = 0;'."\r\n";
+	echo "\t\t".'var awaitingEps    = 0;'."\r\n";
+	echo "\t\t".'var missedEpsStr   = \'\';'."\r\n";
+	echo "\t\t".'var awaitingEpsStr = \'\';'."\r\n";
 ?>
 		$(document).ready(function() {
 			$('#myNavbar').load( './navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { if (isAdmin) { initNavbarFancies(); } } );
-			$('#showsDiv').load( './serien_.php?data=1', function() { if (missedEps > 0) { $('#missEps').css("color", "red"); } $('#missEps').html(missedEpsStr); $('.knob-dyn').knob(); initShowFancies(); } );
+			$('#showsDiv').load( './serien_.php?data=1', function() {
+				if (missedEps > 0) { $('#missEps').css("color", "red"); }
+				if (awaitingEps > 0) { $('#missEps').prop('title', awaitingEpsStr); }
+				$('#missEps').html(missedEpsStr);
+				$('.knob-dyn').knob();
+				initShowFancies();
+<?php
+			if ($oItems > 0) {
+?>
+				selected(null, true, true, false);
+<?php
+			}
+?>
+			});
 		});
 	</script>
 </head>
@@ -148,7 +168,7 @@ function fillTable($serien, $dbh) {
 
 	echo "\t\t".'<tr class="emptyTR" id="emptyTR" style="border-top:0px; border-bottom:3px double #6699cc;">';
 	if (!$isAdmin && !$isDemo) {
-		echo '<th class="checkaCheck righto">';
+		echo '<th class="checka checkaCheck righto">';
 		echo '<input type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 		echo '</th>';
 	}
@@ -162,28 +182,34 @@ function fillTable($serien, $dbh) {
 	}
 	echo '</th>';
 
-	$missed = 0;
-	echo '<th colspan="'.(4 + $colspan2).'" style="cursor:default;"><span id="missEps" class="sInfoSize" onclick="toggleAirdates();" style="padding-top:1px; float:left;'.($missed == 0 ? '' : ' color:red;').'"></span></th>';
+	#$missed = 0;
+	#echo '<th colspan="'.(4 + $colspan2).'" style="cursor:default;"><span id="missEps" class="sInfoSize" onclick="toggleAirdates();" style="padding-top:1px; float:left;'.($missed == 0 ? '' : ' color:red;').'"></span></th>';
+	echo '<th colspan="'.(4 + $colspan2).'" style="cursor:default;"><span id="missEps" class="sInfoSize" onclick="toggleAirdates();" style="padding-top:1px; float:left;"></span></th>';
 	echo '</tr>'."\r\n";
-	
-	$missed = postSerien($serien);
+
+	$res = postSerien($serien);
 	echo "\t".'</tbody>'."\r\n";
 	echo "\t".'</table>'."\r\n";
-	
+
 	if ($isAdmin) {
-		$miss = $missed == 0 ? 'next airdates' : sprintf("%02d", $missed).' missed'.' episode'.($missed > 1 ? 's' : '');
-		echo '<script type="text/javascript">missedEpsStr = \''.$miss.'\'; missedEps = \''.$missed.'\';</script>'."\r\n";
+		$missed   = $res[0];
+		$awaiting = $res[1];
+		$miss = $missed   == 0 ? 'next airdates' : sprintf("%02d", $missed).' missed'.' episode'.($missed > 1 ? 's' : '');
+		$wait = $awaiting == 0 ? '' : $awaiting.' episodes airing in the next 7 days';
+		echo '<script type="text/javascript">missedEpsStr = \''.$miss.'\'; missedEps = \''.$missed.'\'; awaitingEpsStr = \''.$wait.'\'; awaitingEps = \''.$awaiting.'\';</script>'."\r\n";
 	}
 }
 
 function postSerien($serien) {
 	$runningItalic = isset($GLOBALS['TVSHOW_RUNNING_ITALIC']) ? $GLOBALS['TVSHOW_RUNNING_ITALIC'] : false;
 	$counter = 1;
-	$missed  = 0;
+	$missed  = array(0, 0);
 	foreach ($serien->getSerien() as $serie) {
 		# || !$serie->isRunning()
 		if (!is_object($serie)) { continue; }
-		$missed += postSerie($serie, $counter++, $runningItalic);
+		$res = postSerie($serie, $counter++, $runningItalic);
+		$missed[0] += $res[0];
+		$missed[1] += $res[1];
 	}
 	return $missed;
 }
@@ -196,11 +222,13 @@ function postSerie($serie, $counter, $runningItalic = false) {
 	$airDate  = null;
 	$daysLeft = -1;
 	$missed   = 0;
+	$awaiting = 0;
 	$idShow   = $serie->getIdShow();
 	$idTvDb   = $serie->getIdTvdb();
 	$running  = $serie->isRunning();
 	$spanId   = 'iDS'.$idShow;
-	
+	$higlight = '';
+
 	$checkAirDate = isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
 	if ($checkAirDate && $running) {
 		$airDate  = $serie->getNextAirDateStr();
@@ -214,8 +242,14 @@ function postSerie($serie, $counter, $runningItalic = false) {
 	$sizeSpan = '';
 	if (!$isDemo) {
 		if (!$isAdmin) {
-			$chkBoxTD  = '<td class="checkaCheck righto">';
-			$chkBoxTD .= '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'" onClick="return selected(this, true, true, '.$isAdmin.');" />';
+			$orderz = $GLOBALS['orderz'];
+			$oItems = $GLOBALS['oItems'];
+#			print_r( $orderz );
+#			echo $orderz[$idShow];
+			$checked  = isset($orderz[$idShow]);
+			$higlight = $checked ? ' highLighTR' : '';
+			$chkBoxTD  = '<td class="checka checkaCheck righto'.$higlight.'">';
+			$chkBoxTD .= '<input type="checkbox" name="checkSerien[]" id="opt_'.$idShow.'" class="checka" value="'.$idShow.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="return selected(this, true, true, '.$isAdmin.');" />';
 			$chkBoxTD .= '</td>';
 		}
 
@@ -227,27 +261,19 @@ function postSerie($serie, $counter, $runningItalic = false) {
 
 	echo "\t\t".'<tr id="iD'.$idShow.'" class="sTR showShowInfo">';
 	echo $chkBoxTD;
-	echo '<td class="showShowInfo1 righto">'.$run1.$strCounter.$run2.'</td>';
-	echo '<td id="epl_'.$idShow.'" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'">';
+	echo '<td class="showShowInfo1 righto'.$higlight.'">'.$run1.$strCounter.$run2.'</td>';
+	echo '<td class="'.$higlight.'" id="epl_'.$idShow.'" onclick="loadShowInfo(this, '.$idShow.'); return true;" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'">';
 	echo '<span class="showName airdHidden">'.($running && $runningItalic ? '<i>' : '').$serie->getName().$info.($running && $runningItalic ? '</i>' : '').'</span>'.$sizeSpan.'</td>';
 
 	if ($isAdmin) {
-		echo '<td class="noPM">';
+		echo '<td class="noPM'.$higlight.'">';
 		if (!empty($airDate)) {
 			$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 			$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
 			$epSearch   = null;
 			$enNum      = null;
 			if (!empty($EP_SEARCH)) {
-				$name = str_replace("'",  "", $serie->getName());
-				$name = str_replace("(",  "", $name);
-				$name = str_replace(")",  "", $name);
-				$name = str_replace("&",  "and", $name);
-				$name = str_replace("&#44; ",  " ", $name);
-				$name = str_replace(",",  "", $name);
-				if (substr_count($name, ', The') > 0) {
-					$name = 'The '.str_replace(", The",  "", $name);
-				}
+				$name     = fixNameForSearch($serie->getName());
 				$nextEp   = fetchNextEpisodeFromDB($idShow);
 				$enNum    = !empty($nextEp) ? getFormattedSE($nextEp['s'], $nextEp['e']) : null;
 				$epSearch = !empty($enNum) && $daysLeft <= 1 ? $ANONYMIZER.$EP_SEARCH.$name.' '.$enNum : null;
@@ -256,7 +282,8 @@ function postSerie($serie, $counter, $runningItalic = false) {
 			$title = $daysLeft  > 0 ?
 				($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days') :
 				($daysLeft  < 0 ? 'Missed episode' : 'Today');
-			$missed = $daysLeft <= 0 ? 1 : 0;
+			$missed   = $daysLeft <= 0 ? 1 : 0;
+			$awaiting = $daysLeft <= 7 ? 1 : 0;
 			$eSrch1 = !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
 			$eSrch2 = !empty($epSearch) ? '</a>' : '';
 			echo $eSrch1.'<span class="airdate sInfoSize defAirdate" style="'.$fCol.getDateFontsize($daysLeft).'" title="'.$title.(!empty($enNum) ? ': '.$enNum : '').'">'.$airDate.'</span>'.$eSrch2;
@@ -264,14 +291,17 @@ function postSerie($serie, $counter, $runningItalic = false) {
 		echo '</td>';
 	}
 
-	echo '<td class="showRating"><span class="hideMobile sInfoRating">'.$serie->getRating().'</span></td>';
+	echo '<td class="showRating'.$higlight.'"><span class="hideMobile sInfoRating">'.$serie->getRating().'</span></td>';
 
 	$stCount  = $serie->getStaffelCount();
 	$strCount = sprintf("%02d", $stCount);
-	echo '<td class="showSeasons"><span class="hideMobile">'.$strCount.' Season'.($stCount > 1 ? 's' : '').'</span></td>';
+	echo '<td class="showSeasons'.$higlight.'"><span class="hideMobile">'.$strCount.' Season'.($stCount > 1 ? 's' : '').'</span></td>';
 	$allEpsCount = $serie->getAllEpisodeCount();
-	echo '<td class="righto showEpisodes"><span class="hideMobile">'.$allEpsCount.' Episode'.($allEpsCount > 1 ? 's' : '&nbsp;').'</span></td>';
-	echo '<td class="righto addEp"><span class="hideMobile">';
+	$missCount = $serie->getMissingCount();
+	$missTitle = $isAdmin && $missCount != 0 ? ' title="'.$missCount.' episode'.($missCount > 1 ? 's' : '').' missing"' : '';
+	$mCountCol = $isAdmin && $missCount != 0 ? ' style="color:#FF0000;"' : '';
+	echo '<td class="righto'.$higlight.' showEpisodes"><span class="hideMobile"'.$mCountCol.$missTitle.'>'.$allEpsCount.'</span><span class="hideMobile"> Episode'.($allEpsCount > 1 ? 's' : '&nbsp;').'</span></td>';
+	echo '<td class="righto'.$higlight.' addEp"><span class="hideMobile">';
 	if ($isAdmin) {
 		echo '<a tabindex="-1" class="fancy_addEpisode" href="./addEpisode.php?idShow='.$idShow.'&idTvdb='.$idTvDb.'">';
 		echo '<img src="./img/add.png" class="galleryImage" title="add Episode" />';
@@ -301,7 +331,7 @@ function postSerie($serie, $counter, $runningItalic = false) {
 	echo '</span></td>';
 	echo '</tr>';
 	echo "\r\n";
-	return $missed;
+	return array($missed, $awaiting);
 }
 
 function fetchRunCount($dbh = null) {

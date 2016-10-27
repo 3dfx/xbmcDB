@@ -16,6 +16,7 @@ include_once "./template/_SERIEN.php";
 	
 	$_SESSION['tvShowParam']['idEpisode'] = $id;
 	$_SESSION['tvShowParam']['idSeason']  = $idSeason;
+	$SOURCE = $GLOBALS['SOURCE'];
 	
 	$idFile     = 0;
 	$title      = '';
@@ -32,10 +33,11 @@ include_once "./template/_SERIEN.php";
 	$airDate    = '';
 	$filesize   = 0;
 	$fsize      = 0;
-	
+	$src        = null;
+
 	$dbh = getPDO();
 	$existArtTable = existsArtTable();
-	
+
 	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
 	$result = querySQL($SQL);
 	foreach($result as $row) {
@@ -52,8 +54,9 @@ include_once "./template/_SERIEN.php";
 		$episode    = $row['episode'];
 		$airDate    = $row['airDate'];
 		$filesize   = $row['filesize'];
+		$src        = $row['source'];
 	}
-	
+
 	$percent;
 	$pausedAt;
 	$timeAt;
@@ -67,10 +70,10 @@ include_once "./template/_SERIEN.php";
 			$percent   = round($timeAt / $timeTotal * 100, 0);
 		}
 	}
-	
+
 	$result = fetchFromDB("SELECT delta AS delta FROM episodelinkepisode WHERE idFile = '".$idFile."';");
 	$delta  = empty($result['delta']) ? null : $result['delta'];
-	
+
 	$coverP  = $path;
 	$episod_ = $episode;
 	$season  = sprintf("%02d", $season);
@@ -82,7 +85,7 @@ include_once "./template/_SERIEN.php";
 	}
 	$path    = mapSambaDirs($path);
 	$fsize   = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
-	
+
 	$duration   = 0;
 	$ar         = null;
 	$width      = null;
@@ -92,7 +95,7 @@ include_once "./template/_SERIEN.php";
 	$aChannels  = array();
 	$aLang      = array();
 	$subtitle   = array();
-	
+
 	$stream = getStreamDetails($idFile);
 	foreach($stream as $stRow) {
 		$tmp = $stRow['fVideoAspect'];
@@ -111,7 +114,7 @@ include_once "./template/_SERIEN.php";
 
 		$tmp = $stRow['iVideoHeight'];
 		if (!empty($tmp)) { $height = $tmp; }
-		
+
 		$tmp = $stRow['iVideoDuration'];
 		if (!empty($tmp)) { $duration = $tmp; }
 
@@ -123,19 +126,19 @@ include_once "./template/_SERIEN.php";
 
 		$tmp = $stRow['iAudioChannels'];
 		if (!empty($tmp)) { $aChannels[count($aChannels)] = $tmp; }
-		
+
 		$tmp = $stRow['strAudioLanguage'];
 		if (!empty($tmp)) { $aLang[count($aLang)] = $tmp; }
-		
+
 		$tmp = $stRow['strSubtitleLanguage'];
 		if (!empty($tmp)) { $subtitle[count($subtitle)] = $tmp; }
 	}
-	
+
 	$thumbImg   = null;
 	$sessionImg = null;
 	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS'])        ? $GLOBALS['TVSHOW_THUMBS']        : false;
 	$ENCODE   = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
-	
+
 	if ($thumbsUp) {
 		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
 		if ($fromSrc) {
@@ -189,7 +192,7 @@ include_once "./template/_SERIEN.php";
 	echo '</div>';
 	
 	if (!empty($thumbImg)) {
-		echo '<div class="thumbDiv"><img class="thumbImg" src="'.$thumbImg.'" /></div>';
+		echo '<div class="thumbDiv"><img id="thumbImg" class="thumbImg" src="'.$thumbImg.'" /></div>';
 	}
 	
 	echo '<div style="padding-right:5px;">';
@@ -217,8 +220,9 @@ include_once "./template/_SERIEN.php";
 		echo '<div id="epGuests" class="padbot15" style="display:none;"><u><i><b>Guests:</b></i></u><br />'.$gString.'</div>';
 	}
 	
-	$rating = substr($epRating, 0, 3);
-	if ($rating != '0.0') {
+	#$rating = substr($epRating, 0, 3);
+	$rating = formatRating($epRating);
+	if (doubleval($rating) != 0) {
 		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><u><i><b>Rating:</b></i></u></span><span class="flalright">'.$rating.'</span></div>';
 	}
 
@@ -275,11 +279,13 @@ include_once "./template/_SERIEN.php";
 			}
 			echo '<div style="overflow-x:hidden;"><span><u><i><b>Sub:</b></i></u></span><span class="flalright">'.$cCount.' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
+
 	}
-	
+
 	if (!$isDemo) {
 		if ($isAdmin) {
 			echo '<div class="padtop15"><hr style="position:width:335px; margin:0px; border-bottom-width:0px; border-color:#BBCCDD;" /></div>';
+			echo '<div class="padtop15"><span><u><i><b>Source:</b></i></u></span><span class="flalright">'.$SOURCE[$src].'</span></div>';
 		}
 		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
 	}
@@ -288,7 +294,7 @@ include_once "./template/_SERIEN.php";
 		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
 		echo encodeString($path).$filename;
 		echo '</div>';
-		
+
 		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>idEpisode</b>/<b>idFile:</b></i></u><span class="flalright">'.$id.' <b>|</b> '.$idFile.'</span></div>';
 	}
 	echo '</div>';
@@ -296,7 +302,7 @@ include_once "./template/_SERIEN.php";
 	echo '</td>';
 	echo '</tr>';
 	echo '</table>';
-	
+
 //- FUNCTIONS -//
 function getLanguage($countyMap, $languages, $i, $trenner = true) {
 	return isValidLang($countyMap, $languages, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($languages[$i]), false) : '';

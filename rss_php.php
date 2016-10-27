@@ -3,7 +3,7 @@
 	RSS_PHP - the PHP DOM based RSS Parser
 	Author: <rssphp.net>
 	Published: 200801 :: blacknet :: via rssphp.net
-	
+
 	RSS_PHP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY.
 
 	Usage:
@@ -13,7 +13,7 @@
 */
 
 class rss_php {
-	
+
 	public $document;
 	public $channel;
 	public $items;
@@ -37,7 +37,7 @@ class rss_php {
 				$this->loadParser($rawxml);
 			}
 		}
-		
+
 /****************************
 	public load methods
 		@param $includeAttributes BOOLEAN
@@ -79,7 +79,7 @@ class rss_php {
 			$this->document = $this->extractDOM($DOMDocument->childNodes);
 		}
 	}
-	
+
 	private function valueReturner($valueBlock=false) {
 		if(!$valueBlock) {
 			$valueBlock = $this->document;
@@ -96,7 +96,7 @@ class rss_php {
 		}
 		return $valueBlock;
 	}
-	
+
 	private function extractDOM($nodeList,$parentNodeName=false) {
 		$itemCounter = 0;
 		$tempNode = ''; //[] = array();
@@ -105,15 +105,15 @@ class rss_php {
 				if($values->nodeName == 'item' || 
 				   $values->nodeName == 'Series' || 
 				   $values->nodeName == 'Episode') {
-				   	
+
 					$nodeName = $values->nodeName.':'.$itemCounter;
 					$itemCounter++;
-					
+
 				} else {
 					$nodeName = $values->nodeName;
 				}
-				
-				$tempNode[$nodeName] = array();				
+
+				$tempNode[$nodeName] = array();
 				if($values->attributes) {
 					for($i=0;$values->attributes->item($i);$i++) {
 						$tempNode[$nodeName]['properties'][$values->attributes->item($i)->nodeName] = $values->attributes->item($i)->nodeValue;
@@ -142,7 +142,7 @@ class rss_php {
 		}
 		return $tempNode;
 	}
-	
+
 	private function randomContext() {
 		$headerstrings = array();
 		$headerstrings['User-Agent'] = 'Mozilla/5.0 (Windows; U; Windows NT 5.'.rand(0,2).'; en-US; rv:1.'.rand(2,9).'.'.rand(0,4).'.'.rand(1,9).') Gecko/2007'.rand(10,12).rand(10,30).' Firefox/2.0.'.rand(0,1).'.'.rand(1,9);
@@ -155,12 +155,12 @@ class rss_php {
 		$contextOptions = array(
 			'http'=>array(
 				'method'=>"GET",
+				'timeout'=>20,
 				'header'=>$setHeaders
 			)
 		);
 		return stream_context_create($contextOptions);
 	}
-	
-}
 
+}
 ?>

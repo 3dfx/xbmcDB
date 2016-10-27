@@ -40,7 +40,7 @@ include_once "globals.php";
 				<form action='_hash.php' method='post' class='navbar-search pull-right' style='height:25px; width:100%;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF; width:80%; float:right;'>
 					<li style='margin:0px; width:100%;'>
-						<input class='search-query span1' style='margin:1px 10px; width:500px; height:30px; float:left;' type='text' id='pass' name='pass' placeholder='password' />
+						<input class='search-query span1' style='margin:1px 10px; width:500px; height:30px; float:left;' type='text' id='pass' name='pass' placeholder='password' autocomplete='off' />
 						<input type='submit' value='Ok' class='btn' style='height:20px; padding-top:0px; margin:5px 0px; float:right;' onfocus='this.blur();'/>
 					</li>
 				</ul>

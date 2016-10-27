@@ -19,7 +19,6 @@ include_once "./template/_SERIEN.php";
 	$studio   = $serie->getStudio();
 	$fsk      = $serie->getFsk();
 	$running  = $serie->isRunning();
-	#$codecs_ = $serie->getCodecStats();
 	$codecs_  = fetchShowCodecs($idShow);
 	$banner   = null;
 	$imgURL   = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
@@ -27,21 +26,9 @@ include_once "./template/_SERIEN.php";
 	#$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 
-	$cols = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-/*
-	$cols = array(
-		0 => '#000000',
-		1 => '#00FF00',
-		2 => '#009900',
-		3 => '#FF0000',
-		4 => '#550000',
-	);
-*/
-
-	$data   = getEscGet('data');
 	$sum    = 0;
 	$codecs = array();
-	
+	$data   = getEscGet('data');
 	foreach ($codecs_ as $codec => $count) {
 		$codecs[postEditVCodec($codec)] = $count + (isset($codecs[postEditVCodec($codec)]) ? $codecs[postEditVCodec($codec)] : 0);
 		$sum += $count;
@@ -49,35 +36,21 @@ include_once "./template/_SERIEN.php";
 	arsort($codecs);
 	
 	if (isset($data)) {
-		$result = '['."\n\r";
-		$idx = 0;
-		$end = count($codecs);
-		foreach ($codecs as $codec => $count) {
-			$prc   = round($count / $sum * 100, 0);
-			$codec = postEditVCodec($codec);
-			$perf  = decodingPerf($codec);
-			$color = $cols == null ? '#000000' : $cols[$perf];
-			
-			$result .= "\t".'{ "value":'.$prc.', "color":"'.$color.'", "highlight":"'.$color.'", "label":"'.$codec.'" }';
-			if (++$idx < $end) { $result .= ','; }
-			$result .= "\n\r";
-		}
-		$result .= ']';
-		echo $result;
+		echo genJsonData($codecs, $sum);
 		return;
 	}
-	
-	
+
 	echo '<table class="film tableDesc">';
 	echo '<tr class="showDesc">';
 	echo '<td class="showDescTD">';
 	if (!empty($idTvdb) && $idTvdb != -1) {
 		$imgFile = './img/banners/'.$idTvdb.'.jpg';
-		if (loadImage($imgURL, $imgFile) == -1 || loadImage($imgURL2, $imgFile) == -1) {
+		$ok1 = loadImage($imgURL,  $imgFile) != -1;
+		$ok2 = loadImage($imgURL2, $imgFile) != -1;
+		if (!$ok1 && !$ok2)
 			$imgFile = null;
-		}
 		wrapItUp('banner', $idTvdb, $imgFile);
-		$banner = empty($imgFile) ? $imgURL : getImageWrap($imgFile, $idTvdb, 'banner', 0);
+		$banner = empty($imgFile) ? ($ok1 ? $imgURL : $imgURL2) : getImageWrap($imgFile, $idTvdb, 'banner', 0);
 		echo '<img id="tvBanner" class="openTvdb" src="'.$banner.'" href="'.$tvdbURL.'" />';
 	}
 	
@@ -107,7 +80,6 @@ include_once "./template/_SERIEN.php";
 	$title = '';
 	$end   = count($codecs);
 	foreach ($codecs as $codec => $count) {
-		#$perf   = decodingPerf($codec);
 		$codec  = postEditVCodec($codec);
 		$prc    = round($count / $sum * 100, 0);
 		$title .= $codec.': '.$prc.'%'.(++$idx < $end ? "\r\n" : '');
@@ -123,8 +95,18 @@ include_once "./template/_SERIEN.php";
 	if (!empty($genre.$studio.$fsk)) {
 		echo '<div class="padbot15" style="overflow-x:hidden;"></div>';
 	}
+
+	$airings = '';
+	$dur     = '';
+	$epFirst = $serie->getFirstStaffel()->getFirstEpisode();
+	$epLast  = $serie->getLastStaffel()->getLastEpisode();
+	if ($epFirst != null && $epLast != null) {
+		$airings = toEuropeanDateFormat($epFirst->getAirDate()).' - '.toEuropeanDateFormat($epLast->getAirDate());
+		$dur     = getDuration($epFirst, $epLast);
+		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>Aired:</b></i></u><span class="flalright">'.$airings.$dur.'</span></div>';
+	}
 	
-	if (checkAirDate() && $running) {
+	if ($isAdmin && $running && checkAirDate()) {
 		$airDate     = null;
 		$nextEpisode = null;
 		$nextAirDate = $serie->getNextAirDateStr();
@@ -180,4 +162,45 @@ include_once "./template/_SERIEN.php";
 	echo '</td>';
 	echo '</tr>';
 	echo '</table>';
+
+function genJsonData($codecs, $sum) {
+	$cols = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+
+	$result = '['."\n\r";
+	$idx = 0;
+	$end = count($codecs);
+	foreach ($codecs as $codec => $count) {
+		$prc   = round($count / $sum * 100, 0);
+		$codec = postEditVCodec($codec);
+		$perf  = decodingPerf($codec);
+		$color = $cols == null ? '#000000' : $cols[$perf];
+
+		$result .= "\t".'{ "value":'.$prc.', "color":"'.$color.'", "highlight":"'.$color.'", "label":"'.$codec.'" }';
+		if (++$idx < $end) { $result .= ','; }
+		$result .= "\n\r";
+	}
+	$result .= ']';
+	return $result;
+}
+
+function getDuration($epFirst, $epLast) {
+	$dtFirst = new DateTime($epFirst->getAirDate());
+	$dtLast  = new DateTime($epLast->getAirDate());
+
+	$yrFirst = $dtFirst->format('y');
+	$yrLast  = $dtLast->format('y');
+	if ($yrFirst == $yrLast)
+		return diffToString(1);
+
+	#$dtFirst = new DateTime($yrFirst.'-01-01');
+	#$dtLast  = new DateTime($yrLast.'-12-31');
+
+	$diff = $dtFirst->diff($dtLast);
+	$res  = $dtFirst->diff($dtLast)->format('%y');
+	return diffToString($res+1);
+}
+
+function diffToString($val) {
+	return ' ('.$val.' year'.($val > 1 ? 's' : '').')';
+}
 ?>

@@ -1,8 +1,8 @@
 <?php
 	include_once "./template/config.php";
 	
+	$TITLE      = getHtmlTitle();
 	$XBMCONTROL = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
-	$TITLE      = isset($GLOBALS['HTML_TITLE'])          ? $GLOBALS['HTML_TITLE']          : 'XBMC Database';
 	$show       = isset($_SESSION['show']) ? $_SESSION['show'] : 'filme';
 	$isMain     = $show == 'filme'  ? true : false;
 	$isTvshow   = $show == 'serien' ? true : false;
@@ -15,7 +15,7 @@
 <?php /*
 	<link rel="shortcut icon" href="favicon.ico" />
 */ ?>
-	<link rel="icon" type="image/png" href="img/favicon15.png">
+	<link rel="shortcut icon" type="image/png" href="img/favicon15.png">
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/docs.css" />
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap.min.css" />
@@ -38,6 +38,7 @@
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>
+<?php /* <script type="text/javascript" src="./template/js/jquery.scrolline.js"></script> */ ?>
 <?php if(isAdmin()) { ?>
 	<script type="text/javascript" src="./template/js/general.js"></script>
 <?php } else { ?>
@@ -53,15 +54,22 @@
 <?php 		} ?>
 <?php } else if($isTvshow) { ?>
 <?php 		if(isAdmin()) { ?>
-	<script type="text/javascript" src="./template/js/chart.js"></script>
 	<script type="text/javascript" src="./template/js/serien.js"></script>
+	<script type="text/javascript" src="./template/js/chart.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
 <?php 		} else { ?>
-	<script type="text/javascript" src="./template/js/chart.min.js"></script>
 	<script type="text/javascript" src="./template/js/serien.min.js"></script>
+	<script type="text/javascript" src="./template/js/chart.min.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
 <?php 		} ?>
 <?php } ?>
 <?php if(isAdmin() && $XBMCONTROL) { ?>
 	<script type="text/javascript" src="./template/js/xbmcJson.js"></script>
 <?php } ?>
+<?php /*
+	<script type="text/javascript">
+		$(function() {
+			$.scrolline();
+		});
+	</script>
+*/ ?>

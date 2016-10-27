@@ -19,7 +19,7 @@ jQuery(document).ready(function() {
 		},
 		'onComplete'		: function() {
 			$("#fancybox-title").show();
-			
+
 			$("#fancybox-wrap").hover(function() {
 				$("#fancybox-title").hide();
 			}, function() {
@@ -48,7 +48,7 @@ jQuery(document).ready(function() {
 		},
 		'onComplete'		: function() {
 			$("#fancybox-title").show();
-			
+
 			$("#fancybox-wrap").hover(function() {
 				$("#fancybox-title").hide();
 			}, function() {
@@ -196,7 +196,7 @@ jQuery(document).ready(function() {
 		function(e){
 			this.t = this.title;
 			this.title = "";
-			
+
 			var c = (this.t != "") ? "<br/>" + this.t : "";
 			$("body").append("<p id='hoverpic'><img src='"+ this.rel +"'/>"+ c +"</p>");
 			$("#hoverpic")
@@ -218,17 +218,17 @@ jQuery(document).ready(function() {
 	function correctYoffset(e, offsetTop) {
 		var CWOffset = $(window).height();
 		var res = 0;
-		
+
 		if (enterPos == null) { enterPos = $("#hoverpic").offset().top; }
 		var val  = enterPos - (offsetTop - CWOffset);
 		var val2 = CWOffset - val;
-		
+
 		//console.log( enterPos + ', ' + val + ', ' + (CWOffset - val) + ', ' + $("#hoverpic").height() + ', ' + offsetTop + ', ' + e.pageY + ', ' + CWOffset );
-		
+
 		if (CWOffset - val < $("#hoverpic").height()) { res = 0; }
 		else if (CWOffset - val2 > $("#hoverpic").height()) { res = $("#hoverpic").height() / 2; }
 		else { res = $("#hoverpic").height(); }
-		
+
 		/*if (offsetTop - enterPos < $("#hoverpic").height()) { console.log('a'); res = 0; }
 		else if (CWOffset - offsetTop - enterPos < 150) { console.log('b'); res = $("#hoverpic").height(); }
 		else if (CWOffset > yHoverPicOffset) { console.log('c'); res = 90; }*/
@@ -260,7 +260,7 @@ function initShowFancies() {
 
 	$(".fancy_addEpisode").fancybox({
 		'width'			: 560,
-		'height'		: 430,
+		'height'		: 480,
 		'transitionIn'		: 'elastic',
 		'transitionOut'		: 'elastic',
 		'overlayColor'		: '#000',
@@ -294,7 +294,7 @@ function initShowFancies() {
 function initShowEpFancies() {
 	$(".fancy_addEpisode").fancybox({
 		'width'			: 560,
-		'height'		: 430,
+		'height'		: 480,
 		'transitionIn'		: 'elastic',
 		'transitionOut'		: 'elastic',
 		'overlayColor'		: '#000',
@@ -325,8 +325,29 @@ function initShowEpFancies() {
 	});
 } //initShowEpFancies
 
+function initFancyBrowsing() {
+	$(".fancy_iframe4").fancybox({
+		'width'			: 1280,
+		'height'		: 720,
+		'transitionIn'		: 'elastic',
+		'transitionOut'		: 'elastic',
+		'overlayColor'		: '#000',
+		'overlayOpacity'	: 0.9,
+		'speedIn'		: 500,
+		'speedOut'		: 250,
+		'padding'		: 5,
+		'autoScale'		: true,
+		'centerOnScroll'	: true,
+		'enableEscapeButton'	: true,
+		'scrolling'		: 'auto',
+		'titleShow'       	: false,
+		'type'			: 'iframe'
+	});
+}
+
 function initShowDescFancies() {
 	initFancyMsgbox();
+	initFancyBrowsing();
 
 	$("#tvBanner").fancybox({
 		'width'			: '63%',

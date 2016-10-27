@@ -48,7 +48,7 @@ function shoutImage($img = null) {
 			shoutImage(null);
 		}
 	} else {
-		$img = imagecreatetruecolor(1, 1);
+		$img = imagecreatetruecolor(2, 1);
 		imagejpeg($img, NULL, 1);
 		imagedestroy($img);
 		exit;

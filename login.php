@@ -4,7 +4,6 @@
 	include_once "globals.php";
 	
 	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
-	$TITLE   = isset($GLOBALS['NAV_TITLE'])      ? $GLOBALS['NAV_TITLE']      : 'xbmcDB';
 	
 	$blacklisted = restoreBlacklist();
 	$hostname    = $_SERVER['HTTP_HOST'];
@@ -36,10 +35,10 @@
 			$demo_enabled   = isset($GLOBALS['DEMO_ENABLED'])   ? $GLOBALS['DEMO_ENABLED']   : false;
 			$hashed         = isset($GLOBALS['PASSES_HASHED'])  ? $GLOBALS['PASSES_HASHED']  : false;
 			
-			$input_passwort = $hashed ? sha1($input_passwort) : $input_passwort;
+			$hashed_passwort = $hashed ? sha1($input_passwort) : $input_passwort;
 			
 			// check username und password
-			if (!empty($login_username) && !empty($login_passwort) && $input_username == $login_username && $input_passwort == $login_passwort) {
+			if (!empty($login_username) && !empty($login_passwort) && $input_username == $login_username && $hashed_passwort == $login_passwort) {
 				
 				$asAdmin    = true;
 				$redirect   = true;
@@ -49,7 +48,7 @@
 				$_SESSION['angemeldet'] = true;
 				unset( $_SESSION['gast'] );
 				
-			} else if (isset($gast_users[$input_username]) && $input_passwort == $gast_users[$input_username]) {
+			} else if (isset($gast_users[$input_username]) && $hashed_passwort == $gast_users[$input_username]) {
 				
 				$redirect   = true;
 				$loggedInAs = 'GUEST';
@@ -60,7 +59,7 @@
 				
 			} else if (
 				  $demo_enabled && 
-				  (isset($demo_users[$input_username]) && $input_passwort == $demo_users[$input_username])
+				  (isset($demo_users[$input_username]) && $hashed_passwort == $demo_users[$input_username])
 				  ) {
 				
 				$redirect   = true;
@@ -160,7 +159,7 @@ function noLog($username, $host, $ip) {
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>XBMC Database</title>
+	<title><?php echo getHtmlTitle(); ?></title>
 	<link rel="icon" type="image/png" href="img/favicon15.png">
 	<link rel="stylesheet" type="text/css" href="class.css" />
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
@@ -170,9 +169,16 @@ function noLog($username, $host, $ip) {
 	<link rel="stylesheet" type="text/css" href="./template/js/bootstrap/css/bootstrap-responsive.min.css" media="screen" />
 <?php if (!$noMoreLogin) { ?>
 	<script type="text/javascript">
+		var timer_ = null;
 		$(document).ready(function() { $('#username').focus(); });
+		
 		function hideFailed() { if ($('#failed').length) { $('#failed').hide(); } }
 		function animateNav() { $('#navLogin').animate({ "top": "0%" }, 250, function() { return true; }); }
+
+		function checkFocusName() { timer_ = window.setTimeout(checkFocusName_, 50); }
+		function checkFocusPass() { timer_ = window.setTimeout(checkFocusPass_, 50); }
+		function checkFocusName_() { if (!$('#passwort').is(':focus')) $('#username').focus(); window.clearInterval(timer_); }
+		function checkFocusPass_() { if (!$('#username').is(':focus')) $('#username').focus(); window.clearInterval(timer_); }
 	</script>
 <?php } ?>
 </head>
@@ -184,12 +190,12 @@ function noLog($username, $host, $ip) {
 		<div class='navbar-inner' style='height:30px;'>
 <?php if (!$noMoreLogin) { ?>
 			<div class='container' style='margin:0px auto; width:auto;'>
-				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:4px; position: absolute;' href='#'><?php echo $TITLE; ?></a></div>
+				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:4px; position: absolute;' href='#'><?php echo getNavTitle(); ?></a></div>
 				<form action='login.php' method='post' class='navbar-search pull-right' style='height:25px;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF;'>
 					<li style='margin:0px;'>
-						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' type='text' id='username' name='username' placeholder='username' />
-						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' type='password' id='passwort' name='passwort' placeholder='password' />
+						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusName();' type='text' id='username' name='username' placeholder='username' />
+						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusPass();' type='password' id='passwort' name='passwort' placeholder='password' />
 						<input type='submit' value='Ok' class='btn' style='height:20px; padding-top:0px; margin:5px 10px;' onfocus='this.blur();'/>
 					</li>
 				</ul>

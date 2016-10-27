@@ -54,6 +54,11 @@ function doRequest__(isShow, ids) {
 	});
 }
 
+function saveSelection() {
+	unsaved = false;
+	saveSelection__(false, ids);
+}
+
 function saveSelection__(isShow, ids) {
 	var resBox = document.getElementById('result');
 	if (resBox == null) { return; }
@@ -71,7 +76,98 @@ function saveSelection__(isShow, ids) {
 			else if (data == '-3') { alert('Session expired!'); setTimeout("location.reload(true);", 150); }
 			else { alert('Error saving!'); }
 			
-			if (data != '-1') { clearSelectBoxes(null); }
+			//if (data != '-1') { clearSelectBoxes(null); }
 		}
 	});
+}
+
+function selected(obj, changeMaster, postRequest, admin) {
+	collectIds__();
+
+	if (obj != null) {
+		var tr = $( obj ).parent().parent();
+		var td = $( tr ).children('TD');
+		if (obj.checked) {
+			unsaved = true;
+			//addId(obj.value);
+			td.addClass('highLighTR');
+
+		} else {
+			unsaved = true;
+			//removeId(obj.value);
+			td.removeClass('highLighTR');
+		}
+	}
+
+	var resBox  = document.getElementById('result');
+	var listDiv = document.getElementById('movieList');
+	if (listDiv == null) { return; }
+	var clearSelectAll = document.getElementById('clearSelectAll');
+	if (ids == '') {
+		listDiv.style.display = 'none';
+		resBox.innerHTML = '';
+
+	} else {
+		listDiv.style.display = 'block';
+	}
+
+	if (changeMaster) {
+		clearSelectAll.checked = ids == '' ? false : true;
+	}
+
+	if (postRequest) {
+		doRequest();
+	}
+
+	return true;
+}
+
+function collectIds__() {
+	ids = '';
+	var tds = $('TD');
+	for (var r = 0; r < tds.length; r++) {
+		var td = tds[r];
+		var obj = $( td ).find('.checka')[0];
+		if (obj == null || obj.type != "checkbox") { continue; }
+		if (obj.disabled || !obj.checked) { continue; }
+		addId(obj.value);
+	}
+}
+
+function addId(id) {
+	if (ids.search(id + ',') != -1 || ids.search(', ' + id) != -1)
+		return;
+	ids = ids + (ids.length == 0 ? '' : ', ') + id;
+}
+
+function removeId(id) {
+/*
+console.log( '0: ' + ids );
+	var arr = ids.split(', ');
+console.log( '1: ' + arr );
+	var idx = arr.indexOf(id);
+console.log( '2: ' + id + ' idx: ' + idx );
+	if (idx > -1) {
+		arr.splice(idx, 1);
+		ids = arr.join(',');
+	}
+console.log( '2: ' + ids );
+	ids = ids.replace(', ', ',');
+	ids = ids.replace(',', ', ');
+
+/--*
+	if (ids.indexOf(id + ', ') != -1) {
+console.log( '^1' );
+		ids = ids.replace(id + ', ', '');
+
+	} else if (ids.indexOf(', ' + id) != -1) {
+console.log( '^2' );
+		ids = ids.replace(', ' + id, '');
+
+	} else if (ids.indexOf(',') == -1) {
+console.log( '^3' );
+		ids = ids.replace(id, '');
+	}
+*/
+console.log( '4: ' + ids );
 }

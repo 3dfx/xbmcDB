@@ -44,8 +44,7 @@ function execSQL_($dbh, $SQL, $throw = true, $commitExtern = true) {
 }
 
 function querySQL($SQL, $throw = true) {
-	$dbh = getPDO();
-	return querySQL_($dbh, $SQL, $throw);
+	return querySQL_(null, $SQL, $throw);
 }
 
 function querySQL_($dbh, $SQL, $throw = true) {
@@ -67,8 +66,7 @@ function fetchCount($dbh, $table) {
 }
 
 function singleSQL($SQL, $throw = true) {
-	$dbh = getPDO();
-	return singleSQL_($dbh, $SQL, $throw);
+	return singleSQL_(null, $SQL, $throw);
 }
 
 function singleSQL_($dbh, $SQL, $throw = true) {
@@ -155,6 +153,7 @@ function getResolution($dbh) {
 		$idStream = unserialize($_SESSION['idStream']);
 
 	} else {
+		//TODO: only ids from movie and tvshow...
 		$SQL = "SELECT * FROM streamdetails WHERE iVideoWidth IS NOT NULL";
 		$result = querySQL_($dbh, $SQL, false);
 		foreach($result as $row) {
@@ -295,26 +294,32 @@ function checkEpLinkEpTable($dbh = null) {
 
 function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
 	else {
-		if (isset($_SESSION['param_fpsColChecked']))
-			return;
-		$colFound = false;
-		$res = $dbh->query("PRAGMA TABLE_INFO('fileinfo');");
-		foreach($res as $row) {
-			if ($row[1] == 'fps') {
-				$colFound = true;
-				break;
-			}
-		}
-		if (!$colFound) { $dbh->exec("ALTER TABLE fileinfo ADD fps FLOAT;"); }
-		$_SESSION['param_fpsColChecked'] = true;
+		checkFileInfoTableCol($dbh, 'param_fpsColChecked', 'fps', 'FLOAT');
+		checkFileInfoTableCol($dbh, 'param_srcColChecked', 'src', 'INTEGER');
 	}
+}
+
+function checkFileInfoTableCol($dbh = null, $sessionKey, $col, $colType) {
+	if (isset($_SESSION[$sessionKey]))
+		return;
+	$colFound = false;
+	$res = $dbh->query("PRAGMA TABLE_INFO('fileinfo');");
+	foreach($res as $row) {
+		if ($row[1] == $col) {
+			$colFound = true;
+			break;
+		}
+	}
+
+	if (!$colFound) { $dbh->exec("ALTER TABLE fileinfo ADD ".$col." ".$colType.";"); }
+	$_SESSION[$sessionKey] = true;
 }
 
 function checkMyEpisodeView($dbh = null) {
 	$exist = existsTable('episodeviewMy', 'view', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy AS SELECT episode.*,files.strFileName AS strFileName,path.idPath AS idPath,path.strPath AS strPath,files.playCount AS playCount,files.lastPlayed AS lastPlayed,tvshow.c00 AS strTitle,tvshow.c14 AS strStudio,tvshow.idShow AS idShow,tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy AS SELECT episode.*, files.strFileName AS strFileName, path.idPath AS idPath, path.strPath AS strPath, files.playCount AS playCount, files.lastPlayed AS lastPlayed, tvshow.c00 AS strTitle, tvshow.c14 AS strStudio, tvshow.idShow AS idShow, tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false); }
 }
 
 function checkTvshowRunningTable($dbh = null) {
@@ -338,6 +343,33 @@ function existsOrderzTable($dbh = null) {
 		$exist = existsTable('orderz', 'table', $dbh);
 	}
 	return $exist;
+}
+
+function existsFilemapTable($dbh = null) {
+	$exist = existsTable('filemap', 'table', $dbh);
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS filemap( idFile integer primary key, strFilename text, dateAdded text, value longint );", false); }
+}
+
+function checkFileMapTable($dbh) {
+/* //not needed anymore
+	$dbVer = $GLOBALS['db_ver'];
+	if ($dbVer >= 60) {
+		$dateAddedFound = false;
+		$res = $dbh->query("PRAGMA TABLE_INFO('files');");
+		foreach($res as $row) {
+			if ($row[1] == 'dateAdded') {
+				$dateAddedFound = true;
+				break;
+			}
+		}
+
+		if (!$dateAddedFound) {
+			$dbh->exec("ALTER TABLE files ADD dateAdded text;");
+		}
+	}
+*/
+
+	existsFilemapTable($dbh);
 }
 
 function existsOrdersTable($dbh = null) {
@@ -367,36 +399,31 @@ function existsTable($tableName, $type = 'table', $dbh = null) {
 	return false;
 }
 
-function getIdOrder($dbh = null) {
-	$GETID_SQL = 'SELECT idOrder FROM orderz ORDER BY idOrder DESC LIMIT 0, 1;';
-	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
-	$lastId    = $row['idOrder'];
-	$idFile    = $lastId + 1;
+function fetchSeasonIds($idShow) {
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 
-	return $idFile;
-}
+	$ids = array();
+	if ( isset($_SESSION['param_seasonIds']) && isset($_SESSION['param_seasonIds'][$idShow]) && $overrideFetch == 0) {
+		$ids = unserialize($_SESSION['param_seasonIds'][$idShow]);
 
-function checkFileMapTable($dbh) {
-	$dbVer = $GLOBALS['db_ver'];
-	if ($dbVer >= 60) {
-		$dateAddedFound = false;
-		$res = $dbh->query("PRAGMA TABLE_INFO('files');");
+	} else {
+		$SQL = "SELECT idSeason,season FROM seasons WHERE idShow = ".$idShow.";";
+
+		$dbh = getPDO();
+		$res = querySQL_($dbh, $SQL, false);
+
+		$index = 0;
 		foreach($res as $row) {
-			if ($row[1] == 'dateAdded') {
-				$dateAddedFound = true;
-				break;
-			}
+			$ids[$index][0] = $row['idSeason'];
+			$ids[$index][1] = $row['season'];
+			$index++;
 		}
 
-		if (!$dateAddedFound) {
-			$dbh->exec("ALTER TABLE files ADD dateAdded text;");
-		}
+		$_SESSION['param_seasonIds'][$idShow] = serialize($ids);
+		unset( $_SESSION['overrideFetch'] );
 	}
 
-	$exist = existsTable('filemap', 'table', $dbh);
-	if (!$exist) {
-		$dbh->exec("CREATE TABLE IF NOT EXISTS filemap( idFile integer primary key, strFilename text, dateAdded text, value longint );");
-	}
+	return $ids;
 }
 
 function fetchPaths() {
@@ -409,7 +436,7 @@ function fetchPaths() {
 	} else {
 		$TVSHOWDIR = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : '';
 		#$SQL = "SELECT idPath, strPath FROM path WHERE strPath like '%".$TVSHOWDIR."%' ORDER BY strPath ASC;";
-		$SQL = "SELECT idPath,strPath FROM path WHERE strPath IN (SELECT DISTINCT(strPath) FROM episodeview);";
+		$SQL = "SELECT idPath,strPath FROM path WHERE strPath IN (SELECT DISTINCT(strPath) FROM ".mapDBC('episodeview').");";
 
 		$dbh = getPDO();
 		$res = querySQL_($dbh, $SQL, false);
@@ -432,8 +459,8 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 	$fpsEnabled = isset($GLOBALS['FETCH_FPS']) ? $GLOBALS['FETCH_FPS'] : false;
 	if (!$fpsEnabled)
 		return null;
-	
-	if ($fps == null || $fps == 0) {
+
+	if ($fps == null) {
 		$stacked = (substr($filename, 0, 8) == "stack://");
 		if ($stacked) {
 			$fps = null; #getStackedFps($filename);
@@ -441,13 +468,14 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 			$fps = getFps($path.$filename);
 		}
 
-		if (empty($fps)) { return 0; }
+		#if (empty($fps)) { return null; }
+		if (empty($fps)) { $fps = 0.0; }
 
 		$dbhIsNull = ($dbh == null);
 		try {
 			if ($dbhIsNull) { $dbh = getPDO(); }
 
-			$sqli = "UPDATE fileinfo SET fps = '$fps' WHERE idFile = '$idFile';";
+			$sqli = "UPDATE fileinfo SET fps = '".$fps."' WHERE idFile = '$idFile';";
 			if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 
 			$dbh->exec($sqli);
@@ -462,7 +490,7 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 		}
 	} // if fsize == null...
 
-	return $fps;
+	return empty($fps) || intval($fps) == 0 ? null : $fps;
 }
 
 function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
@@ -480,7 +508,7 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 		try {
 			if ($dbhIsNull) { $dbh = getPDO(); }
 
-			$sqli = "REPLACE INTO fileinfo(idFile, filesize) VALUES(".$idFile.", ".$fsize.");";
+			$sqli = "REPLACE INTO fileinfo(idFile, filesize, src) VALUES(".$idFile.", ".$fsize.", (SELECT src FROM fileinfo WHERE idFile = ".$idFile."));";
 			if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 
 			$dbh->exec($sqli);
@@ -515,7 +543,7 @@ function getFilesize($file) {
 	#if (!isLinux()) { return null; }
 	#$file = correctFilename($file);
 	#if (empty($file)) { return null; }
-	
+
 	#$execString = 'stat -c %s '.$file;
 	#exec($execString, $output);
 	$output = execCommand($file, 'stat -c %s ');
@@ -544,10 +572,11 @@ function getCreation($file) {
 function getFps($file) {
 	$output = execCommand($file, 'mediainfo --Inform="Video;%FrameRate%" ');
 	if ($output != null && count($output) > 0) {
-		return trim($output[0]);
+		$res = trim($output[0]);
+		return empty($res) ? 0 : $res;
 	}
 
-	return null;
+	return 0;
 }
 
 function correctFilename($file) {
@@ -850,7 +879,6 @@ function fetchActorCovers($dbh = null) {
 	$res    = querySQL_($dbh, $SQL, false);
 
 	foreach($res as $row) {
-#if (isAdmin()) { print_r( $row ); }
 		$idMovie = $row['idMovie'];
 		$idActor = $row['idActor'];
 		$artist  = $row['strActor'];
@@ -925,6 +953,38 @@ function getNewAddedCount() {
 	return $newAddedCount;
 }
 
+function getNavTitle() {
+	return isset($GLOBALS['NAV_TITLE'])  ? $GLOBALS['NAV_TITLE']  : 'xbmcDB';
+}
+
+function getHtmlTitle() {
+	return isset($GLOBALS['HTML_TITLE']) ? $GLOBALS['HTML_TITLE'] : 'XBMC Database';
+}
+
+function getSrcMarker($source) {
+	$res = '';
+	if (!isAdmin())
+		return $res;
+	switch($source) {
+		case 1:
+			$res = 'bdrip';
+			break;
+		case 2:
+			$res = 'webrip';
+			break;
+		case 3:
+			$res = 'hdtv';
+			break;
+		case 4:
+			$res = 'dvdrip';
+			break;
+		default:
+			$res = 'unknown';
+	}
+
+	return '<span class="source '.$res.'">|</span>';
+}
+
 function postNavBar() {
 	fetchMediaCounts();
 	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
@@ -987,9 +1047,12 @@ function postNavBar_($isMain) {
 	$res .= '<div class="nav-collapse">';
 	$res .= '<ul class="nav" style="padding-top:2px;">';
 	$res .= '<li class="divider-vertical" style="height:36px;"></li>';
-	$res .= '<li'.($isMain ? ' class="active"' : '').'>';
-	$res .= '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
-	$res .= '</li>';
+
+	if (!$isMain) {
+		$res .= '<li'.($isMain ? ' class="active"' : '').'>';
+		$res .= '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
+		$res .= '</li>';
+	}
 
 	if (!empty($dbSearch)) {
 		$saferSearch = trim(SQLite3::escapeString($dbSearch));
@@ -1045,9 +1108,23 @@ function postNavBar_($isMain) {
 			$selectedIs = '3D';
 		}
 
-		$res .= '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.$selectedIs.' <b class="caret"></b></a>';
+		$res .= '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');">';
+		#$res .= '<a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">'.$selectedIs.' <b class="caret"></b></a>';
+		$res .= '<a tabindex="1" class="dropdown-toggle '.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'" style="font-weight:bold;'.($bs211).'" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();">movies <b class="caret"></b></a>';
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
-		$all = ((!isset($unseen) || $unseen == 3) && $newmode != 1 && empty($just) && empty($mode) && empty($saferSearch) && empty($country) ? ' class="selectedItem"' : '');
+
+		$res .= '<li class="dropdown-submenu">';
+		$res .= '<a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').'</a>';
+		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
+		$res .= '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
+		$res .= '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
+		$res .= '</ul>';
+		$res .= '</li>';
+
+		$res .= '<li class="divider"></li>';
+
+		#$all = ((!isset($unseen) || $unseen == 3) && $newmode != 1 && empty($just) && empty($mode) && empty($saferSearch) && empty($country) ? ' class="selectedItem"' : '');
+		$all = ($selectedIs == 'all' ? ' class="selectedItem"' : '');
 		$res .= '<li><a href="?show=filme&newmode=0&unseen=3'.$unsetParams.$unsetMode.$unsetCountry.'" onclick="return checkForCheck();"'.$all.'>all</a></li>';
 
 		$res .= '<li class="dropdown-submenu">';
@@ -1110,6 +1187,7 @@ function postNavBar_($isMain) {
 		$res .= '</li>';
 	} //$isMain
 
+/*
 	if ($isMain || ($isTvshow && $TVSHOW_GAL_ENABLED)) {
 		$res .= '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
@@ -1122,6 +1200,7 @@ function postNavBar_($isMain) {
 	if ($SEARCH_ENABLED && $isMain) {
 		$res .= createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
 	}
+*/
 
 	if ($countTVshows > 0) {
 		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
@@ -1139,7 +1218,9 @@ function postNavBar_($isMain) {
 		}
 	}
 
-	if ($SEARCH_ENABLED && $isTvshow) {
+	#if ($SEARCH_ENABLED && $isTvshow) {
+	if ($SEARCH_ENABLED) {
+		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 		$res .= createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
 	}
 
@@ -1161,8 +1242,8 @@ function postNavBar_($isMain) {
 		$state   = ($state == 1 ? 'playing' : ($state == 0 ? 'paused' : ''));
 		$res .= '<span id="xbmControlWrap" style="float:left;">';
 		$res .= '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
-			$res .= '<span id="xbmcPlayerState_" style="color:'.($INVERSE ? 'white' : 'black').'; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
 			$res .= '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
+			$res .= '<span id="xbmcPlayerState_" style="color:'.($INVERSE ? 'white' : 'black').'; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
 			$res .= '<span id="xbmcPlayerFile" style="color:'.($INVERSE ? 'white' : 'black').'; top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
 			$res .= '</a> ';
 			$res .= '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
@@ -1291,24 +1372,26 @@ function createEpisodeSubmenu($result) {
 	$isAdmin = isAdmin();
 	$counter = 2;
 	$res = '';
+	
 	foreach($result as $key => $show) {
 		$lId = 'sub_'.str_replace(' ', '_', $key);
 		$res .= '<li class="dropdown-submenu" id="'.$lId.'" style="cursor:default;">';
-		$count = count($show);
-		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#"><span title="'.$count.' episode'.($count > 1 ? 's' : '').'">'.$key.'</span></a>';
+		$ttip = count($show) > 1 ? ' title="'.count($show).' episodes"' : '';
+		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#"><span'.$ttip.'>'.$key.'</span></a>';
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 		foreach($show as $row) {
 			$idShow    = $row['idShow'];    $serie = $row['serie'];   $season  = $row['season'];
 			$idEpisode = $row['idEpisode']; $title = $row['title'];   $episode = $row['episode'];
-			$playCount = $row['playCount']; $rating = $row['rating']; $sCount = $row['sCount'];
+			$playCount = $row['playCount']; $rating = $row['rating']; $sCount  = $row['sCount'];
+			$srCol = $isAdmin ? getSrcMarker($row['src']) : '';
 
 			$season   = sprintf("%02d", $season);
 			$episode  = sprintf("%02d", $episode);
 			$epTrId   = 'iD'.$idShow.'.S'.$season;
 			$noRating = empty($rating) || substr($rating, 0, 1) == '0';
 
-			$SE = '<span class="dropdown-menu_epTitle"><b><sub>S'.$season.'.E'.$episode.'</sub></b></span> ';
+			$SE = '<span class="dropdown-menu_epTitle"><b><sub>S'.$season.'.E'.$episode.$srCol.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
 			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
 			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'" class="elem"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
@@ -1596,7 +1679,7 @@ function adminInfo($start, $show) {
 
 					if (empty($label)) { continue; }
 
-					$tCol = (empty($state) ? '' : ($state == 'standby' ? ' label' :  ' label-success') );
+					$tCol = (empty($state) ? '' : ($state == 'standby' || $state == 'unknown' ? ' label' :  ' label-success') );
 					echo '<span id="hdp'.$i.'" style="cursor:default; display:none; padding:5px 8px; margin-left:5px; margin-bottom:5px;" class="label'.$tCol.'" title="'.($state == 'standby' ? 'idle' : 'active').'">'.$label.'</span>';
 				}
 				echo '<br id="brr0" style="display:none;" />';
@@ -1857,6 +1940,8 @@ function getShowInfo($idTvDb) {
 
 	$rss = new rss_php;
 	$URL = 'http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$idTvDb.'/all/'.$LANG.'.xml';
+#	if (!urlCheck($URL))
+#		return null;
 
 	$rss->load($URL);
 	$items = $rss->getItems();
@@ -1880,6 +1965,34 @@ function getShowInfo($idTvDb) {
 
 	$_SESSION['TvDbCache'][$idTvDb] = serialize($episodes);
 	return $episodes;
+}
+
+function urlCheck($url) {
+	$s_link   = trimURL($url);
+	$s_link   = str_replace('::', ':', $s_link);
+	$address_ = explode (':',"$s_link");
+	$address  = empty($address_[0]) ? $address_[1] : $address_[0];
+	$churl    = @fsockopen($address, 80, $errno, $errstr, 5);
+/*
+print_r( $address_ );
+echo '<br/>';
+echo $errstr.'<br/>';
+echo $errno.'<br/>';
+echo $addr.'<br/>';
+echo $churl.'<br/>';
+*/
+
+	if (!$churl)
+	    return false;
+	else
+	    return true;
+}
+
+function trimURL($url) {
+	$url = str_replace('http://', '', $url);
+	$url = str_replace('www.',    '', $url);
+	if (strstr($url,'/')) { $url = substr($url, 0, strpos($url, '/')); }
+	return $url;
 }
 
 function getEpisodeInfo($episodes, $getSeason, $getEpisode) {
@@ -2001,6 +2114,18 @@ function getFormattedSE($sNum, $eNum, $epDelta = 0) {
 	return $res;
 }
 
+function fixNameForSearch($name) {
+	$name = str_replace("'",       "",    $name);
+	$name = str_replace("(",       "",    $name);
+	$name = str_replace(")",       "",    $name);
+	$name = str_replace("&",       "and", $name);
+	$name = str_replace("&#44; ",  " ",   $name);
+	$name = str_replace(",",       "",    $name);
+	if (substr_count($name, ', The') > 0)
+		$name = 'The '.str_replace(", The",  "", $name);
+	return $name;
+}
+
 function getGuests($guests) {
 	if (empty($guests)) { return null; }
 	$guests = str_replace(',',  ' / ', $guests);
@@ -2035,7 +2160,7 @@ function getDateColor($airDate, $daysLeft) {
 }
 
 function getDateFontsize($daysLeft) {
-	$fSize = ' font-size:8pt;';
+	$fSize = ' font-size:8pt; font-weight:bold;';
 	$fSize = ($daysLeft >= 1 ? ' font-size:7pt;' : $fSize);
 	$fSize = ($daysLeft >= 2 ? ' font-size:6pt;' : $fSize);
 	$fSize = ($daysLeft > 30 ? ' font-size:5pt;' : $fSize);
@@ -2104,6 +2229,11 @@ function getPausedAt($timeAt) {
 	$min = $timeAt / 60 % 60;
 	$hrs = round($timeAt / 3600, 0);
 	return sprintf('%02d:%02d:%02d', $hrs, $min, $sec);
+}
+
+function formatRating($rating) {
+	#$rating = substr($rating, 0, 3);
+	return sprintf('%2.1f', $rating);
 }
 
 function workaroundMTime($img) {
@@ -2353,23 +2483,28 @@ function escapeArray($val) {
 function generateOnDemandCopyScript($idOrder) {
 	$srcLetter = isset($GLOBALS['srcDrive']) ? $GLOBALS['srcDrive'] : '';
 	$dstLetter = isset($GLOBALS['selDrive']) ? $GLOBALS['selDrive'] : '';
+	$scriptCopyWin = isset($GLOBALS['COPYASSCRIPT_COPY_WIN']) ? $GLOBALS['COPYASSCRIPT_COPY_WIN']  : false;
 	if (empty($srcLetter)) { $srcLetter = isset($GLOBALS['COPYASSCRIPT_COPY_FROM_LETTER']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM_LETTER'] : $srcLetter; }
 	if (empty($dstLetter)) { $dstLetter = isset($GLOBALS['COPYASSCRIPT_COPY_TO_LETTER'])   ? $GLOBALS['COPYASSCRIPT_COPY_TO_LETTER']   : $dstLetter; }
 
-	$res = querySQL("SELECT * FROM orderItemz WHERE idOrder = ".$idOrder." ORDER BY movieOrShow, idElement;");
+	$user = fetchFromDB("SELECT user FROM orderz WHERE idOrder = ".$idOrder.";", false);
+	$res  = querySQL("SELECT * FROM orderItemz WHERE idOrder = ".$idOrder." ORDER BY movieOrShow, idElement;");
 	$idShows  = array();
 	$idMovies = array();
 	foreach($res as $row) {
 		if ($row['movieOrShow'] == 0) { $idShows[] = $row['idElement']; }
 		else { $idMovies[] = $row['idElement']; }
 	}
+	$idShows  = array_unique($idShows);
+	$idMovies = array_unique($idMovies);
 	$idShows  = implode(',', $idShows);
 	$idMovies = implode(',', $idMovies);
 
 	$shows  = getItemsForRequest($idShows, true);
 	$movies = getItemsForRequest($idMovies, false);
 
-	$res  = '';
+	$res  = $scriptCopyWin ? 'chcp 1252'.$newLine."\n" : '';
+	$res .= 'rem for: '.$user['user']."\n\n";
 	$res .= doTheStuffTvShow($shows, true, false, $srcLetter, $dstLetter);
 	$res .= doTheStuffMovie($movies, true, true, $srcLetter, $dstLetter);
 	return $res;
@@ -2399,7 +2534,7 @@ function doTheStuffTvShow($result, $forOrder = false, $append = false, $srcLette
 	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
 
 	$newLine = $forOrder ? "\n" : '<br />';
-	$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	#$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
 	if (count($result) == 0)
 		return $res;
 	foreach($result as $row) {
@@ -2446,7 +2581,7 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 
 	$oldPath   = '';
 	$newLine = $forOrder ? "\n" : '<br />';
-	$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	#$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
 	$totalsize = 0;
 	foreach($result as $row) {
 		$path       = $row['path'];
@@ -2499,6 +2634,40 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 	}
 
 	return $res;
+}
+
+function getIdOrder($dbh = null) {
+	$GETID_SQL = 'SELECT idOrder FROM orderz ORDER BY idOrder DESC LIMIT 0, 1;';
+	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	$lastId    = $row['idOrder'];
+	return $lastId+1;
+}
+
+function findUserOrder() {
+	$saveOrderInDB = isset($GLOBALS['SAVE_ORDER_IN_DB']) ? $GLOBALS['SAVE_ORDER_IN_DB'] : false;
+	if (isAdmin() || !$saveOrderInDB)
+		return null;
+	
+	$user = $_SESSION['user'];
+	$SQL  = "SELECT idOrder AS idOrder FROM orderz WHERE fresh=1 AND user='[USER]' ORDER BY idOrder DESC;";
+	$SQL  = str_replace('[USER]', $user, $SQL);
+	$res  = querySQL($SQL);
+	$ids  = array();
+	foreach($res as $row)
+		$ids[] = $row['idOrder'];
+
+	if (empty($ids) || count($ids) == 0)
+		return null;
+
+	$_SESSION['param_idOrder'] = $ids[0];
+	$ids  = implode(',', $ids);
+	$SQL  = "SELECT movieOrShow AS movie, idElement AS id FROM orderItemz WHERE idOrder IN (".$ids.");";
+	$res  = querySQL($SQL);
+	$result = array(0=>array(), 1=>array());
+	foreach($res as $row)
+		$result[$row['movie']][$row['id']] = $row['id'];
+
+	return $result;
 }
 
 /*

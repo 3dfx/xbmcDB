@@ -291,7 +291,7 @@ table.film td {
 
 .th0 { text-align:left; padding-top:5px; padding-bottom:5px; padding-left:10px; }
 .th1 { text-align:left; padding-top:5px; padding-bottom:5px; }
-.th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:175px; padding-left:10px; }
+.th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:175px; }
 .th3 { text-align:left; padding-top:5px; padding-bottom:5px; width:100px; padding-left:10px; }
 .th4 { text-align:left; padding-top:5px; padding-bottom:5px; width:400px; }
 .th5 { text-align:right !important; padding-right:10px; }
@@ -549,11 +549,11 @@ table.artists td {
 }
 
 .streaminfoAV {
-	padding-left:15px;
+	padding-left:12px;
 }
 
 .streaminfoAV2 {
-	padding-left:15px;
+	padding-left:12px;
 	padding-right:25px !important;
 }
 
@@ -568,7 +568,7 @@ table.streaminfo th {
 
 table.streaminfo th, table.streaminfo td {
 	color:dimgray;
-	padding-right:15px;
+	padding-right:12px;
 	padding-top:2px;
 	padding-bottom:2px;
 	vertical-align:top;
@@ -666,6 +666,10 @@ input[type=checkbox] {
 .originalTitle {
 	font-size: 12px;
 	font-weight: normal;
+	position: relative;
+	padding-bottom: 2px;
+	left: 0px;
+
 }
 
 .movieTitle {
@@ -692,7 +696,7 @@ input[type=checkbox] {
 
 #movieDescription {
 	position:relative;
-	top:15px;
+	top:20px;
 	width:980px;
 }
 
@@ -711,7 +715,7 @@ input[type=checkbox] {
 	color:black;
 	font-size: 12px;
 	top:22px;
-	width:260px;
+	width:300px;
 	overflow-x:hidden;
 	margin-top:10px;
 }
@@ -1026,7 +1030,7 @@ a.showlink {
 
 .showShowInfo   { cursor:default; width:1px; white-space:nowrap; height:20px; width:550px; min-width:550px; max-width:550px !important; }
 .checka         { position:relative; top:-2px; }
-.checkaCheck    { padding-left:4px; padding-right:0px !important; }
+.checkaCheck    { padding-left:4px; padding-right:0px !important; top:0px !important; }
 .showShowInfo1  { color:silver; padding:2px 4px 2px 0px; }
 .showName       { float:left; overflow-x:hidden; cursor:pointer; }
 .airdShown      { width:150px; }
@@ -1080,9 +1084,16 @@ a.showlink {
 .padtop15      { padding-top:15px; }
 .nOverflow     { overflow-x:hidden; white-space:nowrap !important; }
 
-#adminInfo { top:60px; right:25px; position:absolute; text-align:right; padding:10px 10px 14px; }
+#adminInfo { top:60px; right:25px; position:fixed; text-align:right; padding:10px 10px 14px; }
 
 .maxWidth30 { max-width:30px; overflow-x:hidden; }
 
 .lightSide { -webkit-filter:invert(0%);   filter:invert(0%);   }
 .darkSide  { -webkit-filter:invert(100%); filter:invert(100%); }
+
+.source  { font-weight:normal !important; }
+.unknown { color:RGBA(0,0,0,0); }
+.bdrip   { color:#AFF8BC;       }
+.webrip  { color:#66AACC;       }
+.hdtv    { color:red;           }
+.dvdrip  { color:#FFF5AE;       }

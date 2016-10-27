@@ -1,4 +1,5 @@
 var ids          = '';
+var unsaved      = false;
 var searchLength = 0;
 
 $(document).ready(function() {
@@ -10,14 +11,14 @@ $(document).ready(function() {
 	
 	$(document).keydown(function(event) {
 		if (bindF) { 
-			if(event.ctrlKey && event.keyCode == '70') {
+			if (event.ctrlKey && event.keyCode == '70') {
 				event.preventDefault();
 				openNav('#dropSearch');
 				$('#searchDBfor').focus();
 			}
 		}
 		if (!isAdmin) {
-			if(event.ctrlKey && event.keyCode == '83') {
+			if (event.ctrlKey && event.keyCode == '83') {
 				event.preventDefault();
 				saveSelection();
 			}
@@ -46,7 +47,9 @@ function closeNavs() {
 }
 
 function checkForCheck() {
-	return (ids != null && ids != '' ? confirm("Attention:\nSelection will be lost!") : true);
+	if (unsaved)
+		return (ids != null && ids != '' ? confirm("Attention:\nUnsaved selection will be lost!") : true);
+	return true;
 }
 
 function clearSelectBoxes(obj) {
@@ -83,50 +86,7 @@ function clearSelectBoxes(obj) {
 	}
 }
 
-function selected(obj, changeMaster, postRequest, admin) {
-	var tr = $( obj ).parent().parent();
-
-	if (obj.checked) {
-		ids = ids + (ids.length == 0 ? '' : ', ') + obj.value;
-		$( tr ).children('TD').addClass('highLighTR');
-		
-	} else {
-		$( tr ).children('TD').removeClass('highLighTR');
-		
-		if (ids.indexOf(obj.value + ', ') != -1) {
-			ids = ids.replace(obj.value + ', ', '');
-			
-		} else if (ids.indexOf(', ' + obj.value) != -1) {
-			ids = ids.replace(', ' + obj.value, '');
-			
-		} else if (ids.indexOf(',') == -1) {
-			ids = ids.replace(obj.value, '');
-		}
-	}
-	
-	var resBox  = document.getElementById('result');
-	var listDiv = document.getElementById('movieList');
-	if (listDiv == null) { return; }
-	var clearSelectAll = document.getElementById('clearSelectAll');
-	if (ids == '') {
-		listDiv.style.display = 'none';
-		resBox.innerHTML = '';
-		
-	} else {
-		listDiv.style.display = 'block';
-	}
-	
-	if (changeMaster) {
-		clearSelectAll.checked = ids == '' ? false : true;
-	}
-	
-	if (postRequest) {
-		doRequest();
-	}
-}
-
 function doRequest() { doRequest__(false, ids); }
-function saveSelection() { saveSelection__(false, ids); }
 
 function collectIds() {
 	ids = '';
@@ -135,7 +95,7 @@ function collectIds() {
 		var tr = trs[r];
 		var obj = $( tr ).find('.checka')[0];
 		if (obj.disabled || !obj.checked) { continue; }
-		ids = ids + (ids.length == 0 ? '' : ', ') + obj.value;
+		addId(obj.value);
 	}
 }
 

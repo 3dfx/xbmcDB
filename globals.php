@@ -3,19 +3,19 @@ include_once "./globals.php";
 
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
 	$ANONYMIZER         = 'http://dontknow.me/at/?';
-	
+
 	$IMDB               = 'http://www.imdb.de/find?s=';
 	$IMDBFILMTITLE      = 'http://www.imdb.de/title/';
 	$PERSONINFOSEARCH   = $IMDB.'nm&q=';
 	$FILMINFOSEARCH     = $IMDB.'tt&q=';
-	
+
 	$SHOW_NEW_VALUES    = array(10, 30, 60, 90, 120, 150, 180);
 	$COLUMNCOUNT        = 10;
-	
+
 	$BLACKLIST_FILE     = './logs/blacklist.log';
-	
+
 	$DAY_IN_SECONDS     = 86400;
-	
+
 	$LOCALHOST          = false;
 	$HOMENETWORK        = false;
 	$CLIENT_IP          = !isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['REMOTE_ADDR'] : $_SERVER['HTTP_X_FORWARDED_FOR'];
@@ -26,7 +26,7 @@ include_once "./globals.php";
 		$LOCALHOST   = ($check == $local0);
 		$HOMENETWORK = ($check == $local0 || $check == $local1);
 	}
-	
+
 	$COUNTRY_MAP =	array(
 		'DE' => array(
 				'GER' => 'Deutsch',
@@ -72,7 +72,16 @@ include_once "./globals.php";
 				'POL' => 'Polish'
 			)
 	);
-	
+
+	$SOURCE = array(
+		null => 'unknown',
+		0    => 'unknown',
+		1    => 'BluRay',
+		2    => 'WEBrip',
+		3    => 'TVrip',
+		4    => 'DVDrip',
+	);
+
 	$CODEC_COLORS = array(
 		0 => '#000000',
 		1 => '#00FF00',
@@ -80,7 +89,7 @@ include_once "./globals.php";
 		3 => '#FF0000',
 		4 => '#550000',
 	);
-	
+
 	$DB_MAPPINGS = array(
 		93 => array(
 			'actorlinkmovie'    => 'actor_link',
@@ -113,14 +122,15 @@ include_once "./globals.php";
 
 function mergeMapping($dbVer) {
 	if (isset($_SESSION['DB_MAPPING'])) { return $_SESSION['DB_MAPPING']; }
-	
+
 	$merged   = array();
 	$mappings = $GLOBALS['DB_MAPPINGS'];
+	sort($mappings);
 	foreach($mappings as $key => $value) {
 		if ($key > $dbVer) { continue; }
 		$merged = array_merge($merged, $value);
 	}
-	
+
 	$_SESSION['DB_MAPPING'] = $merged;
 	return $merged;
 }
@@ -131,7 +141,7 @@ function mapDBC($str) {
 		$map = mergeMapping($dbVer);
 		return isset($map[$str]) ? $map[$str] : $str;
 	}
-	
+
 	return $str;
 }
 
