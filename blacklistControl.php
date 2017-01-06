@@ -1,7 +1,7 @@
 <?php
 include_once "check.php";
 include_once "./template/functions.php";
-	
+
 	if (!isAdmin()) { return; }
 	if ($_SERVER['REQUEST_METHOD'] == 'GET' && !empty($_GET)) {
 		$action = isset($_GET['act']) ? urldecode(getEscGet('act')) : null;
@@ -19,18 +19,18 @@ include_once "./template/functions.php";
 	<script type="text/javascript">
 		function deleteBlock(ip) {
 			if (ip == null || ip == '') { return; }
-			
+
 			var frage = unescape("Delete block '" + ip + "'?");
 			var answer = confirm(frage);
 			if (!answer) { return; }
-			
+
 			window.location.href='./blacklistControl.php?act=delete&ip=' + ip;
 		}
 	</script>
 </head>
 <body !oncontextmenu="return false" ondragstart="return false" style="margin:0px;">
 <?php
-	echo "<table class='film' style='margin:15px -5px; width:99%; max-width:99%;'>\r\n";
+	echo "<table class='film' style='margin:15px -10px; width:99%; max-width:99%;'>\r\n";
 	echo "<tr>";
 	#echo "<th colspan='".($which == 1 ? 6 : 8)."' style='padding:5px 5px;'>".$title."</th>";
 	echo "<th colspan='5' style='padding:5px 5px;'>Blacklist control</th>";
@@ -42,19 +42,19 @@ include_once "./template/functions.php";
 	echo "<th style='padding:2px 10px;'>Count</th>";
 	echo "<th style='padding:2px 10px;'>Delete</th>";
 	echo "</tr>\r\n";
-	
+
 	$x = 1;
 	$blacklist = restoreBlacklist();
 	if (!empty($blacklist)) {
 		#arsort($blacklist, SORT_NUMERIC);
 		foreach($blacklist as $ip => $entry) { $dates[$ip] = $entry['date']; }
 		array_multisort($dates, SORT_DESC, SORT_NUMERIC, $blacklist);
-		
+
 		foreach($blacklist as $ip => $entry) {
 			$date  = $entry['date'];
 			$count = $entry['count'];
 			$color = isBlacklisted($ip) ? ' color:red;' : ' color:#6699CC;';
-			
+
 			echo "<tr style='height:15px;'>";
 			echo "<td style='padding:2px 5px; text-align:right;".$color."'>".($x++)."</td>";
 			echo "<td style='padding:2px 10px;".$color."'>".strftime("%d.%m.%Y <b>%X</b>", $date)."</td>";

@@ -252,18 +252,13 @@ include_once "./template/functions.php";
 			$inhalt = str_replace('\n\r', '<br/>', $inhalt);
 			$inhalt = str_replace('\r',   '<br/>', $inhalt);
 
+			$descHidden = '';
 			$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
-			if (!$spProtect || ($isAdmin && $watched >= 1)) {
-				echo '<span id="movieDescription">';
-				echo $inhalt;
-				echo '</span>';
-
-			} else if ($spProtect || ($spProtect && $isAdmin && (empty($watched)))) {
+			if ($spProtect && ($isAdmin && (empty($watched) && empty($percent)))) {
+				$descHidden = ' style="display:none;"';
 				echo '<div id="spoiler" style="padding-top:15px; color:red; cursor:pointer;" onclick="spoilIt(); return false;"><u><i><b>spoil it!</b></i></u></div>';
-				echo '<span id="movieDescription" style="display:none;">';
-				echo $inhalt;
-				echo '</span>';
 			}
+			echo '<span id="movieDescription"'.$descHidden.'>'.$inhalt.'</span>';
 
 		} else {
 			echo '<i>Keine Beschreibung vorhanden.</i>';

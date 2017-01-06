@@ -68,7 +68,7 @@ include_once "./template/_SERIEN.php";
 	if ($idSelected) {
 		$episodes = getShowInfo($idTvdb);
 #print_r( $episodes );
-		if ($episodes == null) { die('NOTHING FOUND!'); }
+		if (empty($episodes)) { die("Couldn't fetch show info!"); }
 	}
 	
 	$showPath = $serie->getShowpath();

@@ -77,9 +77,10 @@ include_once "./globals.php";
 		null => 'unknown',
 		0    => 'unknown',
 		1    => 'BluRay',
-		2    => 'WEBrip',
-		3    => 'TVrip',
-		4    => 'DVDrip',
+		2    => 'WEB-DL',
+		3    => 'WEBrip',
+		4    => 'TVrip',
+		5    => 'DVDrip',
 	);
 
 	$CODEC_COLORS = array(
@@ -145,8 +146,14 @@ function mapDBC($str) {
 	return $str;
 }
 
-$db_name = fetchDbName();
 $db_ver  = fetchDbVer();
+$db_name = fetchDbName();
+
+function fetchDbVer() {
+	if (!isset($_SESSION)) { session_start(); }
+	if (!isset($_SESSION['dbVer']) || empty($_SESSION['dbVer'])) { fetchDbName(); }
+	return $_SESSION['dbVer'];
+}
 
 function fetchDbName() {
 	if (!isset($_SESSION)) { session_start(); }
@@ -158,11 +165,11 @@ function fetchDbName() {
 	$d = dir($dir);
 	$counter = 0;
 	while (false !== ($entry = $d->read())) {
-		if ($entry == '.' || $entry == '..')    { continue; }
-		if (substr($entry, 0, 8) != 'MyVideos') { continue; }
-		if (substr($entry, -3) != '.db')        { continue; }
+		$ver_ = getVer_($entry);
+		if (empty($ver_)) { continue; }
 
-		$ver[$counter][0] = intval(substr($entry, 8, 2));
+		$ver[$counter][0] = intval($ver_);
+		#$ver[$counter][0] = intval(substr($entry, 8, 2));
 		$ver[$counter++][1] = $entry;
 	}
 	$d->close();
@@ -173,10 +180,14 @@ function fetchDbName() {
 	return $_SESSION['dbName'];
 }
 
-function fetchDbVer() {
-	if (!isset($_SESSION)) { session_start(); }
-	if (!isset($_SESSION['dbVer']) || empty($_SESSION['dbVer'])) { fetchDbName(); }
-	return $_SESSION['dbVer'];
+function getVer_($entry) {
+	if ($entry == '.' || $entry == '..')    { return null; }
+	if (substr($entry, 0, 8) != 'MyVideos'
+	 || substr($entry, -3)   != '.db') { return null; }
+
+	$entry = str_replace('MyVideos', '', $entry);
+	$entry = str_replace('.db',      '', $entry);
+	return intval($entry);
 }
 
 ?>

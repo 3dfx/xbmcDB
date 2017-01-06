@@ -570,6 +570,10 @@ function getCreation($file) {
 }
 
 function getFps($file) {
+	#$output = null;
+	#if (file_exists('./myScripts/conf/mediaInfo'))
+	#	$output = execCommand($file, 'mediainfo --Inform=file:///var/spool/myScripts/conf/mediaInfo ');
+	#else
 	$output = execCommand($file, 'mediainfo --Inform="Video;%FrameRate%" ');
 	if ($output != null && count($output) > 0) {
 		$res = trim($output[0]);
@@ -973,9 +977,12 @@ function getSrcMarker($source) {
 			$res = 'webrip';
 			break;
 		case 3:
-			$res = 'hdtv';
+			$res = 'webrip';
 			break;
 		case 4:
+			$res = 'hdtv';
+			break;
+		case 5:
 			$res = 'dvdrip';
 			break;
 		default:
@@ -1163,26 +1170,25 @@ function postNavBar_($isMain) {
 			}
 		}
 
+		if ($isAdmin) {
+			$res .= '<li class="divider"></li>';
+			$res .= '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) ? ' class="selectedItem"' : '').'>unseen</a></li>';
+			$res .= '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
+		}
+
 		if ($CUTSENABLED || $DREIDENABLED) {
 			$res .= '<li class="divider"></li>';
 		}
-
 		if ($CUTSENABLED) {
 			$res .= '<li><a href="?show=filme&mode=3'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 3 && empty($just) ? ' class="selectedItem"' : '').'>directors cut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=4'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 4 && empty($just) ? ' class="selectedItem"' : '').'>extended cut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=5'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 5 && empty($just) ? ' class="selectedItem"' : '').'>uncut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=6'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 6 && empty($just) ? ' class="selectedItem"' : '').'>unrated</a></li>';
 		}
-
 		if ($DREIDENABLED) {
 			$res .= '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
 		}
 
-		if ($isAdmin) {
-			$res .= '<li class="divider"></li>';
-			$res .= '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) ? ' class="selectedItem"' : '').'>unseen</a></li>';
-			$res .= '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
-		}
 		$res .= '</ul>';
 		$res .= '</li>';
 	} //$isMain
@@ -1308,7 +1314,7 @@ function postNavBar_($isMain) {
 		$NAS_CONTROL   = isset($GLOBALS['NAS_CONTROL'])    ? $GLOBALS['NAS_CONTROL']    : false;
 		$MP3_EXPLORER  = isset($GLOBALS['MP3_EXPLORER'])   ? $GLOBALS['MP3_EXPLORER']   : false;
 		$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
-		$upgrLog       = isLinux() && file_exists($privateFolder.'/upgradeLog.php') && file_exists('./myScripts/upgrade.log');
+		$upgrLog       = isLinux() && file_exists($privateFolder.'/upgradeLog.php') && file_exists('./myScripts/logs/upgrade.log');
 		if ($upgrLog || $NAS_CONTROL || $MP3_EXPLORER) {
 			$res .= '<li class="divider"></li>';
 		}
@@ -1669,7 +1675,7 @@ function adminInfo($start, $show) {
 
 		if (isLinux()) {
 			//hdparm
-			$filename = './myScripts/hdparm.log';
+			$filename = './myScripts/logs/hdparm.log';
 			if (file_exists($filename)) {
 				$log = file($filename);
 				for ($i = 0; $i < count($log); $i++) {
@@ -1759,7 +1765,7 @@ function adminInfoJS() {
 		echo "});\r\n";
 		echo "\r\n";
 		echo "function hideAdminInfo(show) {\r\n";
-		$filename = './myScripts/hdparm.log';
+		$filename = './myScripts/logs/hdparm.log';
 		if (file_exists($filename)) {
 			$log = file($filename);
 			for ($i = 0; $i < count($log); $i++) {
@@ -2481,6 +2487,7 @@ function escapeArray($val) {
 }
 
 function generateOnDemandCopyScript($idOrder) {
+	$newLine   = isset($GLOBALS['newLine'])  ? $GLOBALS['newLine']  : '';
 	$srcLetter = isset($GLOBALS['srcDrive']) ? $GLOBALS['srcDrive'] : '';
 	$dstLetter = isset($GLOBALS['selDrive']) ? $GLOBALS['selDrive'] : '';
 	$scriptCopyWin = isset($GLOBALS['COPYASSCRIPT_COPY_WIN']) ? $GLOBALS['COPYASSCRIPT_COPY_WIN']  : false;
@@ -2534,7 +2541,7 @@ function doTheStuffTvShow($result, $forOrder = false, $append = false, $srcLette
 	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
 
 	$newLine = $forOrder ? "\n" : '<br />';
-	#$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	$res = '';
 	if (count($result) == 0)
 		return $res;
 	foreach($result as $row) {
@@ -2579,10 +2586,10 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 	$scriptCopyFrom = $srcLetter.$scriptCopyFrom;
 	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
 
-	$oldPath   = '';
 	$newLine = $forOrder ? "\n" : '<br />';
-	#$res = $scriptCopyWin && $forOrder && !$append ? 'chcp 1252'.$newLine : '';
+	$oldPath   = '';
 	$totalsize = 0;
+	$res = '';
 	foreach($result as $row) {
 		$path       = $row['path'];
 		$filename   = $row['filename'];
