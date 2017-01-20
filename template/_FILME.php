@@ -1,6 +1,8 @@
 <?php
-	include_once "./template/functions.php";
+include_once "./template/functions.php";
+
 	function fetchMovies($dbh, $SQL, $sessionKey) {
+		$dbh = empty($dbh) ? getPDO() : $dbh;
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 		
 		$res = array();
@@ -17,6 +19,7 @@
 				$res[$count]['playCount'] = isset($row['playCount']) ? $row['playCount'] : '';
 				$res[$count]['thumb']     = isset($row['thumb'])     ? $row['thumb']     : '';
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
+				$res[$count]['fps']       = isset($row['fps'])       ? $row['fps']  	 : '';
 				$res[$count]['dateAdded'] = isset($row['dateAdded']) ? $row['dateAdded'] : '';
 				$res[$count]["path"]      = isset($row["path"])      ? $row["path"]      : '';
 				$res[$count]['jahr']      = isset($row['jahr'])      ? $row['jahr']      : '';
