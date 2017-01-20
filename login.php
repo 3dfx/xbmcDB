@@ -171,7 +171,7 @@ function noLog($username, $host, $ip) {
 	<script type="text/javascript">
 		var timer_ = null;
 		$(document).ready(function() { $('#username').focus(); });
-		
+
 		function hideFailed() { if ($('#failed').length) { $('#failed').hide(); } }
 		function animateNav() { $('#navLogin').animate({ "top": "0%" }, 250, function() { return true; }); }
 
@@ -194,8 +194,8 @@ function noLog($username, $host, $ip) {
 				<form action='login.php' method='post' class='navbar-search pull-right' style='height:25px;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF;'>
 					<li style='margin:0px;'>
-						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusName();' type='text' id='username' name='username' placeholder='username' />
-						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusPass();' type='password' id='passwort' name='passwort' placeholder='password' />
+						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusName();' type='text' id='username' name='username' placeholder='username' required minlength='5' />
+						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusPass();' type='password' id='passwort' name='passwort' placeholder='password' required minlength='5' />
 						<input type='submit' value='Ok' class='btn' style='height:20px; padding-top:0px; margin:5px 10px;' onfocus='this.blur();'/>
 					</li>
 				</ul>
