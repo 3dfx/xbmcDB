@@ -82,7 +82,7 @@ include_once "globals.php";
 	echo '</form>';
 	echo "\r\n".'</table>';
 	echo "\r\n".'</div>';
-	
+
 	if (!$isAdmin && !$isDemo) {
 		if ($gallerymode != 1) {
 			echo "\r\n";
@@ -224,11 +224,14 @@ function getSessionKeySQL() {
 		$unseenCriteria = '';
 	}
 
-	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, A.c05, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, ".
+	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, ".
 		"M.dateAdded as dateAdded, M.value as dateValue, ".
-		"A.c07 AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, A.c09 AS imdbId, C.strPath AS path, F.filesize, F.fps ".
+		"A.c07 AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps ".
 		"FROM movie A, files B, path C ".
+//		"FROM movie_view A, files B, path C ".
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
+		mapDBC('joinIdMovie').
+		mapDBC('joinRatingMovie').
 		"LEFT JOIN filemap M ON B.strFilename = M.strFilename ".
 		(isset($mode) && ($mode == 2) ? "LEFT JOIN streamdetails SD ON (B.idFile = SD.idFile AND SD.strAudioLanguage IS NOT NULL) " : '').
 		(isset($filter, $_which) && ($_which == 'artist') ? ', '.mapDBC('actorlinkmovie').' E'    : '').
@@ -241,8 +244,8 @@ function getSessionKeySQL() {
 		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY A.c07 ASC, dateAdded ASC";        }
 		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                      }
 		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                       }
-		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY A.c05 DESC";                      }
-		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY A.c05 ASC";                       }
+		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY rating DESC";                      }
+		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY rating ASC";                       }
 		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC";                 }
 		else if ($sort == 'sizea')   { $sessionKey .= 'orderSizeA_';   $sqlOrder = " ORDER BY F.filesize ASC";                  }
 
@@ -306,7 +309,7 @@ function getSessionKeySQL() {
 	$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
 	$SQL .= $params.";";
 
-	#echo $SQL;
+//	echo $SQL;
 
 	$res['SQL']         = $SQL;
 	$res['sessionKey']  = $sessionKey;
@@ -369,7 +372,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 		$fps       = $row['fps'];
 		$playCount = $row['playCount'];
 		$trailer   = $row['trailer'];
-		$rating    = $row['c05'];
+		$rating    = $row['rating'];
 		$imdbId    = $row['imdbId'];
 		$genres    = $row['c14'];
 		$vRes      = isset($idStream[$idFile]) ? $idStream[$idFile] : array();

@@ -10,7 +10,7 @@ include_once "globals.php";
 
 	$hostname = $_SERVER['HTTP_HOST'];
 	$path = dirname($_SERVER['PHP_SELF']);
-
+	
 	$act        = getEscGPost('act',         '');
 	$id         = getEscGPost('id',          -1);
 	$idFile     = getEscGPost('idFile',      -1);
@@ -83,20 +83,34 @@ include_once "globals.php";
 			$SQLfile = str_replace('[FILENAME]', $file, $SQLfile);
 			$dbh->exec($SQLfile);
 
-			$SQLepi = 'UPDATE episode SET c00="[TITLE]",c01="[DESC]",c03="[RATING]",c04="[GUEST_AUTOR]",c05="[AIRED]",c10="[REGIE]",c18="[FILENAME]" WHERE idEpisode=[idEpisode];';
+			$idRating = null;
+			if (!emptyRating($rating)) {
+				$GETID_SQL = "SELECT c03 FROM episode WHERE idEpisode=".$idEpisode.";";
+				$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+				$idRating  = $row['c03'];
+				if ($idRating == null || $idRating == '' || $idRating == -1)
+					$idRating = getNextId($dbh, 'rating', 'rating_id');
+
+				$SQLrating = 'REPLACE INTO rating (rating_id,media_id,media_type,rating_type,rating,votes) VALUES([RATING_ID],[idEpisode],"episode","[default]","[RATING]",0);';
+				$SQLrating = str_replace('[idEpisode]',   $idEpisode,  $SQLrating);
+				$SQLrating = str_replace('[RATING_ID]',   $idRating,   $SQLrating);
+				$SQLrating = str_replace('[RATING]',      $rating,     $SQLrating);
+				$dbh->exec($SQLrating);
+			}
+
+			$SQLepi = 'UPDATE episode SET c00="[TITLE]",c01="[DESC]",'.(!empty($idRating) ? 'c03="[RATING_ID]",' : '').'c04="[GUEST_AUTOR]",c05="[AIRED]",c10="[REGIE]",c18="[FILENAME]" WHERE idEpisode=[idEpisode];';
 			$SQLepi = str_replace('[idEpisode]',   $idEpisode,  $SQLepi);
 			$SQLepi = str_replace('[TITLE]',       $title,      $SQLepi);
 			$SQLepi = str_replace('[DESC]',        $desc,       $SQLepi);
-			$SQLepi = str_replace('[RATING]',      $rating,     $SQLepi);
 			$SQLepi = str_replace('[GUEST_AUTOR]', $gast_autor, $SQLepi);
 			$SQLepi = str_replace('[AIRED]',       $airdate,    $SQLepi);
 			$SQLepi = str_replace('[REGIE]',       $regie,      $SQLepi);
+			$SQLepi = str_replace('[RATING_ID]',   $idRating,   $SQLepi);
 			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
 			$dbh->exec($SQLepi);
-
+			
 			$source = $source > 0 ? $source : 'NULL';
 			if ($clrSize == 1)
-				#$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
 				$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,src='.$source.' WHERE idFile='.$idFile.';');
 			else
 				$dbh->exec('UPDATE fileinfo SET src='.$source.' WHERE idFile='.$idFile.';');
@@ -137,20 +151,29 @@ include_once "globals.php";
 			$SQLfile = str_replace('[ADDED]',    $added,  $SQLfile);
 			$dbh->exec($SQLfile);
 
-			$GETID_SQL = 'SELECT idEpisode FROM episode ORDER BY idEpisode DESC LIMIT 0, 1;';
-			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
-			$lastId    = $row['idEpisode'];
-			$idEpisode = $lastId + 1;
+			$idEpisode = getNextId($dbh, 'episode', 'idEpisode');
+			$idRating  = null;
+
+			if (!emptyRating($rating)) {
+				$idRating  = getNextId($dbh, 'rating',  'rating_id');
+				
+				$SQLrating = 'INSERT INTO rating VALUES([RATING_ID],[idEpisode],"episode","[default]","[RATING]",0);';
+				$SQLrating = str_replace('[idEpisode]',    $idEpisode,     $SQLrating);
+				$SQLrating = str_replace('[RATING_ID]',    $idRating,      $SQLrating);
+				$rating = empty($rating) ? 0 : $rating;
+				$SQLrating = str_replace('[RATING]',       $rating,        $SQLrating);
+				$dbh->exec($SQLrating);
+		        }
 
 			$showEpi = explode('-', $showEpi);
 			$SQLepi = 'INSERT INTO episode '.
-				   'VALUES([idEpisode],[idFile],"[TITLE]","[DESC]",NULL,"[RATING]","[GUEST_AUTOR]","[AIRED]",NULL,NULL,NULL,NULL,"[REGIE]",NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,"[FULLFILENAME]",[idPath],NULL,NULL,NULL,NULL,[idShow],[U_RATING],[idSeason]);';
+				   'VALUES([idEpisode],[idFile],"[TITLE]","[DESC]",NULL,"[RATING_ID]","[GUEST_AUTOR]","[AIRED]",NULL,NULL,NULL,NULL,"[REGIE]",NULL,[SEASON],[EPISODE],NULL,-1,-1,-1,"[FULLFILENAME]",[idPath],NULL,NULL,NULL,NULL,[idShow],[U_RATING],[idSeason]);';
 			$SQLepi = str_replace('[idEpisode]',    $idEpisode,     $SQLepi);
 			$SQLepi = str_replace('[idFile]',       $idFile,        $SQLepi);
 			$SQLepi = str_replace('[idSeason]',     $strSeason,     $SQLepi);
 			$SQLepi = str_replace('[TITLE]',        $title,         $SQLepi);
 			$SQLepi = str_replace('[DESC]',         $desc,          $SQLepi);
-			$SQLepi = str_replace('[RATING]',       $rating,        $SQLepi);
+			$SQLepi = str_replace('[RATING_ID]',    $idRating,      $SQLepi);
 			$SQLepi = str_replace('[U_RATING]',     intval($rating), $SQLepi);
 			$SQLepi = str_replace('[GUEST_AUTOR]',  $gast_autor,    $SQLepi);
 			$SQLepi = str_replace('[AIRED]',        $airdate,       $SQLepi);
@@ -161,14 +184,14 @@ include_once "globals.php";
 			$SQLepi = str_replace('[idPath]',       $idPath,        $SQLepi);
 			$SQLepi = str_replace('[idShow]',       $idShow,        $SQLepi);
 			$dbh->exec($SQLepi);
-
-			try {
-				if (checkAirDate()) {
+			
+			if (checkAirDate()) {
+				try {
 					checkNextAirDateTable($dbh);
 					clearAirdateInDb($idShow, $dbh);
 					fetchAndUpdateAirdate($idShow, $dbh);
-				}
-			} catch(Exception $e) { }
+				} catch(Exception $e) { }
+			}
 
 			clearMediaCache();
 
@@ -178,18 +201,36 @@ include_once "globals.php";
 
 		if ($act == 'setmovieinfo' && $idMovie != -1 && $idFile != -1) {
 			$params = null;
-			if (!empty($title) || !empty($jahr) || !empty($rating) || !empty($genre)) {
+			$dbVer  = fetchDbVer();
+			if (!empty($title) || !empty($jahr) || (!empty($rating)) || !empty($genre)) {
 				$title  = str_replace('_AND_', '&', $title);
 				$title  = str_replace("''",    "'", $title);
 				$title  = str_replace('"',     "'", $title);
 				$rating = str_replace(',',     '.', $rating);
 
 				$params  = (!empty($title)  ? 'c00="'.$title.'"' : '');
-				$params .= (!empty($jahr)   ? (!empty($params) ? ' AND ' : '').'c07="'.$jahr.'"'   : '');
-				$params .= (!empty($rating) ? (!empty($params) ? ' AND ' : '').'c05="'.$rating.'"' : '');
 				$params .= (!empty($genre)  ? (!empty($params) ? ' AND ' : '').'c14="'.$genre.'"'  : '');
+				$params .= (!empty($jahr)   ? (!empty($params) ? ' AND ' : '').'c07="'.$jahr.'"'   : '');
+				if (!emptyRating($rating) && $dbVer < 107) {
+				$params .= (!empty($rating) ? (!empty($params) ? ' AND ' : '').'c05="'.$rating.'"' : '');
+				}
 
-				$dbh->exec('UPDATE movie SET '.$params.' WHERE idMovie = '.$idMovie.';');
+				if ($params != '')
+					$dbh->exec('UPDATE movie SET '.$params.' WHERE idMovie = '.$idMovie.';');
+			}
+
+			if (!empty($rating) && $dbVer >= 107) {
+				$idRating = findRatingId($dbh, $idMovie);
+				if (empty($idRating)) {
+					$idRating = getNextId($dbh, 'rating', 'rating_id');
+					$dbh->exec('UPDATE movie SET c05='.$idRating.' WHERE idMovie = '.$idMovie.';');
+				}
+				
+				$SQLrating = 'REPLACE INTO rating (rating_id,media_id,media_type,rating_type,rating,votes) VALUES([RATING_ID],[idMovie],"movie","[default]","[RATING]",0);';
+				$SQLrating = str_replace('[idMovie]',   $idMovie,  $SQLrating);
+				$SQLrating = str_replace('[RATING_ID]', $idRating,   $SQLrating);
+				$SQLrating = str_replace('[RATING]',    $rating,     $SQLrating);
+				$dbh->exec($SQLrating);
 			}
 
 			$params = null;
@@ -407,4 +448,17 @@ include_once "globals.php";
 	}
 	
 	exit;
+
+function findRatingId($dbh, $mediaId, $mediaType = 'movie') {
+	$GETID_SQL = "SELECT rating_id FROM rating WHERE media_id=".$mediaId." AND media_type='".$mediaType."';";
+	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	return isset($row['rating_id']) ? $row['rating_id'] : null;
+}
+
+function getNextId($dbh, $table, $column) {
+	$GETID_SQL = "SELECT ".$column." FROM ".$table." ORDER BY ".$column." DESC LIMIT 0, 1;";
+	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	$lastId    = $row[$column];
+	return $lastId + 1;
+}
 ?>

@@ -26,7 +26,7 @@ include_once "./template/functions.php";
 				$res[$count]['filesize']  = isset($row['filesize'])  ? $row['filesize']  : '';
 				$res[$count]['playCount'] = isset($row['playCount']) ? $row['playCount'] : '';
 				$res[$count]['trailer']   = isset($row['trailer'])   ? $row['trailer']   : '';
-				$res[$count]['c05']       = isset($row['c05'])       ? $row['c05']       : '';
+				$res[$count]['rating']    = isset($row['rating'])    ? $row['rating']    : '';
 				$res[$count]['imdbId']    = isset($row['imdbId'])    ? $row['imdbId']    : '';
 				$res[$count]['c14']       = isset($row['c14'])       ? $row['c14']       : '';
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';

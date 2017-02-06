@@ -118,11 +118,28 @@ include_once "./globals.php";
 		99 => array(
 			'seasonview'        => 'season_view',
 			'tvshowview'        => 'tvshow_view',
+			'joinIdMovie'       => '',
+			'joinRatingMovie'   => '',
+		),
+		107 => array(
+			'joinIdMovie'       => 'LEFT JOIN uniqueid I ON (I.media_type="movie" AND I.media_id=A.idMovie) ',
+			'joinRatingMovie'   => 'LEFT JOIN rating R ON (R.media_type="movie" AND R.media_id=A.idMovie) ',
+
+			'A.c04'             => 'R.votes',
+			'A.c05'             => 'R.rating',
+			'A.c09'             => 'I.value',
+//			'A.c05'             => 'A.rating',
+//			'A.c09'             => 'A.uniqueid_value',
+
+			'T.c12'             => 'T.uniqueid_value',
+			'V.rating'          => 'R.rating',
+//			'V.c03'             => 'R.rating',
+			'V.c03'             => 'V.c03 AS rating_, (SELECT R.rating FROM rating R WHERE R.media_id = V.idEpisode AND R.media_type="episode")',
 		)
 	);
 
 function mergeMapping($dbVer) {
-	if (isset($_SESSION['DB_MAPPING'])) { return $_SESSION['DB_MAPPING']; }
+	if (isset($_SESSION['DB_MAPPING'])) { return unserialize($_SESSION['DB_MAPPING']); }
 
 	$merged   = array();
 	$mappings = $GLOBALS['DB_MAPPINGS'];
@@ -132,7 +149,7 @@ function mergeMapping($dbVer) {
 		$merged = array_merge($merged, $value);
 	}
 
-	$_SESSION['DB_MAPPING'] = $merged;
+	$_SESSION['DB_MAPPING'] = serialize($merged);
 	return $merged;
 }
 

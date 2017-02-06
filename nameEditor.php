@@ -171,8 +171,8 @@ function fetchInfos() {
 	$change  = $GLOBALS['change'];
 	
 	if ($change == 'movie') {
-		$SQL = 'SELECT F.idFile, M.c00 AS title, M.c05 AS rating, M.c07 AS jahr, M.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded '.
-		'FROM movie M, filemap FM, files F WHERE FM.idFile = F.idFile AND M.idFile = F.idFile AND M.idMovie = '.$idMovie.';';
+		$SQL = "SELECT F.idFile, A.c00 AS title, ".mapDBC('A.c05')." AS rating, A.c07 AS jahr, A.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded ".
+		"FROM movie A, filemap FM, files F ".mapDBC('joinRatingMovie')." WHERE FM.idFile = F.idFile AND A.idFile = F.idFile AND A.idMovie = ".$idMovie.";";
 		$result = querySQL($SQL);
 		$res = array();
 		$i = 0;
@@ -188,7 +188,7 @@ function fetchInfos() {
 		}
 		
 	} else if ($change == 'genre') {
-		$SQL = 'SELECT * FROM genre WHERE idGenre = '.$idGenre.';';
+		$SQL = "SELECT * FROM genre WHERE idGenre = ".$idGenre.";";
 		$result = querySQL($SQL);
 		$res = array();
 		$i = 0;

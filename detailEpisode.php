@@ -220,9 +220,8 @@ include_once "./template/_SERIEN.php";
 		echo '<div id="epGuests" class="padbot15" style="display:none;"><u><i><b>Guests:</b></i></u><br />'.$gString.'</div>';
 	}
 	
-	#$rating = substr($epRating, 0, 3);
 	$rating = formatRating($epRating);
-	if (doubleval($rating) != 0) {
+	if (!emptyRating($rating)) {
 		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><u><i><b>Rating:</b></i></u></span><span class="flalright">'.$rating.'</span></div>';
 	}
 

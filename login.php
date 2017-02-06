@@ -2,31 +2,31 @@
 	include_once "./template/config.php";
 	include_once "./template/functions.php";
 	include_once "globals.php";
-	
+
 	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
-	
+
 	$blacklisted = restoreBlacklist();
 	$hostname    = $_SERVER['HTTP_HOST'];
 	$path        = dirname($_SERVER['PHP_SELF']);
-	
+
 	startSession();
 	if (isLoggedIn()) { loggedInSoRedirect(true); }
-	
+
 	logRefferer();
-	
+
 	$loggedInAs  = '';
 	$failedText  = 'login failed!';
 	$FAIL_       = 'FAiL';
 	$redirect    = false;
 	$asAdmin     = false;
 	$noMoreLogin = false;
-	
+
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$username_ = getEscPost('username');
 		$passwort_ = getEscPost('passwort');
 		$input_username = urldecode($username_);
 		$input_passwort = urldecode($passwort_);
-		
+
 		if (!(empty($input_username) || empty($input_passwort))) {
 			$login_username = isset($GLOBALS['LOGIN_USERNAME']) ? $GLOBALS['LOGIN_USERNAME'] : null;
 			$login_passwort = isset($GLOBALS['LOGIN_PASSWORT']) ? $GLOBALS['LOGIN_PASSWORT'] : null;
@@ -34,52 +34,52 @@
 			$demo_users     = isset($GLOBALS['DEMO_USERS'])     ? $GLOBALS['DEMO_USERS']     : array();
 			$demo_enabled   = isset($GLOBALS['DEMO_ENABLED'])   ? $GLOBALS['DEMO_ENABLED']   : false;
 			$hashed         = isset($GLOBALS['PASSES_HASHED'])  ? $GLOBALS['PASSES_HASHED']  : false;
-			
+
 			$hashed_passwort = $hashed ? sha1($input_passwort) : $input_passwort;
-			
+
 			// check username und password
 			if (!empty($login_username) && !empty($login_passwort) && $input_username == $login_username && $hashed_passwort == $login_passwort) {
-				
+
 				$asAdmin    = true;
 				$redirect   = true;
 				$loggedInAs = 'ADMiN';
-				
+
 				$_SESSION['user']       = $loggedInAs;
 				$_SESSION['angemeldet'] = true;
 				unset( $_SESSION['gast'] );
-				
+
 			} else if (isset($gast_users[$input_username]) && $hashed_passwort == $gast_users[$input_username]) {
-				
+
 				$redirect   = true;
 				$loggedInAs = 'GUEST';
-				
+
 				$_SESSION['user'] = $input_username;
 				$_SESSION['gast'] = true;
 				unset( $_SESSION['angemeldet'] );
-				
+
 			} else if (
 				  $demo_enabled && 
 				  (isset($demo_users[$input_username]) && $hashed_passwort == $demo_users[$input_username])
 				  ) {
-				
+
 				$redirect   = true;
 				$loggedInAs = 'DEMO';
-				
+
 				$_SESSION['user'] = $input_username;
 				$_SESSION['demo'] = true;
 				unset( $_SESSION['angemeldet'] );
-				
+
 			} else {
 				$loggedInAs = $FAIL_;
 			}
 		} else {
 			$loggedInAs = $FAIL_;
 		}
-		
+
 		logLogin();
 		if ($redirect) { loggedInSoRedirect(); }
 	}
-	
+
 	if (isBlacklisted()) { $noMoreLogin = true; $failedText = 'too many failed logins!'; }
 
 function loggedInSoRedirect($loggedInAlready = false) {
@@ -99,7 +99,7 @@ function logLogin() {
 	$FAIL_        = 'FAiL';
 	if ($loggedInAs == $FAIL_) { addBlacklist(); }
 	else { removeBlacklist(); }
-	
+
 	if (!($LOCALHOST || $HOMENETWORK)) {
 		$username       = $GLOBALS['input_username'];
 		$passwort       = $GLOBALS['input_passwort'];
@@ -109,18 +109,18 @@ function logLogin() {
 		$hostname       = $_SERVER['HTTP_HOST'];
 		$ip             = $_SERVER['REMOTE_ADDR'];
 		$host           = gethostbyaddr($ip);
-		
+
 		if (noLog($username, $host, $ip) && $loggedInAs != $FAIL_) { return; }
-		
+
 		$datum = strftime("%d.%m.%Y");
 		$time  = strftime("%X");
 		$logPass = $passwort;
 		if ($asAdmin || $passwort == $login_passwort || $username == $login_username) {
 			$logPass = '****';
 		}
-		
+
 		$input = $datum."|".$time."|".$ip."|".$host."|".$hostname."|".$loggedInAs."|".$username."|".$logPass."\n";
-		
+
 		$datei = "./logs/loginLog.php";
 		if (file_exists($datei)) {
 			$fp = fopen($datei, "r");
@@ -130,12 +130,12 @@ function logLogin() {
 			}
 			fclose($fp);
 		}
-		
+
 		$input = str_replace('<? /*', '', $input);
 		$input = str_replace('*/ ?>', '', $input);
 		$input = str_replace("\n\n", "\n", $input);
 		$input = '<? /*'."\n".$input.'*/ ?>';
-		
+
 		$fp = fopen($datei, "w+");
 		fputs($fp, $input);
 		fclose($fp);
@@ -194,7 +194,7 @@ function noLog($username, $host, $ip) {
 				<form action='login.php' method='post' class='navbar-search pull-right' style='height:25px;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF;'>
 					<li style='margin:0px;'>
-						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusName();' type='text' id='username' name='username' placeholder='username' required minlength='5' />
+						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusName();' type='text' id='username' name='username' placeholder='username' required minlength='3' />
 						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusPass();' type='password' id='passwort' name='passwort' placeholder='password' required minlength='5' />
 						<input type='submit' value='Ok' class='btn' style='height:20px; padding-top:0px; margin:5px 10px;' onfocus='this.blur();'/>
 					</li>

@@ -1057,7 +1057,7 @@ function postNavBar_($isMain) {
 
 	if (!$isMain) {
 		$res .= '<li'.($isMain ? ' class="active"' : '').'>';
-		$res .= '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : '').'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
+		$res .= '<a tabindex="1" href="?show=filme'.($isMain ? '&unseen=3&newmode=0&gallerymode=0'.$unsetParams.$unsetMode.$unsetCountry : $unsetParams).'" onmouseover="closeNavs();" onclick="this.blur(); return checkForCheck();"'.($isMain ? ' class="'.($INVERSE ? 'selectedMainItemInverse' : 'selectedMainItem').'"' : '').' style="font-weight:bold;'.($bs211).'">movies</a>';
 		$res .= '</li>';
 	}
 
@@ -1387,15 +1387,17 @@ function createEpisodeSubmenu($result) {
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 		foreach($show as $row) {
-			$idShow    = $row['idShow'];    $serie = $row['serie'];   $season  = $row['season'];
-			$idEpisode = $row['idEpisode']; $title = $row['title'];   $episode = $row['episode'];
-			$playCount = $row['playCount']; $rating = $row['rating']; $sCount  = $row['sCount'];
+			$idShow    = $row['idShow'];    $serie  = $row['serie'];  $season  = $row['season'];
+			$idEpisode = $row['idEpisode']; $title  = $row['title'];  $episode = $row['episode'];
+			$playCount = $row['playCount']; $rating = $row['rating']; $rating_ = $row['rating_'];
+			$sCount    = $row['sCount'];
 			$srCol = $isAdmin ? getSrcMarker($row['src']) : '';
 
 			$season   = sprintf("%02d", $season);
 			$episode  = sprintf("%02d", $episode);
 			$epTrId   = 'iD'.$idShow.'.S'.$season;
-			$noRating = empty($rating) || substr($rating, 0, 1) == '0';
+			$noRating = emptyRating($rating);
+			$noRating = $noRating && emptyRating($rating_);
 
 			$SE = '<span class="dropdown-menu_epTitle"><b><sub>S'.$season.'.E'.$episode.$srCol.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
@@ -1539,7 +1541,7 @@ function xbmcRunning() {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
 
-	exec('ps -ea | grep lightdm | wc -l', $output);
+	exec('ps -ea | grep kodi.bin | wc -l', $output);
 	$res = intval(trim($output[0]));
 	$_SESSION['param_xbmcRunning'] = $res;
 	return $res;
@@ -2238,8 +2240,12 @@ function getPausedAt($timeAt) {
 }
 
 function formatRating($rating) {
-	#$rating = substr($rating, 0, 3);
 	return sprintf('%2.1f', $rating);
+}
+
+function emptyRating($rating) {
+	$rating = empty($rating) ? 0 : formatRating($rating);
+	return $rating <= 0 || $rating > 10;
 }
 
 function workaroundMTime($img) {

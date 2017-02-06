@@ -1,11 +1,14 @@
 <?php
 include_once "./globals.php";
 
-	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, V.c03 AS rating, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount, F.src AS src FROM episodeviewMy V LEFT JOIN fileinfo F ON V.idFile = F.idFile";
+/*
+	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, ".mapDBC('V.c03')." AS rating, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount, F.src AS src FROM episodeviewMy V LEFT JOIN fileinfo F ON V.idFile = F.idFile";
 	$LastEpisodeSQL  = $MenuSerienSQL." ORDER BY idEpisode DESC LIMIT [LIMIT]";
 	$LastSerienSQL   = "SELECT COUNT(DISTINCT(idShow)) AS itemz FROM episodeviewMy WHERE idEpisode IN (SELECT idEpisode FROM episodeviewMy ORDER BY idEpisode DESC LIMIT [LIMIT])";
-#	$LastSerienSQL   = "SELECT DISTINCT(idShow) FROM episodeviewMy ORDER BY idEpisode DESC LIMIT 30";
-#	$LastEpisodeSQL_ = " ORDER BY idEpisode DESC LIMIT 30";
+*/
+	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, ".mapDBC('V.c03')." AS rating, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount, F.src AS src FROM ".mapDBC('episodeview')." V LEFT JOIN fileinfo F ON V.idFile = F.idFile";
+	$LastEpisodeSQL  = $MenuSerienSQL." ORDER BY idEpisode DESC LIMIT [LIMIT]";
+	$LastSerienSQL   = "SELECT COUNT(DISTINCT(idShow)) AS itemz FROM ".mapDBC('episodeview')." WHERE idEpisode IN (SELECT idEpisode FROM ".mapDBC('episodeview')." ORDER BY idEpisode DESC LIMIT [LIMIT])";
 	$SearchSerienSQL = $MenuSerienSQL." WHERE lower(V.c04) LIKE '%[SEARCH]%' OR lower(V.c01) LIKE '%[SEARCH]%' OR lower(V.c00) LIKE '%[SEARCH]%' ORDER BY V.strTitle ASC";
 	$SQLrunning      = "SELECT R.idShow AS idShow, R.running AS running, A.airdate AS airdate FROM tvshowrunning R LEFT JOIN nextairdate A ON R.idShow = A.idShow;";
 	$SeasonDirSQL    = "SELECT idShow, strPath FROM ".mapDBC('seasonview').";";
@@ -14,7 +17,7 @@ include_once "./globals.php";
 	$SerienSQL       = "SELECT V.*, ".
 			   "V.c00 AS epName, ".
 			   "V.c01 AS epDesc, ".
-			   "V.c03 AS epRating, ".
+			   "V.rating AS epRating, ".
 			   "V.c04 AS guests, ".
 			   "V.c05 AS airDate, ".
 			   "V.c09 AS duration, ".
@@ -27,16 +30,17 @@ include_once "./globals.php";
 			   "V.strPath AS path, ".
 			   "T.c01 AS showDesc, ".
 			   "T.c08 AS genre, ".
-			   "T.c12 AS idTvdb, ".
+			   mapDBC('T.c12')." AS idTvdb, ".
 			   "T.c13 AS fsk, ".
 			   "T.c14 AS studio, ".
 			   "P.idPath AS idPath, ".
 			   "F.filesize AS filesize, ".
 			   "F.src AS source ".
-			   "FROM ".mapDBC('episodeview')." V, tvshow T ".
+			   "FROM ".mapDBC('episodeview')." V, ".mapDBC('tvshowview')." T ".
 			   "LEFT JOIN fileinfo F ON V.idFile = F.idFile ".
 			   "LEFT JOIN files FS ON V.idFile=FS.idFile ".
 			   "LEFT JOIN path P ON P.idPath=FS.idPath ".
+//			   mapDBC('joinIdShow').
 			   "WHERE T.idShow = V.idShow";
 
 	function fetchSearchSerien($search) {
@@ -72,6 +76,7 @@ include_once "./globals.php";
 
 		$LastEpisodeSQL = $GLOBALS['LastEpisodeSQL'].';';
 		$SQL = str_replace('[LIMIT]', $LIMIT, $LastEpisodeSQL);
+		#echo $SQL;
 		return fetchSerienToArray($SQL, 'LSerien');
 	}
 
@@ -88,8 +93,8 @@ include_once "./globals.php";
 				$result[$row['strTitle']][] = array(
 				'idShow' => $row['idShow'], 'serie'     => $row['strTitle'],  'episode' => $row['episode'],
 				'season' => $row['season'], 'idEpisode' => $row['idEpisode'], 'title'   => $row['title'], 
-				'sCount' => $row['sCount'], 'playCount' => $row['playCount'], 'rating'  => $row['rating'],
-				'src'    => $row['src']
+				'sCount' => $row['sCount'], 'playCount' => $row['playCount'], 'src'     => $row['src'],
+				'rating' => $row['rating'], 'rating_'   => $row['rating_']
 				);
 			}
 
@@ -143,16 +148,6 @@ include_once "./globals.php";
 			$runs[$idShow]['running']     = $running;
 			$runs[$idShow]['nextairdate'] = $nextAirDate;
 		}
-
-/*
-		$SQLcodec = $GLOBALS['ShowCodecSQL'];
-		$resC     = querySQL_($dbh, $SQLcodec, false);
-		$codecs   = array();
-		foreach($resC as $row) {
-			$idShow = $row['idShow'];
-			$codecs[$idShow][$row['codec']] = $row['count'];
-		}
-*/
 
 		$SQLdirs = $GLOBALS['SeasonDirSQL'];
 		$resD    = querySQL_($dbh, $SQLdirs, false);

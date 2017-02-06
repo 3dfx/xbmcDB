@@ -96,9 +96,12 @@ include_once "./template/functions.php";
 
 		$existArtTable = existsArtTable();
 
-		$SQL = "SELECT c00, c01, c02, idMovie, c07 AS jahr, c08 AS thumb, c09 AS imdbId, B.strFilename AS filename, A.c19 AS trailer, c04, c05, c11, c14, c16, ".
+		$SQL = "SELECT c00, c01, c02, idMovie, c07 AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c11, c14, c16, ".
 			"C.strPath AS path, D.filesize, D.fps, A.idFile, B.playCount AS playCount ".
-			"FROM movie A, files B, path C LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE A.idFile = B.idFile AND C.idPath = B.idPath AND idMovie = '".$id."' ";
+			"FROM movie A, files B, path C ".
+			mapDBC('joinIdMovie').
+			mapDBC('joinRatingMovie').
+			"LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE A.idFile = B.idFile AND C.idPath = B.idPath AND idMovie = '".$id."' ";
 		$row = fetchFromDB($SQL, false);
 
 		if (empty($row)) { die('not found...'); }
@@ -296,9 +299,9 @@ include_once "./template/functions.php";
 			$minutes = $minutes.'\'';
 			$run = 1;
 		}
-		if (substr($row['c05'], 0, 1) != "0") {
-			$rating  = formatRating($row['c05']);
-			$stimmen = $row['c04'];
+		if (substr($row['rating'], 0, 1) != "0") {
+			$rating  = formatRating($row['rating']);
+			$stimmen = $row['votes'];
 			$run = 1;
 		}
 		if (!empty($row['c14'])) {
