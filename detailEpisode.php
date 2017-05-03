@@ -6,18 +6,18 @@ include_once "./template/config.php";
 include_once "./template/_SERIEN.php";
 
 	header("Content-Type: text/html; charset=UTF-8");
-	
+
 	$isAdmin  = isAdmin();
 	$isDemo   = isDemo();
 	$id       = getEscGPost('id');
 	$idSeason = getEscGPost('idSeason');
-	
+
 	if ($id == null || $id <= 0) { die('No id given!'); }
-	
+
 	$_SESSION['tvShowParam']['idEpisode'] = $id;
 	$_SESSION['tvShowParam']['idSeason']  = $idSeason;
 	$SOURCE = $GLOBALS['SOURCE'];
-	
+
 	$idFile     = 0;
 	$title      = '';
 	$epDesc     = '';
@@ -144,19 +144,19 @@ include_once "./template/_SERIEN.php";
 		if ($fromSrc) {
 			// READ EMBER GENERATED THUMBS FROM SOURCE
 			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
-			
+
 			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
 			$smb = (substr($sessionImg, 0, 6) == 'smb://');
-			
+
 			if (file_exists($sessionImg)) {
 				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encoded' : null);
 			}
 		}
-		
+
 		if (empty($sessionImg) || !file_exists($sessionImg)) {
 			$sessionImg = getTvShowThumb($coverP.$filename);
 			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0);
-			
+
 			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
 				$SQL  = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';";
 				$row2 = fetchFromDB_($dbh, $SQL, false);
@@ -169,17 +169,17 @@ include_once "./template/_SERIEN.php";
 				}
 			}
 		}
-		
+
 		wrapItUp('file', $idFile, $sessionImg);
 	}
-	
+
 	if (!empty($timeAt)) { echo "<script type=\"text/javascript\">$(document).ready(function() { $('.knob-dyn').knob(); });</script>"; }
-	
+
 	echo '<table id="epDescription" class="film">';
 	echo '<tr class="showDesc">';
 	echo '<td class="showDescTD2">';
 	echo '<div style="width:300px;">';
-	echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;"><div><u><i><b>Title:</b></i></u></div><span>'.$title.' <font color="silver">[</font> S'.$season.'.E'.$episode.' <font color="silver">]</font></span>';
+	echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;"><div><u><i><b>Title:</b></i></u></div><span><span onclick="selSpanText(this);">'.$title.'</span> <font color="silver">[</font> S'.$season.'.E'.$episode.' <font color="silver">]</font></span>';
 	echo '<span class="epCheckSpan"'.($isAdmin && !empty($percent) ? ' title="'.$pausedAt.' ('.$percent.'%)"' : '').'>';
 	if ($isAdmin) {
 		if ($playCount > 0) {
@@ -190,27 +190,27 @@ include_once "./template/_SERIEN.php";
 	}
 	echo '</span>';
 	echo '</div>';
-	
+
 	if (!empty($thumbImg)) {
 		echo '<div class="thumbDiv"><img id="thumbImg" class="thumbImg" src="'.$thumbImg.'" /></div>';
 	}
-	
+
 	echo '<div style="padding-right:5px;">';
 	if (!empty($epDesc)) {
 		$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
-		
+
 		$descDiv = '<div class="epDesc"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
 		if (!$isAdmin || ($isAdmin && empty($playCount))) {
 			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red; cursor:pointer; float:right;">spoil it!</span></div>';
 			echo '<span id="epDescr" style="display:none;">';
 			echo $descDiv;
 			echo '</span>';
-			
+
 		} else if (!$spProtect || !empty($playCount)) {
 			echo $descDiv;
 		}
 	}
-	
+
 	$guests = getGuests($guests);
 	if (!empty($guests)) {
 		$gString = '';
@@ -219,7 +219,7 @@ include_once "./template/_SERIEN.php";
 		echo '<div id="epGuest" class="padbot15" onclick="showGuests(); return false;"><u><i><b>Guests:</b></i></u> <span style="color:red; cursor:pointer; float:right;">show guests!</span></div>';
 		echo '<div id="epGuests" class="padbot15" style="display:none;"><u><i><b>Guests:</b></i></u><br />'.$gString.'</div>';
 	}
-	
+
 	$rating = formatRating($epRating);
 	if (!emptyRating($rating)) {
 		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><u><i><b>Rating:</b></i></u></span><span class="flalright">'.$rating.'</span></div>';
@@ -229,13 +229,13 @@ include_once "./template/_SERIEN.php";
 		$duration = round($duration / 60, 0);
 		echo '<div class="padbot15"><span><u><i><b>Duration:</b></i></u></span><span class="flalright">'.$duration.' min</span></div>';
 	}
-	
+
 	if (!empty($airDate)) {
 		$dayOfWk = dayOfWeekShort($airDate);
 		$airDate = toEuropeanDateFormat($airDate);
 		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
 	}
-	
+
 	if ($isAdmin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
 			$dayOfWk    = dayOfWeekShort($lastPlayed);
@@ -243,7 +243,7 @@ include_once "./template/_SERIEN.php";
 			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
 		}
 	}
-	
+
 	if (!$isDemo) {
 		if (!empty($vCodec) || (!empty($width) && !empty($height))) {
 			echo '<div class="padtop15">';

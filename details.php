@@ -91,12 +91,11 @@ include_once "./template/functions.php";
 		);
 
 		$isAdmin = isAdmin();
-		$dbVer   = fetchDbVer();
 		$idFile  = -1;
 
 		$existArtTable = existsArtTable();
 
-		$SQL = "SELECT c00, c01, c02, idMovie, c07 AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c11, c14, c16, ".
+		$SQL = "SELECT c00, c01, c02, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c11, c14, c16, ".
 			"C.strPath AS path, D.filesize, D.fps, A.idFile, B.playCount AS playCount ".
 			"FROM movie A, files B, path C ".
 			mapDBC('joinIdMovie').
@@ -126,6 +125,7 @@ include_once "./template/functions.php";
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['c01'];
 		$country      = getCountry($idMovie);
+		$bit10        = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 
 		$fps = fetchFps($idFile, $path, $filename, $fps, getPDO());
 
@@ -396,9 +396,9 @@ include_once "./template/functions.php";
 
 		$vCodec  = postEditVCodec($vCodec);
 		$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-		$perf    = (!empty($vCodec) ? decodingPerf($vCodec)     : 0);
+		$perf    = (!empty($vCodec) ? decodingPerf($vCodec, $bit10) : 0);
 		$color   = ($cols == null || $perf < 4 ? null : $cols[$perf]);
-		$vCodec  = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.'</span>' : $vCodec);
+		$vCodec  = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.($bit10 ? ' 10bit' : '').'</span>' : $vCodec);
 		$res[0][$COLS['VIDEO2']] = $vCodec;
 
 		if (!empty($fps)) {
@@ -717,14 +717,6 @@ include_once "./template/functions.php";
 		return $res;
 	}
 
-	function getCountry($idMovie) {
-		$dbVer = $GLOBALS['dbVer'];
-		$SQL = "SELECT c.".mapDBC('strCountry')." FROM ".mapDBC('countrylinkmovie')." cl, country c, movie m WHERE m.idMovie = cl.".mapDBC('idMovie')." AND cl.".mapDBC('idCountry')." = c.".mapDBC('idCountry')." AND m.idMovie = '".$idMovie."';";
-		$res = querySQL($SQL, false);
-		$row = $res->fetch();
-		return $row[mapDBC('strCountry')];
-	}
-
 	function getFanartCover($fnam, $idMovie) {
 		$existArtTable = $GLOBALS['existArtTable'];
 
@@ -752,8 +744,14 @@ include_once "./template/functions.php";
 		return null;
 	}
 
+	function getCountry($idMovie) {
+		$SQL = "SELECT c.".mapDBC('strCountry')." FROM ".mapDBC('countrylinkmovie')." cl, country c, movie m WHERE m.idMovie = cl.".mapDBC('idMovie')." AND cl.".mapDBC('idCountry')." = c.".mapDBC('idCountry')." AND m.idMovie = '".$idMovie."';";
+		$res = querySQL($SQL, false);
+		$row = $res->fetch();
+		return $row[mapDBC('strCountry')];
+	}
+
 	function getStudio($idMovie) {
-		$dbVer = $GLOBALS['dbVer'];
 		$res = querySQL("SELECT name FROM studio WHERE studio_id = (SELECT studio_id FROM studio_link WHERE media_type = 'movie' AND media_id = '".$idMovie."');", false);
 		$row = $res->fetch();
 		return $row['name'];

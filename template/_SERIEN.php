@@ -382,7 +382,7 @@ include_once "./globals.php";
 		private $parted         = 0;
 		private $epCount        = 0;
 		private $epCountWatched = 0;
-		private $lastEpNum      = 0;
+		private $lastEpNum      = -1;
 		private $missingCount   = 0;
 		private $idShow         = -1;
 		private $idSeason       = -1;

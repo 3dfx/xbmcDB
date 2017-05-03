@@ -171,7 +171,7 @@ function fetchInfos() {
 	$change  = $GLOBALS['change'];
 	
 	if ($change == 'movie') {
-		$SQL = "SELECT F.idFile, A.c00 AS title, ".mapDBC('A.c05')." AS rating, A.c07 AS jahr, A.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded ".
+		$SQL = "SELECT F.idFile, A.c00 AS title, ".mapDBC('A.c05')." AS rating, ".mapDBC('A.c07')." AS jahr, A.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded ".
 		"FROM movie A, filemap FM, files F ".mapDBC('joinRatingMovie')." WHERE FM.idFile = F.idFile AND A.idFile = F.idFile AND A.idMovie = ".$idMovie.";";
 		$result = querySQL($SQL);
 		$res = array();

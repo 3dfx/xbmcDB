@@ -296,16 +296,17 @@ function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
 	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
 	else {
-		checkFileInfoTableCol($dbh, 'param_fpsColChecked', 'fps', 'FLOAT');
-		checkFileInfoTableCol($dbh, 'param_srcColChecked', 'src', 'INTEGER');
+		checkAndAlterTableCol($dbh, 'fileinfo', 'param_fpsColChecked', 'fps', 'FLOAT');
+		checkAndAlterTableCol($dbh, 'fileinfo', 'param_srcColChecked', 'src', 'INTEGER');
 	}
 }
 
-function checkFileInfoTableCol($dbh = null, $sessionKey, $col, $colType) {
+function checkAndAlterTableCol($dbh = null, $table, $sessionKey, $col, $colType) {
 	if (isset($_SESSION[$sessionKey]))
 		return;
 	$colFound = false;
-	$res = $dbh->query("PRAGMA TABLE_INFO('fileinfo');");
+	$dbh = (!empty($dbh) ? $dbh : getPDO());
+	$res = $dbh->query("PRAGMA TABLE_INFO('".$table."');");
 	foreach($res as $row) {
 		if ($row[1] == $col) {
 			$colFound = true;
@@ -313,7 +314,7 @@ function checkFileInfoTableCol($dbh = null, $sessionKey, $col, $colType) {
 		}
 	}
 
-	if (!$colFound) { $dbh->exec("ALTER TABLE fileinfo ADD ".$col." ".$colType.";"); }
+	if (!$colFound) { $dbh->exec("ALTER TABLE ".$table." ADD ".$col." ".$colType.";"); }
 	$_SESSION[$sessionKey] = true;
 }
 
@@ -329,7 +330,11 @@ function checkTvshowRunningTable($dbh = null) {
 
 function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, maxSeason INTEGER, maxEpisode INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	else {
+		checkAndAlterTableCol($dbh, 'nextairdate', 'param_lStColChecked', 'maxSeason',  'INTEGER');
+		checkAndAlterTableCol($dbh, 'nextairdate', 'param_lEpColChecked', 'maxEpisode', 'INTEGER');
+	}
 }
 
 function existsOrderzTable($dbh = null) {
@@ -351,24 +356,6 @@ function existsFilemapTable($dbh = null) {
 }
 
 function checkFileMapTable($dbh) {
-/* //not needed anymore
-	$dbVer = $GLOBALS['db_ver'];
-	if ($dbVer >= 60) {
-		$dateAddedFound = false;
-		$res = $dbh->query("PRAGMA TABLE_INFO('files');");
-		foreach($res as $row) {
-			if ($row[1] == 'dateAdded') {
-				$dateAddedFound = true;
-				break;
-			}
-		}
-
-		if (!$dateAddedFound) {
-			$dbh->exec("ALTER TABLE files ADD dateAdded text;");
-		}
-	}
-*/
-
 	existsFilemapTable($dbh);
 }
 
@@ -924,7 +911,12 @@ function fetchDirectorCovers($dbh = null) {
 }
 
 function hasPowerfulCpu() {
-	return isset($GLOBALS['POWERFUL_CPU']) ? $GLOBALS['POWERFUL_CPU'] : false;
+	$result = false;
+	if (isAdmin())
+		$result = isset($GLOBALS['POWERFUL_CPU_ADMIN']) ? $GLOBALS['POWERFUL_CPU_ADMIN'] : $result;
+	else
+		$result = isset($GLOBALS['POWERFUL_CPU'])       ? $GLOBALS['POWERFUL_CPU']       : $result;
+	return $result;
 }
 
 function fetchHighestMovieId() {
@@ -1935,7 +1927,7 @@ function isWatchedAnyHiddenInMain($idShow) {
 	return isset($hidden[$idShow]);
 }
 
-function getShowInfo($idTvDb) {
+function getShowInfo($idTvDb, $lastStaffel = null) {
 	if (empty($idTvDb) || $idTvDb < 0) { return null; }
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if (isset($_SESSION['TvDbCache'][$idTvDb]) && $overrideFetch == 0) {
@@ -1970,6 +1962,7 @@ function getShowInfo($idTvDb) {
 
 	$status = isset($items['Data']['Series:0']['Status']) ? $items['Data']['Series:0']['Status'] : null;
 	if (isset($status)) { $episodes[0][0] = (trim($status) == 'Ended' ? 'e' : 'r'); }
+	$episodes[0][1] = getLastEpisodeInfo($episodes, $lastStaffel); //last season/episode
 
 	$_SESSION['TvDbCache'][$idTvDb] = serialize($episodes);
 	return $episodes;
@@ -2005,12 +1998,43 @@ function trimURL($url) {
 
 function getEpisodeInfo($episodes, $getSeason, $getEpisode) {
 	if ($getSeason == -1 || $getEpisode == -1) { return null; }
-
-	#$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY']) ? $GLOBALS['TVDB_API_KEY'] : null;
-	#if (empty($TVDB_API_KEY)) { return null; }
 	if (empty($episodes) || empty($episodes[$getSeason]) || empty($episodes[$getSeason][$getEpisode])) { return null; }
 
 	return $episodes[$getSeason][$getEpisode];
+}
+
+function getLastEpisodeInfo($episodes, $lastStaffel = null) {
+	$seas = count($episodes)-1;
+	if (!isset($episodes[$seas]))
+		$seas--;
+
+	$epis = null;
+	if ($lastStaffel != null) {
+		for ($i = intval($seas); $i >= 0; $i--) {
+			if (!isset($episodes[$i]))
+				continue;
+
+			$epis = count($episodes[$i]);
+			if (!isset($episodes[$i][$epis])) {
+				$epis--;
+				if (!isset($episodes[$i][$epis]))
+					continue;
+			}
+
+			if ($lastStaffel == intval($episodes[$i][$epis]['SeasonNumber'])) {
+				#$seas = intval($episodes[$i][$epis]['SeasonNumber']);
+				$seas = $i;
+			}
+		}
+	}
+
+	if ($epis == null)
+		return null;
+
+	#$epis = count($episodes[$seas])-1;
+	if (isset($episodes[$seas]) && isset($episodes[$seas][$epis]))
+		return array('ms' => $episodes[$seas][$epis]['SeasonNumber'], 'me' => $episodes[$seas][$epis]['EpisodeNumber']);
+	return null;
 }
 
 function checkAirDate() {
@@ -2028,13 +2052,14 @@ function fetchAndUpdateAirdate($idShow, $dbh = null) {
 
 	if (empty($nextEpisode)) { return; }
 	$airDate     = getNextAirDate($nextEpisode);
+	$last        = getLastEpisode($serie);
 
 	//tvdb
 	$season  = $nextEpisode['SeasonNumber'];
 	$episode = $nextEpisode['EpisodeNumber'];
 
 	if (empty($season) || empty($episode)) { return; }
-	updateAirdateInDb($idShow, $season, $episode, $airDate, $dbh);
+	updateAirdateInDb($idShow, $season, $episode, $airDate, $last, $dbh);
 	clearMediaCache();
 }
 
@@ -2044,10 +2069,11 @@ function clearAirdateInDb($idShow, $dbh = null) {
 	execSQL_($dbh, $SQL, false, false);
 }
 
-function updateAirdateInDb($idShow, $season, $episode, $airdate, $dbh = null) {
+function updateAirdateInDb($idShow, $season, $episode, $airdate, $last = null, $dbh = null) {
 	if (!checkAirDate()) { return; }
 	if ($idShow == -1 || $season == -1 || $episode == -1 || empty($episode) || empty($airdate)) { return; }
-	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate) VALUES ('".$idShow."', '".$season."', '".$episode."', '".strtotime($airdate)."');";
+	if (empty($last)) { $last = array('ms'=>null,'me'=>null); }
+	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate, maxSeason, maxEpisode) VALUES ('".$idShow."', '".$season."', '".$episode."', '".strtotime($airdate)."', '".$last['ms']."', '".$last['me']."'".");";
 	execSQL_($dbh, $SQL, false, false);
 }
 
@@ -2063,16 +2089,27 @@ function fetchNextEpisodesFromDB($dbh = null) {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if ($overrideFetch == 0 && isset($_SESSION['param_nextEpisodes'])) { return $_SESSION['param_nextEpisodes']; }
 
-	$SQL = "SELECT idShow, season, episode FROM nextairdate;";
+	$SQL = "SELECT idShow, season, episode, airdate, maxSeason, maxEpisode FROM nextairdate;";
 	$result = querySQL_($dbh, $SQL, false);
 	$res    = array();
 	foreach($result as $row) {
-		$res[$row['idShow']]['s'] = $row['season'];
-		$res[$row['idShow']]['e'] = $row['episode'];
+		$res[$row['idShow']]['s']   = $row['season'];
+		$res[$row['idShow']]['e']   = $row['episode'];
+		$res[$row['idShow']]['ms']  = $row['maxSeason'];
+		$res[$row['idShow']]['me']  = $row['maxEpisode'];
+		$res[$row['idShow']]['air'] = $row['airdate'];
 	}
 
 	$_SESSION['param_nextEpisodes'] = $res;
 	return $res;
+}
+
+function getLastEpisode($serie) {
+	$running  = $serie->isRunning();
+	if (!$running) { return null; }
+	$idTvDb   = $serie->getIdTvdb();
+	$episodes = getShowInfo($idTvDb, $serie->getLastStaffel()->getStaffelNum());
+	return $episodes[0][1];
 }
 
 function getNextEpisode($serie) {
@@ -2083,22 +2120,21 @@ function getNextEpisode($serie) {
 	$nextEpisode = null;
 
 	if (!$running) { return null; }
-	$episodes = getShowInfo($idTvDb);
 	$staffel  = $serie->getLastStaffel();
-	#echo $staffel->getStaffelNum();
+	$episodes = getShowInfo($idTvDb, $staffel->getStaffelNum());
 
-	$epCount  = is_object($staffel) ? $staffel->getLastEpNum() : null;
-	if (empty($epCount))
+	$epCount  = is_object($staffel) ? $staffel->getLastEpNum() : -1;
+	if ($epCount < 0)
 		return null;
 
 	if ($staffel->getStaffelNum() > $stCount)
 		$stCount = $staffel->getStaffelNum();
 
-	$info = getEpisodeInfo($episodes, $stCount, $epCount+1); //check next episode in given season
+	$info = getEpisodeInfo($episodes, $stCount, $epCount+1);  //check next episode in given season
 	if (empty($info)) {
 		$info = getEpisodeInfo($episodes, $stCount+1, 1); //check first episode of next season
 	}
-
+	
 	return !empty($info) ? $info : null;
 }
 
@@ -2202,13 +2238,17 @@ function dayOfWeekShort($given) {
 function toEuropeanDateFormatWDay($given) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
 	$strFormat = $eurDateFormat ? 'd.m.y \(D\)' : 'Y-m-d \(D\)';
-	return (empty($given) ? $given : date($strFormat, strtotime($given)));
+	if (checkIfDateIsString($given))
+		$given = strtotime($given);
+	return (empty($given) ? $given : date($strFormat, $given));
 }
 
 function toEuropeanDateFormat($given) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
 	$strFormat = $eurDateFormat ? 'd.m.y' : 'Y-m-d';
-	return (empty($given) ? $given : date($strFormat, strtotime($given)));
+	if (checkIfDateIsString($given))
+		$given = strtotime($given);
+	return (empty($given) ? $given : date($strFormat, $given));
 }
 
 function addRlsDiffToDate($given) {
@@ -2217,14 +2257,21 @@ function addRlsDiffToDate($given) {
 	$rlsDiff = isset($GLOBALS['RLS_OFFSET_IN_DAYS']) ? $GLOBALS['RLS_OFFSET_IN_DAYS'] : 1;
 	$oneDay  = $GLOBALS['DAY_IN_SECONDS'];
 	$diff    = $rlsDiff * $oneDay;
-
-	return date('Y-m-d', strtotime($given) + $diff);
+	if (checkIfDateIsString($given))
+		return date('Y-m-d', strtotime($given) + $diff);
+	return $given + $diff;
 }
 
 function compareDates($given1, $given2) {
 	if (empty($given1)) { return true; }
 	if (empty($given2)) { return false;  }
-	return strtotime($given1) < strtotime($given2);
+	if (checkIfDateIsString($given1) && checkIfDateIsString($given2))
+		return strtotime($given1) < strtotime($given2);
+	return $given1 < $given2;
+}
+
+function checkIfDateIsString($given) {
+	return intval($given).'' != $given.'';
 }
 
 function formatToDeNotation($str) {
@@ -2340,7 +2387,7 @@ function postEditVCodec($str) {
 	return $str;
 }
 
-function decodingPerf($str) {
+function decodingPerf($str, $bit10 = false) {
 	$str = strtoupper($str);
 
 	if ($str == 'MPEG-1' || $str == 'MPEG-2' || $str == 'MPEG-4')
@@ -2353,9 +2400,24 @@ function decodingPerf($str) {
 		return 3;
 
 	if ($str == 'X265')
-		return 4;
+		return $bit10 ? 5 : 4;
 
 	return 0;
+}
+
+function getResDesc($vRes) {
+	if (empty($vRes))
+		return '';
+
+	if ($vRes[0] >= 4000)
+		return '4k';
+	if ($vRes[0] >= 2000)
+		return '2k';
+	if ($vRes[0] >= 1800 || $vRes[1] >= 780)
+		return '1080p';
+	if ($vRes[0] >= 1200)
+		return '720p';
+	return '480p';
 }
 
 function postEditACodec($str) {

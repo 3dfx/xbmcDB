@@ -10,7 +10,7 @@ include_once "globals.php";
 
 	$hostname = $_SERVER['HTTP_HOST'];
 	$path = dirname($_SERVER['PHP_SELF']);
-	
+
 	$act        = getEscGPost('act',         '');
 	$id         = getEscGPost('id',          -1);
 	$idFile     = getEscGPost('idFile',      -1);
@@ -108,7 +108,7 @@ include_once "globals.php";
 			$SQLepi = str_replace('[RATING_ID]',   $idRating,   $SQLepi);
 			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
 			$dbh->exec($SQLepi);
-			
+
 			$source = $source > 0 ? $source : 'NULL';
 			if ($clrSize == 1)
 				$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,src='.$source.' WHERE idFile='.$idFile.';');
@@ -119,7 +119,7 @@ include_once "globals.php";
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 
 			clearMediaCache();
-			
+
 		} else if ($act == 'addEpisode' && $idShow != -1 && $idTvdb != -1 && $idPath != -1 && !empty($file) && !empty($strPath) && !empty($strSeason)) {
 			 ##################################
 			##
@@ -156,7 +156,7 @@ include_once "globals.php";
 
 			if (!emptyRating($rating)) {
 				$idRating  = getNextId($dbh, 'rating',  'rating_id');
-				
+
 				$SQLrating = 'INSERT INTO rating VALUES([RATING_ID],[idEpisode],"episode","[default]","[RATING]",0);';
 				$SQLrating = str_replace('[idEpisode]',    $idEpisode,     $SQLrating);
 				$SQLrating = str_replace('[RATING_ID]',    $idRating,      $SQLrating);
@@ -184,7 +184,7 @@ include_once "globals.php";
 			$SQLepi = str_replace('[idPath]',       $idPath,        $SQLepi);
 			$SQLepi = str_replace('[idShow]',       $idShow,        $SQLepi);
 			$dbh->exec($SQLepi);
-			
+
 			if (checkAirDate()) {
 				try {
 					checkNextAirDateTable($dbh);
@@ -202,6 +202,7 @@ include_once "globals.php";
 		if ($act == 'setmovieinfo' && $idMovie != -1 && $idFile != -1) {
 			$params = null;
 			$dbVer  = fetchDbVer();
+			
 			if (!empty($title) || !empty($jahr) || (!empty($rating)) || !empty($genre)) {
 				$title  = str_replace('_AND_', '&', $title);
 				$title  = str_replace("''",    "'", $title);
@@ -209,10 +210,12 @@ include_once "globals.php";
 				$rating = str_replace(',',     '.', $rating);
 
 				$params  = (!empty($title)  ? 'c00="'.$title.'"' : '');
-				$params .= (!empty($genre)  ? (!empty($params) ? ' AND ' : '').'c14="'.$genre.'"'  : '');
-				$params .= (!empty($jahr)   ? (!empty($params) ? ' AND ' : '').'c07="'.$jahr.'"'   : '');
-				if (!emptyRating($rating) && $dbVer < 107) {
-				$params .= (!empty($rating) ? (!empty($params) ? ' AND ' : '').'c05="'.$rating.'"' : '');
+				$params .= (!empty($genre)  ? (!empty($params) ? ', ' : '').'c14="'.$genre.'"'  : '');
+				if ($dbVer < 107) {
+					$params .= (!empty($rating) && !emptyRating($rating) ? (!empty($params) ? ', ' : '').'c05="'.$rating.'"' : '');
+					$params .= (!empty($jahr)   ? (!empty($params) ? ', ' : '').'c07="'.$jahr.'"'   : '');
+				} else {
+					$params .= (!empty($jahr)   ? (!empty($params) ? ', ' : '').'premiered="'.$jahr.'-01-01"'   : '');
 				}
 
 				if ($params != '')
@@ -225,7 +228,7 @@ include_once "globals.php";
 					$idRating = getNextId($dbh, 'rating', 'rating_id');
 					$dbh->exec('UPDATE movie SET c05='.$idRating.' WHERE idMovie = '.$idMovie.';');
 				}
-				
+
 				$SQLrating = 'REPLACE INTO rating (rating_id,media_id,media_type,rating_type,rating,votes) VALUES([RATING_ID],[idMovie],"movie","[default]","[RATING]",0);';
 				$SQLrating = str_replace('[idMovie]',   $idMovie,  $SQLrating);
 				$SQLrating = str_replace('[RATING_ID]', $idRating,   $SQLrating);
@@ -251,7 +254,7 @@ include_once "globals.php";
 					#$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 				}
 			}
-			else
+
 			if (!empty($dateAdded)) {
 				$dateValue = strtotime($dateAdded);
 				if (!empty($params)) { $params .= ', '.$params; }
@@ -401,7 +404,7 @@ include_once "globals.php";
 			$row = fetchFromDB_($dbh, $GETID_SQL, false);
 			$lastId = $row['idSet'];
 			$id = $lastId + 1;
-			
+
 			$SQL = 'REPLACE INTO sets (idSet, strSet) VALUES('.$id.', "'.$name.'");';
 			$dbh->exec($SQL);
 		}
@@ -446,7 +449,7 @@ include_once "globals.php";
 		echo $e;
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
 	}
-	
+
 	exit;
 
 function findRatingId($dbh, $mediaId, $mediaType = 'movie') {

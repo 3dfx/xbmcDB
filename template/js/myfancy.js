@@ -192,8 +192,9 @@ jQuery(document).ready(function() {
 	xHoverPicOffset = 30;
 	yHoverPicOffset = 220;
 	enterPos = null;
+	enterMoved = false;
 	$("a.hoverpic").hover(
-		function(e){
+		function(e) {
 			this.t = this.title;
 			this.title = "";
 
@@ -206,10 +207,12 @@ jQuery(document).ready(function() {
 		}, function(){
 			this.title = this.t;
 			enterPos = null;
+			enterMoved = false;
 			$("#hoverpic").remove();
 		}
 	);
-	$("a.hoverpic").mousemove(function(e){
+	$("a.hoverpic").mousemove(function(e) {
+		enterMoved = true;
 		$("#hoverpic")
 			.css("top",(e.pageY - correctYoffset(e, $(this).offset().top)) + "px")
 			.css("left",(e.pageX + xHoverPicOffset) + "px");
@@ -222,12 +225,14 @@ jQuery(document).ready(function() {
 		if (enterPos == null) { enterPos = $("#hoverpic").offset().top; }
 		var val  = enterPos - (offsetTop - CWOffset);
 		var val2 = CWOffset - val;
+		var hHeight = $("#hoverpic").height();
 
-		//console.log( enterPos + ', ' + val + ', ' + (CWOffset - val) + ', ' + $("#hoverpic").height() + ', ' + offsetTop + ', ' + e.pageY + ', ' + CWOffset );
+		//console.log( enterMoved + ', ' + enterPos + ', ' + val + ', ' + (CWOffset - val) + ', ' + hHeight + ', ' + offsetTop + ', ' + e.pageY + ', ' + CWOffset );
 
-		if (CWOffset - val < $("#hoverpic").height()) { res = 0; }
-		else if (CWOffset - val2 > $("#hoverpic").height()) { res = $("#hoverpic").height() / 2; }
-		else { res = $("#hoverpic").height(); }
+		if (hHeight == 0) { res = 138/2; }
+		else if (CWOffset - val  < hHeight) { res = 0; }
+		else if (CWOffset - val2 > hHeight) { res = hHeight / 2; }
+		else { res = hHeight; }
 
 		/*if (offsetTop - enterPos < $("#hoverpic").height()) { console.log('a'); res = 0; }
 		else if (CWOffset - offsetTop - enterPos < 150) { console.log('b'); res = $("#hoverpic").height(); }

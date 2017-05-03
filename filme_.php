@@ -203,7 +203,7 @@ function getSessionKeySQL() {
 		$sessionKey .= 'just_'.$filter.'_';
 
 	} else if ($_which == 'year') {
-		$filter = " AND A.c07 = '".$_just."'";
+		$filter = " AND ".mapDBC('A.c07')." = '".$_just."'";
 		$sessionKey .= 'just_'.$filter.'_';
 
 	} else if ($_which == 'set') {
@@ -226,7 +226,7 @@ function getSessionKeySQL() {
 
 	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, ".
 		"M.dateAdded as dateAdded, M.value as dateValue, ".
-		"A.c07 AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps ".
+		mapDBC('A.c07')." AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps ".
 		"FROM movie A, files B, path C ".
 //		"FROM movie_view A, files B, path C ".
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
@@ -240,8 +240,8 @@ function getSessionKeySQL() {
 		" WHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
 
 	if (!empty($sort)) {
-		     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY A.c07 DESC, dateAdded DESC";      }
-		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY A.c07 ASC, dateAdded ASC";        }
+		     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY ".mapDBC('A.c07')." DESC, dateAdded DESC";      }
+		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY ".mapDBC('A.c07')." ASC, dateAdded ASC";        }
 		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                      }
 		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                       }
 		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY rating DESC";                      }
@@ -367,7 +367,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 		$filename  = $row['filename'];
 		$dateAdded = $row['dateAdded'];
 		$path      = $row['path'];
-		$jahr      = $row['jahr'];
+		$jahr      = substr($row['jahr'], 0, 4);
 		$filesize  = $row['filesize'];
 		$fps       = $row['fps'];
 		$playCount = $row['playCount'];
@@ -457,8 +457,8 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 
 #counter
 			$spalTmp = '<td class="countTD'.$higlight.'">';
-			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'" style="cursor:default;">'; }
-			if ($isAdmin) { $spalTmp .= '<span class="fancy_movieEdit" href="./nameEditor.php?change=movie&idMovie='.$idMovie.'" style="cursor:pointer;">'; }
+			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'">'; }
+			if ($isAdmin) { $spalTmp .= '<span class="fancy_movieEdit" href="./nameEditor.php?change=movie&idMovie='.$idMovie.'">'; }
 			$spalTmp .= '_C0UNTER_';
 			if ($isAdmin) { $spalTmp .= '</span>'; }
 			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '</a>'; }
@@ -672,20 +672,24 @@ if ($dirActorEnabled) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 } //$dirActorEnabled
 
-#resolution/codec(fps)
+#resolution/codec/10bit/fps
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-				$resInfo   = (!empty($vRes)  ? ($vRes[0] >= 1800 || $vRes[1] >= 780 ? '1080p' : ($vRes[0] >= 1200 ? '720p' : '480p')) : '');
+				$resInfo   = getResDesc($vRes);
 				$resTip    = (!empty($vRes)  ? $vRes[0].'x'.$vRes[1] : '');
 				$codec     = (!empty($vRes)  ? postEditVCodec($vRes[2]) : '');
-				$perf      = (!empty($codec) ? decodingPerf($codec)     : 0);
+				$bit10     = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
+				$perf      = (!empty($codec) ? decodingPerf($codec, $bit10) : 0);
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
-				$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : 'style="padding-left:4px;"');
+				#$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : ' style="padding-left:4px;"');
+				$codecST   = (!empty($color)  ? ' style="color:'.$color.';"' : '');
 				$resTD     = (!empty($resInfo) ? '<span class="searchField">'.$resInfo.'</span>' : '');
-				$codecTD   = (!empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>'   : '');
+				$codecTD   = (!empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>' : '');
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
 				$fps       = fetchFps($idFile, $path, $filename, $fps, getPDO());
-				$fpsTitle  = (!empty($fps) ? ' title="'.$fps.' fps"' : '');
+				$fpsTitle  = (!empty($fps) ? $fps.' fps' : '');
+				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
+				$fpsTitle  = 'title="'.$fpsTitle.'"';
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" '.$fpsTitle.'>'.$codecTD.'</td>';
 
 #filesize

@@ -765,7 +765,10 @@ table.login {
 	cursor:default;
 }
 
-.fancyimage1, .fancy_iframe2, .fancy_iframe3 {
+.fancy_movieEdit,
+.fancyimage1,
+.fancy_iframe2,
+.fancy_iframe3 {
 	cursor:pointer;
 }
 
@@ -959,6 +962,7 @@ table.gallery {
 
 #hoverpic {
 	position:absolute;
+	cursor:default;
 	border:1px solid #ccc;
 	background:#333;
 	padding:5px;

@@ -1,14 +1,14 @@
 <?php
 include_once "./template/functions.php";
-	
+
 	if (!isAdmin()) { exit; }
-	
+
 	$which  = 1;
 	$file   = 'logs/reffer.php';
 	$title  = 'Refferer-log';
 	$which  = getEscGet('which');
 	$filter = getEscPost('filter');
-	
+
 	if (isset($which) && $which == 2) {
 		$file  = 'logs/loginLog.php';
 		$title = 'Login-log';
@@ -29,7 +29,7 @@ include_once "./template/functions.php";
 		echo '</form>'."\r\n";
 		echo '</span></div>'."\r\n";
 	}
-	
+
 	echo "<table class='film' style='margin-top:15px; max-width:850px; width:850px;'>\r\n";
 	echo "<tr>";
 	echo "<th colspan='".($which == 1 ? 6 : 8)."' style='padding:5px 5px;'>".$title."</th>";
@@ -42,14 +42,14 @@ include_once "./template/functions.php";
 	echo "<th style='padding:2px 10px;'>Host</th>";
 	if ($which == 1) {
 		echo "<th style='padding:2px 10px;'>Refferer</th>";
-		
+
 	} else if ($which == 2) {
 		echo "<th style='padding:2px 10px;'>Acc. Type</th>";
 		echo "<th style='padding:2px 10px;'>Username</th>";
 		echo "<th style='padding:2px 10px;'>Password</th>";
 	}
 	echo "</tr>\r\n";
-	
+
 	$datei  = file($file);
 	$linien = sizeof($datei);
 	if ($linien > 0) {
@@ -58,13 +58,13 @@ include_once "./template/functions.php";
 			if ($datei[$i] != "") {
 				$eintraege = explode ("|", $datei[$i]);
 				$eintraege[4] = trim($eintraege[4]);
-				
+
 				if (strlen($eintraege[4]) > 35) {
 					$show_p = substr($eintraege[4], 0, 32)."...";
 				} else {
 					$show_p = $eintraege[4];
 				}
-				
+
 				$exit  = false;
 				$admin = false;
 				$color = '';
@@ -75,41 +75,41 @@ include_once "./template/functions.php";
 						if ($eintraege[5] == 'FAiL') {
 							$exit  = true;
 							$color = ' color:red';
-							
+
 						} else if ($eintraege[5] == 'ADMiN') {
 							$admin = true;
 							$color = ' color:#6699CC';
 						}
 					}
 				}
-				
+
 				if (!empty($filter)) {
 					if ($filter == '1' && $exit)  { continue; }
 					if ($filter == '2' && !$exit) { continue; }
 				}
-				
+
 				echo "<tr style='height:15px;'>";
 				echo "<td style='padding:2px 5px; text-align:right;".$color."'>".($x+1)."</td>";
 				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[0])."</td>";
 				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[1])."</td>";
 				echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[2])."</td>";
 				echo "<td style='padding:2px 10px; max-width:250px; overflow:hidden;".$color."'>".trim($eintraege[3])."</td>";
-				
+
 				if ($which == 1) {
 					if (substr_count($eintraege[4], "http") || substr_count($eintraege[4], "www")) {
-						echo "<td style='padding:2px 10px;".$color."'><a style='font: 11px Verdana, Arial' href='".(substr_count($eintraege[4], "http") ? '' : 'http://').$eintraege[4]."' target='_blank'".($show_p != $eintraege[4] ? " title='".$eintraege[4]."'" : "").">".$show_p."</a></td>";
+						echo "<td style='padding:2px 10px;".$color."'><a style='font: 11px Verdana, Arial; margin-left:-7px;' href='".(substr_count($eintraege[4], "http") ? '' : 'http://').$eintraege[4]."' target='_blank'".($show_p != $eintraege[4] ? " title='".$eintraege[4]."'" : "").">".$show_p."</a></td>";
 					} else {
 						echo "<td style='padding:2px 5px;".$color."'>".$show_p."</td>";
 					}
 				}
-				
+
 				if ($which == 2) {
 					echo "<td style='padding:2px 10px;".$color."'>".trim($eintraege[5])."</td>";
 					echo "<td class='maxWidth30' style='padding:2px 10px;".$color.";'>".trim($eintraege[6])."</td>";
 					echo "<td class='maxWidth30' style='padding:2px 10px; color:rgba(0,0,0,0);'>".(!$admin ? trim($eintraege[7]) : '')."</td>";
 				}
 				echo "</tr>\r\n";
-				
+
 				if (++$x >= 20) { break; }
 			}
 		}

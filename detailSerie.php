@@ -41,6 +41,7 @@ function postSerie($serie) {
 
 	$stCount = $serie->getStaffelCount();
 	$allEpsCount = sprintf("%02d", $serie->getAllEpisodeCount());
+	$last = fetchNextEpisodeFromDB($serie->getIdShow());
 
 	echo '<tr id="descTR">';
 	echo '<th class="descTRd1">'.$stCount.' Season'.($stCount > 1 ? 's' : '').'</th>';
@@ -75,11 +76,11 @@ function postSerie($serie) {
 	echo "\r\n";
 
 	foreach ($serie->getStaffeln() as $staffel) {
-		if (is_object($staffel)) { postStaffel($staffel); }
+		if (is_object($staffel)) { postStaffel($staffel, $last); }
 	}
 }
 
-function postStaffel($staffel) {
+function postStaffel($staffel, $last = null) {
 	$isAdmin = $GLOBALS['isAdmin'];
 	$isDemo  = $GLOBALS['isDemo'];
 
@@ -146,7 +147,7 @@ function postStaffel($staffel) {
 		if ($sNum_ > 0 && $chk != $epNum_) {
 			$missCount = $epNum_ - $chk;
 			for ($i = $missCount; $i > 0; $i--)
-				postMissingRow($staffel, $seasonId, rand(-9999,-1), $sNum_, $epNum_ - $i, 'missing episode');
+				postMissingRow($staffel, $seasonId, rand(-9999,-1), $sNum_, $epNum_ - $i);
 		}
 
 		$delta = $epi->getDelta();
@@ -197,6 +198,17 @@ function postStaffel($staffel) {
 
 		$lastEp = $epi;
 	}
+
+	if (!isset($last)) { return; }
+	$lastEpNum = $lastEp->getEpNum()+1;
+	$lastEpNum = empty($epi->getDelta()) ? $lastEpNum : $epi->getDelta()+1;
+	if ($sNum_ == $last['ms'] && $lastEpNum <= $last['me']) {
+		$airdate = $last['air'];
+		for ($epNum_ = $lastEpNum; $epNum_ <= $last['me']; $epNum_++) {
+			postMissingRow($staffel, $seasonId, rand(-9999,-1), $sNum_, $epNum_, false, $airdate);
+			$airdate = null;
+		}
+	}
 }
 
 function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
@@ -216,9 +228,14 @@ function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
 	return '';
 }
 
-function postMissingRow($staffel, $seasonId, $idEpisode, $sNum_, $epNum_, $epTitle) {
+function postMissingRow($staffel, $seasonId, $idEpisode, $sNum_, $epNum_, $missing = true, $airdate = null) {
+	$epTitle = ($missing ? 'missing' : 'unaired').' episode';
+	if (!empty($airdate))
+		$epTitle = 'unaired: '.toEuropeanDateFormat(addRlsDiffToDate($airdate));
+	$color = $missing ? '#FF0000' : '#DCDCDC';
+	$bold  = $missing ? ' font-weight:bold;' : '';
 	$epNum = sprintf("%02d", $epNum_);
-	$text  = '<span class="vSpan" style="color:#FF0000;">'.$epNum.'  </span><span class="searchField" style="color:#FF0000; font-weight:bold;">'.$epTitle.'</span>';
+	$text  = '<span class="vSpan" style="color:'.$color.';">'.$epNum.'  </span><span class="searchField" style="color:'.$color.';'.$bold.'">'.$epTitle.'</span>';
 	$link  = generateDLink($staffel, $sNum_, $epNum_, $text);
 	echo '<tr class="epTR '.$seasonId.'" id="'.$idEpisode.'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;">';
 	echo '<td class="epTRd1" colspan="3">'.$link.'</td>';

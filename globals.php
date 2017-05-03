@@ -85,10 +85,11 @@ include_once "./globals.php";
 
 	$CODEC_COLORS = array(
 		0 => '#000000',
-		1 => '#00FF00',
-		2 => '#009900',
-		3 => '#FF0000',
-		4 => '#550000',
+		1 => '#00FF00', //MPEG
+		2 => '#009900', //DivX
+		3 => '#FF7F27', //x264
+		4 => '#880000', //x265
+		5 => '#DD0000', //x265 10bit
 	);
 
 	$DB_MAPPINGS = array(
@@ -127,6 +128,8 @@ include_once "./globals.php";
 
 			'A.c04'             => 'R.votes',
 			'A.c05'             => 'R.rating',
+			'A.c07'             => 'substr(A.premiered,1,4)',
+			'A.c07_'             => 'A.premiered',
 			'A.c09'             => 'I.value',
 //			'A.c05'             => 'A.rating',
 //			'A.c09'             => 'A.uniqueid_value',

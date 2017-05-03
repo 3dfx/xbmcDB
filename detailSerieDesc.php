@@ -23,8 +23,7 @@ include_once "./template/_SERIEN.php";
 	$banner   = null;
 	$imgURL   = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g.jpg';
 	$imgURL2  = 'http://thetvdb.com/banners/graphical/'.$idTvdb.'-g2.jpg';
-	#$ANONYMIZER = $GLOBALS['ANONYMIZER'];
-	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
+	$tvdbURL  = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 
 	$sum    = 0;
 	$codecs = array();
@@ -57,7 +56,7 @@ include_once "./template/_SERIEN.php";
 	echo '<div class="fClose" onclick="closeShow();"><img src="./img/close.png" style="cursor:pointer;"/></div>';
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
-		$episodes = getShowInfo($idTvdb);
+		$episodes = getShowInfo($idTvdb, $serie->getLastStaffel()->getStaffelNum());
 		$runningTvDb = isset($episodes[0][0]) ? $episodes[0][0] : null;
 		
 		$pad1 = $runningTvDb == null ? 'class="padbot15" ' : '';
@@ -101,24 +100,28 @@ include_once "./template/_SERIEN.php";
 	$epFirst = $serie->getFirstStaffel()->getFirstEpisode();
 	$epLast  = $serie->getLastStaffel()->getLastEpisode();
 	if ($epFirst != null && $epLast != null) {
-		$airings = toEuropeanDateFormat($epFirst->getAirDate()).' - '.toEuropeanDateFormat($epLast->getAirDate());
-		$dur     = getDuration($epFirst, $epLast);
+		$airings = toEuropeanDateFormat($epFirst->getAirDate());
+		$lastAir = toEuropeanDateFormat($epLast->getAirDate());
+		if ($airings != $lastAir) { $airings .= ' - '.$lastAir; }
+		$dur = getDuration($epFirst, $epLast);
 		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>Aired:</b></i></u><span class="flalright">'.$airings.$dur.'</span></div>';
 	}
 	
 	if ($isAdmin && $running && checkAirDate()) {
 		$airDate     = null;
 		$nextEpisode = null;
+		$lastEpisode = null;
 		$nextAirDate = $serie->getNextAirDateStr();
-		
+
 		if (empty($nextAirDate) || dateMissed($nextAirDate)) {
 			//tvdb
 			$nextEpisode = getNextEpisode($serie);
+			$lastEpisode = getLastEpisode($serie);
 			$airDate     = getNextAirDate($nextEpisode);
 		} else {
 			$airDate = $nextAirDate;
 		}
-		
+
 		if (!empty($airDate)) {
 			$season  = -1;
 			$episode = -1;
@@ -133,7 +136,7 @@ include_once "./template/_SERIEN.php";
 				$season  = !empty($st) && is_object($st)       ? $st->getStaffelNum()     : null;
 				$episode = !empty($ep) && is_object($ep)       ? $ep->getEpNum()          : null;
 			}
-			
+
 			$dbDate    = $airDate;
 			$airDate   = addRlsDiffToDate($airDate);
 			$dayOfWeek = dayOfWeek($airDate);
@@ -151,7 +154,7 @@ include_once "./template/_SERIEN.php";
 			echo 'Next airdate:<br />'.$clear1.$info.$clear2.'<br /><br />';
 			
 			if (!empty($nextEpisode) && compareDates($nextAirDate, $dbDate)) {
-				updateAirdateInDb($id, $season, $episode, $dbDate);
+				updateAirdateInDb($id, $season, $episode, $dbDate, $lastEpisode);
 				clearMediaCache();
 			}
 		}
