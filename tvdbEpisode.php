@@ -19,9 +19,5 @@ include_once "./template/functions.php";
 	$context = stream_context_create($opts);
 	$json    = file_get_contents($URL, false, $context);
 
-	#$res = json_decode($json);
-	#$rating = $res->{'data'}->{'siteRating'};
-
-	#echo $rating;
 	echo $json;
 ?>
