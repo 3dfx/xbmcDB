@@ -58,7 +58,7 @@
 				unset( $_SESSION['angemeldet'] );
 
 			} else if (
-				  $demo_enabled && 
+				  $demo_enabled &&
 				  (isset($demo_users[$input_username]) && $hashed_passwort == $demo_users[$input_username])
 				  ) {
 

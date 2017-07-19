@@ -96,7 +96,7 @@ include_once "./template/functions.php";
 		$existArtTable = existsArtTable();
 
 		$SQL = "SELECT c00, c01, c02, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c11, c14, c16, ".
-			"C.strPath AS path, D.filesize, D.fps, A.idFile, B.playCount AS playCount ".
+			"C.strPath AS path, D.filesize, D.fps, D.bit, A.idFile, B.playCount AS playCount ".
 			"FROM movie A, files B, path C ".
 			mapDBC('joinIdMovie').
 			mapDBC('joinRatingMovie').
@@ -115,6 +115,8 @@ include_once "./template/functions.php";
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
 		$fps          = $row['fps'];
+		$bits         = $row['bits'];
+		$bit10        = $bits >= 10;
 		$idMovie      = $row['idMovie'];
 		$path         = $row['path'];
 		$filename     = $row['filename'];
@@ -125,9 +127,9 @@ include_once "./template/functions.php";
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['c01'];
 		$country      = getCountry($idMovie);
-		$bit10        = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
-
-		$fps = fetchFps($idFile, $path, $filename, $fps, getPDO());
+		$fps          = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
+		if ($bit10 == null && $fps == null && $fps[0] == null)
+			$bit10 = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 
 		$percent;
 		$timeAt;
@@ -138,8 +140,10 @@ include_once "./template/functions.php";
 			$timeAt    = $result['timeAt'];
 			$timeTotal = $result['timeTotal'];
 			if (!empty($timeAt) && !empty($timeTotal)) {
-				$pausedAt  = getPausedAt($timeAt);
+				$timeAt    = intval($timeAt);
+				$timeTotal = intval($timeTotal);
 				$percent   = round($timeAt / $timeTotal * 100, 0);
+				$pausedAt  = getPausedAt(round($percent * $timeTotal / 100, 0));
 			}
 		}
 
@@ -286,6 +290,7 @@ include_once "./template/functions.php";
 		$aLang     = array();
 		$sLang     = array();
 		$res       = array();
+		$vRes      = array();
 		$run       = 0;
 
 		if ($row['c00'] != $row['c16']) {
@@ -314,7 +319,7 @@ include_once "./template/functions.php";
 		}
 
 		foreach($result3 as $row3) {
-			if (!empty($tmp = $row3['fVideoAspect'])) { $ar = sprintf ("%01.2f", round($tmp, 1)).':1'; }
+			if (!empty($tmp = $row3['fVideoAspect'])) { $ar = sprintf ("%01.2f", round($tmp, 2)).':1'; }
 			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
 			if (!empty($tmp = $row3['iVideoHeight'])) { $height = $tmp; }
 			if (!empty($tmp = $row3['strVideoCodec']) && !isDemo()) { $vCodec = trim($tmp); }
@@ -353,11 +358,8 @@ include_once "./template/functions.php";
 			if ($g < count($genre)) {
 				$genreId = -1;
 				$strGenre = ucwords(strtolower(trim($genre[$g])));
-				if (!empty($strGenre)) {
-					if (isset($idGenre[$strGenre])) {
-						$genreId = $idGenre[$strGenre];
-					}
-				}
+				if (!empty($strGenre) && isset($idGenre[$strGenre]))
+					$genreId = $idGenre[$strGenre];
 
 				if ($genreId != -1) {
 					$res[$g][$COLS['GENRE']] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
@@ -390,9 +392,21 @@ include_once "./template/functions.php";
 		#$res[0][$COLS['VOTE']] = $stimmen;
 		$res[0][$COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
 		if (!empty($width) && !empty($height)) {
-			$res[0][$COLS['VIDEO1']] = $width.'x'.$height;
+			$vRes[0] = $width;
+			$vRes[1] = $height;
+			$resInfo  = $width.'x'.$height;
+			$cols     = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+			$resPerf  = getResPerf($vRes);
+			$resColor = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
+			$resInfo  = (empty($resColor) ? $resInfo : '<span style="font-weight:bold; color:'.$resColor.';">'.$resInfo.'</span>');
+			$res[0][$COLS['VIDEO1']] = $resInfo;
 		}
 		$res[1][$COLS['VIDEO1']] = $ar;
+
+		if (!empty($fps)) {
+			$res[1][$COLS['VIDEO2']] = $fps[1].' fps';
+			$bit10 = $fps[0] >= 10;
+		}
 
 		$vCodec  = postEditVCodec($vCodec);
 		$cols    = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
@@ -400,10 +414,6 @@ include_once "./template/functions.php";
 		$color   = ($cols == null || $perf < 4 ? null : $cols[$perf]);
 		$vCodec  = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.($bit10 ? ' 10bit' : '').'</span>' : $vCodec);
 		$res[0][$COLS['VIDEO2']] = $vCodec;
-
-		if (!empty($fps)) {
-			$res[1][$COLS['VIDEO2']] = $fps.' fps';
-		}
 
 		if ($run > 0) {
 			echo '<div class="stream">';

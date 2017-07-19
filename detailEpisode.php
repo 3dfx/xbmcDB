@@ -34,6 +34,8 @@ include_once "./template/_SERIEN.php";
 	$filesize   = 0;
 	$fsize      = 0;
 	$src        = null;
+	$fps        = null;
+	$bits       = null;
 
 	$dbh = getPDO();
 	$existArtTable = existsArtTable();
@@ -55,6 +57,8 @@ include_once "./template/_SERIEN.php";
 		$airDate    = $row['airDate'];
 		$filesize   = $row['filesize'];
 		$src        = $row['source'];
+		$fps        = $row['fps'];
+		$bits       = $row['bits'];
 	}
 
 	$percent;
@@ -83,18 +87,24 @@ include_once "./template/_SERIEN.php";
 		$delta    = '-E'.sprintf("%02d", $delta);
 		$episode  = $episode.$delta;
 	}
-	$path    = mapSambaDirs($path);
-	$fsize   = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
+	$path  = mapSambaDirs($path);
+	$fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
+	$fps   = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
+	if ($fps != null) {
+		$bits = $fps[0];
+		$fps  = $fps[1];
+	}
+#if (isAdmin()) { print_r( $fps ); }
 
-	$duration   = 0;
-	$ar         = null;
-	$width      = null;
-	$height     = null;
-	$vCodec     = null;
-	$aCodec     = array();
-	$aChannels  = array();
-	$aLang      = array();
-	$subtitle   = array();
+	$duration  = 0;
+	$ar        = null;
+	$width     = null;
+	$height    = null;
+	$vCodec    = null;
+	$aCodec    = array();
+	$aChannels = array();
+	$aLang     = array();
+	$subtitle  = array();
 
 	$stream = getStreamDetails($idFile);
 	foreach($stream as $stRow) {
@@ -246,16 +256,34 @@ include_once "./template/_SERIEN.php";
 
 	if (!$isDemo) {
 		if (!empty($vCodec) || (!empty($width) && !empty($height))) {
-			echo '<div class="padtop15">';
+			echo '<div class="padtop15 padbot20">';
 			echo '<span><u><i><b>Video:</b></i></u></span>';
-			if (!empty($width) && !empty($height))
-				echo '<span class="flalright">'.$width.'x'.$height.(!empty($ar) ? ' <font color="silver">[</font> '.$ar.' <font color="silver">]</font>' : '').'</span>';
-			if (!empty($vCodec)) {
-				$cols   = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-				$vCodec = postEditVCodec($vCodec);
-				$perf   = decodingPerf($vCodec);
-				$color  = $cols == null ? '#000000' : $cols[$perf];
-				echo '<span class="flalright"><font color="'.$color.'">'.$vCodec.'</font>&nbsp;<font color="silver"><b>|</b></font>&nbsp;</span>';
+			if ((!empty($width) && !empty($height)) || !empty($fps)) {
+				echo '<span class="flalright">';
+				if (!empty($width) && !empty($height)) {
+					echo $width.'x'.$height.(!empty($ar) ? ' <font color="silver">[</font> '.$ar.' <font color="silver">]</font>' : '');
+					if (!empty($fps))
+						echo '<br/>';
+				}
+				if (!empty($fps))
+					echo '<span class="flalleft">'.$fps.' fps</span>';
+				echo '</span>';
+			}
+			if (!empty($vCodec) || !empty($bits)) {
+				echo '<span class="flalright">';
+				$color = '';
+				if (!empty($vCodec)) {
+					$cols   = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
+					$vCodec = postEditVCodec($vCodec);
+					$perf   = decodingPerf($vCodec, !empty($bits) && $bits >= 10);
+					$color  = $cols == null ? '#000000' : $cols[$perf];
+					echo '<font color="'.$color.'">'.$vCodec.'</font>&nbsp;<font color="silver"><b>|</b></font>&nbsp;';
+					if (!empty($bits))
+						echo '<br/>';
+				}
+				if (!empty($bits))
+					echo $bits.' bit&nbsp;<font color="silver"><b>|</b></font>&nbsp;';
+				echo '</span>';
 			}
 			echo '</div>';
 		}

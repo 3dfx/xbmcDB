@@ -1084,6 +1084,7 @@ a.showlink {
 .epDesc        { padding-bottom:15px; text-align:justify; white-space:pre-line !important; }
 .flalright     { float:right; text-align:right; }
 .flalleft      { float:left; text-align:left; }
+.padbot20      { padding-bottom:20px; }
 .padbot15      { padding-bottom:15px; }
 .padtop15      { padding-top:15px; }
 .nOverflow     { overflow-x:hidden; white-space:nowrap !important; }

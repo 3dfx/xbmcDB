@@ -27,7 +27,7 @@ function getKeyCode(event) {
 
 function newMoviesAvailable() {
 	if (!gotoConfirmation()) { return; }
-	
+
 	var href = './?show=filme&newmode=1&newsort=2&unseen=3&dbSearch&which&just&sort&mode&country';
 	window.location.href=href;
 }
@@ -39,10 +39,10 @@ function gotoConfirmation() {
 function doRequest__(isShow, ids) {
 	var resBox = document.getElementById('result');
 	if (resBox == null) { return; }
-	
+
 	var copyAsScript = document.getElementById('copyAsScript');
 	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
-	
+
 	$.ajax({
 		type: "POST",
 		url: "request.php",
@@ -62,10 +62,10 @@ function saveSelection() {
 function saveSelection__(isShow, ids) {
 	var resBox = document.getElementById('result');
 	if (resBox == null) { return; }
-	
+
 	var copyAsScript = document.getElementById('copyAsScript');
 	var asscript = (copyAsScript != null && copyAsScript.checked) ? 1 : 0;
-	
+
 	$.ajax({
 		type: "POST",
 		url: "request.php",
@@ -75,7 +75,7 @@ function saveSelection__(isShow, ids) {
 			else if (data == '2') { alert('Selection appended!'); }
 			else if (data == '-3') { alert('Session expired!'); setTimeout("location.reload(true);", 150); }
 			else { alert('Error saving!'); }
-			
+
 			//if (data != '-1') { clearSelectBoxes(null); }
 		}
 	});
@@ -169,5 +169,5 @@ console.log( '^3' );
 		ids = ids.replace(id, '');
 	}
 */
-console.log( '4: ' + ids );
+//console.log( '4: ' + ids );
 }

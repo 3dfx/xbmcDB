@@ -52,7 +52,7 @@ include_once "globals.php";
 			clearMediaCache();
 
 		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
-			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL WHERE src IS NOT NULL AND idFile IN('.$idFiles.');');
+			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL WHERE src IS NOT NULL AND idFile IN('.$idFiles.');');
 			$dbh->exec('DELETE FROM fileinfo WHERE src IS NULL AND idFile IN('.$idFiles.');');
 			if ($clrStream == 1)
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile IN('.$idFiles.');');
@@ -60,7 +60,7 @@ include_once "globals.php";
 			clearMediaCache();
 
 		} else if ($idFile != -1 && $act == 'clearFileSize')  {
-			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL WHERE src IS NOT NULL AND idFile='.$idFile.';');
+			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL WHERE src IS NOT NULL AND idFile='.$idFile.';');
 			$dbh->exec('DELETE FROM fileinfo WHERE src IS NULL AND idFile='.$idFile.';');
 			if ($clrStream == 1)
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
@@ -84,7 +84,7 @@ include_once "globals.php";
 			$dbh->exec($SQLfile);
 
 			$idRating = null;
-			if (!emptyRating($rating)) {
+			if (!emptyRating($rating) || intval($rating) == 0) {
 				$GETID_SQL = "SELECT c03 FROM episode WHERE idEpisode=".$idEpisode.";";
 				$row       = fetchFromDB_($dbh, $GETID_SQL, false);
 				$idRating  = $row['c03'];
@@ -111,7 +111,7 @@ include_once "globals.php";
 
 			$source = $source > 0 ? $source : 'NULL';
 			if ($clrSize == 1)
-				$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,src='.$source.' WHERE idFile='.$idFile.';');
+				$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL,src='.$source.' WHERE idFile='.$idFile.';');
 			else
 				$dbh->exec('UPDATE fileinfo SET src='.$source.' WHERE idFile='.$idFile.';');
 
@@ -202,7 +202,7 @@ include_once "globals.php";
 		if ($act == 'setmovieinfo' && $idMovie != -1 && $idFile != -1) {
 			$params = null;
 			$dbVer  = fetchDbVer();
-			
+
 			if (!empty($title) || !empty($jahr) || (!empty($rating)) || !empty($genre)) {
 				$title  = str_replace('_AND_', '&', $title);
 				$title  = str_replace("''",    "'", $title);

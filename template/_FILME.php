@@ -4,11 +4,11 @@ include_once "./template/functions.php";
 	function fetchMovies($dbh, $SQL, $sessionKey) {
 		$dbh = empty($dbh) ? getPDO() : $dbh;
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-		
+
 		$res = array();
 		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0) {
 			$res = unserialize($_SESSION[$sessionKey]);
-			
+
 		} else {
 			$result = querySQL_($dbh, $SQL);
 			$count = 0;
@@ -20,8 +20,9 @@ include_once "./template/functions.php";
 				$res[$count]['thumb']     = isset($row['thumb'])     ? $row['thumb']     : '';
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
 				$res[$count]['fps']       = isset($row['fps'])       ? $row['fps']  	 : '';
+				$res[$count]['bits']      = isset($row['bits'])      ? $row['bits']  	 : '';
 				$res[$count]['dateAdded'] = isset($row['dateAdded']) ? $row['dateAdded'] : '';
-				$res[$count]["path"]      = isset($row["path"])      ? $row["path"]      : '';
+				$res[$count]['path']      = isset($row['path'])      ? $row['path']      : '';
 				$res[$count]['jahr']      = isset($row['jahr'])      ? $row['jahr']      : '';
 				$res[$count]['filesize']  = isset($row['filesize'])  ? $row['filesize']  : '';
 				$res[$count]['playCount'] = isset($row['playCount']) ? $row['playCount'] : '';
@@ -32,7 +33,7 @@ include_once "./template/functions.php";
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
 				$count++;
 			}
-			
+
 			$_SESSION[$sessionKey] = serialize($res);
 			unset( $_SESSION['overrideFetch'] );
 		}

@@ -226,7 +226,7 @@ function getSessionKeySQL() {
 
 	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, ".
 		"M.dateAdded as dateAdded, M.value as dateValue, ".
-		mapDBC('A.c07')." AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps ".
+		mapDBC('A.c07')." AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
 		"FROM movie A, files B, path C ".
 //		"FROM movie_view A, files B, path C ".
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
@@ -370,6 +370,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 		$jahr      = substr($row['jahr'], 0, 4);
 		$filesize  = $row['filesize'];
 		$fps       = $row['fps'];
+		$bits      = $row['bits'];
 		$playCount = $row['playCount'];
 		$trailer   = $row['trailer'];
 		$rating    = $row['rating'];
@@ -676,18 +677,20 @@ if ($dirActorEnabled) {
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 				$resInfo   = getResDesc($vRes);
-				$resTip    = (!empty($vRes)  ? $vRes[0].'x'.$vRes[1] : '');
-				$codec     = (!empty($vRes)  ? postEditVCodec($vRes[2]) : '');
-				$bit10     = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
-				$perf      = (!empty($codec) ? decodingPerf($codec, $bit10) : 0);
+				$resPerf   = getResPerf($vRes);
+				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
+				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resColor) ? '' : ' style="color:'.$resColor.';"').'>'.$resInfo.'</span>');
+				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]);
+				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
+				$fps       = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
+				$bit10     = !empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
+				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
 				#$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : ' style="padding-left:4px;"');
-				$codecST   = (!empty($color)  ? ' style="color:'.$color.';"' : '');
-				$resTD     = (!empty($resInfo) ? '<span class="searchField">'.$resInfo.'</span>' : '');
-				$codecTD   = (!empty($codec)   ? '<span class="searchField"'.$codecST.'>'.$codec.'</span>' : '');
+				$codecST   = (empty($color) ? '' : ' style="color:'.$color.';"');
+				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
-				$fps       = fetchFps($idFile, $path, $filename, $fps, getPDO());
-				$fpsTitle  = (!empty($fps) ? $fps.' fps' : '');
+				$fpsTitle  = (empty($fps) ? '' : (is_array($fps) ? $fps[1] : $fps).' fps');
 				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = 'title="'.$fpsTitle.'"';
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" '.$fpsTitle.'>'.$codecTD.'</td>';

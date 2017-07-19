@@ -1,12 +1,10 @@
 <?php
 include_once "auth.php";
 include_once "check.php";
-
 include_once "./template/config.php";
 include_once "./template/functions.php";
 include_once "./template/_SERIEN.php";
 include_once "globals.php";
-
 if (!isAdmin()) { exit; }
 ?>
 <head>
@@ -37,7 +35,6 @@ if (!isAdmin()) { exit; }
 	#echo "\t".'</div>'."\r\n";
 ?>
 </body>
-
 <?php
 function fillTable($serien, $dbh) {
 	echo "\t".'<table id="showsTable" class="film">'."\r\n";
@@ -46,7 +43,6 @@ function fillTable($serien, $dbh) {
 	echo "\t".'</tbody>'."\r\n";
 	echo "\t".'</table>'."\r\n";
 }
-
 function postSerien($serien) {
 	$counter = 1;
 	foreach ($serien->getSerien() as $serie) {
@@ -55,7 +51,6 @@ function postSerien($serien) {
 		$counter = postSerie($serie, $counter);
 	}
 }
-
 function postSerie($serie, $counter) {
 	$airDate  = null;
 	$daysLeft = -1;
@@ -73,7 +68,6 @@ function postSerie($serie, $counter) {
 	}
 	
 	if (empty($airDate)) { return $counter; }
-
 	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
 	$epSearch   = null;

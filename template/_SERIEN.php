@@ -35,6 +35,8 @@ include_once "./globals.php";
 			   "T.c14 AS studio, ".
 			   "P.idPath AS idPath, ".
 			   "F.filesize AS filesize, ".
+			   "F.fps AS fps, ".
+			   "F.bit AS bits, ".
 			   "F.src AS source ".
 			   "FROM ".mapDBC('episodeview')." V, ".mapDBC('tvshowview')." T ".
 			   "LEFT JOIN fileinfo F ON V.idFile = F.idFile ".
