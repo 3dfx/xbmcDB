@@ -1,5 +1,5 @@
 <?php
-include_once "./globals.php";
+#include_once "./globals.php";
 
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
 	$ANONYMIZER         = 'http://dontknow.me/at/?';
@@ -11,6 +11,7 @@ include_once "./globals.php";
 
 	$SHOW_NEW_VALUES    = array(10, 30, 60, 90, 120, 150, 180);
 	$COLUMNCOUNT        = 10;
+	$TVSHOW_MENU_LIMIT  = 30;
 
 	$BLACKLIST_FILE     = './logs/blacklist.log';
 

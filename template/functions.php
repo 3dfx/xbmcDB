@@ -479,7 +479,7 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 			$dbh->exec($sqli);
 			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->commit(); }
 
-			clearMediaCache();
+			//clearMediaCache();
 
 		} catch(PDOException $e) {
 			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
@@ -957,6 +957,7 @@ function checkLastHighest() {
 function setLastHighest() {
 	$_SESSION['lastHighest'] = fetchHighestMovieId();
 	$_SESSION['lastMovie']['set'] = true;
+	unset($_SESSION['lastMovie']['confirmed'], $_SESSION['lastMovie']['seen']);
 }
 
 function getNewAddedCount() {
@@ -1382,16 +1383,18 @@ function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs
 }
 
 function createEpisodeSubmenu($result) {
-	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
+	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE'])    ? $GLOBALS['NAVBAR_INVERSE']    : false;
+	$LIMIT   = isset($GLOBALS['TVSHOW_MENU_LIMIT']) ? $GLOBALS['TVSHOW_MENU_LIMIT'] : 30;
 	$isAdmin = isAdmin();
-	$counter = 2;
+	$counter = 1;
+	$tabIndx = 2;
 	$res = '';
 
 	foreach($result as $key => $show) {
 		$lId = 'sub_'.str_replace(' ', '_', $key);
 		$res .= '<li class="dropdown-submenu" id="'.$lId.'" style="cursor:default;">';
 		$ttip = count($show) > 1 ? ' title="'.count($show).' episodes"' : '';
-		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($counter++).'" _href="#"><span'.$ttip.'>'.$key.'</span></a>';
+		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($tabIndx++).'" _href="#"><span'.$ttip.'>'.$key.'</span></a>';
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 		foreach($show as $row) {
@@ -1410,11 +1413,13 @@ function createEpisodeSubmenu($result) {
 			$SE = '<span class="dropdown-menu_epTitle"><b><sub>S'.$season.'.E'.$episode.$srCol.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';
 			$chkImg = ($isAdmin && $playCount > 0 ? ' <span class="flalright mnuIcon"><img src="./img/check.png" class="icon24" title="watched" /></span>' : '');
-			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$counter++.'" class="elem"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
+			$res .= '<li _href="./detailEpisode.php?id='.$idEpisode.'" desc="./detailSerieDesc.php?id='.$idShow.'" eplist="./detailSerie.php?id='.$idShow.'" onclick="loadLatestShowInfo(this, '.$idShow.', '.$idEpisode.', \''.$epTrId.'\', '.$sCount.'); return true;" onmouseover="toggleActive(this);" onmouseout="toggleDActive(this);" style="cursor:pointer;"><a tabindex="'.$tabIndx++.'" class="elem"><div style="height:20px;">'.$showTitle.'</div></a>'.$chkImg.'</li>';
 		}
 
 		$res .= '</ul>';
 		$res .= '</li>';
+		if ($LIMIT <= $counter++)
+			break;
 	}
 
 	return $res;
@@ -1662,7 +1667,8 @@ function restoreSession() {
 }
 
 function storeSession() {
-	$user = $_SESSION['user'];
+	$user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
+	if (empty($user)) { return; }
 	setLastHighest();
 	clearMediaCache();
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['refferLogged'], $_SESSION['overrideFetch'],
@@ -1672,6 +1678,7 @@ function storeSession() {
 	       $_SESSION['dbName'],     $_SESSION['dbVer']
 
 	     ); //remove values that should be determined at login
+	if ($_SESSION['show'] == 'airdate') { unset($_SESSION['show']); }
 
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
 	fputs($sessionfile, session_encode());

@@ -1,5 +1,6 @@
 <?php
 include_once "./globals.php";
+include_once "./template/config.php";
 
 /*
 	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, ".mapDBC('V.c03')." AS rating, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount, F.src AS src FROM episodeviewMy V LEFT JOIN fileinfo F ON V.idFile = F.idFile";
@@ -60,20 +61,18 @@ include_once "./globals.php";
 
 	function fetchLastSerien() {
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-
-		$LIMIT = 30;
-		$sessionKey = 'param_S_LIMIT';
-		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0)
-			$LIMIT = $_SESSION[$sessionKey];
+		$LIMIT = isset($GLOBALS['TVSHOW_MENU_LIMIT']) ? $GLOBALS['TVSHOW_MENU_LIMIT'] : 30;
+		if (isset($_SESSION['param_S_LIMIT']) && $overrideFetch == 0)
+			$LIMIT = $_SESSION['param_S_LIMIT'];
 		else {
-			$runs  = 0;
+			$runs  = 1;
 			$items = 0;
-			while(($items = getLastItemsCount($LIMIT)) < 20) {
-				$LIMIT += 10*$runs;
+			while(($items = getLastItemsCount($LIMIT)) < $LIMIT) {
+				$LIMIT += 5*$runs;
 				if ($runs++ >= 5)
 					break;
 			}
-			$_SESSION[$sessionKey] = $LIMIT;
+			$_SESSION['param_S_LIMIT'] = $LIMIT;
 		}
 
 		$LastEpisodeSQL = $GLOBALS['LastEpisodeSQL'].';';

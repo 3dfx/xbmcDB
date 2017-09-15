@@ -682,7 +682,8 @@ if ($dirActorEnabled) {
 				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resColor) ? '' : ' style="color:'.$resColor.';"').'>'.$resInfo.'</span>');
 				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]);
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
-				$fps       = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
+				$fps       = array($bits, $fps);
+//				$fps       = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
 				$bit10     = !empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
@@ -690,7 +691,8 @@ if ($dirActorEnabled) {
 				$codecST   = (empty($color) ? '' : ' style="color:'.$color.';"');
 				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
-				$fpsTitle  = (empty($fps) ? '' : (is_array($fps) ? $fps[1] : $fps).' fps');
+				#$fpsTitle  = (!empty($fps) ? (is_array($fps) ? $fps[1] : $fps).' fps' : '');
+				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
 				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = 'title="'.$fpsTitle.'"';
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" '.$fpsTitle.'>'.$codecTD.'</td>';

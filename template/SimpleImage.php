@@ -42,6 +42,7 @@ class SimpleImage {
 	}
 	
 	function save($filename, $image_type = IMAGETYPE_JPEG, $compression = 75, $permissions = null) {
+		if (empty($this->image)) { return; }
 		if ($image_type == IMAGETYPE_JPEG) {
 			imagejpeg($this->image,$filename,$compression);
 		} elseif ($image_type == IMAGETYPE_GIF) {
@@ -55,6 +56,7 @@ class SimpleImage {
 	}
 	
 	function output($image_type = IMAGETYPE_JPEG) {
+		if (empty($this->image)) { return; }
 		if ($image_type == IMAGETYPE_JPEG) {
 			imagejpeg($this->image);
 		} elseif ($image_type == IMAGETYPE_GIF) {

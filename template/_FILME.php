@@ -20,7 +20,7 @@ include_once "./template/functions.php";
 				$res[$count]['thumb']     = isset($row['thumb'])     ? $row['thumb']     : '';
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
 				$res[$count]['fps']       = isset($row['fps'])       ? $row['fps']  	 : '';
-				$res[$count]['bits']      = isset($row['bits'])      ? $row['bits']  	 : '';
+				$res[$count]['bits']      = isset($row['bit'])       ? $row['bit']       : '';
 				$res[$count]['dateAdded'] = isset($row['dateAdded']) ? $row['dateAdded'] : '';
 				$res[$count]['path']      = isset($row['path'])      ? $row['path']      : '';
 				$res[$count]['jahr']      = isset($row['jahr'])      ? $row['jahr']      : '';
