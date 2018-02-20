@@ -606,25 +606,6 @@ function getFps($file) {
 	return 0;
 }
 
-function correctFilename($file) {
-	$ersetzen = array(
-		'ä' => '?',
-		'ö' => '?',
-		'ü' => '?',
-		'?' => '%',
-		' ' => '\ ',
-		'[' => '\[',
-		']' => '\]',
-		'(' => '\(',
-		')' => '\)',
-		'&' => '\&',
-		);
-
-	$file = strtr($file, $ersetzen);
-	$file = mapSambaDirs($file);
-	return $file;
-}
-
 function execCommand($file, $execString) {
 	if (!isLinux()) { return null; }
 	$file = correctFilename($file);
@@ -2650,33 +2631,50 @@ function pluralize($str, $val, $plr = 's', $format = null) {
 	return (isset($format) ? sprintf("%02d", $val) : $val).' '.$str.($val > 1 ? $plr : '');
 }
 
+function correctFilename($file) {
+	$ersetzen = array(
+		'Ã¤' => 'ä',
+		'Ã¶' => 'ö',
+		'Ã¼' => 'ü',
+		'ß'  => '%',
+		' '  => '\ ',
+		'['  => '\[',
+		']'  => '\]',
+		'('  => '\(',
+		')'  => '\)',
+		'&'  => '\&',
+	);
+
+	$file = strtr($file, $ersetzen);
+	$file = mapSambaDirs($file);
+	return $file;
+}
+
 function encodeString($text, $plain = false) {
 	$text = str_replace("''", "'", $text);
 	//return htmlspecialchars($text, ENT_QUOTES);
 
 	if (!$plain) {
-		$text = str_replace ("?",  "&auml;", $text);
-		$text = str_replace ("?",  "&Auml;", $text);
-		//$text = str_replace ("?",  "&auml;", $text);
-		$text = str_replace ("?",  "&ouml;", $text);
-		$text = str_replace ("ö", "&ouml;", $text);
-		$text = str_replace ("?",  "&Ouml;", $text);
-		$text = str_replace ("?",  "&uuml;", $text);
-		$text = str_replace ("ü", "&uuml;", $text);
-		$text = str_replace ("?",  "&Uuml;", $text);
-		$text = str_replace ("?",  "&Uuml;", $text);
-		$text = str_replace ("?", "&szlig;", $text);
-		$text = str_replace ("'",  "&#039;", $text);
-		$text = str_replace ("'",  "&#039;", $text);
+		$text = str_replace ("ä",  "&auml;",  $text);
+		$text = str_replace ("Ä",  "&Auml;",  $text);
+//		$text = str_replace ("Ü¤", "&auml;",  $text);
+		$text = str_replace ("ö",  "&ouml;",  $text);
+		$text = str_replace ("Ö",  "&Ouml;",  $text);
+		$text = str_replace ("ü",  "&uuml;",  $text);
+		$text = str_replace ("Ü",  "&Uuml;",  $text);
+		$text = str_replace ("Ã",  "&Uuml;",  $text);
+		$text = str_replace ("ß",  "&szlig;", $text);
+		$text = str_replace ("'",  "&#039;",  $text);
+		$text = str_replace ("'",  "&#039;",  $text);
 	} else {
-		$text = str_replace ("?", "c", $text);
-		$text = str_replace ("?", "C", $text);
-		$text = str_replace ("?", "u", $text);
-		$text = str_replace ("?", "U", $text);
-		$text = str_replace ("?", "o", $text);
-		$text = str_replace ("?", "O", $text);
-		$text = str_replace ("?", "a", $text);
-		$text = str_replace ("?", "A", $text);
+		$text = str_replace ("ç", "c", $text);
+		$text = str_replace ("Ç", "C", $text);
+		$text = str_replace ("ü", "u", $text);
+		$text = str_replace ("Ü", "U", $text);
+		$text = str_replace ("ö", "o", $text);
+		$text = str_replace ("Ö", "O", $text);
+		$text = str_replace ("ä", "a", $text);
+		$text = str_replace ("Ä", "A", $text);
 	}
 
 	return $text;
@@ -2686,14 +2684,14 @@ function decodeString($text) {
 	$text = str_replace("&#039;", "'", $text);
 	//return htmlspecialchars_decode($text, ENT_QUOTES);
 
-	$text = str_replace ("&amp;", "&", $text);
-	$text = str_replace ("&auml;", "?", $text);
-	$text = str_replace ("&Auml;", "?", $text);
-	$text = str_replace ("&ouml;", "?", $text);
-	$text = str_replace ("&Ouml;", "?", $text);
-	$text = str_replace ("&uuml;", "?", $text);
-	$text = str_replace ("&Uuml;", "?", $text);
-	$text = str_replace ("&szlig;", "?", $text);
+ 	$text = str_replace ("&amp;",   "&", $text);
+	$text = str_replace ("&auml;",  "ä", $text);
+	$text = str_replace ("&Auml;",  "Ä", $text);
+	$text = str_replace ("&ouml;",  "ö", $text);
+	$text = str_replace ("&Ouml;",  "Ö", $text);
+	$text = str_replace ("&uuml;",  "ü", $text);
+	$text = str_replace ("&Uuml;",  "Ü", $text);
+	$text = str_replace ("&szlig;", "ß", $text);
 	return $text;
 }
 
