@@ -115,7 +115,7 @@ function postSets() {
 		foreach($sets as $entry) {
 			$idSet  = $entry['idSet'];
 			$strSet = $entry['strSet'];
-			postSet($idSet, $strSet, $counts[$idSet]);
+			postSet($idSet, $strSet, !empty($counts[$idSet]) ? $counts[$idSet] : 0);
 
 			foreach($movies as $movie) {
 				if ($movie['idSet'] != $idSet) { continue; }

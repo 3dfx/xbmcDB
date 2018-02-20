@@ -124,7 +124,7 @@
 			'joinRatingMovie'   => '',
 		),
 		107 => array(
-			'joinIdMovie'       => 'LEFT JOIN uniqueid I ON (I.media_type="movie" AND I.media_id=A.idMovie) ',
+			'joinIdMovie'       => 'LEFT JOIN uniqueid I ON (I.media_type="movie" AND I.type="imdb" AND I.media_id=A.idMovie) ',
 			'joinRatingMovie'   => 'LEFT JOIN rating R ON (R.media_type="movie" AND R.media_id=A.idMovie) ',
 
 			'A.c04'             => 'R.votes',

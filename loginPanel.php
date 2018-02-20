@@ -69,16 +69,17 @@ include_once "./template/functions.php";
 				$admin = false;
 				$color = '';
 				if ($which == 1) {
-					$exit = isset($eintraege[5]) && $eintraege[5] == 1;
+					if (isset($eintraege[5]) && $eintraege[5] == 1)
+						$color = ' color:red';
 				} else if ($which == 2) {
 					if (isset($eintraege[5])) {
 						if ($eintraege[5] == 'FAiL') {
 							$exit  = true;
-							$color = ' color:red';
+							$color = ' color:red;';
 
 						} else if ($eintraege[5] == 'ADMiN') {
 							$admin = true;
-							$color = ' color:#6699CC';
+							$color = ' color:#6699CC;';
 						}
 					}
 				}
@@ -86,6 +87,13 @@ include_once "./template/functions.php";
 				if (!empty($filter)) {
 					if ($filter == '1' && $exit)  { continue; }
 					if ($filter == '2' && !$exit) { continue; }
+				}
+
+				if (substr_count($eintraege[2], ':') > 0) {
+					$eintraege[2] = expandIpv6($eintraege[2]);
+				}
+				if (substr_count($eintraege[3], ':') > 0) {
+					$eintraege[3] = expandIpv6($eintraege[3]);
 				}
 
 				echo "<tr style='height:15px;'>";
@@ -97,7 +105,7 @@ include_once "./template/functions.php";
 
 				if ($which == 1) {
 					if (substr_count($eintraege[4], "http") || substr_count($eintraege[4], "www")) {
-						echo "<td style='padding:2px 10px; padding-left:15px !important;".$color."'><a style='font: 11px Verdana, Arial; margin-left:-7px;' href='".(substr_count($eintraege[4], "http") ? '' : 'http://').$eintraege[4]."' target='_blank'".($show_p != $eintraege[4] ? " title='".$eintraege[4]."'" : "").">".$show_p."</a></td>";
+						echo "<td style='padding:2px 10px; padding-left:15px !important;".$color."'><a style='font: 11px Verdana, Arial; margin-left:-7px;".$color."' href='".(substr_count($eintraege[4], "http") ? '' : 'http://').$eintraege[4]."' target='_blank'".($show_p != $eintraege[4] ? " title='".$eintraege[4]."'" : "").">".$show_p."</a></td>";
 					} else {
 						echo "<td style='padding:2px 5px; padding-left:15px !important;".$color."'>".$show_p."</td>";
 					}

@@ -204,6 +204,6 @@ function getDuration($epFirst, $epLast) {
 }
 
 function diffToString($val) {
-	return ' ('.$val.' year'.($val > 1 ? 's' : '').')';
+	return ' ('.pluralize('year', $val).')';
 }
 ?>

@@ -45,7 +45,7 @@ function shoutImage($img = null) {
 		try {
 			readfile($img);
 		} catch (Exception $e) {
-			shoutImage(null);
+			shoutImage();
 		}
 	} else {
 		$img = imagecreatetruecolor(2, 1);

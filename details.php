@@ -115,7 +115,7 @@ include_once "./template/functions.php";
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
 		$fps          = $row['fps'];
-		$bits         = $row['bits'];
+		$bits         = isset($row['bits']) ? $row['bits'] : 0;
 		$bit10        = $bits >= 10;
 		$idMovie      = $row['idMovie'];
 		$path         = $row['path'];
@@ -201,37 +201,45 @@ include_once "./template/functions.php";
 		$cmpOrTit = str_replace('and', '', $cmpOrTit);
 		$cmpOrTit = str_replace('und', '', $cmpOrTit);
 		$cmpOrTit = str_replace('&',   '', $cmpOrTit);
-		$orTitleShown = false;
+
+		$checkDelta = 0;
 		if (!empty($cmpOrTit) && $cmpTitel != $cmpOrTit) {
-			$orTitleShown = true;
+			$checkDelta++;
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:4px;">';
-			#echo '<br/>';
 			echo '<b>Original title</b>: '.$row['c16'];
 			echo '</div>';
 			echo "\r\n";
 		}
+
 		if (!empty($country)) {
+			$checkDelta++;
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:8px;">';
-			#echo '<br/>';
 			echo '<b>Made in</b>: '.$country;
 			echo '</div>';
 			echo "\r\n";
 		}
+
 		$studio = getStudio($idMovie);
 		if (!empty($studio)) {
+			$checkDelta++;
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:12px;">';
-			#echo '<br/>';
 			echo '<b>Studio</b>: '.$studio;
 			echo '</div>';
 			echo "\r\n";
 		}
+		
+		$checkPos = 0;
+		if ($checkDelta == 3)
+			$checkPos = 80;
+		else if ($checkDelta == 2)
+			$checkPos = 64;
 
 		if ($isAdmin) {
 			$hint = empty($percent) ? '' : ' title="'.$pausedAt.' ('.$percent.'%)"';
-			echo '<span class="epCheckSpan fancy_movieset" href="./dbEdit.php?act=clearBookmark&idFile='.$idFile.'"'.$hint.' style="top:'.($orTitleShown ? '-80' : '-64').'px; right:-16px;">';
+			echo '<span class="epCheckSpan fancy_movieset" href="./dbEdit.php?act=clearBookmark&idFile='.$idFile.'"'.$hint.' style="top:-'.$checkPos.'px; right:-16px;">';
 			if (!empty($percent)) {
 				echo '<input type="text" class="knob-dyn" data-width="25" data-height="25" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
 			}

@@ -152,7 +152,7 @@ function getSessionKeySQL() {
 	$country     = isset($_SESSION['country'])     ? $_SESSION['country']     : null;
 
 	$sessionKey  = 'movies_';
-	if (empty($unseen) || (!empty($_just) && !empty($_which) || !empty($dbSearch)) ) {
+	if (!isset($unseen) || (!empty($_just) && !empty($_which) || !empty($dbSearch)) ) {
 		$unseen = 3;
 	}
 	$sessionKey .= 'unseen_'.$unseen.'_';
@@ -165,7 +165,7 @@ function getSessionKeySQL() {
 		$saferSearch = strtolower(SQLite3::escapeString($dbSearch));
 /*
 //if (isAdmin()) {
-		$actorSQL = "SELECT ".mapDBC('idActor')." FROM actor WHERE lower(name) LIKE '%".$saferSearch."%' LIMIT 1;";
+		$actorSQL = "SELECT ".mapDBC('idActor')." FROM actor WHERE lower(name) LIKE lower('%".$saferSearch."%') LIMIT 1;";
 		$idRes = querySQL_($dbh, $actorSQL, false);
 		$ids = $idRes->fetch();
 		#print_r( $ids );
@@ -181,13 +181,13 @@ function getSessionKeySQL() {
 	if (!empty($saferSearch)) {
 		$sessionKey .= 'search_'.str_replace(' ', '-', $saferSearch).'_';
 		$filter      =  " AND (".
-				" lower(B.strFilename) LIKE '%".$saferSearch."%' OR".
-				" lower(A.c00) LIKE '%".$saferSearch."%' OR".
-				" lower(A.c01) LIKE '%".$saferSearch."%' OR".
-				" lower(A.c03) LIKE '%".$saferSearch."%' OR".
-				" lower(A.c14) LIKE '%".$saferSearch."%' OR".
-				" lower(A.c15) LIKE '%".$saferSearch."%' OR".
-				" lower(A.c16) LIKE '%".$saferSearch."%'".
+				" lower(B.strFilename) LIKE lower('%".$saferSearch."%') OR".
+				" lower(A.c00) LIKE lower('%".$saferSearch."%') OR".
+				" lower(A.c01) LIKE lower('%".$saferSearch."%') OR".
+				" lower(A.c03) LIKE lower('%".$saferSearch."%') OR".
+				" lower(A.c14) LIKE lower('%".$saferSearch."%') OR".
+				" lower(A.c15) LIKE lower('%".$saferSearch."%') OR".
+				" lower(A.c16) LIKE lower('%".$saferSearch."%')".
 				")";
 
 	} else if ($_which == 'artist') {
@@ -242,12 +242,12 @@ function getSessionKeySQL() {
 	if (!empty($sort)) {
 		     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY ".mapDBC('A.c07')." DESC, dateAdded DESC";      }
 		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY ".mapDBC('A.c07')." ASC, dateAdded ASC";        }
-		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                      }
-		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                       }
-		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY rating DESC";                      }
-		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY rating ASC";                       }
-		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC";                 }
-		else if ($sort == 'sizea')   { $sessionKey .= 'orderSizeA_';   $sqlOrder = " ORDER BY F.filesize ASC";                  }
+		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                                    }
+		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                                     }
+		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY rating DESC";                                   }
+		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY rating ASC";                                    }
+		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC";                               }
+		else if ($sort == 'sizea')   { $sessionKey .= 'orderSizeA_';   $sqlOrder = " ORDER BY F.filesize ASC";                                }
 
 	} else if ($newmode) {
 		$sqlOrder = " ORDER BY ".($newsort == 1 ? "dateValue" : "A.idMovie")." DESC";
@@ -302,6 +302,11 @@ function getSessionKeySQL() {
 			$sessionKey .= '3dCut';
 			break;
 
+		case 8:
+			$uncut = " AND (lower(B.strFilename) LIKE '%remastered%' OR lower(A.c00) LIKE '%remastered%') ";
+			$sessionKey .= 'remasteredCut';
+			break;
+
 		default:
 			unset($uncut);
 	}
@@ -309,7 +314,7 @@ function getSessionKeySQL() {
 	$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
 	$SQL .= $params.";";
 
-//	echo $SQL;
+	#echo $SQL;
 
 	$res['SQL']         = $SQL;
 	$res['sessionKey']  = $sessionKey;
@@ -682,7 +687,7 @@ if ($dirActorEnabled) {
 				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resColor) ? '' : ' style="color:'.$resColor.';"').'>'.$resInfo.'</span>');
 				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]);
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
-				$fps       = array($bits, $fps);
+				$fps       = array($bits, formatFps($fps));
 //				$fps       = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
 				$bit10     = !empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));

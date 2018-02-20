@@ -160,10 +160,12 @@ include_once "./template/_SERIEN.php";
 
 			if (file_exists($sessionImg)) {
 				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encoded' : null);
+			} else {
+				unset($sessionImg);
 			}
 		}
 
-		if (empty($sessionImg) || !file_exists($sessionImg)) {
+		if (empty($sessionImg)) {
 			$sessionImg = getTvShowThumb($coverP.$filename);
 			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0);
 

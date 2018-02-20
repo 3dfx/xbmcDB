@@ -6,7 +6,12 @@ include_once "./template/_SERIEN.php";
 require_once "./rss_php.php";
 
 function startSession()   { if (!isset($_SESSION)) { session_start(); } }
-function allowedRequest() { return true; }
+function allowedRequest($reffer = null) {
+	$ext = isset($GLOBALS['EXT_HOST']) ? $GLOBALS['EXT_HOST'] : null;
+	if (!empty($ext) && !empty($reffer) && substr_count($reffer, gethostbyname($ext)) != 0)
+		return false;
+	return true;
+}
 function getOS() {
 	startSession();
 	if (!isset($_SESSION['OS']) || isset($_SESSION['overrideFetch'])) { $_SESSION['OS'] = strtoupper(php_uname('s')); }
@@ -174,7 +179,7 @@ function getWrapper() {
 	return isset($GLOBALS['IMAGE_DELIVERY']) ? $GLOBALS['IMAGE_DELIVERY'] : null;
 }
 
-function wrapItUp($type, $id, $strFname, $sessionKey = null) {
+function wrapItUp($type, $id, $strFname) {
 	$dlvry = getWrapper();
 	if (isset($dlvry) && $dlvry == 'wrapped' && !empty($strFname)) {
 		$_SESSION['thumbs'][$type][$id] = $strFname;
@@ -444,6 +449,7 @@ function fetchPaths() {
 }
 
 function fetchFps($idFile, $path, $filename, $fps, $dbh) {
+	if (!isLinux()) { return null; }
 	$fpsEnabled = isset($GLOBALS['FETCH_FPS']) ? $GLOBALS['FETCH_FPS'] : false;
 	if (!$fpsEnabled)
 		return null;
@@ -464,7 +470,7 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 		}
 
 		//variable FPS fix
-		if ($fps[2] != null && $fps[1] == null)
+		if (isset($fps[2]) && $fps[2] != null && $fps[1] == null)
 			$fps = array($fps[0], $fps[2]);
 		else
 			$fps = array($fps[0], $fps[1]);
@@ -473,7 +479,7 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 		try {
 			if ($dbhIsNull) { $dbh = getPDO(); }
 
-			$sqli = "UPDATE fileinfo SET fps = '".$fps[1]."',bit = '".intval($fps[0])."' WHERE idFile = '$idFile';";
+			$sqli = "UPDATE fileinfo SET fps = '".$fps[1]."', bit = '".intval($fps[0])."' WHERE idFile = '$idFile';";
 
 			if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 			$dbh->exec($sqli);
@@ -489,8 +495,21 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 
 	if (empty($fps))
 		return array(null, null);
+/*
 	if (isset($fps[1]) && intval($fps[1]) == 0)
 		$fps[1] = null;
+	if (isset($fps[1]) && substr($fps[1], -3) == '000')
+		$fps[1] = intval($fps[1]);
+*/
+	$fps[1] = formatFps($fps[1]);
+	return $fps;
+}
+
+function formatFps($fps) {
+	if (isset($fps) && intval($fps) == 0)
+		$fps = null;
+	if (isset($fps) && (substr($fps, -3) == '000' || substr($fps, -2) == '.0'))
+		$fps = intval($fps);
 	return $fps;
 }
 
@@ -541,7 +560,7 @@ function getStackedFilesize($filename) {
 }
 
 function getFilesize($file) {
-	#if (!isLinux()) { return null; }
+	if (!isLinux()) { return null; }
 	#$file = correctFilename($file);
 	#if (empty($file)) { return null; }
 
@@ -556,7 +575,7 @@ function getFilesize($file) {
 }
 
 function getCreation($file) {
-	#if (!isLinux()) { return null; }
+	if (!isLinux()) { return null; }
 	#$file = correctFilename($file);
 	#if (empty($file)) { return null; }
 
@@ -571,6 +590,7 @@ function getCreation($file) {
 }
 
 function getFps($file) {
+	if (!isLinux()) { return null; }
 	#$output = null;
 	#if (file_exists('./myScripts/conf/mediaInfo'))
 	#	$output = execCommand($file, 'mediainfo --Inform=file:///var/spool/myScripts/conf/mediaInfo ');
@@ -588,10 +608,10 @@ function getFps($file) {
 
 function correctFilename($file) {
 	$ersetzen = array(
-		'Ã¤' => 'ä',
-		'Ã¶' => 'ö',
-		'Ã¼' => 'ü',
-		'ß' => '%',
+		'Ã¤' => '?',
+		'Ã¶' => '?',
+		'Ã¼' => '?',
+		'?' => '%',
 		' ' => '\ ',
 		'[' => '\[',
 		']' => '\]',
@@ -1122,6 +1142,9 @@ function postNavBar_($isMain) {
 
 		} else if ($mode == 7 && empty($just)) {
 			$selectedIs = '3D';
+
+		} else if ($mode == 8 && empty($just)) {
+			$selectedIs = 'remastered';
 		}
 
 		$res .= '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');">';
@@ -1193,6 +1216,7 @@ function postNavBar_($isMain) {
 			$res .= '<li><a href="?show=filme&mode=4'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 4 && empty($just) ? ' class="selectedItem"' : '').'>extended cut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=5'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 5 && empty($just) ? ' class="selectedItem"' : '').'>uncut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=6'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 6 && empty($just) ? ' class="selectedItem"' : '').'>unrated</a></li>';
+			$res .= '<li><a href="?show=filme&mode=8'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 8 && empty($just) ? ' class="selectedItem"' : '').'>remastered</a></li>';
 		}
 		if ($DREIDENABLED) {
 			$res .= '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
@@ -1903,6 +1927,16 @@ function getHostnamee() {
 	return getHttPre().$hostname;
 }
 
+function expandIpv6($ip){
+	$hex = unpack("H*hex", inet_pton($ip));
+	return substr(preg_replace("/([A-f0-9]{4})/", "$1:", $hex['hex']), 0, -1);
+}
+
+function getHttpResponseCode($url) {
+	$headers = get_headers($url);
+	return explode(' ', $headers[0])[1];
+}
+
 function getLocalhost() {
 	$hostname = '127.0.0.1';
 	return getHttPre().$hostname;
@@ -1929,7 +1963,7 @@ function logRefferer($reffer = null) {
 
 		$datum = strftime("%d.%m.%Y");
 		$time = strftime("%X");
-		if (!allowedRequest()) { $exit = true; }
+		if (!allowedRequest($reffer)) { $exit = true; }
 
 		$input = $datum."|".$time."|".$ip."|".$host."|".$reffer."|".($exit ? 1 : 0)."\n";
 
@@ -1949,9 +1983,8 @@ function logRefferer($reffer = null) {
 		$fp = fopen($datei, "w+");
 		fputs($fp, $input);
 		fclose($fp);
-
-		return $exit;
 	}
+	return $exit;
 }
 
 function isWatchedAnyHiddenInMain($idShow) {
@@ -2044,10 +2077,15 @@ function getEpisodes($idTvDb, $page=1) {
 		'method'  => 'GET',
 		'header'  => 'Accept:application/json'."\r\n".'Authorization:Bearer '.$TOKEN
 	));
-	$context = stream_context_create($opts);
-	$result  = null;
+	$result = null;
 	try {
+		//$resCode = getHttpResponseCode($URL);
+		//if ($resCode != 200)
+		//	return null;
+		$context = stream_context_create($opts);
+		$oldHandler = set_error_handler('handleError');
 		$result = file_get_contents($URL, false, $context);
+		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 	} catch (Exception $e) {
 		return null;
 	}
@@ -2335,7 +2373,7 @@ function getGuests($guests) {
 
 function getDateColor($airDate, $daysLeft) {
 	$color = 'silver';
-	if (isAdmin()) {
+	if (isAdmin() && !empty($airDate)) {
 		if (dateMissed($airDate))   { $color = 'red';       }
 		else if ($daysLeft > -1) {
 			if ($daysLeft <= 3) { $color = 'lightblue'; }
@@ -2361,13 +2399,17 @@ function getToday() {
 }
 
 function dateMissed($given) {
-	#return empty($given) ? false : (strtotime($given)) < getToday();
-	return (empty($given) ? false : daysLeft($given) < 0);
+	return (empty($given) ? false : daysLeft($given) <= -1);
 }
 
 function daysLeft($given) {
-	$oneDay  = $GLOBALS['DAY_IN_SECONDS'];
-	return round((strtotime($given) - getToday()) / $oneDay, 0);
+	if (empty($given))
+		return 0;
+
+	$oneDay = $GLOBALS['DAY_IN_SECONDS'];
+	if (checkIfDateIsString($given))
+		$given = strtotime($given);
+	return round(($given - getToday()) / $oneDay, 0);
 }
 
 function dayOfWeek($given) {
@@ -2604,33 +2646,37 @@ function trimDoubles($text) {
 	return str_replace("''", "'", $text);
 }
 
+function pluralize($str, $val, $plr = 's', $format = null) {
+	return (isset($format) ? sprintf("%02d", $val) : $val).' '.$str.($val > 1 ? $plr : '');
+}
+
 function encodeString($text, $plain = false) {
 	$text = str_replace("''", "'", $text);
 	//return htmlspecialchars($text, ENT_QUOTES);
 
 	if (!$plain) {
-		$text = str_replace ("ä",  "&auml;", $text);
-		$text = str_replace ("Ä",  "&Auml;", $text);
-		//$text = str_replace ("Ü¤",  "&auml;", $text);
-		$text = str_replace ("ö",  "&ouml;", $text);
+		$text = str_replace ("?",  "&auml;", $text);
+		$text = str_replace ("?",  "&Auml;", $text);
+		//$text = str_replace ("?",  "&auml;", $text);
+		$text = str_replace ("?",  "&ouml;", $text);
 		$text = str_replace ("Ã¶", "&ouml;", $text);
-		$text = str_replace ("Ö",  "&Ouml;", $text);
-		$text = str_replace ("ü",  "&uuml;", $text);
+		$text = str_replace ("?",  "&Ouml;", $text);
+		$text = str_replace ("?",  "&uuml;", $text);
 		$text = str_replace ("Ã¼", "&uuml;", $text);
-		$text = str_replace ("Ü",  "&Uuml;", $text);
-		$text = str_replace ("Ã",  "&Uuml;", $text);
-		$text = str_replace ("ß", "&szlig;", $text);
+		$text = str_replace ("?",  "&Uuml;", $text);
+		$text = str_replace ("?",  "&Uuml;", $text);
+		$text = str_replace ("?", "&szlig;", $text);
 		$text = str_replace ("'",  "&#039;", $text);
 		$text = str_replace ("'",  "&#039;", $text);
 	} else {
-		$text = str_replace ("ç", "c", $text);
-		$text = str_replace ("Ç", "C", $text);
-		$text = str_replace ("ü", "u", $text);
-		$text = str_replace ("Ü", "U", $text);
-		$text = str_replace ("ö", "o", $text);
-		$text = str_replace ("Ö", "O", $text);
-		$text = str_replace ("ä", "a", $text);
-		$text = str_replace ("Ä", "A", $text);
+		$text = str_replace ("?", "c", $text);
+		$text = str_replace ("?", "C", $text);
+		$text = str_replace ("?", "u", $text);
+		$text = str_replace ("?", "U", $text);
+		$text = str_replace ("?", "o", $text);
+		$text = str_replace ("?", "O", $text);
+		$text = str_replace ("?", "a", $text);
+		$text = str_replace ("?", "A", $text);
 	}
 
 	return $text;
@@ -2641,13 +2687,13 @@ function decodeString($text) {
 	//return htmlspecialchars_decode($text, ENT_QUOTES);
 
 	$text = str_replace ("&amp;", "&", $text);
-	$text = str_replace ("&auml;", "ä", $text);
-	$text = str_replace ("&Auml;", "Ä", $text);
-	$text = str_replace ("&ouml;", "ö", $text);
-	$text = str_replace ("&Ouml;", "Ö", $text);
-	$text = str_replace ("&uuml;", "ü", $text);
-	$text = str_replace ("&Uuml;", "Ü", $text);
-	$text = str_replace ("&szlig;", "ß", $text);
+	$text = str_replace ("&auml;", "?", $text);
+	$text = str_replace ("&Auml;", "?", $text);
+	$text = str_replace ("&ouml;", "?", $text);
+	$text = str_replace ("&Ouml;", "?", $text);
+	$text = str_replace ("&uuml;", "?", $text);
+	$text = str_replace ("&Uuml;", "?", $text);
+	$text = str_replace ("&szlig;", "?", $text);
 	return $text;
 }
 
@@ -2877,7 +2923,7 @@ function findUserOrder() {
 	$saveOrderInDB = isset($GLOBALS['SAVE_ORDER_IN_DB']) ? $GLOBALS['SAVE_ORDER_IN_DB'] : false;
 	if (isAdmin() || !$saveOrderInDB)
 		return null;
-	
+
 	$user = $_SESSION['user'];
 	$SQL  = "SELECT idOrder AS idOrder FROM orderz WHERE fresh=1 AND user='[USER]' ORDER BY idOrder DESC;";
 	$SQL  = str_replace('[USER]', $user, $SQL);

@@ -44,7 +44,7 @@ function postSerie($serie) {
 	$last = fetchNextEpisodeFromDB($serie->getIdShow());
 
 	echo '<tr id="descTR">';
-	echo '<th class="descTRd1">'.$stCount.' Season'.($stCount > 1 ? 's' : '').'</th>';
+	echo '<th class="descTRd1">'.pluralize('Season', $stCount).'</th>';
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
 	echo '<th class="lefto"> Episode'.($allEpsCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto">'.$serie->getRating().'</th>';
@@ -98,7 +98,7 @@ function postStaffel($staffel, $last = null) {
 	echo '<tr class="seasonTR">';
 	echo '<td class="seasonTRd1"><a tabindex="-1" href="#" id="'.$linkId.'" class="plmin hidelink" onclick="toggleEps(\''.$seasonId.'\', '.$eps.', this); $(this).blur(); return false;"></a>Season '.$sNum.'</td>';
 	$missCount = $staffel->getMissingCount();
-	$missTitle = $isAdmin && $missCount != 0 ? ' title="'.$missCount.' episode'.($missCount > 1 ? 's' : '').' missing"' : '';
+	$missTitle = $isAdmin && $missCount != 0 ? ' title="'.pluralize('episode', $missCount).' missing"' : '';
 	$mCountCol = $isAdmin && $missCount != 0 ? ' style="color:#FF0000;"' : '';
 	echo '<td class="seasonTRd2 righto"'.$mCountCol.$missTitle.'>'.$strAllEps.'</td>';
 	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
@@ -205,7 +205,7 @@ function postStaffel($staffel, $last = null) {
 	if ($sNum_ == $last['ms'] && $lastEpNum <= $last['me']) {
 		$airdate = $last['air'];
 		for ($epNum_ = $lastEpNum; $epNum_ <= $last['me']; $epNum_++) {
-			postMissingRow($staffel, $seasonId, rand(-9999,-1), $sNum_, $epNum_, false, $airdate);
+			postMissingRow($staffel, $seasonId, rand(-9999,-1), $sNum_, $epNum_, dateMissed($airdate), $airdate);
 			$airdate = null;
 		}
 	}
@@ -231,7 +231,9 @@ function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
 function postMissingRow($staffel, $seasonId, $idEpisode, $sNum_, $epNum_, $missing = true, $airdate = null) {
 	$epTitle = ($missing ? 'missing' : 'unaired').' episode';
 	if (!empty($airdate))
-		$epTitle = 'unaired: '.toEuropeanDateFormat(addRlsDiffToDate($airdate));
+		$airdate = toEuropeanDateFormat(addRlsDiffToDate($airdate));
+	if (!empty($airdate) && !$missing)
+		$epTitle = 'unaired: '.$airdate;
 	$color = $missing ? '#FF0000' : '#DCDCDC';
 	$bold  = $missing ? ' font-weight:bold;' : '';
 	$epNum = sprintf("%02d", $epNum_);

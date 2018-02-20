@@ -11,8 +11,7 @@
 
 	startSession();
 	if (isLoggedIn()) { loggedInSoRedirect(true); }
-
-	logRefferer();
+	if (logRefferer()) { throw new Exception('301'); }
 
 	$loggedInAs  = '';
 	$failedText  = 'login failed!';

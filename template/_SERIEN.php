@@ -204,10 +204,8 @@ include_once "./template/config.php";
 		$SQLcodec = str_replace('[IDSHOW]', $idShow, $SQLcodec);
 		$resC     = querySQL_($dbh, $SQLcodec, false);
 		$codecs   = array();
-		foreach($resC as $row) {
-			#$idShow = $row['idShow'];
+		foreach($resC as $row)
 			$codecs[$row['codec']] = $row['count'];
-		}
 
 		return $codecs;
 	}
@@ -422,12 +420,12 @@ include_once "./template/config.php";
 		}
 
 		public function compEpisodesByIdEpisode($a, $b) {
-			if($a->getIdEpisode() == $b->getIdEpisode()) return 0;
+			if ($a->getIdEpisode() == $b->getIdEpisode()) return 0;
 			return ($a->getIdEpisode() < $b->getIdEpisode()) ? -1 : 1;
 		}
 
 		public function compEpisodesByAirDate($a, $b) {
-			if($a->getAirDate() == $b->getAirDate()) return 0;
+			if ($a->getAirDate() == $b->getAirDate()) return 0;
 			return ($a->getAirDate() < $b->getAirDate()) ? -1 : 1;
 		}
 
@@ -1032,7 +1030,7 @@ include_once "./template/config.php";
 			$this->o1 = $o1;
 			$this->o2 = $o2;
 			usort($this->serien, function($a, $b) {
-				if($a->getNextAirDate() == $b->getNextAirDate()) return 0;
+				if ($a->getNextAirDate() == $b->getNextAirDate()) return 0;
 				return ($a->getNextAirDate() < $b->getNextAirDate()) ? $this->o1 : $this->o2;
 			});
 		}
