@@ -6,12 +6,12 @@ include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "globals.php";
 include_once "./template/_SERIEN.php";
-	
+
 	header("Content-Type: text/html; charset=UTF-8");
-	
+
 	$admin = isAdmin();
 	if (!$admin) { die(';-)'); };
-	
+
 	$getSeason     = -1;
 	$getEpisode    = -1;
 	$idShow        = -1;
@@ -21,7 +21,7 @@ include_once "./template/_SERIEN.php";
 	$source        = null;
 	$update        = 0;
 	$closeFrame    = 0;
-	
+
 	$idSelected     = false;
 	$seasonSelected = false;
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -35,7 +35,7 @@ include_once "./template/_SERIEN.php";
 		$source     = getEscPost('source');
 		$closeFrame = getEscPost('closeFrame');
 		$idSelected = true;
-		
+
 	} else if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 		$getSeason  = getEscGet('season');
 		$getEpisode = getEscGet('episode');
@@ -48,32 +48,42 @@ include_once "./template/_SERIEN.php";
 		$closeFrame = getEscGet('closeFrame');
 		$idSelected = true;
 	}
-	
+
 	$serien = fetchSerien(null, null);
 	$serien->sortSerien();
-	
+
 	if ($idShow == -1) { $idShow = $serien->getSerieIdByIdTvdb($idTvdb); }
 	if ($idShow == -1) { die('TV-Show not found!'); }
 	$serie = $serien->getSerie($idShow);
 	if ($serie == null) { die('TV-Show is null!'); }
-	
+
 	if ($update && $idEpisode == -1) { die('idEpisode not set!'); }	
 	$episodeToUp = $serie->findEpisode($idEpisode);
 	if ($update && $episodeToUp == null) { die('Selected Episode is null!'); }
-	
+
 	if ($idTvdb == -1) { $idSelected = false; }
 	if ($getSeason == -1 && $getEpisode == -1) { $seasonSelected = false; }
-	
+
 	$episodes = null;
 	if ($idSelected) {
 		$episodes = getShowInfo($idTvdb);
 		if (empty($episodes)) { die("Couldn't fetch show info!"); }
 	}
-	
+
 	$showPath = $serie->getShowpath();
-	
+
 	$item = null;
 	if ($seasonSelected) { $item = getEpisodeInfo($episodes, $getSeason, $getEpisode); }
+	
+	$epDesc = null;
+	$guests = null;
+	$SQL = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$idEpisode.';';
+	$result = querySQL($SQL);
+	foreach($result as $row) {
+		$epDesc = trimDoubles(trim($row['epDesc']));
+		$guests = $row['guests'];
+	}
+	
 ?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
@@ -114,16 +124,20 @@ include_once "./template/_SERIEN.php";
 			var guestField  = document.getElementById('gast_autor');
 			var ratingField = document.getElementById('rating');
 
-			ratingField.value = '';
-			guestField.value  = '';
-			regieField.value  = '';
 			var result = null;
 			$.ajax({
 				url:    'tvdbEpisode.php?idEp='+idEp,
 				type:   'GET',
 				async:   returnResult ? false : true,
+				timeout: 500,
 				success: function(json) {
-					var obj = JSON.parse(json); 
+					if (json == null) { return null; }
+					var obj = JSON.parse(json);
+					if (obj == null) { return null; }
+
+					ratingField.value = '';
+					guestField.value  = '';
+					regieField.value  = '';
 
 					if (obj.data.siteRating != rating.value && obj.data.siteRating != 0) {
 						rating.value = obj.data.siteRating;
@@ -154,11 +168,14 @@ include_once "./template/_SERIEN.php";
 							directors_ = directors_ + ' / ';
 					}
 					regieField.value = directors_;
-					
+
 					result = obj;
+				},
+				error: function (xhr, ajaxOptions, thrownError) {
+					console.log( "TVdb error! / " + xhr.status + " / " + thrownError );
 				}
 			});
-			
+
 			return result;
 		}
 
@@ -172,6 +189,9 @@ include_once "./template/_SERIEN.php";
 		function showEpInfos() {
 			var sel = document.getElementById('showEpisode');
 			var id = sel.value;
+
+			if (episodes == null) { return; }
+
 			for (var i = 0; i < episodes.length; i++) {
 				var season = episodes[i];
 				for (var j = 0; j < season.length; j++) {
@@ -187,7 +207,7 @@ include_once "./template/_SERIEN.php";
 
 						title.value   = episode[3];
 						airdate.value = episode[4];
-						desc.value    = descriptions[i][j];
+						desc.value    = descriptions == null ? "" : descriptions[i][j];
 						fetchEpisodeInfo(idEp, false);
 					}
 				}
@@ -331,11 +351,11 @@ include_once "./template/_SERIEN.php";
 ?>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Titel:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="title" name="title" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="title" name="title" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo trimDoubles(trim($episodeToUp->getName())); ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Air-Date:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="airdate" name="airdate" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="airdate" name="airdate" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo trimDoubles(trim($episodeToUp->getAirDate())); ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Regie:</td>
@@ -343,15 +363,15 @@ include_once "./template/_SERIEN.php";
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Gast:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="gast_autor" name="gast_autor" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="gast_autor" name="gast_autor" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo $guests; ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Rating:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="rating" name="rating" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="rating" name="rating" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo trimDoubles(trim($episodeToUp->getRating())); ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Desc:</td>
-		<td style="padding-left:5px; zwidth:450px;"><textarea id="desc" name="desc" class="key inputbox" style="width:450px; height:150px;" onfocus="this.select();" onclick="this.select();"></textarea></td>
+		<td style="padding-left:5px; zwidth:450px;"><textarea id="desc" name="desc" class="key inputbox" style="width:450px; height:150px;" onfocus="this.select();" onclick="this.select();"><?php echo $epDesc; ?></textarea></td>
 		</tr>
 <?php
 		echo "\t\t".'<tr>';
@@ -436,7 +456,6 @@ function postPaths() {
 		$episodeToUp = $GLOBALS['episodeToUp'];
 		$idPath = $episodeToUp->getIdPath();
 	}
-	echo $idPath;
 	
 	for ($i = 0; $i < count($paths); $i++) {
 		$name = $paths[$i][1];
@@ -471,76 +490,96 @@ function postPathsJS() {
 function postEpisodesJS($episodes) {
 	foreach ($episodes as $xdex => $season) {}
 	$cEpisodes = count($episodes);
+
+	$arrCheck = 0;
+	foreach ($episodes as $xdex => $season) {
+		if (empty($season)) { continue; }
+		foreach($season as $ydex => $episode) {
+			if (empty($episode)) { continue; }
+			$arrCheck++;
+		}
+	}
+	#echo $arrCheck;
 	
 	$index = 1;
 	echo "\t\t";
-	echo 'var episodes = new Array(';
-	foreach ($episodes as $xdex => $season) {
-		echo "\r\n\t\t\t";
+	echo 'var episodes = ';
+	if (empty($arrCheck)) {
+		echo 'null;'."\r\n";
+	} else {
 		echo 'new Array(';
-		$lastSeason = 0;
-		$jndex = 1;
-		foreach($season as $ydex => $episode) {
-			$seas       = get($episode, 'airedSeason');
-			if ($seas == null || $seas == '') { $seas = 0; }
-			$lastSeason = $seas;
-			$idEpisode  = get($episode, 'id');
-			#$gastStars  = processCredits(get($episode, 'GuestStars'), 'Gast Star');
-			#$autoren    = processCredits(get($episode, 'Writer'), 'Autor');
-			#$spl        = ($gastStars != '' && $autoren != '' ? ' / ' : '');
-			#$gast_autor = $gastStars.$spl.$autoren;
-			#$regie      = processCredits(get($episode, 'Director'), null);
-			#$rating     = getRating(get($episode, 'Rating'));
-			
-			echo "\r\n\t\t\t\t";
+		foreach ($episodes as $xdex => $season) {
+			echo "\r\n\t\t\t";
 			echo 'new Array(';
-			#echo '"'.$seas.'","'.get($episode, 'airedEpisodeNumber').'",'.json_encode( get($episode, 'episodeName') ).',"'.get($episode, 'firstAired').'","'.$rating.'",'.json_encode( $regie ).','.json_encode( $gast_autor );
-			echo '"'.$idEpisode.'","'.$seas.'","'.get($episode, 'airedEpisodeNumber').'",'.json_encode( get($episode, 'episodeName') ).',"'.get($episode, 'firstAired').'"';
-			echo ')';
-			if ($jndex < count($season)) {
-				echo ', ';
-			} else {
-				echo "\r\n\t\t\t";
+			$lastSeason = 0;
+			$jndex = 1;
+			foreach($season as $ydex => $episode) {
+				$seas       = get($episode, 'airedSeason');
+				if ($seas == null || $seas == '') { $seas = 0; }
+				$lastSeason = $seas;
+				$idEpisode  = get($episode, 'id');
+				#$gastStars  = processCredits(get($episode, 'GuestStars'), 'Gast Star');
+				#$autoren    = processCredits(get($episode, 'Writer'), 'Autor');
+				#$spl        = ($gastStars != '' && $autoren != '' ? ' / ' : '');
+				#$gast_autor = $gastStars.$spl.$autoren;
+				#$regie      = processCredits(get($episode, 'Director'), null);
+				#$rating     = getRating(get($episode, 'Rating'));
+
+				echo "\r\n\t\t\t\t";
+				echo 'new Array(';
+				#echo '"'.$seas.'","'.get($episode, 'airedEpisodeNumber').'",'.json_encode( get($episode, 'episodeName') ).',"'.get($episode, 'firstAired').'","'.$rating.'",'.json_encode( $regie ).','.json_encode( $gast_autor );
+				echo '"'.$idEpisode.'","'.$seas.'","'.get($episode, 'airedEpisodeNumber').'",'.json_encode( get($episode, 'episodeName') ).',"'.get($episode, 'firstAired').'"';
+				echo ')';
+				if ($jndex < count($season)) {
+					echo ', ';
+				} else {
+					echo "\r\n\t\t\t";
+				}
+
+				$jndex++;
 			}
-			
-			$jndex++;
+			echo ')';
+			if ($index < $cEpisodes) {
+				echo ', ';
+			}
+			$index++;
 		}
-		echo ')';
-		if ($index < $cEpisodes) {
-			echo ', ';
-		}
-		$index++;
+		echo "\r\n\t\t";
+		echo ');';
+		echo "\r\n";
+		echo "\r\n";
 	}
-	echo "\r\n\t\t";
-	echo ');';
-	echo "\r\n";
-	echo "\r\n";
 	
 	$index = 1;
 	echo "\t\t";
-	echo 'var descriptions = new Array(';
-	foreach ($episodes as $xdex => $season) {
-		echo "\r\n\t\t\t";
+	echo 'var descriptions = ';
+	if (empty($arrCheck)) {
+		echo 'null;'."\r\n";
+	} else {
 		echo 'new Array(';
-		$jndex = 1;
-		foreach($season as $ydex => $episode) {
-			echo "\r\n\t\t\t\t";
+		foreach ($episodes as $xdex => $season) {
+			echo "\r\n\t\t\t";
 			echo 'new Array(';
-			echo json_encode( get($episode, 'overview') );
-			echo ')';
-			if ($jndex < count($season)) {
+			$jndex = 1;
+			foreach($season as $ydex => $episode) {
+				echo "\r\n\t\t\t\t";
+				echo 'new Array(';
+				echo json_encode( get($episode, 'overview') );
+				echo ')';
+				if ($jndex < count($season)) {
+					echo ', ';
+				}
+				$jndex++;
+			}
+			echo "\r\n\t\t\t".')';
+			if ($index < $cEpisodes) {
 				echo ', ';
 			}
-			$jndex++;
+			$index++;
 		}
-		echo "\r\n\t\t\t".')';
-		if ($index < $cEpisodes) {
-			echo ', ';
-		}
-		$index++;
+		echo "\r\n\t\t";
+		echo ');';
 	}
-	echo "\r\n\t\t";
-	echo ');';
 	echo "\r\n";
 }
 
@@ -557,9 +596,9 @@ function processCredits($input, $role) {
 		return '';
 	if (substr($input, 0, 1) == '|') { $input = substr($input, 1); }
 	if (substr($input, -1) == '|') { $input = substr($input, 0, strlen($input)-1); }
-	
+
 	if (trim($input) == '') { return ''; }
-	
+
 	$tmp = explode("|", $input);
 	$name = $role != null ? ' ('.$role.')' : '';
 	if (count($tmp) > 1) { $input = implode($name.' / ', $tmp); }

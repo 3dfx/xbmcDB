@@ -20,6 +20,10 @@ function getOS() {
 
 function isLinux() { return 'LINUX' == getOS(); }
 
+function getTimeOut($intra = false) {
+	return $intra ? 1 : 3;
+}
+
 function execSQL($SQL, $throw = true) {
 	$dbh = getPDO();
 	return execSQL_($dbh, $SQL, $throw);
@@ -1539,7 +1543,7 @@ function curlJson($method) {
 		CURLOPT_USERPWD        => $json_username.':'.$json_passwort,
 		CURLOPT_HTTPHEADER     => array('content-type:application/json') ,
 		CURLOPT_POSTFIELDS     => $json_string,
-		CURLOPT_TIMEOUT        => 1
+		CURLOPT_TIMEOUT        => getTimeOut(true)
 	);
 
 	curl_setopt_array($ch, $options);
@@ -1987,17 +1991,23 @@ function authTvDB() {
 	$opts = array('http' => array(
 		'method'  => 'POST',
 //		'method'  => 'GET',
+		'timeout' => getTimeOut(),
 		'header'  => 'Content-Type: application/json'."\r\n".'Accept: application/json',
 		'content' => '{"apikey": "'.$TVDB_API_KEY.'", "userkey": "", "username": ""}'
 	));
 	$context = stream_context_create($opts);
 	$result  = null;
+	$oldHandler = set_error_handler('handleError');
 	try {
 		$result  = file_get_contents($URL, false, $context);
+		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 	} catch (Exception $e) {
+		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 		return null;
 	}
-	if ($result === FALSE) {
+
+	if (!empty($oldHandler)) { set_error_handler($oldHandler); }
+	if ($result === FALSE || $result == null) {
 		unset($_SESSION['TvDbCache']['JWT_TOKEN']);
 		return null;
 	}
@@ -2024,6 +2034,7 @@ function getShowInfoJson($idTvDb) {
 	$URL = 'https://api.thetvdb.com/series/'.$idTvDb;
 	$opts = array('http' => array(
 		'method'  => 'GET',
+		'timeout' => getTimeOut(),
 		'header'  => 'Accept:application/json'."\r\n".'Authorization:Bearer '.$TOKEN
 	));
 	$context = stream_context_create($opts);
@@ -2056,6 +2067,7 @@ function getEpisodes($idTvDb, $page=1) {
 	$URL = 'https://api.thetvdb.com/series/'.$idTvDb.'/episodes?page='.$page;
 	$opts = array('http' => array(
 		'method'  => 'GET',
+		'timeout' => getTimeOut(),
 		'header'  => 'Accept:application/json'."\r\n".'Authorization:Bearer '.$TOKEN
 	));
 	$result = null;
@@ -2182,7 +2194,7 @@ function getLastEpisodeInfo($episodes, $lastStaffel = null) {
 					continue;
 			}
 
-			if ($lastStaffel == intval($episodes[$i][$epis]['airedSeason'])) {
+			if (intval($lastStaffel) == intval($episodes[$i][$epis]['airedSeason'])) {
 				#$seas = intval($episodes[$i][$epis]['airedSeason']);
 				$seas = $i;
 				break;
