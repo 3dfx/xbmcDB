@@ -123,7 +123,7 @@ function postSets() {
 			}
 		}
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		echo $e->getMessage();
 	}
 }

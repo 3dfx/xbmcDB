@@ -57,7 +57,7 @@ include_once "./template/_SERIEN.php";
 	$serie = $serien->getSerie($idShow);
 	if ($serie == null) { die('TV-Show is null!'); }
 
-	if ($update && $idEpisode == -1) { die('idEpisode not set!'); }	
+	if ($update && $idEpisode == -1) { die('idEpisode not set!'); }
 	$episodeToUp = $serie->findEpisode($idEpisode);
 	if ($update && $episodeToUp == null) { die('Selected Episode is null!'); }
 
@@ -145,29 +145,35 @@ include_once "./template/_SERIEN.php";
 
 					guests  = obj.data.guestStars;
 					guests_ = '';
-					for (var i = 0; i < guests.length; i++) {
-						guests_ = guests_ + guests[i] + ' (Gast Star)';
-						if (i < guests.length-1)
-							guests_ = guests_ + ' / ';
+					if (guests != null && guests.length != 0) {
+						for (var i = 0; i < guests.length; i++) {
+							guests_ = guests_ + guests[i] + ' (Gast Star)';
+							if (i < guests.length-1)
+								guests_ = guests_ + ' / ';
+						}
 					}
 
 					writers  = obj.data.writers;
-					writers_ = '';
-					for (var i = 0; i < writers.length; i++) {
-						writers_ = writers_ + writers[i] + ' (Autor)';
-						if (i < writers.length-1)
-							writers_ = writers_ + ' / ';
+					if (writers != null && writers.length != 0) {
+						writers_ = '';
+						for (var i = 0; i < writers.length; i++) {
+							writers_ = writers_ + writers[i] + ' (Autor)';
+							if (i < writers.length-1)
+								writers_ = writers_ + ' / ';
+						}
+						guestField.value = guests_ + (guests_.length == 0 || writers_.length == 0 ? '' : ' / ') + writers_;
 					}
-					guestField.value = guests_ + (guests_.length == 0 || writers_.length == 0 ? '' : ' / ') + writers_;
 
 					directors  = obj.data.directors;
-					directors_ = '';
-					for (var i = 0; i < directors.length; i++) {
-						directors_ = directors_ + directors[i];
-						if (i < directors.length-1)
-							directors_ = directors_ + ' / ';
+					if (directors != null && directors.length != 0) {
+						directors_ = '';
+						for (var i = 0; i < directors.length; i++) {
+							directors_ = directors_ + directors[i];
+							if (i < directors.length-1)
+								directors_ = directors_ + ' / ';
+						}
+						regieField.value = directors_;
 					}
-					regieField.value = directors_;
 
 					result = obj;
 				},
@@ -411,6 +417,9 @@ function postEpisoden($episodes) {
 		$selSE = $episodeToUp->getSeason().'-'.$episodeToUp->getEpNum();
 	}
 
+	$lS = 0;
+	$lE = 0;
+
 	foreach($episodes as $xdex => $season) {
 		foreach($season as $ydex => $episode) {
 			if ($episode == null || get($episode, 'airedEpisodeNumber') == null)
@@ -421,10 +430,28 @@ function postEpisoden($episodes) {
 			if ($s == '') { $s = 0; }
 			$e = intval(trim($episode['airedEpisodeNumber']));
 			$se = sprintf("%d-%d", $s, $e);
-			echo "\t\t\t\t".'<option value="'.$se.'"'.($se == $selSE ? ' SELECTED' : '').'>'.sprintf("S%02d E%02d", $s, $e).'</option>';
-			echo "\r\n";
+			echo "\t\t\t\t".'<option value="'.$se.'"'.($se == $selSE ? ' SELECTED' : '').'>'.sprintf("S%02d E%02d", $s, $e).'</option>'."\r\n";
+
+			$lS = $s;
+			$lE = $e;
 		}
 	}
+
+	$tmp = explode('-', $selSE);
+    $selS = intval($tmp[0]);
+    $selE = intval($tmp[1]);
+
+    $firstRun = true;
+    for ($s_ = $lS; $s_ <= $selS; $s_++) {
+        for ($e_ = $lE; $e_ <= $selE; $e_++) {
+            if ($firstRun) {
+                $firstRun = false;
+                continue;
+            }
+            $se = sprintf("%d-%d", $s_, $e_);
+            echo "\t\t\t\t".'<option value="'.$se.'"'.($se == $selSE ? ' SELECTED' : '').'>'.sprintf("S%02d E%02d", $s_, $e_).' [x]</option>'."\r\n";
+        }
+    }
 }
 
 function postSeasonIds($idShow) {

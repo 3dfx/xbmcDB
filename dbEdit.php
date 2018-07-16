@@ -190,7 +190,7 @@ include_once "globals.php";
 					checkNextAirDateTable($dbh);
 					clearAirdateInDb($idShow, $dbh);
 					fetchAndUpdateAirdate($idShow, $dbh);
-				} catch(Exception $e) { }
+				} catch(Throwable $e) { }
 			}
 
 			clearMediaCache();
@@ -326,7 +326,7 @@ include_once "globals.php";
 				$dbh->exec('REPLACE INTO art (media_id, media_type, type, url) VALUES("'.$id.'", "set", "poster", "'.$poster.'");');
 				$dbh->exec('REPLACE INTO art (media_id, media_type, type, url) VALUES("'.$id.'", "set", "fanart", "'.$fanart.'");');
 
-			} catch(PDOException $e) {
+			} catch(Throwable $e) {
 				if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
 				exit;
 			}
@@ -445,7 +445,7 @@ include_once "globals.php";
 
 		if ($clsFrame) { header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php'); }
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		echo $e;
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
 	}

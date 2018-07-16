@@ -27,14 +27,15 @@ include_once "./template/_SERIEN.php";
 
 	$sum    = 0;
 	$codecs = array();
-	$data   = getEscGet('data');
 	foreach ($codecs_ as $codec => $count) {
 		$codecs[postEditVCodec($codec)] = $count + (isset($codecs[postEditVCodec($codec)]) ? $codecs[postEditVCodec($codec)] : 0);
 		$sum += $count;
 	}
 	arsort($codecs);
 
-	if (isset($data)) {
+	$data   = getEscGet('data');
+	//if (isset($data)) {
+	if (isAjax() && isset($data)) {
 		echo genJsonData($codecs, $sum);
 		return;
 	}
@@ -57,19 +58,19 @@ include_once "./template/_SERIEN.php";
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
 		$episodes = getShowInfo($idTvdb, $serie->getLastStaffel()->getStaffelNum());
-		$runningTvDb = isset($episodes[0][0]) ? $episodes[0][0] : null;
-		
+		$runningTvDb = isset($episodes[0][0]) ? $episodes[0][0] : '';
+
 		$pad1 = $runningTvDb == null ? 'class="padbot15" ' : '';
 		$pad2 = $runningTvDb != null ? 'class="padbot15" ' : '';
-		echo '<div '.$pad1.'style="overflow-x:hidden;"><u><i><b>idShow:</b></i></u><span class="flalright">'.$idShow.'</span></div>';
-		if ($runningTvDb != null) {
+		echo '<div '.$pad1.'style="overflow-x:hidden;"><i><b>idShow:</b></i><span class="flalright">'.$idShow.'</span></div>';
+		if ($runningTvDb !== null) {
 			$run1 = '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act=setRunning&val='.($running ? 0 : 1).'&idShow='.$idShow.'">';
 			$run2 = '</a>';
 			$diff = ($running && $runningTvDb == 'e') || (!$running && $runningTvDb == 'r');
 			echo '<div '.$pad2.'style="overflow-x:hidden;">'.
-			     '<u><i><b>Status:</b></i></u>'.
+			     '<i><b>Status:</b></i>'.
 			     $run1.
-			     '<span class="flalright"'.($diff ? ' style="font-weight:bold; color:red;"' : '').'>'.($runningTvDb == 'r' ? 'running' : 'ended').'</span>'.
+			     '<span class="flalright"'.($diff ? ' style="font-weight:bold; color:red;"' : '').'>'.($running == 'r' ? 'running' : 'ended').'</span>'.
 			     $run2.
 			     '</div>';
 		}
@@ -84,13 +85,13 @@ include_once "./template/_SERIEN.php";
 		$title .= $codec.': '.$prc.'%'.(++$idx < $end ? "\r\n" : '');
 	}
 
-	echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>Codecs:</b></i></u><span class="flalright" style="padding-top:2.5px;" title="'.$title.'">';
+	echo '<div class="padbot15" style="overflow-x:hidden;"><i><b>Codecs:</b></i><span class="flalright" style="padding-top:2.5px;" title="'.$title.'">';
 	echo '<canvas id="donutChartPir" width="20" height="20"></canvas>';
 	echo '</span></div>';
 
-	if (!empty($genre))  { echo '<div style="overflow-x:hidden;"><u><i><b>Genre:</b></i></u><span class="flalright">'.$genre.'</span></div>'; }
-	if (!empty($fsk))    { echo '<div style="overflow-x:hidden;"><u><i><b>FSK:</b></i></u><span class="flalright">'.$fsk.'</span></div>'; }
-	if (!empty($studio)) { echo '<div style="overflow-x:hidden;"><u><i><b>Studio:</b></i></u><span class="flalright">'.$studio.'</span></div>'; }
+	if (!empty($genre))  { echo '<div style="overflow-x:hidden;"><i><b>Genre:</b></i><span class="flalright">'.$genre.'</span></div>'; }
+	if (!empty($fsk))    { echo '<div style="overflow-x:hidden;"><i><b>FSK:</b></i><span class="flalright">'.$fsk.'</span></div>'; }
+	if (!empty($studio)) { echo '<div style="overflow-x:hidden;"><i><b>Studio:</b></i><span class="flalright">'.$studio.'</span></div>'; }
 	if (!empty($genre.$studio.$fsk)) {
 		echo '<div class="padbot15" style="overflow-x:hidden;"></div>';
 	}
@@ -104,7 +105,7 @@ include_once "./template/_SERIEN.php";
 		$lastAir = toEuropeanDateFormat($epLast->getAirDate());
 		if ($airings != $lastAir) { $airings .= ' - '.$lastAir; }
 		$dur = getDuration($epFirst, $epLast);
-		echo '<div class="padbot15" style="overflow-x:hidden;"><u><i><b>Aired:</b></i></u><span class="flalright">'.$airings.$dur.'</span></div>';
+		echo '<div class="padbot15" style="overflow-x:hidden;"><i><b>Aired:</b></i><span class="flalright">'.$airings.$dur.'</span></div>';
 	}
 
 	if ($isAdmin && $running && checkAirDate()) {
@@ -151,7 +152,7 @@ include_once "./template/_SERIEN.php";
 			$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
 			$clear2    = $isAdmin ? '</a>' : '';
 
-			echo 'Next airdate:<br />'.$clear1.$info.$clear2.'<br /><br />';
+			echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2.'<br /><br />';
 
 			if (!empty($nextEpisode) && compareDates($nextAirDate, $dbDate)) {
 				updateAirdateInDb($id, $season, $episode, $dbDate, $lastEpisode);

@@ -35,7 +35,8 @@ include_once "globals.php";
 			echo unserialize($_SESSION['param_tvShowJsVars']);
 		return;
 	}
-	if (getEscGet('data')) {
+	//if (getEscGet('data')) {
+	if (isAjax()) {
 		if ($TVSHOW_GAL_ENABLED && $gallerymode && $isAdmin) {
 			return fillTableGal($serien, $dbh);
 		} else {
@@ -56,7 +57,7 @@ include_once "globals.php";
 ?>
 		$(document).ready(function() {
 			$('#myNavbar').load( './navbar.php?maself=<?php echo ($isMain ? 1 : 0); ?>', function() { if (isAdmin) { initNavbarFancies(); } } );
-			$('#showsDiv').load( './serien_.php?data=1', function() {
+			$('#showsDiv').load( './serien_.php', function() {
 				$('.knob-dyn').knob();
 				initShowFancies();
 <?php
@@ -303,7 +304,7 @@ function postSerie($serie, $counter, $runningItalic = false) {
 			$awaiting = $daysLeft <= 7 ? 1 : 0;
 			$eSrch1 = !empty($epSearch) ? '<a tabindex="-1" class="fancy_iframe4" href="'.$epSearch.'">' : '';
 			$eSrch2 = !empty($epSearch) ? '</a>' : '';
-			echo $eSrch1.'<span class="airdate sInfoSize defAirdate" style="'.$fCol.getDateFontsize($daysLeft).'" title="'.$title.(!empty($enNum) ? ': '.$enNum : '').'">'.$airDate.'</span>'.$eSrch2;
+			echo $eSrch1.'<span class="airdate sInfoSize defAirdate" style="'.$fCol.getDateFontsize($daysLeft).(!empty($epSearch) ? ' cursor:pointer;' : '').'" title="'.$title.(!empty($enNum) ? ': '.$enNum : '').'">'.$airDate.'</span>'.$eSrch2;
 		}
 		echo '</td>';
 	}

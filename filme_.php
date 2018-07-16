@@ -129,7 +129,7 @@ function createTable($orderz) {
 
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->commit(); }
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
 		if (isAdmin()) { echo $e->getMessage(); }
 	}
@@ -678,27 +678,26 @@ if ($dirActorEnabled) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 } //$dirActorEnabled
 
-#resolution/codec/10bit/fps
+#resolution/codec/10bit/fps/hdr
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 				$resInfo   = getResDesc($vRes);
-				$resPerf   = getResPerf($vRes);
+				$hdr       = preg_match_all('/\bHDR\b/', $filename) > 0 ? true : false;
+				$resPerf   = getResPerf($vRes, $hdr);
 				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
 				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resColor) ? '' : ' style="color:'.$resColor.';"').'>'.$resInfo.'</span>');
-				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]);
+				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '');
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
 				$fps       = array($bits, formatFps($fps));
-//				$fps       = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
 				$bit10     = !empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
-				#$codecST   = (!empty($color)  ? ' style="color:'.$color.'; font-weight:bold;"' : ' style="padding-left:4px;"');
 				$codecST   = (empty($color) ? '' : ' style="color:'.$color.';"');
 				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
-				#$fpsTitle  = (!empty($fps) ? (is_array($fps) ? $fps[1] : $fps).' fps' : '');
 				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
 				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
+				$fpsTitle  = ($hdr   ? 'HDR'   : '').($hdr   && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = 'title="'.$fpsTitle.'"';
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" '.$fpsTitle.'>'.$codecTD.'</td>';
 

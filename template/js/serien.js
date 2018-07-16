@@ -574,7 +574,7 @@ function saveSelection() { saveSelection__(true, ids); }
 function drawDonut(id) {
 	if (id == null || id < 0) { return; }
 
-	var url     = './detailSerieDesc?data&id=' + id;
+	var url     = './detailSerieDesc.php?data&id=' + id;
 	var data    = $.ajax({ url: url, dataType:'json', async: false }).responseText;
 	var gotData = data != null && data != '';
 	if (!gotData) { return; }

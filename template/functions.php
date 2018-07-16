@@ -18,6 +18,10 @@ function getOS() {
 	return $_SESSION['OS'];
 }
 
+function isAjax() {
+	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+}
+
 function isLinux() { return 'LINUX' == getOS(); }
 
 function getTimeOut($intra = false) {
@@ -43,7 +47,7 @@ function execSQL_($dbh, $SQL, $throw = true, $commitExtern = true) {
 			$dbh->commit();
 		}
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if (!$commitExtern && $dbh->inTransaction()) {
 			$dbh->rollBack();
 		}
@@ -62,7 +66,7 @@ function querySQL_($dbh, $SQL, $throw = true) {
 	try {
 		return $dbh->query($SQL);
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
@@ -84,7 +88,7 @@ function singleSQL_($dbh, $SQL, $throw = true) {
 	try {
 		return $dbh->querySingle($SQL);
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
@@ -102,7 +106,7 @@ function fetchFromDB_($dbh, $SQL, $throw = true) {
 		$result = $dbh->query($SQL);
 		return $result->fetch();
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if ($throw || isAdmin()) { echo $e->getMessage(); }
 	}
 	return null;
@@ -120,7 +124,7 @@ function getTableNames() {
 		sort($result);
 		return $result;
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if (isAdmin()) { echo $e->getMessage(); }
 	}
 }
@@ -391,7 +395,7 @@ function existsTable($tableName, $type = 'table', $dbh = null) {
 		$_SESSION['existsTable'][$tableName] = $exist;
 		return $exist;
 
-	} catch(PDOException $e) { }
+	} catch(Throwable $e) { }
 
 	return false;
 }
@@ -491,11 +495,11 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 
 			//clearMediaCache();
 
-		} catch(PDOException $e) {
+		} catch(Throwable $e) {
 			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
 			if (isAdmin()) { echo $e->getMessage(); }
 		}
-	} // if fsize == null...
+	} // if fps == null...
 
 	if (empty($fps))
 		return array(null, null);
@@ -541,7 +545,7 @@ function fetchFileSize($idFile, $path, $filename, $fsize, $dbh) {
 
 			clearMediaCache();
 
-		} catch(PDOException $e) {
+		} catch(Throwable $e) {
 			if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
 			if (isAdmin()) { echo $e->getMessage(); }
 		}
@@ -595,11 +599,7 @@ function getCreation($file) {
 
 function getFps($file) {
 	if (!isLinux()) { return null; }
-	#$output = null;
-	#if (file_exists('./myScripts/conf/mediaInfo'))
-	#	$output = execCommand($file, 'mediainfo --Inform=file:///var/spool/myScripts/conf/mediaInfo ');
-	#else
-	#$output = execCommand($file, 'mediainfo --Inform="Video;%FrameRate%" ');
+	#$output = execCommand($file, 'mediainfo --Inform="Video;%BitDepth% %FrameRate% %FrameRate_Original% %transfer_characteristics%" ');
 	$output = execCommand($file, 'mediainfo --Inform="Video;%BitDepth% %FrameRate% %FrameRate_Original%" ');
 
 	if ($output != null && count($output) > 0) {
@@ -716,7 +716,7 @@ function setSeenDelMovie($what, $checkFilme) {
 
 		if ($dbh->inTransaction()) { $dbh->commit(); }
 
-	} catch(PDOException $e) {
+	} catch(Throwable $e) {
 		if ($dbh->inTransaction()) { $dbh->rollBack(); }
 		if (isAdmin()) { echo $e->getMessage(); }
 	}
@@ -732,7 +732,7 @@ function resizeImg($SRC, $DST, $w, $h) {
 	$image = new SimpleImage();
 	try {
 		$image->load($SRC);
-	} catch (Exception $e) { }
+	} catch (Throwable $e) { }
 
 	if ($image->isEmpty()) { return; }
 
@@ -832,7 +832,7 @@ function getCover($SRC, $orSRC, $cacheDir, $subDir, $subName, $w, $h, $newmode) 
 		if ($cachedImgExist) {
 			$ftime = filemtime($cachedimg);
 		}
-	} catch (Exception $e) { }
+	} catch (Throwable $e) { }
 
 	$resizedfile = './img/'.$subDir.'/'.$crc.'-'.$subName.(empty($ftime) ? '' : '_').$ftime.'.jpg';
 	$_SESSION['covers'][$CACHE_KEY] = generateImg($cachedimg, $resizedfile, $orSRC, $w, $h);
@@ -1314,7 +1314,7 @@ function postNavBar_($isMain) {
 			$res .= '<li><a href="" onclick="scanLib(); return false;">Scan Library</a></li>';
 		}
 		$res .= '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
-		$res .= '<li><a class="fancy_msgbox" style="cursor:pointer;" href="guestStarLinks.php">Import guest links</a></li>';
+		$res .= '<li><a class="fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
 		$res .= '<li class="divider"></li>';
 
 		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
@@ -1561,9 +1561,8 @@ function xbmcRunning() {
 	if (!isAdmin() || !isLinux()) { return 0; }
 
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
-
-	exec('ps -ea | grep kodi.bin | wc -l', $output);
+	#if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
+	exec('ps -ea | grep kodi-x11 | wc -l', $output);
 	$res = intval(trim($output[0]));
 	$_SESSION['param_xbmcRunning'] = $res;
 	return $res;
@@ -1650,9 +1649,13 @@ function setSessionParams($isAuth = false) {
 		if (!empty($_SESSION['which']))    { unset( $_SESSION['dbSearch'] ); }
 		if (!empty($_SESSION['dbSearch'])) { unset( $_SESSION['which'], $_SESSION['just'] ); }
 
-		foreach ($_POST as $key => $value)    { $_SESSION[$key] = SQLite3::escapeString($value); }
+		foreach ($_POST as $key => $value)    {
+			if ($key == 'passwort' || $key == 'username') { continue; }
+			$_SESSION[$key] = SQLite3::escapeString($value);
+		}
 		foreach ($_GET  as $key => $value)    {
-			if(isset($_GET['show']) &&
+			if ($key == 'passwort' || $key == 'username') { continue; }
+			if (isset($_GET['show']) &&
 			   $_GET['show'] != 'logout') { $_SESSION[$key] = SQLite3::escapeString($value); }
 		}
 
@@ -1683,7 +1686,7 @@ function storeSession() {
 	unset( $_SESSION['username'],   $_SESSION['user'],  $_SESSION['idGenre'],  $_SESSION['refferLogged'], $_SESSION['overrideFetch'],
 	       $_SESSION['passwort'],   $_SESSION['gast'],  $_SESSION['idStream'], $_SESSION['tvShowParam'],  $_SESSION['OS'],
 	       $_SESSION['angemeldet'], $_SESSION['demo'],  $_SESSION['thumbs'],   $_SESSION['existsTable'],  $_SESSION['DB_MAPPING'],
-	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['reffer'],
+	       $_SESSION['private'],    $_SESSION['paths'], $_SESSION['covers'],   $_SESSION['reffer'],       $_SESSION['name'],
 	       $_SESSION['dbName'],     $_SESSION['dbVer']
 
 	     ); //remove values that should be determined at login
@@ -1700,16 +1703,22 @@ function adminInfo($start, $show) {
 		echo '<div class="bs-docs" id="adminInfo" style="z-index:10;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
 
 		if (isLinux()) {
+			$ssdTemp = '';
 			//hdparm
 			$filename = './myScripts/logs/hdparm.log';
 			if (file_exists($filename)) {
 				$log = file($filename);
 				for ($i = 0; $i < count($log); $i++) {
-					$line = explode(',',$log[$i]);
+				#for ($i = count($log); $i >= 0; $i--) {
+					$line = explode(',', $log[$i]);
 					$label = trim($line[0]);
 					$state = trim($line[1]);
 
 					if (empty($label)) { continue; }
+					if ($label == '/ssd') {
+						$ssdTemp = $state;
+						continue;
+					}
 
 					$title = $state;
 					if ($state != 'unknown')
@@ -1720,18 +1729,33 @@ function adminInfo($start, $show) {
 						$tCol_='background:#bcbcbc; ';
 					echo '<span id="hdp'.$i.'" style="'.$tCol_.'cursor:default; display:none; padding:5px 8px; margin-left:5px; margin-bottom:5px;" class="label'.$tCol.'" title="'.$title.'">'.$label.'</span>';
 				}
-				echo '<br id="brr0" style="display:none;" />';
+				#echo '<br id="brr0" style="display:none;" />';
 			}
 			//hdparm
 
-			//cpu temp
-			unset($output);
-			exec('sensors | sed -ne "s/Core\ 0: \+[-+]\([0-9]\+\).*/\1/p"', $output);
-			$cpu0 = getCPUdiv($output, 0);
-			unset($output);
-			exec('sensors | sed -ne "s/Core\ 1: \+[-+]\([0-9]\+\).*/\1/p"', $output);
-			$cpu1 = getCPUdiv($output, 1);
+			//ssd temp
+			echo getTempDiv($ssdTemp, -1, 'ssd');
+			echo '<br id="brr0" style="display:none;" />';
+			//ssd temp
 
+			//cpu temp
+			$filename = './myScripts/logs/cpuTemp_.log';
+			if (file_exists($filename)) {
+				$log = file($filename);
+				$cpu_ = explode(' ', $log[0]);
+				echo getTempDiv($cpu_[0], 0);
+				echo getTempDiv($cpu_[1], 1);
+				#exec('sensors | sed -ne "s/Core\ 0: \+[-+]\([0-9]\+\).*/\1/p"', $output);
+				#$cpu0 = getCPUdiv($output, 0);
+				#unset($output);
+				#exec('sensors | sed -ne "s/Core\ 1: \+[-+]\([0-9]\+\).*/\1/p"', $output);
+				#$cpu1 = getCPUdiv($output, 1);
+
+				echo '<br id="brr1" style="display:none;" />';
+			}
+			//cpu temp
+
+			//cpu load
 			unset($output);
 			$load = '';
 			if (file_exists('./myScripts/logs/cpuTemps.log'))
@@ -1739,13 +1763,8 @@ function adminInfo($start, $show) {
 			else
 				exec("ps -eo pcpu | awk ' {cpu_load+=$1} END {print cpu_load}'", $output);
 			$load = getLoadDiv($output);
-
-			echo $cpu0;
-			echo $cpu1;
-			echo '<br id="brr1" style="display:none;" />';
-			//cpu temp
-
 			echo $load;
+			//cpu load
 		} //isLinux
 
 		//time
@@ -1760,20 +1779,21 @@ function adminInfo($start, $show) {
 	}
 }
 
-function getCPUdiv($output, $core) {
+function getTempDiv($output, $core, $title = '') {
 	if (empty($output))
 		return '';
 
 	$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
 	$CPU_TEMPS     = isset($GLOBALS['CPU_TEMPS'])      ? $GLOBALS['CPU_TEMPS']      : array(30,40,50);
 
-	$output = $output[0];
+	#$output = $output[0];
 	$tCol = ' label-success';
 	if ($output <= $CPU_TEMPS[0]) { $tCol = ' label-success';   }
 	if ($output >= $CPU_TEMPS[1]) { $tCol = ' label-warning';   }
 	if ($output >= $CPU_TEMPS[2]) { $tCol = ' label-important'; }
-	$href = file_exists($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=0&interpolate=1"' : null;
-	return '<span id="spTemp'.$core.'"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-left:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_cpu' : '').'" title="core '.($core+1).'">'.$output.'&deg;C</span>';
+	$href = $core >= 0 && file_exists($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=0&interpolate=1"' : '';
+	$label = $core >= 0 ? 'core '.($core+1) : $title;
+	return '<span id="spTemp'.$core.'"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-left:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_cpu' : '').'" title="'.$label.'">'.$output.'&deg;C</span>';
 }
 
 function getLoadDiv($output) {
@@ -1804,17 +1824,11 @@ function adminInfoJS() {
 		echo "function hideAdminInfo(show) {\r\n";
 		$filename = './myScripts/logs/hdparm.log';
 		if (file_exists($filename)) {
-			$log = file($filename);
-			for ($i = 0; $i < count($log); $i++) {
-				echo "\t$( '#hdp".$i."' ).toggle(show);\r\n";
-			}
+			echo "\t$( '[id^=hdp]' ).toggle(show);\r\n";
 		}
-		echo "\tif ($( '#brr0' ) != null) { $( '#brr0' ).toggle(show); }\r\n";
-		echo "\tif ($( '#brr1' ) != null) { $( '#brr1' ).toggle(show); }\r\n";
-		echo "\t$( '#spTemp0' ).toggle(show);\r\n";
-		echo "\t$( '#spTemp1' ).toggle(show);\r\n";
-		echo "\t$( '#spLoad' ).toggle(show);\r\n";
-		echo "\t$( '#spTime' ).toggle(show);\r\n";
+
+		echo "\t$( '[id^=sp]' ).toggle(show);\r\n";
+		echo "\t$( '[id^=brr]' ).toggle(show);\r\n";
 		echo "\t$( '#adminInfo.bs-docs' ).css('padding', show ? '35px 10px 14px' : '10px 10px 14px');\r\n";
 		echo "}\r\n";
 		echo '</script>'."\r\n";
@@ -2001,7 +2015,7 @@ function authTvDB() {
 	try {
 		$result  = file_get_contents($URL, false, $context);
 		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
-	} catch (Exception $e) {
+	} catch (Throwable $e) {
 		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 		return null;
 	}
@@ -2041,7 +2055,7 @@ function getShowInfoJson($idTvDb) {
 	$result  = null;
 	try {
 		$result = file_get_contents($URL, false, $context);
-	} catch (Exception $e) {
+	} catch (Throwable $e) {
 		return null;
 	}
 #echo $result;
@@ -2055,10 +2069,10 @@ function getShowInfoJson($idTvDb) {
 
 function getEpisodes($idTvDb, $page=1) {
 	if (empty($idTvDb) || $idTvDb < 0) { return null; }
-	#$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	#if (isset($_SESSION['TvDbCache']['episodes'][$idTvDb]) && $overrideFetch == 0) {
-	#	return unserialize($_SESSION['TvDbCache']['episodes'][$idTvDb]);
-	#}
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	if (isset($_SESSION['TvDbCache']['episodes'][$idTvDb]) && $overrideFetch == 0) {
+		return unserialize($_SESSION['TvDbCache']['episodes'][$idTvDb]);
+	}
 
 	$TOKEN = authTvDB();
 	if (empty($TOKEN))
@@ -2079,14 +2093,15 @@ function getEpisodes($idTvDb, $page=1) {
 		$oldHandler = set_error_handler('handleError');
 		$result = file_get_contents($URL, false, $context);
 		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
-	} catch (Exception $e) {
+	} catch (Throwable $e) {
 		return null;
 	}
 	if ($result === FALSE) {
+        $_SESSION['TvDbCache']['episodes'][$idTvDb] = null;
 		return null;
 	}
 
-	#$_SESSION['TvDbCache']['episodes'][$idTvDb] = serialize($result);
+	$_SESSION['TvDbCache']['episodes'][$idTvDb] = serialize($result);
 	return $result;
 }
 
@@ -2118,8 +2133,8 @@ function getShowInfo($idTvDb, $lastStaffel = null) {
 		for ($i = 0; $i < count($items); $i++) {
 			$item = $items[$i];
 
-			$s    = $item['airedSeason'];
-			$e    = $item['airedEpisodeNumber'];
+			$s = $item['airedSeason'];
+			$e = $item['airedEpisodeNumber'];
 			$episodes[$s][$e] = $item;
 			$count++;
 		}
@@ -2147,19 +2162,8 @@ function urlCheck($url) {
 	$address_ = explode (':',"$s_link");
 	$address  = empty($address_[0]) ? $address_[1] : $address_[0];
 	$churl    = @fsockopen($address, 80, $errno, $errstr, 5);
-/*
-print_r( $address_ );
-echo '<br/>';
-echo $errstr.'<br/>';
-echo $errno.'<br/>';
-echo $addr.'<br/>';
-echo $churl.'<br/>';
-*/
 
-	if (!$churl)
-	    return false;
-	else
-	    return true;
+	return !$churl ? false : true;
 }
 
 function trimURL($url) {
@@ -2599,14 +2603,14 @@ function getResDesc($vRes) {
 	return '480p';
 }
 
-function getResPerf($vRes) {
+function getResPerf($vRes, $hdr = false) {
 	if (empty($vRes))
 		return 0;
 
-	if ($vRes[0] >= 3700)
-		return 5;
+//	if ($vRes[0] >= 3700)
+//		return 5;
 	if ($vRes[0] >= 2200)
-		return 4;
+		return $hdr ? 5 : 4;
 	return 0;
 }
 
@@ -2985,7 +2989,7 @@ function getPD0() {
 		error_reporting(E_ALL);
 		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$dbh->exec("PRAGMA foreign_keys = ON;");
-	} catch(Exception $e) { }
+	} catch(Throwable $e) { }
 	return $dbh;
 }
 

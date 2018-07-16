@@ -28,7 +28,7 @@ class SimpleImage {
 		if (empty($filename)) { return; }
 		$image_info = null;
 		try { $image_info = getimagesize($filename); }
-		catch (Exception $e) { }
+		catch (Throwable $e) { }
 		if (empty($image_info)) { return; }
 		
 		$this->image_type = $image_info[2];

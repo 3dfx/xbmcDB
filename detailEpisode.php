@@ -191,16 +191,20 @@ include_once "./template/_SERIEN.php";
 	echo '<tr class="showDesc">';
 	echo '<td class="showDescTD2">';
 	echo '<div style="width:300px;">';
-	echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;"><div><u><i><b>Title:</b></i></u></div><span><span onclick="selSpanText(this);">'.$title.'</span> <font color="silver">[</font> S'.$season.'.E'.$episode.' <font color="silver">]</font></span>';
-	echo '<span class="epCheckSpan"'.($isAdmin && !empty($percent) ? ' title="'.$pausedAt.' ('.$percent.'%)"' : '').'>';
-	if ($isAdmin) {
-		if ($playCount > 0) {
-			echo '<img src="./img/check.png" class="galleryImage thumbCheck" style="position:relative; bottom:4px;" title="watched" />';
-		} else if (!empty($percent)) {
-			echo '<input type="text" class="knob-dyn" data-width="15" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
-		}
-	}
-	echo '</span>';
+		echo '<div style="padding-bottom:'.(!empty($thumbImg) ? '2' : '15').'px;">';
+			echo '<span style="float:left;"><i><b>Title:</b></i></span>';
+			echo '<span style="float:right;"><font color="silver">[</font> S'.$season.'.E'.$episode.' <font color="silver">]</font></span>';
+		echo '</div>';
+		echo '<br /><span onclick="selSpanText(this);">'.$title.'</span>';
+		echo '<span class="epCheckSpan"'.($isAdmin && !empty($percent) ? ' title="'.$pausedAt.' ('.$percent.'%)"' : '').'>';
+			if ($isAdmin) {
+				if ($playCount > 0) {
+					echo '<img src="./img/check.png" class="galleryImage thumbCheck" style="position:relative; bottom:4px;" title="watched" />';
+				} else if (!empty($percent)) {
+					echo '<input type="text" class="knob-dyn" data-width="15" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
+				}
+			}
+		echo '</span>';
 	echo '</div>';
 
 	if (!empty($thumbImg)) {
@@ -211,9 +215,9 @@ include_once "./template/_SERIEN.php";
 	if (!empty($epDesc)) {
 		$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
 
-		$descDiv = '<div class="epDesc"><u><i><b>Description:</b></i></u><br />'.$epDesc.'</div>';
+		$descDiv = '<div class="epDesc"><i><b>Description:</b></i><br />'.$epDesc.'</div>';
 		if (!$isAdmin || ($isAdmin && empty($playCount))) {
-			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><u><i><b>Description:</b></i></u> <span style="color:red; cursor:pointer; float:right;">spoil it!</span></div>';
+			echo '<div id="epSpoiler" class="padbot15" onclick="spoilIt(); return false;"><i><b>Description:</b></i> <span style="color:red; cursor:pointer; float:right;">spoil it!</span></div>';
 			echo '<span id="epDescr" style="display:none;">';
 			echo $descDiv;
 			echo '</span>';
@@ -228,38 +232,38 @@ include_once "./template/_SERIEN.php";
 		$gString = '';
 		$len = count($guests);
 		for ($i = 0; $i < $len; $i++) { $gString .= $guests[$i].($i < $len-1 ? '<br />' : ''); }
-		echo '<div id="epGuest" class="padbot15" onclick="showGuests(); return false;"><u><i><b>Guests:</b></i></u> <span style="color:red; cursor:pointer; float:right;">show guests!</span></div>';
-		echo '<div id="epGuests" class="padbot15" style="display:none;"><u><i><b>Guests:</b></i></u><br />'.$gString.'</div>';
+		echo '<div id="epGuest" class="padbot15" onclick="showGuests(); return false;"><i><b>Guests:</b></i> <span style="color:red; cursor:pointer; float:right;">show guests!</span></div>';
+		echo '<div id="epGuests" class="padbot15" style="display:none;"><i><b>Guests:</b></i><br />'.$gString.'</div>';
 	}
 
 	$rating = formatRating($epRating);
 	if (!emptyRating($rating)) {
-		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><u><i><b>Rating:</b></i></u></span><span class="flalright">'.$rating.'</span></div>';
+		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><i><b>Rating:</b></i></span><span class="flalright">'.$rating.'</span></div>';
 	}
 
 	if (!empty($duration)) {
 		$duration = round($duration / 60, 0);
-		echo '<div class="padbot15"><span><u><i><b>Duration:</b></i></u></span><span class="flalright">'.$duration.' min</span></div>';
+		echo '<div class="padbot15"><span><i><b>Duration:</b></i></span><span class="flalright">'.$duration.' min</span></div>';
 	}
 
 	if (!empty($airDate)) {
 		$dayOfWk = dayOfWeekShort($airDate);
 		$airDate = toEuropeanDateFormat($airDate);
-		echo '<div><span><u><i><b>Airdate:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
+		echo '<div><span><i><b>Airdate:</b></i></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
 	}
 
 	if ($isAdmin) {
 		if (!empty($lastPlayed) && $playCount > 0) {
 			$dayOfWk    = dayOfWeekShort($lastPlayed);
 			$lastPlayed = toEuropeanDateFormat(substr($lastPlayed, 0, 10));
-			echo '<div><span><u><i><b>Watched:</b></i></u></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
+			echo '<div><span><i><b>Watched:</b></i></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
 		}
 	}
 
 	if (!$isDemo) {
 		if (!empty($vCodec) || (!empty($width) && !empty($height))) {
 			echo '<div class="padtop15 padbot20">';
-			echo '<span><u><i><b>Video:</b></i></u></span>';
+			echo '<span><i><b>Video:</b></i></span>';
 			if ((!empty($width) && !empty($height)) || !empty($fps)) {
 				echo '<span class="flalright">';
 				if (!empty($width) && !empty($height)) {
@@ -293,38 +297,42 @@ include_once "./template/_SERIEN.php";
 			$codecs = '';
 			$countyMap = getCountyMap();
 			for($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditACodec($aCodec[$i]).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countyMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : ''); }
-			echo '<div style="overflow-x:hidden;"><span><u><i><b>Audio:</b></i></u></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
+			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
 		if (!empty($subtitle)) {
 			$codecs = '';
 			$cCount = 0;
 			$countyMap = getCountyMap();
+			$subs = array();
 			for($i = 0; $i < count($subtitle); $i++) {
 				$codec = getLanguage($countyMap, $subtitle, $i, false);
 				if (!empty($codec)) {
-					$codecs .= $codec.($i < count($subtitle)-1 && !empty($subtitle[$i]) ? ' <font color="silver"><b>|</b></font> ' : '');
+					if (!in_array($codec, $subs)) {
+						$codecs .= $codec . ($i < count($subtitle) - 1 && !empty($subtitle[$i]) ? ' <font color="silver"><b>|</b></font> ' : '');
+						$subs[count($subs) - 1] = $codec;
+					}
 					$cCount++;
 				}
 			}
-			echo '<div style="overflow-x:hidden;"><span><u><i><b>Sub:</b></i></u></span><span class="flalright">'.$cCount.' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
-		}
 
-	}
+			echo '<div style="overflow-x:hidden;"><span title="Count is not unique"><i><b>Sub:</b></i></span><span class="flalright">'.$cCount.' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
+		}
+	} // !isDemo
 
 	if (!$isDemo) {
 		if ($isAdmin) {
 			echo '<div class="padtop15"><hr style="position:width:335px; margin:0px; border-bottom-width:0px; border-color:#BBCCDD;" /></div>';
-			echo '<div class="padtop15"><span><u><i><b>Source:</b></i></u></span><span class="flalright">'.$SOURCE[$src].'</span></div>';
+			echo '<div class="padtop15"><span><i><b>Source:</b></i></span><span class="flalright">'.$SOURCE[$src].'</span></div>';
 		}
-		echo '<div class="padtop15"><span><u><i><b>Size:</b></i></u></span><span class="flalright">'.$fsize.'</span></div>';
+		echo '<div class="padtop15"><span><i><b>Size:</b></i></span><span class="flalright">'.$fsize.'</span></div>';
 	}
 	if ($isAdmin) {
-		echo '<div style="overflow-x:hidden;"><u><i><b>File:</b></i></u><br />';
+		echo '<div style="overflow-x:hidden;"><i><b>File:</b></i><br />';
 		$filename = '<span onclick="selSpanText(this);">'.encodeString($filename).'</span>';
 		echo encodeString($path).$filename;
 		echo '</div>';
 
-		echo '<div class="padtop15" style="overflow-x:hidden;"><u><i><b>idEpisode</b>/<b>idFile:</b></i></u><span class="flalright">'.$id.' <b>|</b> '.$idFile.'</span></div>';
+		echo '<div class="padtop15" style="overflow-x:hidden;"><i><b>idEpisode</b>/<b>idFile:</b></i><span class="flalright">'.$id.' <b>|</b> '.$idFile.'</span></div>';
 	}
 	echo '</div>';
 	echo '</div>';

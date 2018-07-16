@@ -40,7 +40,7 @@ body 	{
 	padding:10px;
 	font-family: 'Lucida Grande', 'Verdana', 'Arial';
 	font-size: 13px;
-	
+
 	scrollbar-face-color      : #ddd;
 	scrollbar-arrow-color     : #ddd;
 	scrollbar-track-color     : transparent;
@@ -177,7 +177,7 @@ TD.highLighTR { border-bottom:1px dotted #93B7E3 !important; }
 	min-width: 1200px;
 	max-width: 1200px;
 	overflow: hidden;
-	
+
 //	width:550px;
 //	margin-top: 0px;
 	margin-bottom: 25px;
@@ -231,7 +231,7 @@ table.film td {
 	white-space:nowrap;
 }
 
-.servBodL { border-left:1px dotted #CEDCEA; } 
+.servBodL { border-left:1px dotted #CEDCEA; }
 
 #box1 a {
 	/*color:#ffffff;
@@ -674,7 +674,7 @@ input[type=checkbox] {
 
 .movieTitle {
 	position:relative;
-	font:26px verdana;
+	font-size:26px;
 	font-weight:bold;
 	white-space:nowrap;
 	width:99%;
@@ -744,7 +744,7 @@ input[type=checkbox] {
 	padding: 15px;
 	display:none;
 	position:absolute;
-}				
+}
 
 .selectedfield {
 	color:black;
@@ -756,7 +756,7 @@ input[type=checkbox] {
 }
 
 table.login {
-	font:14px Verdana;
+	font-size:14px;
 	font-weight: normal;
 }
 
@@ -766,6 +766,7 @@ table.login {
 }
 
 .fancy_movieEdit,
+.fancy_msgbox,
 .fancyimage1,
 .fancy_iframe2,
 .fancy_iframe3 {
@@ -798,7 +799,8 @@ table.login {
 }
 
 table.gallery {
-	font:13px Verdana, Arial;
+	font-size:13px;
+	font-family: 'Lucida Grande', 'Verdana', 'Arial';
 	font-weight:normal;
 	margin:-10px auto 25px;
 }
