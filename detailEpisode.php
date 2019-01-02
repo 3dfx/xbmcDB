@@ -293,28 +293,25 @@ include_once "./template/_SERIEN.php";
 			}
 			echo '</div>';
 		}
+
+		$countryMap = !empty($aCodec) || !empty($subtitle) ? getCountryMap() : null;
 		if (!empty($aCodec)) {
 			$codecs = '';
-			$countyMap = getCountyMap();
-			for($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditACodec($aCodec[$i]).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countyMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : ''); }
+			for ($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditACodec($aCodec[$i]).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countryMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : ''); }
 			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
-		if (!empty($subtitle)) {
-			$codecs = '';
-			$cCount = 0;
-			$countyMap = getCountyMap();
-			$subs = array();
-			for($i = 0; $i < count($subtitle); $i++) {
-				$codec = getLanguage($countyMap, $subtitle, $i, false);
-				if (!empty($codec)) {
-					if (!in_array($codec, $subs)) {
-						$codecs .= $codec . ($i < count($subtitle) - 1 && !empty($subtitle[$i]) ? ' <font color="silver"><b>|</b></font> ' : '');
-						$subs[count($subs) - 1] = $codec;
-					}
-					$cCount++;
-				}
-			}
 
+		if (!empty($subtitle)) {
+			$subtitle = array_unique($subtitle);
+			$cCount = 0;
+			$codecs = '';
+			foreach ($subtitle as $i => $sub) {
+				$codec = getLanguage($countryMap, $subtitle, $i, false);
+				if (!empty($codec)) {
+					$codecs .= ($cCount > 0 && !empty($sub) ? ' <font color="silver"><b>|</b></font> ' : '') . $codec;
+				}
+				$cCount++;
+			}
 			echo '<div style="overflow-x:hidden;"><span title="Count is not unique"><i><b>Sub:</b></i></span><span class="flalright">'.$cCount.' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
 	} // !isDemo
@@ -341,12 +338,12 @@ include_once "./template/_SERIEN.php";
 	echo '</table>';
 
 //- FUNCTIONS -//
-function getLanguage($countyMap, $languages, $i, $trenner = true) {
-	return isValidLang($countyMap, $languages, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($languages[$i]), false) : '';
+function getLanguage($countryMap, $languages, $i, $trenner = true) {
+	return isValidLang($countryMap, $languages, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($languages[$i]), false) : '';
 }
 
-function isValidLang($countyMap, $languages, $i) {
-	return isset($languages[$i]) && isset($countyMap[strtoupper($languages[$i])]);
+function isValidLang($countryMap, $languages, $i) {
+	return isset($languages[$i]) && isset($countryMap[strtoupper($languages[$i])]);
 }
 //- FUNCTIONS -//
 ?>

@@ -568,7 +568,7 @@ include_once "./template/config.php";
 			}
 			$ids = trim($ids);
 			#if ($count > 1)
-			$ids = substr($ids, 0, count($ids)-2);
+			$ids = substr($ids, 0, strlen($ids)-2);
 
 			$this->fileIds = $ids;
 			return $ids;
@@ -795,7 +795,7 @@ include_once "./template/config.php";
 			}
 			$ids = trim($ids);
 			#if ($count > 1)
-			$ids = substr($ids, 0, count($ids)-2);
+			$ids = substr($ids, 0, strlen($ids)-2);
 
 			$this->fileIds = $ids;
 			return $ids;

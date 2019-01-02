@@ -126,10 +126,17 @@ include_once "./template/functions.php";
 		$orTitel      = trim($row['c16']);
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['c01'];
+        $ar           = '';
 		$country      = getCountry($idMovie);
 		$fps          = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
 		if ($bit10 == null && $fps == null && $fps[0] == null)
 			$bit10 = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
+
+        $resultAR = fetchFromDB("SELECT ratio FROM aspectratio WHERE idMovie = ".$idMovie.";");
+        if (!empty($resultAR) && !empty($resultAR['ratio'])) {
+			$ar = sprintf("%01.2f", round($resultAR['ratio'], 2)).':1';
+            $ar = '<span style="font-style:italic;" title="aspect-ratio overridden">'.$ar.'</span>';
+        }
 
 		$percent;
 		$timeAt;
@@ -166,7 +173,9 @@ include_once "./template/functions.php";
 			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>'."\r\n";
 		}
 
-		$is3D = strpos($filename, '.3D.');
+        $f4Ke = preg_match_all('/f4Ke/',       $filename) > 0 ? true : false;
+        $hdr  = preg_match_all('/\bHDR\b/',    $filename) > 0 ? true : false;
+		$is3D = preg_match_all('/\b\.3d\.\b/', $filename) > 0 ? true : false;
 		if ($is3D == true) {
 			$titel .= ' (3D)';
 		}
@@ -186,7 +195,11 @@ include_once "./template/functions.php";
 
 		echo '<div class="moviebox2">';
 		echo '<div class="movieTitle">';
-		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$ANONYMIZER.$IMDBFILMTITLE.$row['imdbId'].'">'.$titel.' ('.$jahr.')'.'</a>';
+        $imdbLink = $ANONYMIZER.$FILMINFOSEARCH.$titel;
+        if (!empty($imdbId)) {
+			$imdbLink = $ANONYMIZER.$IMDBFILMTITLE.$imdbId;
+        }
+		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$imdbLink.'">'.$titel.' ('.$jahr.')'.'</a>';
 		$trailer = $row['trailer'];
 		if ($SHOW_TRAILER && !empty($trailer)) {
 			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>'."\r\n";
@@ -288,7 +301,6 @@ include_once "./template/functions.php";
 		$hours     = '';
 		$rating    = '';
 		$stimmen   = '';
-		$ar        = '';
 		$width     = '';
 		$height    = '';
 		$vCodec    = '';
@@ -314,7 +326,8 @@ include_once "./template/functions.php";
 		}
 		if (substr($row['rating'], 0, 1) != "0") {
 			$rating  = formatRating($row['rating']);
-			$stimmen = $row['votes'];
+			$rating  = '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.$rating.'</a>';
+			$stimmen = '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.$row['votes'].'</a>';
 			$run = 1;
 		}
 		if (!empty($row['c14'])) {
@@ -327,7 +340,7 @@ include_once "./template/functions.php";
 		}
 
 		foreach($result3 as $row3) {
-			if (!empty($tmp = $row3['fVideoAspect'])) { $ar = sprintf ("%01.2f", round($tmp, 2)).':1'; }
+			if (!empty($tmp = $row3['fVideoAspect']) && empty($ar)) { $ar = sprintf ("%01.2f", round($tmp, 2)).':1'; }
 			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
 			if (!empty($tmp = $row3['iVideoHeight'])) { $height = $tmp; }
 			if (!empty($tmp = $row3['strVideoCodec']) && !isDemo()) { $vCodec = trim($tmp); }
@@ -369,6 +382,7 @@ include_once "./template/functions.php";
 				if (!empty($strGenre) && isset($idGenre[$strGenre]))
 					$genreId = $idGenre[$strGenre];
 
+				$strGenre = shortenGenre($strGenre);
 				if ($genreId != -1) {
 					$res[$g][$COLS['GENRE']] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
 				} else {
@@ -404,9 +418,20 @@ include_once "./template/functions.php";
 			$vRes[1] = $height;
 			$resInfo  = $width.'x'.$height;
 			$cols     = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-			$resPerf  = getResPerf($vRes);
+			$resPerf  = getResPerf($vRes, $hdr);
+			$title    = $f4Ke ? 'title="Fake 4K"; ' : '';
 			$resColor = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
-			$resInfo  = (empty($resColor) ? $resInfo : '<span style="font-weight:bold; color:'.$resColor.';">'.$resInfo.'</span>');
+			$resStyle  = '';
+			if (!empty($resColor) || $f4Ke) {
+				if ($f4Ke)
+					$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,1.75);';
+				else
+					$resStyle .= 'font-weight:bold;';
+
+				if (!empty($resColor))
+					$resStyle .= ' color:'.$resColor.';';
+			}
+			$resInfo  = '<span '.$title.'style="'.$resStyle.'">'.$resInfo.'</span>';
 			$res[0][$COLS['VIDEO1']] = $resInfo;
 		}
 		$res[1][$COLS['VIDEO1']] = $ar;

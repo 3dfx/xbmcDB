@@ -315,6 +315,13 @@ function checkFileInfoTable($dbh = null) {
 	}
 }
 
+function checkARTable($dbh = null) {
+	$exist = existsTable('aspectratio', 'table', $dbh);
+	if (!$exist) {
+		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS aspectratio(idFile INTEGER NOT NULL, idMovie INTEGER NOT NULL, ratio FLOAT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false);
+	}
+}
+
 function checkAndAlterTableCol($dbh = null, $table, $sessionKey, $col, $colType) {
 	if (isset($_SESSION[$sessionKey]))
 		return;
@@ -2070,8 +2077,8 @@ function getShowInfoJson($idTvDb) {
 function getEpisodes($idTvDb, $page=1) {
 	if (empty($idTvDb) || $idTvDb < 0) { return null; }
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if (isset($_SESSION['TvDbCache']['episodes'][$idTvDb]) && $overrideFetch == 0) {
-		return unserialize($_SESSION['TvDbCache']['episodes'][$idTvDb]);
+	if (isset($_SESSION['TvDbCache']['episodes'][$idTvDb][$page]) && $overrideFetch == 0) {
+		return unserialize($_SESSION['TvDbCache']['episodes'][$idTvDb][$page]);
 	}
 
 	$TOKEN = authTvDB();
@@ -2097,11 +2104,11 @@ function getEpisodes($idTvDb, $page=1) {
 		return null;
 	}
 	if ($result === FALSE) {
-        $_SESSION['TvDbCache']['episodes'][$idTvDb] = null;
+        $_SESSION['TvDbCache']['episodes'][$idTvDb][$page] = null;
 		return null;
 	}
 
-	$_SESSION['TvDbCache']['episodes'][$idTvDb] = serialize($result);
+	$_SESSION['TvDbCache']['episodes'][$idTvDb][$page] = serialize($result);
 	return $result;
 }
 
@@ -2112,7 +2119,7 @@ function getShowInfo($idTvDb, $lastStaffel = null) {
 		return unserialize($_SESSION['TvDbCache'][$idTvDb]);
 	}
 
-	$LANG         = isset($GLOBALS['TVDB_LANGUAGE']) ? $GLOBALS['TVDB_LANGUAGE'] : 'en';
+	//$LANG         = isset($GLOBALS['TVDB_LANGUAGE']) ? $GLOBALS['TVDB_LANGUAGE'] : 'en';
 	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY'])  ? $GLOBALS['TVDB_API_KEY']  : null;
 	if (empty($TVDB_API_KEY)) { return null; }
 
@@ -2122,21 +2129,30 @@ function getShowInfo($idTvDb, $lastStaffel = null) {
 
 	$count    = 1;
 	$episodes = array();
+	$hasNext  = true;
 	$limit    = empty($lastStaffel) ? 10 : round($lastStaffel * 2, 0);
 	for ($page = 1; $page <= $limit; $page++) {
 		$json = getEpisodes($idTvDb, $page);
 		if (empty($json))
 			break; #return null;
 		$items = json_decode($json, true);
+		if (isset($items['links']) && isset($items['links']['next']) && $page >= $items['links']['next']) {
+			$hasNext = false;
+		}
 		$items = $items['data'];
 
-		for ($i = 0; $i < count($items); $i++) {
+		$itemsCount = count($items);
+		for ($i = 0; $i < $itemsCount; $i++) {
 			$item = $items[$i];
 
 			$s = $item['airedSeason'];
 			$e = $item['airedEpisodeNumber'];
 			$episodes[$s][$e] = $item;
 			$count++;
+		}
+
+		if (!$hasNext) {
+			break;
 		}
 	}
 
@@ -2147,7 +2163,7 @@ function getShowInfo($idTvDb, $lastStaffel = null) {
 	if (!empty($json)) {
 		$res = json_decode($json);
 		$status = $res->{'data'}->{'status'};
-		$banner = $res->{'data'}->{'banner'};
+		//$banner = $res->{'data'}->{'banner'};
 	}
 	if (isset($status)) { $episodes[0][0] = (trim($status) == 'Ended' ? 'e' : 'r'); }
 	$episodes[0][1] = getLastEpisodeInfo($episodes, $lastStaffel); //last season/episode
@@ -2493,7 +2509,7 @@ function is3d($filename) {
 	return strpos(strtoupper($filename), '.3D.') >= 1 || strpos(strtoupper($filename), '(3D)') >= 1;
 }
 
-function getCountyMap() {
+function getCountryMap() {
 	$COUNTRY_MAP = isset($GLOBALS['COUNTRY_MAP']) ? $GLOBALS['COUNTRY_MAP'] : null;
 	if (empty($COUNTRY_MAP)) { return null; }
 
@@ -2502,7 +2518,7 @@ function getCountyMap() {
 }
 
 function postEditLanguage($str, $buildLink = true) {
-	$chosenMap = getCountyMap();
+	$chosenMap = getCountryMap();
 	if (empty($chosenMap)) { return $str; }
 
 	if ($str == 'GER') { $str = makeLangLink($str, 'GER', 'DEU', 'deu', $chosenMap[$str], $buildLink); }
@@ -2709,6 +2725,14 @@ function decodeString($text) {
 	$text = str_replace ("&Uuml;",  "Ü", $text);
 	$text = str_replace ("&szlig;", "ß", $text);
 	return $text;
+}
+
+function shortenGenre($genre) {
+	if ("Science Fiction" == $genre) {
+		return "Sci-Fi";
+	}
+
+	return $genre;
 }
 
 function isBlacklisted($ipIs = null) {

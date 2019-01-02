@@ -75,13 +75,15 @@ include_once "./template/_SERIEN.php";
 	$item = null;
 	if ($seasonSelected) { $item = getEpisodeInfo($episodes, $getSeason, $getEpisode); }
 	
-	$epDesc = null;
-	$guests = null;
-	$SQL = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$idEpisode.';';
-	$result = querySQL($SQL);
-	foreach($result as $row) {
-		$epDesc = trimDoubles(trim($row['epDesc']));
-		$guests = $row['guests'];
+	$epDesc = "";
+	$guests = "";
+	if (!empty($idEpisode)) {
+		$SQL = $GLOBALS['SerienSQL'] . ' AND V.idEpisode = ' . $idEpisode . ';';
+		$result = querySQL($SQL);
+		foreach ($result as $row) {
+			$epDesc = trimDoubles(trim($row['epDesc']));
+			$guests = $row['guests'];
+		}
 	}
 	
 ?>

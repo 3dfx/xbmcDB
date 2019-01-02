@@ -114,6 +114,7 @@ function createTable($orderz) {
 		checkFileMapTable($dbh);
 		#existsOrdersTable($dbh);
 		existsOrderzTable($dbh);
+		checkARTable($dbh);
 
 		$SkQL        = getSessionKeySQL();
 		$SQL         = $SkQL['SQL'];
@@ -681,12 +682,22 @@ if ($dirActorEnabled) {
 #resolution/codec/10bit/fps/hdr
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-				$resInfo   = getResDesc($vRes);
+				$f4Ke      = preg_match_all('/f4Ke/',    $filename) > 0 ? true : false;
 				$hdr       = preg_match_all('/\bHDR\b/', $filename) > 0 ? true : false;
+				$resInfo   = getResDesc($vRes);
 				$resPerf   = getResPerf($vRes, $hdr);
 				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
-				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resColor) ? '' : ' style="color:'.$resColor.';"').'>'.$resInfo.'</span>');
-				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '');
+				$resStyle  = '';
+				if (!empty($resColor) || $f4Ke) {
+				    $resStyle = ' style="';
+				    if ($f4Ke)
+						$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,0.75);';
+					if (!empty($resColor))
+						$resStyle .= ($f4Ke ? ' ' : '').'color:'.$resColor.';';
+					$resStyle .= '"';
+				}
+				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resStyle) ? '' : $resStyle).'>'.$resInfo.'</span>');
+				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '').($f4Ke ? ' | Fake 4K' : '');
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
 				$fps       = array($bits, formatFps($fps));
 				$bit10     = !empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;

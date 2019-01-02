@@ -98,6 +98,7 @@ include_once "globals.php";
 				$dbh->exec($SQLrating);
 			}
 
+			$gast_autor = str_replace('"', "''", $gast_autor);
 			$SQLepi = 'UPDATE episode SET c00="[TITLE]",c01="[DESC]",'.(!empty($idRating) ? 'c03="[RATING_ID]",' : '').'c04="[GUEST_AUTOR]",c05="[AIRED]",c10="[REGIE]",c18="[FILENAME]" WHERE idEpisode=[idEpisode];';
 			$SQLepi = str_replace('[idEpisode]',   $idEpisode,  $SQLepi);
 			$SQLepi = str_replace('[TITLE]',       $title,      $SQLepi);
@@ -236,7 +237,7 @@ include_once "globals.php";
 				$dbh->exec($SQLrating);
 			}
 
-			$params = null;
+			$params = '';
 			if (!empty($file)) {
 				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
 				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);

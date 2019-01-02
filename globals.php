@@ -4,8 +4,8 @@
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
 	$ANONYMIZER         = 'http://dontknow.me/at/?';
 
-	$IMDB               = 'http://www.imdb.de/find?s=';
-	$IMDBFILMTITLE      = 'http://www.imdb.de/title/';
+	$IMDB               = 'http://www.imdb.com/find?s=';
+	$IMDBFILMTITLE      = 'http://www.imdb.com/title/';
 	$PERSONINFOSEARCH   = $IMDB.'nm&q=';
 	$FILMINFOSEARCH     = $IMDB.'tt&q=';
 
