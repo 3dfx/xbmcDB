@@ -43,7 +43,7 @@ include_once "globals.php";
 		$entries[$counter]['counter']   = $counter;
 		$counter++;
 	}
-	
+
 	$counter = 0;
 	$count   = count($entries);
 	foreach($entries as $entry)
@@ -84,6 +84,7 @@ include_once "globals.php";
 			}
 		</script>
 <?php } else { ?>
+<?php /*
 		<script type="text/javascript">
 			function selectText(obj) {
 				if (document.selection) {
@@ -97,6 +98,7 @@ include_once "globals.php";
 				}
 			}
 		</script>
+*/ ?>
 <?php } /* empty($idOrder) */ ?>
 	</head>
 	<body style='padding:10px 0px; margin:0px;'>
@@ -118,7 +120,8 @@ include_once "globals.php";
 	
 	echo "\r\n<b>Order: ".$idOrder."</b>\r\n";
 	echo "<hr style='background:#69C; border:0px; height:2px; width:300%;' />\r\n";
-	echo "<pre onclick='selectText(this);'>\r\n";
+	#echo "<pre onclick='selectText(this);'>\r\n";
+	echo "<pre>\r\n";
 	echo encodeString($content);
 	echo "</pre>\r\n";
 } /* !empty($idOrder) */ ?>

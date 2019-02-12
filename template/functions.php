@@ -2821,6 +2821,7 @@ function generateOnDemandCopyScript($idOrder) {
 	$res .= 'rem for: '.$user['user']."\n\n";
 	$res .= doTheStuffTvShow($shows, true, false, $srcLetter, $dstLetter);
 	$res .= doTheStuffMovie($movies, true, true, $srcLetter, $dstLetter);
+	$res .= "\n";
 	return $res;
 }
 
