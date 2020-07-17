@@ -1,4 +1,5 @@
 <?php
+//include_once "functions.php";
 
 /*
 * File: SimpleImage.php
@@ -25,10 +26,15 @@ class SimpleImage {
 	var $image_type;
 	
 	function load($filename) {
+		if (substr_count($filename, 'actors') > 0) {
+			return null;
+		}
+
 		if (empty($filename)) { return; }
 		$image_info = null;
 		try { $image_info = getimagesize($filename); }
 		catch (Throwable $e) { }
+
 		if (empty($image_info)) { return; }
 		
 		$this->image_type = $image_info[2];

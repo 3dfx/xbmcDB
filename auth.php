@@ -15,7 +15,7 @@ include_once "./template/functions.php";
 	setSessionParams(true);
 	if (!isLogedIn()) {
 		$path = dirname($_SERVER['PHP_SELF']);
-		include './login.php';
+		include_once './login.php';
 		//exit;
 	}
 ?>

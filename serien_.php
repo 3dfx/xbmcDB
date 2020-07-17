@@ -4,7 +4,7 @@ include_once "check.php";
 
 include_once "./template/config.php";
 include_once "./template/functions.php";
-include_once "./template/_SERIEN.php";
+include_once "./template/Series/_SERIEN.php";
 include_once "globals.php";
 
 	$isAdmin = isAdmin();
@@ -13,8 +13,8 @@ include_once "globals.php";
 	$isMain  = (substr($maself, -9) == 'index.php');
 
 	$orderz = findUserOrder();
-	$orderz = $orderz[0];
-	$oItems = !$isAdmin ? count($orderz) : 0;
+	$orderz = isset($orderz[0]) ? $orderz[0] : null;
+	$oItems = !$isAdmin && !empty($orderz) ? count($orderz) : 0;
 
 	$dbh    = getPDO();
 	$SQL    = $GLOBALS['SerienSQL'].';';

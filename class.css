@@ -1,5 +1,5 @@
 /* Large desktop */
-@media (max-width: 1350px) {
+@media (max-width: 1200px) {
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 }
 
@@ -13,7 +13,7 @@
 }
 
 /* Landscape phone to portrait tablet */
-@media (max-width: 1300px) {
+@media (max-width: 1200px) {
 	#adminInfo { display:none; }
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
@@ -534,6 +534,15 @@ table.artists td {
 .streaminfoGenre {
 	padding-right:15px;
 	border-right:1px dashed dimgray;
+}
+
+.streaminfoBorderTH {
+	padding-left:8px;
+}
+
+.streaminfoBorder {
+	padding-left:8px;
+	border-left:1px dashed dimgray;
 }
 
 .detailLink {

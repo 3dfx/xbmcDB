@@ -19,8 +19,8 @@ include_once "globals.php";
 	$just        = isset($_SESSION['just'])        ? $_SESSION['just']        : null;
 
 	$orderz = findUserOrder();
-	$orderz = $orderz[1];
-	$oItems = !$isAdmin ? count($orderz) : 0;
+	$orderz = isset($orderz[1]) ? $orderz[1] : null;
+	$oItems = !$isAdmin && !empty($orderz) ? count($orderz) : 0;
 #	print_r( $orderz );
 	#$orderz = null;
 ?>
@@ -308,6 +308,11 @@ function getSessionKeySQL() {
 			$sessionKey .= 'remasteredCut';
 			break;
 
+		case 9:
+			$uncut = " AND (lower(B.strFilename) LIKE '%atmos%') ";
+			$sessionKey .= 'atmos';
+			break;
+
 		default:
 			unset($uncut);
 	}
@@ -411,8 +416,8 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 					$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
 					$res2 = querySQL_($dbh, $SQL_, false);
 					foreach($res2 as $row2) {
-						$type = $row2['type'];
-						$url  = $row2['url'];
+						$type = isset($row2['type']) ? $row2['type'] : null;
+						$url  = isset($row2['url'])  ? $row2['url']  : null;
 						if (!empty($url)) { $cover = getCoverThumb($url, $url, true); }
 						if ($type == 'poster') { break; }
 					}
@@ -489,7 +494,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 #title
 			$suffix = '';
 			if (is3d($filename)) { $suffix = ' (3D)'; }
-			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$id.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
+			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
 			else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
 
 #trailer
@@ -589,7 +594,7 @@ if ($dirActorEnabled) {
 					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
 					$res3 = querySQL_($dbh, $SQL_, false);
 					$row3 = $res3->fetch();
-					$url = $row3['url'];
+					$url  = isset($row3['url']) ? $row3['url'] : null;
 					if (!empty($url)) {
 						$actorimg = getActorThumb($url, $url, true);
 					}
@@ -652,7 +657,7 @@ if ($dirActorEnabled) {
 					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
 					$res3 = querySQL_($dbh, $SQL_, false);
 					$row3 = $res3->fetch();
-					$url = $row3['url'];
+					$url  = isset($row3['url']) ? $row3['url'] : null;
 					if (!empty($url)) {
 						$actorimg = getActorThumb($url, $url, true);
 					}
@@ -683,7 +688,7 @@ if ($dirActorEnabled) {
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 				$f4Ke      = preg_match_all('/f4Ke/',    $filename) > 0 ? true : false;
-				$hdr       = preg_match_all('/\bHDR\b/', $filename) > 0 ? true : false;
+				$hdr       = preg_match_all('/\bHDR|HDR10|HDR10p\b/', $filename) > 0 ? true : false;
 				$resInfo   = getResDesc($vRes);
 				$resPerf   = getResPerf($vRes, $hdr);
 				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
@@ -700,10 +705,14 @@ if ($dirActorEnabled) {
 				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '').($f4Ke ? ' | Fake 4K' : '');
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
 				$fps       = array($bits, formatFps($fps));
-				$bit10     = !empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
+				$bit10     = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;
 				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
 				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
 				$codecST   = (empty($color) ? '' : ' style="color:'.$color.';"');
+				if (isAdmin()) {
+					$codec = '<a tabindex="-1" class="fancy_msgbox clearFileSize"'.$codecST.' href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$idFile.'">'.$codec.'</a>';
+					$codecST = '';
+				}
 				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
 				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');

@@ -8,7 +8,7 @@ include_once "./template/functions.php";
 	$img = getEscGPost('img');
 	if (!empty($img)) { include_once "img.php"; exit; }
 
-	header("Content-Type: text/html; charset=UTF-8");
+	header("Content-Type:text/html; charset=UTF-8");
 
 	$start  = microtime(true);
 	$show   = getEscGPost('show');
@@ -29,7 +29,7 @@ include_once "./template/functions.php";
 
 	if ( !empty($_GET) || !empty($_POST) ) { redirectPage('', true); } //breaks the browsers back button, who gives a fuck??
 ?>
-<html><?php
+<html lang="de"><?php
 	if (empty($show)) { $show = 'filme'; }
 
 	     if ($show == 'logout')                     { include "./logout.php";   }
@@ -43,8 +43,7 @@ include_once "./template/functions.php";
 	else if ($show == 'mpExp' && file_exists('fExplorer.php')) { include "./fExplorer.php"; }
 
 	adminInfo($start, $show);
-?>
-<?php
+
 	if (!isDemo()) {
 		logc( 'Page generated in: '.round(microtime(true)-$start, 2).'s', true );
 		adminInfoJS();

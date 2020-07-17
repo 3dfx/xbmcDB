@@ -5,7 +5,7 @@ include_once "check.php";
 include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "globals.php";
-include_once "./template/_SERIEN.php";
+include_once "./template/Series/_SERIEN.php";
 
 	header("Content-Type: text/html; charset=UTF-8");
 
@@ -141,13 +141,13 @@ include_once "./template/_SERIEN.php";
 					guestField.value  = '';
 					regieField.value  = '';
 
-					if (obj.data.siteRating != rating.value && obj.data.siteRating != 0) {
+					if (obj.data.siteRating !== rating.value && obj.data.siteRating !== 0) {
 						rating.value = obj.data.siteRating;
 					}
 
 					guests  = obj.data.guestStars;
 					guests_ = '';
-					if (guests != null && guests.length != 0) {
+					if (guests != null && guests.length !== 0) {
 						for (var i = 0; i < guests.length; i++) {
 							guests_ = guests_ + guests[i] + ' (Gast Star)';
 							if (i < guests.length-1)
@@ -156,18 +156,18 @@ include_once "./template/_SERIEN.php";
 					}
 
 					writers  = obj.data.writers;
-					if (writers != null && writers.length != 0) {
+					if (writers != null && writers.length !== 0) {
 						writers_ = '';
 						for (var i = 0; i < writers.length; i++) {
 							writers_ = writers_ + writers[i] + ' (Autor)';
 							if (i < writers.length-1)
 								writers_ = writers_ + ' / ';
 						}
-						guestField.value = guests_ + (guests_.length == 0 || writers_.length == 0 ? '' : ' / ') + writers_;
+						guestField.value = guests_ + (guests_.length === 0 || writers_.length === 0 ? '' : ' / ') + writers_;
 					}
 
 					directors  = obj.data.directors;
-					if (directors != null && directors.length != 0) {
+					if (directors != null && directors.length !== 0) {
 						directors_ = '';
 						for (var i = 0; i < directors.length; i++) {
 							directors_ = directors_ + directors[i];
@@ -208,7 +208,7 @@ include_once "./template/_SERIEN.php";
 					var snum = episode[1];
 					var ep   = episode[2];
 
-					if (id == snum+'-'+ep) {
+					if (id === snum+'-'+ep) {
 						var title     = document.getElementById('title');
 						var airdate   = document.getElementById('airdate');
 						var desc      = document.getElementById('desc');
@@ -225,10 +225,10 @@ include_once "./template/_SERIEN.php";
 		function saveStrPath() {
 			var sel = document.getElementById('idPath');
 			var id = sel.value;
-			var strPath = ''
+			var strPath = '';
 			for (var i = 0; i < paths.length; i++) {
 				var path = paths[i];
-				if (id == path[0]) {
+				if (id === path[0]) {
 					strPath = path[1];
 					break;
 				}
@@ -244,7 +244,7 @@ include_once "./template/_SERIEN.php";
 			var strSeason = ''
 			for (var i = 0; i < paths.length; i++) {
 				var path = paths[i];
-				if (id == path[0]) {
+				if (id === path[0]) {
 					strSeason = path[1];
 					break;
 				}
@@ -359,11 +359,11 @@ include_once "./template/_SERIEN.php";
 ?>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Titel:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="title" name="title" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo trimDoubles(trim($episodeToUp->getName())); ?>" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="title" name="title" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo $update ? trimDoubles(trim($episodeToUp->getName())) : ''; ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Air-Date:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="airdate" name="airdate" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo trimDoubles(trim($episodeToUp->getAirDate())); ?>" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="airdate" name="airdate" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo $update ? trimDoubles(trim($episodeToUp->getAirDate())) : ''; ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Regie:</td>
@@ -375,7 +375,7 @@ include_once "./template/_SERIEN.php";
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Rating:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="rating" name="rating" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo trimDoubles(trim($episodeToUp->getRating())); ?>" /></td>
+		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="rating" name="rating" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo $update ? trimDoubles(trim($episodeToUp->getRating())) : ''; ?>" /></td>
 		</tr>
 		<tr>
 		<td style="padding-left:5px; width:100px;">Desc:</td>

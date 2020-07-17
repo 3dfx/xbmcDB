@@ -74,6 +74,8 @@
 	$DEFAULT_NEW_ADDED             = 30;
 	
 	$USECACHE                      = true;
+ 	$POWERFUL_CPU                  = false;
+ 	$POWERFUL_CPU_ADMIN            = false;
 	
 	$CHECK_NEXT_AIRDATE            = false;
 	$RLS_OFFSET_IN_DAYS            = 1;

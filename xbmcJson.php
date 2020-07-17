@@ -1,5 +1,6 @@
 <?php
 include_once "./template/config.php";
+include_once "./template/config.php";
 include_once "./template/functions.php";
 
 	if (!isAdmin()) { return; }

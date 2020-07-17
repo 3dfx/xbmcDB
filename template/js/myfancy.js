@@ -172,7 +172,7 @@ jQuery(document).ready(function() {
 
 	$(".fancy_movieEdit").fancybox({
 		'width'			: 380,
-		'height'		: 215,
+		'height'		: 235,
 		'overlayColor'		: '#000',
 		'overlayOpacity'	: 0.55,
 		'padding'		: 1,

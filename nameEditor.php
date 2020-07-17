@@ -32,7 +32,7 @@
 	<link rel="stylesheet" type="text/css" href="class.css" />
 	<script type="text/javascript">
 		$(document).ready(function(){
-			var inp = document.getElementById('title');
+			let inp = document.getElementById('title');
 			if (inp != null) {
 				inp.focus();
 			}
@@ -60,18 +60,18 @@ if ($change == 'genre') {
 		function setGenreInfos(btn) {
 			btn.blur();
 
-			var inTitle = document.getElementById('title');
+            let inTitle = document.getElementById('title');
 			if (inTitle == null) {
 				return;
 			}
 
-			var title = $.trim(inTitle.value);
+            let title = $.trim(inTitle.value);
 
 <?php postOrValues(); ?>
 
-			var changes = false;
-			var href = './dbEdit.php?act=setgenreinfo&idGenre=' + idGenre;
-			if (title != orTitle && title != '') {
+            let changes = false;
+            let href = './dbEdit.php?act=setgenreinfo&idGenre=' + idGenre;
+			if (title !== orTitle && title !== '') {
 				href = href + '&title=' + title;
 				changes = true;
 			}
@@ -94,58 +94,61 @@ if (empty($change) || $change == 'movie') {
 		function setMovieInfos(btn) {
 			btn.blur();
 
-			var inTitle     = document.getElementById('title');
-			var inJahr      = document.getElementById('jahr');
-			var inFile      = document.getElementById('filename');
-			var inDateAdded = document.getElementById('dateAdded');
-			var inRating    = document.getElementById('rating');
-			var inGenre     = document.getElementById('genre');
+            let inTitle     = document.getElementById('title');
+            let inJahr      = document.getElementById('jahr');
+            let inFile      = document.getElementById('filename');
+            let inDateAdded = document.getElementById('dateAdded');
+            let inRating    = document.getElementById('rating');
+            let inGenre     = document.getElementById('genre');
 
 			if (inTitle == null || inJahr == null || inFile == null || inDateAdded == null || inRating == null) {
 				return;
 			}
 
-			var title     = $.trim(inTitle.value);
-			var jahr      = $.trim(inJahr.value);
-			var file      = $.trim(inFile.value);
-			var rating    = $.trim(inRating.value);
-			var dateAdded = $.trim(inDateAdded.value);
-			var genre     = $.trim(inGenre.value);
+            let title     = $.trim(inTitle.value);
+            let jahr      = $.trim(inJahr.value);
+            let file      = $.trim(inFile.value);
+            let rating    = $.trim(inRating.value);
+            let dateAdded = $.trim(inDateAdded.value);
+            let genre     = $.trim(inGenre.value);
 
 <?php postOrValues(); ?>
 
-			var changes = false;
-			var href = './dbEdit.php?act=setmovieinfo&idMovie=' + idMovie + '&idFile=' + idFile;
-			if (title != orTitle && title != '') {
+            let changes = false;
+            let href = './dbEdit.php?act=setmovieinfo&idMovie=' + idMovie + '&idFile=' + idFile;
+			if (title !== orTitle && title !== '') {
 				title = title.replace('&', '_AND_');
 				href = href + '&title=' + title;
 				changes = true;
 			}
-			if (jahr != orJahr && jahr != '') {
+			if (jahr !== orJahr && jahr !== '') {
 				href = href + '&jahr=' + jahr;
 				changes = true;
 			}
-			if (file != orFile && file != '') {
+			if (file !== orFile && file !== '') {
 				href = href + '&filename=' + file;
 				changes = true;
 			}
-			if (dateAdded != orDateAdded && dateAdded != '') {
+			if (dateAdded !== orDateAdded && dateAdded !== '') {
 				href = href + '&dateAdded=' + dateAdded;
 				changes = true;
 			}
-			if (rating != orRating && rating != '') {
+			if (rating !== orRating && rating !== '') {
 				href = href + '&rating=' + rating;
 				changes = true;
 			}
-			if (genre != orGenre && genre != '') {
+			if (genre !== orGenre && genre !== '') {
 				href = href + '&genre=' + genre;
 				changes = true;
 			}
-			
+
 			if (!changes) {
 				alert('Nothing to change!');
 				return;
 			}
+
+            let keepMeta = document.getElementById('keepMeta').checked === true ? 1 : 0;
+            href = href + '&keepMeta=' + keepMeta;
 
 			cursorBusy();
 			$(btn).addClass('okButtonClicked');
@@ -222,6 +225,10 @@ function postEditor() {
 		echo '<td><input type="text" id="rating" class="key inputbox" style="width:75px;" value="'.$rating.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
 		echo '<tr>';
+		echo '<td style="padding-left:5px; height:24px;">Metadata:</td>';
+		echo '<td><input tabindex="-1" type="checkbox" id="keepMeta" name="keepMeta" value="false"><label for="keepMeta">keep data</label></td>';
+		echo '</tr>';
+		echo '<tr>';
 		echo '<td style="padding-left:5px;">Date added:</td>';
 		echo '<td><input type="text" id="dateAdded" class="key inputbox" style="width:275px;" value="'.$dateAdded.'" onfocus="this.select();" onclick="this.select();" /></td>';
 		echo '</tr>';
@@ -245,7 +252,7 @@ function postOrValues() {
 	$change = $GLOBALS['change'];
 	$title  = $GLOBALS['title'];
 	
-	echo "\t\t\t".'var orTitle     = "'.$title.'";'."\r\n";
+	echo "\t\t\t".'let orTitle     = "'.$title.'";'."\r\n";
 	if ($change == 'movie') {
 		$filename  = $GLOBALS['filename'];
 		$jahr      = $GLOBALS['jahr'];

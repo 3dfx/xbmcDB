@@ -4,7 +4,9 @@ include_once "check.php";
 include_once "globals.php";
 include_once "./template/functions.php";
 include_once "./template/config.php";
-include_once "./template/_SERIEN.php";
+include_once "./template/Series/_SERIEN.php";
+
+//header('x-frame-options: "allow-from https://anon.to/"');
 
 	$isAdmin = isAdmin();
 	$id = getEscGet('id');
@@ -57,7 +59,8 @@ include_once "./template/_SERIEN.php";
 	echo '<div class="fClose" onclick="closeShow();"><img src="./img/close.png" style="cursor:pointer;"/></div>';
 	echo '<div class="descDiv">';
 	if ($isAdmin) {
-		$episodes = getShowInfo($idTvdb, $serie->getLastStaffel()->getStaffelNum());
+		$lastStaffel = $serie->getLastStaffel();
+		$episodes = getShowInfo($idTvdb, empty($lastStaffel) ? null : $lastStaffel->getStaffelNum());
 		$runningTvDb = isset($episodes[0][0]) ? $episodes[0][0] : '';
 
 		$pad1 = $runningTvDb == null ? 'class="padbot15" ' : '';
@@ -96,16 +99,19 @@ include_once "./template/_SERIEN.php";
 		echo '<div class="padbot15" style="overflow-x:hidden;"></div>';
 	}
 
+	$clear1  = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
+	$clear2  = $isAdmin ? '</a>' : '';
+
 	$airings = '';
 	$dur     = '';
 	$epFirst = $serie->getFirstStaffel()->getFirstEpisode();
-	$epLast  = $serie->getLastStaffel()->getLastEpisode();
+	$epLast  = empty($lastStaffel) ? null : $lastStaffel->getLastEpisode();
 	if ($epFirst != null && $epLast != null) {
 		$airings = toEuropeanDateFormat($epFirst->getAirDate());
 		$lastAir = toEuropeanDateFormat($epLast->getAirDate());
 		if ($airings != $lastAir) { $airings .= ' - '.$lastAir; }
 		$dur = getDuration($epFirst, $epLast);
-		echo '<div class="padbot15" style="overflow-x:hidden;"><i><b>Aired:</b></i><span class="flalright">'.$airings.$dur.'</span></div>';
+		echo '<div class="padbot15" style="overflow-x:hidden;"><i><b>Aired:</b></i><span class="flalright">'.$clear1.$airings.$dur.$clear2.'</span></div>';
 	}
 
 	if ($isAdmin && $running && checkAirDate()) {
@@ -149,8 +155,8 @@ include_once "./template/_SERIEN.php";
 
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			$info      = $info1.$info2;
-			$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
-			$clear2    = $isAdmin ? '</a>' : '';
+			#$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
+			#$clear2    = $isAdmin ? '</a>' : '';
 
 			echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2.'<br /><br />';
 

@@ -11,7 +11,7 @@
 
 	startSession();
 	if (isLoggedIn()) { loggedInSoRedirect(true); }
-	if (logRefferer()) { throw new Exception('301'); }
+	if (logRefferer()) { throw new Exception('Refferer forbidden', 301); }
 
 	$loggedInAs  = '';
 	$failedText  = 'login failed!';
@@ -189,13 +189,13 @@ function noLog($username, $host, $ip) {
 		<div class='navbar-inner' style='height:30px;'>
 <?php if (!$noMoreLogin) { ?>
 			<div class='container' style='margin:0px auto; width:auto;'>
-				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:4px; position: absolute;' href='#'><?php echo getNavTitle(); ?></a></div>
+				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:3px; position: absolute;' href='#'><?php echo getNavTitle(); ?></a></div>
 				<form action='login.php' method='post' class='navbar-search pull-right' style='height:25px;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF;'>
-					<li style='margin:0px;'>
+					<li style='margin:0px; padding-right:10px;'>
 						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusName();' type='text' id='username' name='username' placeholder='username' required minlength='3' />
 						<input class='search-query span1' style='margin:4px 10px; width:75px; height:25px;' onblur='return checkFocusPass();' type='password' id='passwort' name='passwort' placeholder='password' required minlength='5' />
-						<input type='submit' value='Ok' class='btn' style='height:20px; padding-top:0px; margin:5px 10px;' onfocus='this.blur();'/>
+						<input type='submit' value='Ok' class='btn' style='height:22px; padding-top:0px; margin:5px 10px;' onfocus='this.blur();'/>
 					</li>
 				</ul>
 				</form>

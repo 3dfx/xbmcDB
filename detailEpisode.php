@@ -3,7 +3,7 @@ include_once "check.php";
 
 include_once "./template/functions.php";
 include_once "./template/config.php";
-include_once "./template/_SERIEN.php";
+include_once "./template/Series/_SERIEN.php";
 
 	header("Content-Type: text/html; charset=UTF-8");
 
@@ -59,6 +59,7 @@ include_once "./template/_SERIEN.php";
 		$src        = $row['source'];
 		$fps        = $row['fps'];
 		$bits       = $row['bits'];
+		$atmosx     = $row['atmosx'];
 	}
 
 	$percent;
@@ -67,8 +68,8 @@ include_once "./template/_SERIEN.php";
 	$timeTotal;
 	if ($playCount <= 0) {
 		$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';");
-		$timeAt    = $result['timeAt'];
-		$timeTotal = $result['timeTotal'];
+		$timeAt    = isset($result['timeAt'])    ? $result['timeAt']    : null;
+		$timeTotal = isset($result['timeTotal']) ? $result['timeTotal'] : null;
 		if (!empty($timeAt) && !empty($timeTotal)) {
 			$pausedAt  = getPausedAt($timeAt);
 			$percent   = round($timeAt / $timeTotal * 100, 0);
@@ -172,7 +173,7 @@ include_once "./template/_SERIEN.php";
 			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
 				$SQL  = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';";
 				$row2 = fetchFromDB_($dbh, $SQL, false);
-				$url = $row2['url'];
+				$url = isset($row2['url']) ? $row2['url'] : null;
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
 					if (file_exists($sessionImg)) {
@@ -297,7 +298,10 @@ include_once "./template/_SERIEN.php";
 		$countryMap = !empty($aCodec) || !empty($subtitle) ? getCountryMap() : null;
 		if (!empty($aCodec)) {
 			$codecs = '';
-			for ($i = 0; $i < count($aCodec); $i++) { $codecs .= postEditACodec($aCodec[$i]).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countryMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : ''); }
+			for ($i = 0; $i < count($aCodec); $i++) {
+				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), (substr_count(strtoupper($aCodec[$i]), 'TRUEHD') > 0 || substr_count(strtoupper($aCodec[$i]), 'EAC3') > 0));
+				$codecs .= postEditACodec($aCodec[$i], !empty($atmos) && !empty($atmos[$i])).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countryMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : '');
+			}
 			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
 		}
 

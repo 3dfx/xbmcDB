@@ -1,8 +1,9 @@
 <?php
+/** @noinspection SqlResolve */
 include_once "./globals.php";
 include_once "./template/config.php";
 include_once "./template/SimpleImage.php";
-include_once "./template/_SERIEN.php";
+include_once "./template/Series/_SERIEN.php";
 require_once "./rss_php.php";
 
 function startSession()   { if (!isset($_SESSION)) { session_start(); } }
@@ -22,7 +23,7 @@ function isAjax() {
 	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
 }
 
-function isLinux() { return 'LINUX' == getOS(); }
+function isLinux() { return 'LINUX' === getOS(); }
 
 function getTimeOut($intra = false) {
 	return $intra ? 1 : 3;
@@ -76,6 +77,7 @@ function fetchCount($dbh, $table) {
 	$result = querySQL_($dbh, "SELECT COUNT(*) AS c FROM ".$table.";", false);
 	foreach($result as $row)
 		return $row['c'];
+	return 0;
 }
 
 function singleSQL($SQL, $throw = true) {
@@ -114,19 +116,20 @@ function fetchFromDB_($dbh, $SQL, $throw = true) {
 
 function getTableNames() {
 	$dbh = getPDO();
+	$result = array();
 	try {
 		$res    = $dbh->query("SELECT name FROM sqlite_master WHERE type='table' AND name IS NOT 'sqlite_sequence';");
-		$result = array();
 		foreach($res as $row) {
 			$result[] = $row['name'];
 		}
 
 		sort($result);
-		return $result;
 
 	} catch(Throwable $e) {
 		if (isAdmin()) { echo $e->getMessage(); }
 	}
+
+	return $result;
 }
 
 function getStreamDetails($idFile) {
@@ -309,9 +312,10 @@ function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
 	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
 	else {
-		checkAndAlterTableCol($dbh, 'fileinfo', 'param_fpsColChecked', 'fps', 'FLOAT');
-		checkAndAlterTableCol($dbh, 'fileinfo', 'param_srcColChecked', 'src', 'INTEGER');
-		checkAndAlterTableCol($dbh, 'fileinfo', 'param_fpsColChecked', 'bit', 'INTEGER');
+		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'fps',    'FLOAT',     $dbh);
+		checkAndAlterTableCol('fileinfo', 'param_srcColChecked', 'src',    'TINYINT',   $dbh);
+		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'bit',    'TINYINT',   $dbh);
+		checkAndAlterTableCol('fileinfo', 'param_atmColChecked', 'atmosx', 'CHARACTER', $dbh);
 	}
 }
 
@@ -322,7 +326,7 @@ function checkARTable($dbh = null) {
 	}
 }
 
-function checkAndAlterTableCol($dbh = null, $table, $sessionKey, $col, $colType) {
+function checkAndAlterTableCol($table, $sessionKey, $col, $colType, $dbh = null) {
 	if (isset($_SESSION[$sessionKey]))
 		return;
 	$colFound = false;
@@ -353,8 +357,8 @@ function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
 	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, maxSeason INTEGER, maxEpisode INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
 	else {
-		checkAndAlterTableCol($dbh, 'nextairdate', 'param_lStColChecked', 'maxSeason',  'INTEGER');
-		checkAndAlterTableCol($dbh, 'nextairdate', 'param_lEpColChecked', 'maxEpisode', 'INTEGER');
+		checkAndAlterTableCol('nextairdate', 'param_lStColChecked', 'maxSeason',  'INTEGER', $dbh);
+		checkAndAlterTableCol('nextairdate', 'param_lEpColChecked', 'maxEpisode', 'INTEGER', $dbh);
 	}
 }
 
@@ -442,8 +446,7 @@ function fetchPaths() {
 		$paths = unserialize($_SESSION['paths']);
 
 	} else {
-		$TVSHOWDIR = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : '';
-		#$SQL = "SELECT idPath, strPath FROM path WHERE strPath like '%".$TVSHOWDIR."%' ORDER BY strPath ASC;";
+		// $TVSHOWDIR = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : '';
 		$SQL = "SELECT idPath,strPath FROM path WHERE strPath IN (SELECT DISTINCT(strPath) FROM ".mapDBC('episodeview').");";
 
 		$dbh = getPDO();
@@ -463,13 +466,53 @@ function fetchPaths() {
 	return $paths;
 }
 
+function fetchAudioFormat($idFile, $path, $filename, $atmosx, $dbh, $eventuallyAtmos = false) {
+	if (!isLinux()) { return null; }
+	$enabled = isset($GLOBALS['FETCH_ATMOSX']) ? $GLOBALS['FETCH_ATMOSX'] : false;
+	if (!$enabled) { return null; }
+
+	if (!empty($atmosx)) {
+		return explode(',', $atmosx);
+	}
+
+	$eventuallyAtmos |= (substr_count(strtolower($filename), 'atmos') > 0 || substr_count(strtolower($filename), 'dtsx') > 0);
+	if (!$eventuallyAtmos) { return 0; }
+
+	$res = getAudioProfile($path.$filename);
+	if (empty($res)) { return 0; }
+
+	$atmosRes = array();
+	for ($i = 0; $i < count($res); ++$i) {
+		$item = empty($res[$i]) ? '' : strtolower($res[$i]);
+		$isAtmos = (substr_count($item, 'atmos') > 0 || substr_count($item, 'x / ma') > 0);
+		$atmosRes[$i] = $isAtmos ? '1' : '0';
+	}
+
+	$dbValue = implode(',', $atmosRes);
+	$dbhIsNull = ($dbh === null);
+	try {
+		if ($dbhIsNull) { $dbh = getPDO(); }
+
+		$sqli = "UPDATE fileinfo SET atmosx = '".$dbValue."' WHERE idFile = '$idFile';";
+
+		if ($dbhIsNull && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
+		$dbh->exec($sqli);
+		if ($dbhIsNull && $dbh->inTransaction()) { $dbh->commit(); }
+
+	} catch(Throwable $e) {
+		if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
+		if (isAdmin()) { echo $e->getMessage(); }
+	}
+
+	return $atmosRes;
+}
+
 function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 	if (!isLinux()) { return null; }
-	$fpsEnabled = isset($GLOBALS['FETCH_FPS']) ? $GLOBALS['FETCH_FPS'] : false;
-	if (!$fpsEnabled)
-		return null;
+	$enabled = isset($GLOBALS['FETCH_FPS']) ? $GLOBALS['FETCH_FPS'] : false;
+	if (!$enabled) { return null; }
 
-	if ($fps == null || $fps[0] == null || $fps[1] == null) {
+	if ($fps === null || $fps[0] === null || $fps[1] === null) {
 		$stacked = (substr($filename, 0, 8) == "stack://");
 		if ($stacked)
 			$fps = null;
@@ -490,7 +533,7 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 		else
 			$fps = array($fps[0], $fps[1]);
 
-		$dbhIsNull = ($dbh == null);
+		$dbhIsNull = ($dbh === null);
 		try {
 			if ($dbhIsNull) { $dbh = getPDO(); }
 
@@ -508,14 +551,10 @@ function fetchFps($idFile, $path, $filename, $fps, $dbh) {
 		}
 	} // if fps == null...
 
-	if (empty($fps))
+	if (empty($fps)) {
 		return array(null, null);
-/*
-	if (isset($fps[1]) && intval($fps[1]) == 0)
-		$fps[1] = null;
-	if (isset($fps[1]) && substr($fps[1], -3) == '000')
-		$fps[1] = intval($fps[1]);
-*/
+	}
+
 	$fps[1] = formatFps($fps[1]);
 	return $fps;
 }
@@ -579,8 +618,6 @@ function getFilesize($file) {
 	#$file = correctFilename($file);
 	#if (empty($file)) { return null; }
 
-	#$execString = 'stat -c %s '.$file;
-	#exec($execString, $output);
 	$output = execCommand($file, 'stat -c %s ');
 	if ($output != null && count($output) > 0) {
 		return trim($output[0]);
@@ -594,8 +631,6 @@ function getCreation($file) {
 	#$file = correctFilename($file);
 	#if (empty($file)) { return null; }
 
-	#$execString = 'stat -c %y '.$file;
-	#exec($execString, $output);
 	$output = execCommand($file, 'stat -c %y ');
 	if ($output != null && count($output) > 0) {
 		return substr(trim($output[0]), 0, 19);
@@ -615,6 +650,36 @@ function getFps($file) {
 	}
 
 	return 0;
+}
+
+function getAudioProfile($file) {
+	if (!isLinux()) { return null; }
+	$output = execCommand($file, 'mediainfo --Inform="Audio;%Format_Profile%\n" ');
+	$res = checkAudioOutput($output);
+	if (!empty($res) && "Blu-ray Disc" !== $res[0]) { return $res; }
+
+	$output = execCommand($file, 'mediainfo --Language=raw -f --Inform="Audio;%Format_Commercial%\n" ');
+	$res = checkAudioOutput($output);
+	if (!empty($res)) { return $res; }
+
+	return null;
+}
+
+function checkAudioOutput($output) {
+	if ($output != null && count($output) > 0) {
+		$res = $output;
+		if (empty($res)) { return null; }
+		unset($res[count($res)-1]);
+		if (!empty($res)) {
+			for ($i = count($res); $i > 0; $i--) {
+				if (empty($res[$i-1])) { unset($res[$i-1]); }
+			}
+
+			if (!empty($res)) { return $res; }
+		}
+	}
+
+	return null;
 }
 
 function execCommand($file, $execString) {
@@ -648,7 +713,7 @@ function thumbnailHash($input) {
 	for ($ptr = 0; $ptr < strlen($chars); $ptr++) {
 		$chr = ord($chars[$ptr]);
 		$crc ^= $chr << 24;
-		for ((int) $i = 0; $i < 8; $i++) {
+		for ($i = 0; $i < 8; $i++) {
 			if ($crc & 0x80000000) {
 				$crc = ($crc << 1) ^ 0x04C11DB7;
 			} else {
@@ -926,7 +991,7 @@ function fetchDirectorCovers($dbh = null) {
 		$idMovie     = $row['idMovie'];
 		$idDirector  = $row['idDirector'];
 		$artist      = $row['strActor'];
-		$image   = $row['actorimage'];
+		$image       = $row['actorimage'];
 
 		if (isset($result[$idMovie]['artist'])) { continue; }
 		$result[$idMovie]['id']     = $idDirector;
@@ -1032,7 +1097,7 @@ function postNavBar_($isMain) {
 	$gallerymode         = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
 	$dbSearch            = isset($_SESSION['dbSearch'])    ? $_SESSION['dbSearch']    : null;
 	$unseen              = isset($_SESSION['unseen'])      ? $_SESSION['unseen']      : 3;
-	$serienmode          = isset($_SESSION['serienmode'])  ? $_SESSION['serienmode']  : 0;
+	# $serienmode          = isset($_SESSION['serienmode'])  ? $_SESSION['serienmode']  : 0;
 
 	$which               = isset($_SESSION['which'])       ? $_SESSION['which']       : '';
 	$just                = isset($_SESSION['just'])        ? $_SESSION['just']        : '';
@@ -1040,19 +1105,20 @@ function postNavBar_($isMain) {
 
 	$countMVids          = isset($_SESSION['param_mvC'])   ? $_SESSION['param_mvC']   : 0;
 	$countTVshows        = isset($_SESSION['param_tvC'])   ? $_SESSION['param_tvC']   : 0;
-#	$countMovies         = isset($_SESSION['param_movC'])  ? $_SESSION['param_movC']  : 0;
+	# $countMovies         = isset($_SESSION['param_movC'])  ? $_SESSION['param_movC']  : 0;
 
 	$TITLE               = isset($GLOBALS['NAV_TITLE'])           ? $GLOBALS['NAV_TITLE']           : 'xbmcDB';
 	$INVERSE             = isset($GLOBALS['NAVBAR_INVERSE'])      ? $GLOBALS['NAVBAR_INVERSE']      : false;
 	$SEARCH_ENABLED      = isset($GLOBALS['SEARCH_ENABLED'])      ? $GLOBALS['SEARCH_ENABLED']      : true;
 	$CUTSENABLED         = isset($GLOBALS['CUTS_ENABLED'])        ? $GLOBALS['CUTS_ENABLED']        : true;
 	$DREIDENABLED        = isset($GLOBALS['DREID_ENABLED'])       ? $GLOBALS['DREID_ENABLED']       : true;
+	$ATMOSENABLED        = isset($GLOBALS['ATMOS_ENABLED'])       ? $GLOBALS['ATMOS_ENABLED']       : true;
 	$XBMCCONTROL_ENABLED = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	$CHOOSELANGUAGES     = isset($GLOBALS['CHOOSELANGUAGES'])     ? $GLOBALS['CHOOSELANGUAGES']     : false;
 	$MUSICVIDS_ENABLED   = isset($GLOBALS['MUSICVIDS_ENABLED'])   ? $GLOBALS['MUSICVIDS_ENABLED']   : false;
-	$TVSHOW_GAL_ENABLED  = isset($GLOBALS['TVSHOW_GAL_ENABLED'])  ? $GLOBALS['TVSHOW_GAL_ENABLED']  : false;
+	# $TVSHOW_GAL_ENABLED  = isset($GLOBALS['TVSHOW_GAL_ENABLED'])  ? $GLOBALS['TVSHOW_GAL_ENABLED']  : false;
 	$countryLabel        = $CHOOSELANGUAGES ? 'language' : '';
-	$newAddedCount       = getNewAddedCount();
+	# $newAddedCount       = getNewAddedCount();
 
 	$isMain              = $show == 'filme'  ? true : false;
 	$isTvshow            = $show == 'serien' ? true : false;
@@ -1067,7 +1133,7 @@ function postNavBar_($isMain) {
 	$res = '';
 	//--echo $res .= '<div class="navbar'.($INVERSE ? ' navbar-inverse' : '').'" style="margin:-10px -15px 15px; position: fixed; width: 101%; z-index: 50;">';
 	$res .= '<div class="navbar-inner" style="height:30px;">';
-	$res .= '<div class="container" style="margin:0px auto; width:auto; height:40px;">';
+	$res .= '<div class="container" style="margin:0 auto; width:auto; height:40px;">';
 
 	$res .= '<a class="brand navBarBrand" href="#" onmouseover="closeNavs();" onfocus="this.blur();">'.$TITLE.'</a>';
 
@@ -1137,6 +1203,9 @@ function postNavBar_($isMain) {
 
 		} else if ($mode == 8 && empty($just)) {
 			$selectedIs = 'remastered';
+
+		} else if ($mode == 9 && empty($just)) {
+			$selectedIs = 'atmos';
 		}
 
 		$res .= '<li class="dropdown" role="menu" aria-labelledby="dLabel" id="dropOptions" onmouseover="openNav(\'#dropOptions\');">';
@@ -1200,18 +1269,25 @@ function postNavBar_($isMain) {
 			$res .= '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
 		}
 
-		if ($CUTSENABLED || $DREIDENABLED) {
+		if ($CUTSENABLED || $DREIDENABLED || $ATMOSENABLED) {
 			$res .= '<li class="divider"></li>';
 		}
+		if ($ATMOSENABLED) {
+			$res .= '<li><a href="?show=filme&mode=9'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 9 && empty($just) ? ' class="selectedItem"' : '').'>Atmos</a></li>';
+		}
+		if ($DREIDENABLED) {
+			$res .= '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
+		}
 		if ($CUTSENABLED) {
+			if ($ATMOSENABLED || $DREIDENABLED) {
+				$res .= '<li class="divider"></li>';
+			}
+
 			$res .= '<li><a href="?show=filme&mode=3'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 3 && empty($just) ? ' class="selectedItem"' : '').'>directors cut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=4'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 4 && empty($just) ? ' class="selectedItem"' : '').'>extended cut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=5'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 5 && empty($just) ? ' class="selectedItem"' : '').'>uncut</a></li>';
 			$res .= '<li><a href="?show=filme&mode=6'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 6 && empty($just) ? ' class="selectedItem"' : '').'>unrated</a></li>';
 			$res .= '<li><a href="?show=filme&mode=8'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 8 && empty($just) ? ' class="selectedItem"' : '').'>remastered</a></li>';
-		}
-		if ($DREIDENABLED) {
-			$res .= '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
 		}
 
 		$res .= '</ul>';
@@ -1249,7 +1325,6 @@ function postNavBar_($isMain) {
 		}
 	}
 
-	#if ($SEARCH_ENABLED && $isTvshow) {
 	if ($SEARCH_ENABLED) {
 		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 		$res .= createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
@@ -1273,13 +1348,13 @@ function postNavBar_($isMain) {
 		$state   = ($state == 1 ? 'playing' : ($state == 0 ? 'paused' : ''));
 		$res .= '<span id="xbmControlWrap" style="float:left;">';
 		$res .= '<li id="xbmControl" onmouseover="closeNavs();" style="cursor:default; height:35px;'.(empty($playing) ? ' display:none;' : '').'">';
-			$res .= '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0px; white-space:nowrap; overflow:hidden;">';
+			$res .= '<a id="xbmcPlayLink" class="navbar" onclick="playPause(); return false;" style="cursor:pointer; font-weight:bold; max-width:300px; width:300px; height:20px; float:left; padding:8px; margin:0; white-space:nowrap; overflow:hidden;">';
 			$res .= '<span id="xbmcPlayerState_" style="color:'.($INVERSE ? 'white' : 'black').'; position:absolute; top:10px; font-weight:bold; left:-65px;"><span id="xbmcPlayerState">'.$state.'</span>: </span>';
-			$res .= '<span id="xbmcPlayerFile" style="color:'.($INVERSE ? 'white' : 'black').'; top:0px; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
+			$res .= '<span id="xbmcPlayerFile" style="color:'.($INVERSE ? 'white' : 'black').'; top:0; position:relative; max-width:350px; width:350px; height:20px; left:-7px;">'.$playing.'</span>';
 			$res .= '</a> ';
-			$res .= '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
-			$res .= '<a class="navbar" onclick="playNext(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/next.png" style="width:24px; height:24px;" /></a>';
-			$res .= '<a class="navbar" onclick="playPrev(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0px;"><img src="./img/prev.png" style="width:24px; height:24px;" /></a>';
+			$res .= '<a class="navbar" onclick="stopPlaying(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0;"><img src="./img/stop.png" style="width:24px; height:24px;" /></a>';
+			$res .= '<a class="navbar" onclick="playNext(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0;"><img src="./img/next.png" style="width:24px; height:24px;" /></a>';
+			$res .= '<a class="navbar" onclick="playPrev(); return false;" style="cursor:pointer; float:right; padding:6px; margin:0;"><img src="./img/prev.png" style="width:24px; height:24px;" /></a>';
 		$res .= '</li>';
 		$res .= '</span>';
 
@@ -1287,7 +1362,7 @@ function postNavBar_($isMain) {
 		$res .= '<li id="plaYoutube_" style="font-weight:bold;">';
 		$res .= '<span style="position:relative; top:3px;">';
 		$res .= '<input id="plaYoutube" name="plaYoutube" class="search-query span2" style="margin:4px 5px; width:500px; height:23px; display:none;" type="text" placeholder="play youTube / vimeo" onfocus="this.select();" onkeydown="return playItemPrompt(this, event); return false;" onmouseover="focus(this);" />';
-		$res .= '<img id="ytIcon" src="./img/yt.png" style="width:32px; height:32px;" onmousmove=""; onmouseout=""; />';
+		$res .= '<img id="ytIcon" src="./img/yt.png" style="width:32px; height:32px;" />';
 		$res .= '</span>';
 		$res .= '</li>';
 		}
@@ -1378,9 +1453,9 @@ function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs
 	$res .= '<li class="dropdown" id="dropSearch" onmouseover="openNav(\'#dropSearch\');">';
 	$res .= '<a tabindex="50" href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'" onclick="this.blur();" onfocus="openNav(\'#dropSearch\');">search <b class="caret"></b></a>';
 	$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
-		$res .= '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0px;"').'>';
+		$res .= '<li'.($isMain || empty($saferSearch) ? ' class="navbar-search"' : ' style="margin:0;"').'>';
 		$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchDBfor" name="searchDBfor" placeholder="search..." onfocus="this.select();" onkeyup="return searchDbForString(this, event); return false;" onmouseover="focus(this);" '.(!empty($saferSearch) ? 'value="'.$saferSearch.'"' : '').'/>';
-		$res .= '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').'onclick="return resetDbSearch();"><img src="./img/close.png" /></a>';
+		$res .= '<a class="search-close"'.($isTvshow && !empty($saferSearch) ? 'style="top:9px; left:132px;"' : '').' onclick="return resetDbSearch();"><img src="./img/close.png" /></a>';
 		$res .= '</li>';
 
 		if ($isTvshow && !empty($saferSearch)) {
@@ -1388,7 +1463,7 @@ function createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs
 		}
 
 		if (!$isTvshow) {
-			$res .= '<li class="navbar-search" style="margin:0px;">';
+			$res .= '<li class="navbar-search" style="margin:0;">';
 			$res .= '<input class="search-query span2" style="margin:4px 5px; width:150px; height:23px;" type="text" id="searchfor" name="searchfor" placeholder="filter..." onfocus="this.select();" onkeyup="searchForString(this, event); return false;" onmouseover="focus(this);"'.($gallerymode || !$isMain ? ' disabled' : '').' />';
 			$res .= '<a class="search-close"'.($gallerymode || !$isMain ? ' style="cursor:not-allowed;"' : ' onclick="resetFilter();"').'><img src="./img/close.png" /></a>';
 			$res .= '</li>';
@@ -1410,7 +1485,7 @@ function createEpisodeSubmenu($result) {
 		$lId = 'sub_'.str_replace(' ', '_', $key);
 		$res .= '<li class="dropdown-submenu" id="'.$lId.'" style="cursor:default;">';
 		$ttip = count($show) > 1 ? ' title="'.count($show).' episodes"' : '';
-		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($tabIndx++).'" _href="#"><span'.$ttip.'>'.$key.'</span></a>';
+		$res .= '<a onfocus="openNav_(\'#'.$lId.'\', false);" tabindex="'.($tabIndx++).'"><span'.$ttip.'>'.$key.'</span></a>';
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
 		foreach($show as $row) {
@@ -1459,8 +1534,8 @@ function xbmcGetPlayerId() {
 }
 
 function cleanedPlaying($playing) {
-	$from = array('.flac','.mp3','.m4a','.mkv','.avi','.mp4','.flv');
-	$to   = array(''     ,''    ,''    ,''    ,''    ,''    ,''    );
+	$from = array('.mp3','.aac','.flac','.m4a','.mkv','.avi','.mp4','.flv');
+	$to   = array(''     ,''    ,''    ,''    ,''    ,''    ,''    ,''    );
 	return str_replace($from, $to, $playing);
 }
 
@@ -1470,7 +1545,7 @@ function xbmcGetNowPlaying() {
 	$json_res = curlJson('"method":"Player.GetItem", "params":{"playerid":'.$pid.'}, "id":1');
 	if (empty($json_res)) { return null; }
 
-	$res  = json_decode(encodeString($json_res, true));
+	$res  = json_decode($json_res);
 	$name = !empty($res) ? $res->{'result'}->{'item'}->{'label'} : 'unknown';
 	return $name;
 }
@@ -1568,7 +1643,7 @@ function xbmcRunning() {
 	if (!isAdmin() || !isLinux()) { return 0; }
 
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	#if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
+	if ($overrideFetch == 0 && isset($_SESSION['param_xbmcRunning'])) { return $_SESSION['param_xbmcRunning']; }
 	exec('ps -ea | grep kodi-x11 | wc -l', $output);
 	$res = intval(trim($output[0]));
 	$_SESSION['param_xbmcRunning'] = $res;
@@ -1683,6 +1758,13 @@ function restoreSession() {
 		session_decode($sessiondata);
 	}
 	$_SESSION = array_merge($_SESSION, $orSession); //override pre-login values
+
+	/*
+	$show = isset($_SESSION['show']) ? $_SESSION['show'] : null;
+	if (!empty($show) && $show != 'filme' && $show != 'serien') {
+		unset($_SESSION['show']);
+	}
+	*/
 }
 
 function storeSession() {
@@ -1697,7 +1779,8 @@ function storeSession() {
 	       $_SESSION['dbName'],     $_SESSION['dbVer']
 
 	     ); //remove values that should be determined at login
-	if ($_SESSION['show'] == 'airdate') { unset($_SESSION['show']); }
+//	if (isset($_SESSION['show']) && ($_SESSION['show'] == 'airdate' || $_SESSION['show'] == 'details')) { unset($_SESSION['show']); }
+	if (isset($_SESSION['show']) && ($_SESSION['show'] != 'filme' && $_SESSION['show'] != 'serien')) { unset($_SESSION['show']); }
 
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
 	fputs($sessionfile, session_encode());
@@ -1710,6 +1793,21 @@ function adminInfo($start, $show) {
 		echo '<div class="bs-docs" id="adminInfo" style="z-index:10;" onmouseover="hideAdminInfo(true);" onmouseout="hideAdminInfo(false);">';
 
 		if (isLinux()) {
+			//cpu temp
+			$filename = './myScripts/logs/cpuTemp_.log';
+			if (file_exists($filename)) {
+				$log = file($filename);
+				$cpu_ = explode(' ', $log[0]);
+				echo getTempDiv($cpu_[0], 0);
+				echo getTempDiv($cpu_[1], 1);
+				echo '<br id="brr0" style="display:none;" />';
+				
+				echo getTempDiv($cpu_[2], 2);
+				echo getTempDiv($cpu_[3], 3);
+				echo '<br id="brr1" style="display:none;" />';
+			}
+			//cpu temp
+		
 			$ssdTemp = '';
 			//hdparm
 			$filename = './myScripts/logs/hdparm.log';
@@ -1736,41 +1834,25 @@ function adminInfo($start, $show) {
 						$tCol_='background:#bcbcbc; ';
 					echo '<span id="hdp'.$i.'" style="'.$tCol_.'cursor:default; display:none; padding:5px 8px; margin-left:5px; margin-bottom:5px;" class="label'.$tCol.'" title="'.$title.'">'.$label.'</span>';
 				}
-				#echo '<br id="brr0" style="display:none;" />';
+				#echo '<br id="brr3" style="display:none;" />';
 			}
 			//hdparm
 
 			//ssd temp
-			echo getTempDiv($ssdTemp, -1, 'ssd');
-			echo '<br id="brr0" style="display:none;" />';
-			//ssd temp
-
-			//cpu temp
-			$filename = './myScripts/logs/cpuTemp_.log';
-			if (file_exists($filename)) {
-				$log = file($filename);
-				$cpu_ = explode(' ', $log[0]);
-				echo getTempDiv($cpu_[0], 0);
-				echo getTempDiv($cpu_[1], 1);
-				#exec('sensors | sed -ne "s/Core\ 0: \+[-+]\([0-9]\+\).*/\1/p"', $output);
-				#$cpu0 = getCPUdiv($output, 0);
-				#unset($output);
-				#exec('sensors | sed -ne "s/Core\ 1: \+[-+]\([0-9]\+\).*/\1/p"', $output);
-				#$cpu1 = getCPUdiv($output, 1);
-
-				echo '<br id="brr1" style="display:none;" />';
+			if (!empty($ssdTemp)) {
+				echo getTempDiv($ssdTemp, -1, 'ssd');
+				echo '<br id="brr4" style="display:none;" />';
 			}
-			//cpu temp
+			//ssd temp
 
 			//cpu load
 			unset($output);
-			$load = '';
 			if (file_exists('./myScripts/logs/cpuTemps.log'))
 				exec("tail /var/spool/myScripts/logs/cpuTemps.log -n1 | cut -d ',' -f 4", $output);
 			else
 				exec("ps -eo pcpu | awk ' {cpu_load+=$1} END {print cpu_load}'", $output);
-			$load = getLoadDiv($output);
-			echo $load;
+
+			echo getLoadDiv($output);
 			//cpu load
 		} //isLinux
 
@@ -1779,7 +1861,7 @@ function adminInfo($start, $show) {
 		$eCol = '';
 		if ($end >= 1)   { $eCol = ' label-important'; }
 		if ($end <= 0.1) { $eCol = ' label-success'; }
-		echo '<span id="spTime" style="cursor:default; display:none; padding:5px 8px; margin-top:5px;" class="label'.$eCol.'" title="loadtime">'.$end.'s</span>';
+		echo '<span id="spTime" style="cursor:default; display:none; padding:5px 8px;" class="label'.$eCol.'" title="loadtime">'.$end.'s</span>';
 		//time
 
 		echo '</div>';
@@ -1787,6 +1869,10 @@ function adminInfo($start, $show) {
 }
 
 function getTempDiv($output, $core, $title = '') {
+	if (!empty($output)) {
+		$output = str_replace("\n", "", $output);
+		$output = trim($output);
+	}
 	if (empty($output))
 		return '';
 
@@ -1800,7 +1886,7 @@ function getTempDiv($output, $core, $title = '') {
 	if ($output >= $CPU_TEMPS[2]) { $tCol = ' label-important'; }
 	$href = $core >= 0 && file_exists($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=0&interpolate=1"' : '';
 	$label = $core >= 0 ? 'core '.($core+1) : $title;
-	return '<span id="spTemp'.$core.'"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-left:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_cpu' : '').'" title="'.$label.'">'.$output.'&deg;C</span>';
+	return '<span id="spTemp'.$core.'"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-left:5px; margin-bottom:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_cpu' : '').'" title="'.$label.'">'.$output.'&deg;C</span>';
 }
 
 function getLoadDiv($output) {
@@ -1918,6 +2004,8 @@ function checkOpenGuest() {
 		$_SESSION['demo'] = true;
 		return true;
 	}
+
+	return false;
 }
 
 function getHttPre() {
@@ -2041,6 +2129,38 @@ function authTvDB() {
 	return $_SESSION['TvDbCache']['JWT_TOKEN'];
 }
 
+function createGEToptions() {
+	$TOKEN = authTvDB();
+	if (empty($TOKEN))
+		return null;
+
+	$opts = array('http' => array(
+		'method'  => 'GET',
+		'timeout' => getTimeOut(),
+		'header'  => 'Accept:application/json'."\r\n".'Authorization:Bearer '.$TOKEN
+	));
+
+	return $opts;
+}
+
+function getBanner($URL) {
+	$opts    = createGEToptions();
+	$context = stream_context_create($opts);
+	$result  = null;
+	try {
+		$result = file_get_contents($URL, false, $context);
+
+	} catch (Throwable $e) {
+		return null;
+	}
+
+	if ($result === FALSE) {
+		return null;
+	}
+
+	return $result;
+}
+
 function getShowInfoJson($idTvDb) {
 	if (empty($idTvDb) || $idTvDb < 0) { return null; }
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
@@ -2048,24 +2168,17 @@ function getShowInfoJson($idTvDb) {
 		return unserialize($_SESSION['TvDbCache']['showinfo'][$idTvDb]);
 	}
 
-	$TOKEN = authTvDB();
-	if (empty($TOKEN))
-		return;
-
-	$URL = 'https://api.thetvdb.com/series/'.$idTvDb;
-	$opts = array('http' => array(
-		'method'  => 'GET',
-		'timeout' => getTimeOut(),
-		'header'  => 'Accept:application/json'."\r\n".'Authorization:Bearer '.$TOKEN
-	));
+	$opts    = createGEToptions();
 	$context = stream_context_create($opts);
 	$result  = null;
 	try {
+		$URL = 'https://api.thetvdb.com/series/'.$idTvDb;
 		$result = file_get_contents($URL, false, $context);
+
 	} catch (Throwable $e) {
 		return null;
 	}
-#echo $result;
+
 	if ($result === FALSE) {
 		return null;
 	}
@@ -2081,25 +2194,19 @@ function getEpisodes($idTvDb, $page=1) {
 		return unserialize($_SESSION['TvDbCache']['episodes'][$idTvDb][$page]);
 	}
 
-	$TOKEN = authTvDB();
-	if (empty($TOKEN))
-		return null;
-
-	$URL = 'https://api.thetvdb.com/series/'.$idTvDb.'/episodes?page='.$page;
-	$opts = array('http' => array(
-		'method'  => 'GET',
-		'timeout' => getTimeOut(),
-		'header'  => 'Accept:application/json'."\r\n".'Authorization:Bearer '.$TOKEN
-	));
+	$opts = createGEToptions();
 	$result = null;
 	try {
+		$URL = 'https://api.thetvdb.com/series/'.$idTvDb.'/episodes?page='.$page;
 		//$resCode = getHttpResponseCode($URL);
 		//if ($resCode != 200)
 		//	return null;
 		$context = stream_context_create($opts);
 		$oldHandler = set_error_handler('handleError');
 		$result = file_get_contents($URL, false, $context);
+
 		if (!empty($oldHandler)) { set_error_handler($oldHandler); }
+
 	} catch (Throwable $e) {
 		return null;
 	}
@@ -2139,9 +2246,9 @@ function getShowInfo($idTvDb, $lastStaffel = null) {
 		if (isset($items['links']) && isset($items['links']['next']) && $page >= $items['links']['next']) {
 			$hasNext = false;
 		}
-		$items = $items['data'];
+		$items = isset($items['data']) ? $items['data'] : null;
 
-		$itemsCount = count($items);
+		$itemsCount = empty($items) ? 0 : count($items);
 		for ($i = 0; $i < $itemsCount; $i++) {
 			$item = $items[$i];
 
@@ -2214,7 +2321,8 @@ function getLastEpisodeInfo($episodes, $lastStaffel = null) {
 					continue;
 			}
 
-			if (intval($lastStaffel) == intval($episodes[$i][$epis]['airedSeason'])) {
+			$airedSeason = isset($episodes[$i][$epis]['airedSeason']) ? $airedSeason = $episodes[$i][$epis]['airedSeason'] : null;
+			if (!empty($airedSeason) && intval($lastStaffel) == intval($airedSeason)) {
 				#$seas = intval($episodes[$i][$epis]['airedSeason']);
 				$seas = $i;
 				break;
@@ -2302,7 +2410,8 @@ function getLastEpisode($serie) {
 	$running  = $serie->isRunning();
 	if (!$running) { return null; }
 	$idTvDb   = $serie->getIdTvdb();
-	$episodes = getShowInfo($idTvDb, $serie->getLastStaffel()->getStaffelNum());
+	$lastStaffel = $serie->getLastStaffel();
+	$episodes = getShowInfo($idTvDb, empty($lastStaffel) ? null : $lastStaffel->getStaffelNum());
 	return $episodes[0][1];
 }
 
@@ -2315,7 +2424,7 @@ function getNextEpisode($serie) {
 
 	if (!$running) { return null; }
 	$staffel  = $serie->getLastStaffel();
-	$episodes = getShowInfo($idTvDb, $staffel->getStaffelNum());
+	$episodes = getShowInfo($idTvDb, empty($staffel) ? null : $staffel->getStaffelNum());
 
 	$epCount  = is_object($staffel) ? $staffel->getLastEpNum() : -1;
 	if ($epCount < 0)
@@ -2502,6 +2611,7 @@ function workaroundMTime($img) {
 
 function handleError($errno, $errstr, $errfile, $errline, array $errcontext) {
 	// error was suppressed with the @-operator
+	/** @noinspection PhpUnhandledExceptionInspection */
 	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 }
 
@@ -2608,7 +2718,7 @@ function getResDesc($vRes) {
 	if (empty($vRes))
 		return '';
 
-	if ($vRes[0] >= 3700)
+	if ($vRes[0] >= 3700 || $vRes[1] >= 2000)
 		return '2160p'; //4k
 	if ($vRes[0] >= 2200)
 		return '1440p'; //2k
@@ -2623,21 +2733,39 @@ function getResPerf($vRes, $hdr = false) {
 	if (empty($vRes))
 		return 0;
 
-//	if ($vRes[0] >= 3700)
-//		return 5;
-	if ($vRes[0] >= 2200)
+	if ($vRes[0] >= 2200 || $hdr)
 		return $hdr ? 5 : 4;
+
 	return 0;
 }
 
-function postEditACodec($str) {
-	//$str = str_replace('AC3', '<span title="Audio Coding 3">AC3</span>', $str);
-	$str = str_replace('AAC', '<span title="Advanced Audio Coding">AAC</span>', $str);
-	//$str = str_replace('VORBIS', '<span title="Vorbis">VORBIS</span>', $str);
-	$str = str_replace('DCA', 'DTS', $str);
-	$str = str_replace('TRUEHD', '<span title="True High Definition">True-HD</span>', $str);
-	$str = str_replace('DTSHD_MA', '<span title="DTS - High Definition (Master Audio)">DTS-HD MA</span>', $str);
-	$str = str_replace('DTSHD_HRA', '<span title="DTS - High Definition (High Resolution Audio)">DTS-HD HRA</span>', $str);
+function getFpsPerf($fps) {
+	if (empty($fps) || $fps <= 30)
+		return 0;
+
+	return 5;
+}
+
+function postEditACodec($str, $atmosx = null) {
+	if ($atmosx && ($str == 'TRUEHD' || $str == 'EAC3' || $str == 'A_EAC3')) {
+		$tipp = 'Dolby Atmos with '.($str == 'TRUEHD' ? 'True-HD' : 'E-AC3');
+		$str = '<span title="'.$tipp.'">Atmos</span>';
+
+	} else if ($atmosx && ($str == 'DCA' || $str == 'DTS' || $str == 'DTSHD_MA' || $str == 'DTSHD_HRA')) {
+		$tipp = 'DTS - High Definition';
+		$str = '<span title="'.$tipp.'">DTS:X</span>';
+
+	} else {
+		//$str = str_replace('AC3', '<span title="Audio Coding 3">AC3</span>', $str);
+		$str = str_replace('A_EAC3', '<span title="Enhanced AC3">E-AC3</span>', $str);
+		$str = str_replace('EAC3', '<span title="Enhanced AC3">E-AC3</span>', $str);
+		$str = str_replace('AAC', '<span title="Advanced Audio Coding">AAC</span>', $str);
+		//$str = str_replace('VORBIS', '<span title="Vorbis">VORBIS</span>', $str);
+		$str = str_replace('DCA', 'DTS', $str);
+		$str = str_replace('TRUEHD', '<span title="True High Definition">True-HD</span>', $str);
+		$str = str_replace('DTSHD_MA', '<span title="DTS - High Definition (Master Audio)">DTS-HD MA</span>', $str);
+		$str = str_replace('DTSHD_HRA', '<span title="DTS - High Definition (High Resolution Audio)">DTS-HD HRA</span>', $str);
+	}
 
 	return $str;
 }
@@ -2838,11 +2966,11 @@ function getItemsForRequest($ids, $isShow) {
 }
 
 function doTheStuffTvShow($result, $forOrder = false, $append = false, $srcLetter = '', $dstLetter = '') {
-	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED'])        ? $GLOBALS['COPYASSCRIPT_ENABLED']   : false;
-	$copyAsScript        = isset($GLOBALS['copyAsScript'])                ? $GLOBALS['copyAsScript']           : false;
-	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN'])       ? $GLOBALS['COPYASSCRIPT_COPY_WIN']  : false;
-	$tvShowDir           = isset($GLOBALS['TVSHOWDIR'])                   ? $GLOBALS['TVSHOWDIR']              : $scriptCopyFrom;
+	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED'])        ? $GLOBALS['COPYASSCRIPT_ENABLED']        : false;
+	$copyAsScript        = isset($GLOBALS['copyAsScript'])                ? $GLOBALS['copyAsScript']                : false;
+	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN'])       ? $GLOBALS['COPYASSCRIPT_COPY_WIN']       : false;
 	$scriptCopyFrom      = isset($GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW']) ? $GLOBALS['COPYASSCRIPT_COPY_FROM_SHOW'] : null;
+	$tvShowDir           = isset($GLOBALS['TVSHOWDIR'])                   ? $GLOBALS['TVSHOWDIR']                   : $scriptCopyFrom;
 	$scriptCopyTo        = isset($GLOBALS['COPYASSCRIPT_COPY_TO_SHOW'])   ? $GLOBALS['COPYASSCRIPT_COPY_TO_SHOW']   : '/mnt/hdd/';
 
 	$scriptCopyFrom = $srcLetter.$scriptCopyFrom;
@@ -2985,26 +3113,6 @@ function findUserOrder() {
 	return $result;
 }
 
-/*
-function getScriptString($path, $names, $formattedName) {
-	$scriptCopyTo = $GLOBALS['scriptCopyTo'];
-	$oldPath = '';
-
-	$path = mapSambaDirs($path);
-	$path = str_replace(' ', '\ ', $path);
-	if ($oldPath != $path) {
-		$names .= 'cd '.$path.'<br>';
-	}
-	$names .= 'cp ';
-	$names .= $formattedName;
-	$names .= ' '.$scriptCopyTo.' ';
-	$names .= '<br>';
-	$oldPath = $path;
-
-	return $names;
-}
-*/
-
 $dbConnection = getPD0();
 function getPDO() { return $GLOBALS['dbConnection']; /* return DB_CONN::getConnection(); */ }
 function getPD0() {
@@ -3029,15 +3137,4 @@ function getEscGPost($key, $defVal = null)  {
 	return $defVal;
 }
 
-/* worse than old method
-class DB_CONN {
-	private static $pdo;
-	public static function getConnection() {
-		if (!isLoggedIn()) { return null; }
-		if (empty(self::$pdo)) { self::$pdo = getPD0(); }
-		return self::$pdo;
-	}
-	public static function destruct() { unset(self::$pdo); }
-}
-*/
 ?>

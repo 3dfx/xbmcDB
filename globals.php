@@ -1,8 +1,13 @@
 <?php
 #include_once "./globals.php";
+	$SEARCH_ENABLED                = true;
+	$CUTS_ENABLED                  = true;  // extended, directors, uncut / unrated
+	$DREID_ENABLED                 = true;  // 3d
+	$ATMOS_ENABLED                 = true;
+	$CHOOSELANGUAGES               = true;
 
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
-	$ANONYMIZER         = 'http://dontknow.me/at/?';
+	$ANONYMIZER         = 'https://anon.to/?';
 
 	$IMDB               = 'http://www.imdb.com/find?s=';
 	$IMDBFILMTITLE      = 'http://www.imdb.com/title/';

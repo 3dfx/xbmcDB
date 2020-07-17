@@ -16,6 +16,7 @@ include_once "globals.php";
 	$idFile     = getEscGPost('idFile',      -1);
 	$idFiles    = getEscGPost('idFiles',     '');
 	$idMovie    = getEscGPost('idMovie',     -1);
+	$keepMeta   = getEscGPost('keepMeta',     0);
 	$idGenre    = getEscGPost('idGenre',     -1);
 	$idShow     = getEscGPost('idShow',      -1);
 	$idTvdb     = getEscGPost('idTvdb',      -1);
@@ -39,6 +40,7 @@ include_once "globals.php";
 	$clrStream  = getEscGPost('clrStream',    0);
 	$clrSize    = getEscGPost('clrSize',      0);
 	$source     = getEscGPost('source',       -1);
+	$aRatio     = getEscGPost('aRatio',       -1);
 
 	$dbh = getPDO();
 	try {
@@ -247,12 +249,13 @@ include_once "globals.php";
 				$file    = str_replace("''", "'", $file);
 				$params  = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
-				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
-				$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
-				$dbh->exec('DELETE FROM filemap  WHERE idFile='.$idFile.';');
+				if (!$keepMeta) {
+					$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+					$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+					$dbh->exec('DELETE FROM filemap  WHERE idFile='.$idFile.';');
+				}
 				if (!empty($strPath)) {
 					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
-					#$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
 				}
 			}
 
@@ -299,6 +302,17 @@ include_once "globals.php";
 			$SQL = 'UPDATE sets SET strSet="'.$name.'" WHERE idSet = '.$id.';';
 			$dbh->exec($SQL);
 			clearMediaCache();
+		}
+
+		if ($act == 'setAspectratio' && $idFile != -1 && $idMovie != -1) {
+			$SQL = "";
+			if (empty($aRatio)) {
+				$SQL = "DELETE FROM aspectratio WHERE idFile = '".$idFile."' AND idMovie = '".$idMovie."';";
+			} else {
+				$SQL = "REPLACE INTO aspectratio VALUES('".$idFile."','".$idMovie."','".$aRatio."');";
+			}
+			$dbh->exec($SQL);
+			//clearMediaCache();
 		}
 
 		if ($act == 'setMoviesetCover' && $id != -1 && $idMovie != -1) {
@@ -435,12 +449,13 @@ include_once "globals.php";
 		} else if ($act == 'clearAirdate' && $idShow != -1) {
 			echo '<span style="font:12px Verdana, Arial;">Next airdate was cleared!</span>';
 
+		} else if ($act == 'setAspectratio') {
+			header('Location:./?show=details&idShow='.$idMovie);
+
 		} else if ($act == 'addset' || $act == 'delete' || $act == 'setname' || $act == 'setMoviesetCover' || $act == 'setMoviesetCover') {
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');
 
-		} else if ($act == 'linkInsert' || $act == 'linkUpdate'    || $act == 'linkDelete' ||
-			   $act == 'addEpisode' || $act == 'updateEpisode' || $act == 'setmovieinfo') {
-
+		} else if ($act == 'linkInsert' || $act == 'linkUpdate'    || $act == 'linkDelete' || $act == 'addEpisode' || $act == 'updateEpisode' || $act == 'setmovieinfo') {
 			$clsFrame = true;
 		}
 
