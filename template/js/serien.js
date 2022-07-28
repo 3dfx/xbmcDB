@@ -577,10 +577,10 @@ function drawDonut(id) {
 
 	var url     = './detailSerieDesc.php?data&id=' + id;
 	var ctx = null;
-	if ( $('#donutChartPir').length ) {
+	if ( $('#donutChartPie').length ) {
 		ctx = $("#donutChartPie").get(0).getContext('2d');
 	} else {
-		console.log('Error: Canvas not found with selector #donutChartPir');
+		console.log('Error: Canvas not found with selector #donutChartPie');
 		return;
 	}
 
