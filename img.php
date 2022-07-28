@@ -2,7 +2,10 @@
 include_once "./template/functions.php";
 
 	startSession();
-	if (!isLogedIn()) { shoutImage(); }
+	if (!isLogedIn()) {
+		header("HTTP/1.1 304 Not Modified");
+		shoutImage();
+	}
 
 	$id       = getEscGet('img');
 	$size     = getEscGet('size');
@@ -64,7 +67,7 @@ function setHeaders($img) {
 	}
 
 	header("Pragma: no-cache");
-	header("Cache-Control: public, must-revalidate, max-age=86400", true);
+	header("Cache-Control: public, must-revalidate, max-age=86400");
 
 	$docRoot = getEscServer('DOCUMENT_ROOT');
 	$img = str_replace('./', $docRoot.'/', $img);

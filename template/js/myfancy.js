@@ -283,16 +283,24 @@ function initShowFancies() {
 			cursorBusy('progress');
 		},
 		'onCleanup'		: function() {
-			/*
-			$('body').css('cursor', 'default');
-			$('td').css('cursor', 'default');
-			$('a').css('cursor', 'default');
-			$('.addBoxx').css('cursor', 'default');
-			$('#showSelectTable').css('cursor', 'default');
-			$('#episodeAdd').css('cursor', 'default');
-			*/
 			cursorBusy('');
 		}
+	});
+
+	$(".fancy_changesrc").fancybox({
+		'width'			: 325,
+		'height'		:  50,
+		'overlayColor'		: '#000',
+		'overlayOpacity'	: 0.98,
+		'padding'		: 5,
+		'autoScale'		: true,
+		'centerOnScroll'	: false,
+		'scrolling'		: 'no',
+		'transitionIn'		: 'elastic',
+		'transitionOut'		: 'none',
+		'enableEscapeButton'	: true,
+		'titleShow'       	: false,
+		'type'			: 'iframe'
 	});
 } //initShowFancies
 
@@ -353,7 +361,7 @@ function initFancyBrowsing() {
 function initShowDescFancies() {
 	initFancyMsgbox();
 	initFancyBrowsing();
-
+/*
 	$("#tvBanner").fancybox({
 		'width'			: '63%',
 		'height'		: '94%',
@@ -364,8 +372,9 @@ function initShowDescFancies() {
 		'margin'		: 10,
 		'transitionIn'		: 'elastic',
 		'transitionOut'		: 'none',
-		'type'			: 'iframe'
+		'type'			: 'html'
 	});
+*/
 } //initShowDescFancies
 
 function initFancyMsgbox() {
@@ -427,7 +436,7 @@ function initNavbarFancies() {
 	});
 
 	$(".fancy_blocks").fancybox({
-		'width'			: 400,
+		'width'			: 800,
 		'height'		: 460,
 		'transitionIn'		: 'elastic',
 		'transitionOut'		: 'elastic',
@@ -445,7 +454,7 @@ function initNavbarFancies() {
 	});
 
 	$(".fancy_sets").fancybox({
-		'width'			: 480,
+		'width'			: 550,
 		'height'		: 650,
 		'transitionIn'		: 'elastic',
 		'transitionOut'		: 'elastic',

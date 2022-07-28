@@ -15,9 +15,10 @@ include_once "./template/functions.php";
 			foreach($result as $row) {
 				$res[$count]['idFile']    = isset($row['idFile'])    ? $row['idFile']    : -1;
 				$res[$count]['idMovie']   = isset($row['idMovie'])   ? $row['idMovie']   : -1;
-				$res[$count]['c00']       = isset($row['c00'])       ? $row['c00']       : '';
+				$res[$count]['movieName'] = isset($row['movieName']) ? $row['movieName'] : '';
+//				$res[$count]['sndTitle']  = isset($row['sndTitle'])  ? $row['sndTitle']  : '';
 				$res[$count]['playCount'] = isset($row['playCount']) ? $row['playCount'] : '';
-				$res[$count]['thumb']     = isset($row['thumb'])     ? $row['thumb']     : '';
+//				$res[$count]['thumb']     = isset($row['thumb'])     ? $row['thumb']     : '';
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
 				$res[$count]['fps']       = isset($row['fps'])       ? $row['fps']  	 : '';
 				$res[$count]['bits']      = isset($row['bit'])       ? $row['bit']       : '';
@@ -29,7 +30,7 @@ include_once "./template/functions.php";
 				$res[$count]['trailer']   = isset($row['trailer'])   ? $row['trailer']   : '';
 				$res[$count]['rating']    = isset($row['rating'])    ? $row['rating']    : '';
 				$res[$count]['imdbId']    = isset($row['imdbId'])    ? $row['imdbId']    : '';
-				$res[$count]['c14']       = isset($row['c14'])       ? $row['c14']       : '';
+				$res[$count]['genres']    = isset($row['genres'])    ? $row['genres']    : '';
 				$res[$count]['filename']  = isset($row['filename'])  ? $row['filename']  : '';
 				$count++;
 			}

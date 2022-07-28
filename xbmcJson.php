@@ -1,6 +1,5 @@
 <?php
 include_once "./template/config.php";
-include_once "./template/config.php";
 include_once "./template/functions.php";
 
 	if (!isAdmin()) { return; }
@@ -54,7 +53,7 @@ include_once "./template/functions.php";
 			}
 			
 			if (empty($vidId)) { echo ''; }
-			$url = "plugin://plugin.video.youtube/?action=play_video&videoid=".$vidId."";
+			$url = "plugin://plugin.video.youtube/?action=play_video&videoid=".$vidId;
 			
 		} else if (substr_count($file, 'vimeo') > 0) {
 			if (preg_match('/^http:\/\/(www\.)?vimeo\.com\/(clip\:)?(\d+).*$/', $file, $match)) {
@@ -62,7 +61,7 @@ include_once "./template/functions.php";
 			}
 			
 			if (empty($vidId)) { echo ''; }
-			$url = "plugin://plugin.video.vimeo/?action=play_video&videoid=".$vidId."";
+			$url = "plugin://plugin.video.vimeo/?action=play_video&videoid=".$vidId;
 		} else {
 			$url = $file;
 		}

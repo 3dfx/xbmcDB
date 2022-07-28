@@ -155,7 +155,7 @@ function noLog($username, $host, $ip) {
 }
 ?>
 
-<html>
+<html lang="EN">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title><?php echo getHtmlTitle(); ?></title>
@@ -182,14 +182,14 @@ function noLog($username, $host, $ip) {
 <?php } ?>
 </head>
 <body style='overflow-x:hidden; overflow-y:auto;'>
-<?php if ($loggedInAs == $FAIL_ || $noMoreLogin) { ?>
-	<div id='failed' class='navBarBrand' style='min-width:0%; margin:0 auto; font-size:16pt; <?php echo $noMoreLogin ? 'width:250px; left:43%;' : 'width:120px; left:45%;'; ?> top:45.5%; position:absolute; z-index:1;'><?php echo $failedText; ?></div>
-<?php } ?>
 	<div class='navbar<?php echo ($INVERSE ? ' navbar-inverse' : ''); ?>' id='navLogin' style='margin:0px -15px; position:absolute; top:45%; width:102%;'>
 		<div class='navbar-inner' style='height:30px;'>
 <?php if (!$noMoreLogin) { ?>
 			<div class='container' style='margin:0px auto; width:auto;'>
 				<div class='nav-collapse' style='margin:0px;'><a class='brand navBarBrand' style='font-size:20px; top:3px; position: absolute;' href='#'><?php echo getNavTitle(); ?></a></div>
+<?php if ($loggedInAs == $FAIL_ || $noMoreLogin) { ?>
+				<div id='failed' class='navBarBrand' style='min-width:0%; margin:0 auto; font-size:16pt; <?php echo $noMoreLogin ? 'width:250px; left:43%;' : 'width:120px; left:45%;'; ?> position:absolute; z-index:1;'><?php echo $failedText; ?></div>
+<?php } ?>
 				<form action='login.php' method='post' class='navbar-search pull-right' style='height:25px;' onsubmit='hideFailed(); return animateNav();'>
 				<ul class='nav' style='color:#FFF;'>
 					<li style='margin:0px; padding-right:10px;'>

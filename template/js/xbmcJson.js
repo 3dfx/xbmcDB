@@ -1,9 +1,11 @@
 var actualFile = '';
+/*
 function nowPlaying()   { $.ajax({type:"POST", url:"./xbmcJson.php", data:"method=nowPlaying",      success: function(data) { if (actualFile != data && actualFile != null) { $('#xbmcPlayerFile').text(data); if(data != 'null' && data != '') { $('#xbmControl').show(); } else { $('#xbmControl').hide(); } wrapItUp(); actualFile = data; } } }); }
 function playerState()  { $.ajax({type:"POST", url:"./xbmcJson.php", data:"method=state",           success: function(data) { var res = (data == 'null' ? '' : (data == 0 ? 'paused' : 'playing')); $('#xbmcPlayerState').text(res); if (res != '') { $('#xbmControl').show(); nowPlaying(); } else { $('#xbmControl').hide(); } } }); }
+*/
 
 $(document).on({ click: function(){ if ($('#plaYoutube').is(":visible")) { $('#xbmControlWrap,#plaYTdivide').show(5); $('#plaYoutube').hide(25); } else { $('#xbmControlWrap,#plaYTdivide').hide(5); $('#plaYoutube').show(100); $('#plaYoutube').val(''); $('#plaYoutube').focus(); } } }, '#ytIcon');
-function playItemPrompt(obj, event)  { if (obj == null) { return false; } var search = $.trim(obj.value); var kC = getKeyCode(event); /* if (kC != 13) { return false; } */ if (search != null && search != '') { playItemExt(search); playerState(); $('#plaYoutube').hide("fast"); } }
+function playItemPrompt(obj, event)  { if (obj == null) { return false; } var search = $.trim(obj.value); var kC = getKeyCode(event); /* if (kC != 13) { return false; } */ if (search != null && search !== '') { playItemExt(search); playerState(); $('#plaYoutube').hide("fast"); } }
 
 function playItemExt(file) { $.ajax({type:"POST", url:"./xbmcJson.php", data:"method=playExt&file="+file, success: function(data) { playerState();           } }); }
 function playItem(file)    { $.ajax({type:"POST", url:"./xbmcJson.php", data:"method=play&file="+file,    success: function(data) { playerState();           } }); }
@@ -17,16 +19,48 @@ function scanLib()         { $.ajax({type:"POST", url:"./xbmcJson.php", data:"me
 
 $(document).ready(function() { wrapItUp(); });
 function wrapItUp() {
-	if (xbmcRunning != null && !xbmcRunning) { return; }
-	actualFile = $('#xbmcPlayerFile').text();
-	setInterval("playerState()", 2500);
-	if ($('#xbmcPlayerFile').text().length <= 30) { return; }
-	if ( $('#xbmControl').is(":visible") ) { $('#xbmcPlayerFile').marquee({
-		speed: 50000,
-		gap: 1,
-		delayBeforeStart: 50,
-		direction: 'left',
-		duplicated: true,
-		pauseOnHover: true
-	}); }
+    if (xbmcRunning != null && !xbmcRunning) { return; }
+    $playerFile = $('#xbmcPlayerFile');
+    actualFile = $playerFile.text();
+    setInterval("playerState()", 2500);
+    if ($playerFile.text().length <= 30) { return; }
+    if ( $('#xbmControl').is(":visible") ) { $playerFile.marquee({
+        speed: 50000,
+        gap: 1,
+        delayBeforeStart: 50,
+        direction: 'left',
+        duplicated: true,
+        pauseOnHover: true
+    }); }
+}
+
+function nowPlaying() {
+    $.ajax({
+        type: "POST", url: "./xbmcJson.php", data: "method=nowPlaying", success: function (data) {
+            if (actualFile !== data && actualFile != null) {
+                $('#xbmcPlayerFile').text(data);
+                //actualFile = data;
+                wrapItUp();
+            }
+        }
+    });
+}
+
+function playerState() {
+    if (document.hasFocus()) {
+        $.ajax({
+            type: "POST", url: "./xbmcJson.php", data: "method=state", success: function (data) {
+                var res = (data === null || data === 'null' || data === '' ? '' : (data === 0 ? 'paused' : 'playing'));
+                $('#xbmcPlayerState').text(res);
+                if (res !== null && res !== '') {
+                    nowPlaying();
+                    $('#xbmControl').show();
+                } else {
+                    $('#xbmControl').hide();
+                }
+            }
+        });
+    } else {
+        $('#xbmControl').hide();
+    }
 }

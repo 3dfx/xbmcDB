@@ -140,8 +140,8 @@ function addId(id) {
 	ids = ids + (ids.length == 0 ? '' : ', ') + id;
 }
 
-function removeId(id) {
 /*
+function removeId(id) {
 console.log( '0: ' + ids );
 	var arr = ids.split(', ');
 console.log( '1: ' + arr );
@@ -168,6 +168,6 @@ console.log( '^2' );
 console.log( '^3' );
 		ids = ids.replace(id, '');
 	}
-*/
 //console.log( '4: ' + ids );
 }
+*/

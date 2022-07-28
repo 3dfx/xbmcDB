@@ -1,10 +1,10 @@
 <?php
+#ini_set('memory_limit', '1024M');
+
 include_once "./globals.php";
 include_once "./template/config.php";
 include_once "Serien.php";
 include_once "Episode.php";
-
-ini_set('memory_limit', '1024M');
 
 /*
 	$MenuSerienSQL   = "SELECT V.idShow AS idShow, V.idEpisode AS idEpisode, V.strTitle AS strTitle, V.c12 AS season, V.c13 AS episode, V.c00 AS title, V.playCount AS playCount, ".mapDBC('V.c03')." AS rating, (SELECT COUNT(*) FROM episode E WHERE E.idShow = V.idShow AND E.c12 = V.c12) AS sCount, F.src AS src FROM episodeviewMy V LEFT JOIN fileinfo F ON V.idFile = F.idFile";

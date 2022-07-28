@@ -166,8 +166,7 @@ class Serie {
 			$count++;
 		}
 		$ids = trim($ids);
-		#if ($count > 1)
-		$ids = substr($ids, 0, strlen($ids)-2);
+		$ids = substr($ids, 0, strlen($ids)-1);
 
 		$this->fileIds = $ids;
 		return $ids;
@@ -203,7 +202,7 @@ class Serie {
 		if (!$this->isWatchedAny()) { return null; }
 		$watched = $this->epCountWatched;
 		$epCount = $this->allEpisodeCount;
-		return round($watched / $epCount * 100, 0);
+		return round($watched / $epCount * 100);
 	}
 
 	public function getStaffel($staffelNum) {
@@ -281,7 +280,7 @@ class Serie {
 		return $this->watchedAny;
 	}
 
-	public function addStaffel($staffel) {
+	public function addStaffel($staffel): Staffel {
 		$sNum = $staffel->getStaffelNum();
 		if (!isset($this->staffeln[$sNum])) {
 			$this->staffeln[$sNum] = $staffel;

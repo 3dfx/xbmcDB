@@ -62,7 +62,7 @@
 		private $count = 0;
 		private $doSort = false;
 		
-		public function addMVid(&$MVid) {
+		public function addMVid($MVid) {
 			if (empty($MVid->getArtist()) && empty($MVid->getTitle()))
 				return;
 			$this->MVids[$this->count++] = $MVid;

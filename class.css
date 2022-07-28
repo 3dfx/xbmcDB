@@ -1,44 +1,49 @@
 /* Large desktop */
-@media (max-width: 1200px) {
-	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
+@media (max-width: 1400px) {
+	#adminInfo { display:none; }
 }
 
 /* Portrait tablet to landscape and desktop */
 @media (min-width: 600px) and (max-width: 1024px) {
-	#adminInfo { display:none; }
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
 	.hideMobile { display:none; }
-	#missEps, .noPM, .showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0px; min-width:0px; width:0px; padding:0px !important; margin:0px !important; }
+	#missEps, .noPM, .showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0; min-width:0; width:0; padding:0 !important; margin:0 !important; }
 }
 
 /* Landscape phone to portrait tablet */
 @media (max-width: 1200px) {
-	#adminInfo { display:none; }
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
 	.hideMobile { display:none; }
-	#missEps, .noPM, .showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0px; min-width:0px; width:0px; padding:0px !important; margin:0px !important; }
+	#missEps, .noPM, .showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0; min-width:0; width:0; padding:0 !important; margin:0 !important; }
 }
 
 /* Landscape phones and down */
-@media (max-width: 600px) {
-	#adminInfo { display:none; }
+/* @media (max-width: 1000px) {
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
 	.hideMobile { display:none; }
 	#missEps, .noPM, .showEpisodes, .showSeasons, .showRating, .addEp { overflow:hidden; max-width:0px; min-width:0px; width:0px; padding:0px !important; margin:0px !important; }
+} */
+
+@media (max-width: 800px) {
+	.th1, .th6, .ratingTD, .fsizeTD { display:none; }
+}
+
+@media (max-width: 650px) {
+	.th02, .yearTD { display:none; }
 }
 
 body 	{
-	min-device-width: 481px;
-	max-device-width: 1024px;
+	min-width: 481px;
+	/*max-device-width: 1024px;*/
 	#min-width: 481px;
 	#max-width: 1024px;
 	#min-height: 768px;
 	#max-height: 768px;
 	padding:10px;
-	font-family: 'Lucida Grande', 'Verdana', 'Arial';
+	font-family: 'Lucida Grande', 'Verdana', 'Arial', system-ui;
 	font-size: 13px;
 
 	scrollbar-face-color      : #ddd;
@@ -58,7 +63,7 @@ body 	{
 ::-moz-placeholder          { padding-top: 3px; }
 :-ms-input-placeholder      { padding-top: 3px; }
 input:-moz-placeholder      { padding-top: 3px; }
-::-webkit-input-placeholder { padding-top: 0px; }
+::-webkit-input-placeholder { padding-top: 0; }
 
 a, a:hover {
 	color: #000000;
@@ -83,11 +88,11 @@ a, a:hover {
 }
 
 .navBarBrand {
-	margin-left: 0px !important;
+	margin-left: 0 !important;
 	font-weight: bold !important;
 	color: #AAA !important;
-	padding-right: 0px !important;
-	padding-left: 0px !important;
+	padding-right: 0 !important;
+	padding-left: 0 !important;
 	padding-top: 2px !important;
 	text-shadow: 0 1px 0 rgba(255,255,255,.1), 0 0 30px rgba(255,255,255,.125);
 	-webkit-transition: all .2s linear;
@@ -105,7 +110,13 @@ a, a:hover {
 	width: 25px;
 	cursor: pointer;
 	z-index: 1103;
-	padding:0px !important;
+	padding:0 !important;
+}
+
+.search-close img {
+	width: 60%;
+	padding-left: 5px;
+	padding-top: 4px;
 }
 
 .navbar-inverse.dropdown-menu, 
@@ -141,7 +152,7 @@ a, a:hover {
 }
 
 .highlight  { background-color: yellow; }
-.highLighTR { background-color: #BAD1ED !important; border:0px #fff solid !important; }
+.highLighTR { background-color: #BAD1ED !important; border:0 #fff solid !important; }
 TD.highLighTR { border-bottom:1px dotted #93B7E3 !important; }
 
 .menuSpan {
@@ -198,8 +209,8 @@ table.film {
 	background-color: #fafafa;
 	border:1px #6699CC solid;
 	border-collapse: collapse;
-	border-spacing: 0px;
-	margin-top: 0px;
+	border-spacing: 0;
+	margin-top: 0;
 	margin-bottom: 25px;
 	margin-left: auto;
 	margin-right: auto;
@@ -245,7 +256,7 @@ table.film td {
 	border:0px solid black;
 }
 
-//#box1 a:hover { color:black; background:#ddd8b7;}
+/* #box1 a:hover { color:black; background:#ddd8b7;} */
 #box1 a span {display:none;}
 
 #box1 a:hover span {
@@ -255,7 +266,7 @@ table.film td {
 	display:block;
 	width:200px;
 	color:black;
-	border: 1px solid #333333;
+	/*border: 1px solid #333333;*/
 	font-size: 12px;
 	border:1px solid black;
 	padding:10px;
@@ -270,10 +281,10 @@ table.film td {
 	display:block;
 	width:150px;
 	padding:1px;
-	border:0px solid black;
+	border:0 solid black;
 }
 
-//#box2 a:hover {color:black; background:#ddd8b7;}
+/*#box2 a:hover {color:black; background:#ddd8b7;}*/
 #box2 a span {display:none;}
 
 #box2 a:hover span {
@@ -283,18 +294,18 @@ table.film td {
 	display:block;
 	width:100px;
 	color:black;
-	border: 1px solid #333333;
+	/*border: 1px solid #333333;*/
 	font-size: 12px;
 	border:1px solid black;
 	padding:10px;
 }
 
-.th0 { text-align:left; padding-top:5px; padding-bottom:5px; padding-left:10px; }
+.th0, .th02 { text-align:left; padding-top:5px; padding-bottom:5px; padding-left:10px; }
 .th1 { text-align:left; padding-top:5px; padding-bottom:5px; }
 .th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:175px; }
 .th3 { text-align:left; padding-top:5px; padding-bottom:5px; width:100px; padding-left:10px; }
 .th4 { text-align:left; padding-top:5px; padding-bottom:5px; width:400px; }
-.th5 { text-align:right !important; padding-right:10px; }
+.th5, .th6 { text-align:right !important; padding-right:10px; }
 
 .countTD {
 	padding-left:10px;
@@ -332,13 +343,13 @@ table.film td {
 	overflow: hidden;
 }
 
-.fsizeTD {
+.fsizeTD, .resCodecTD {
 	padding-left:10px;
 	cursor:default;
 }
 
 .bottomTD {
-	border-bottom:0px !important;
+	border-bottom:0 !important;
 	padding-bottom:5px !important;
 }
 
@@ -397,7 +408,7 @@ span.customStyleSelectBox.changed {
 	font-size:12px;
 	font-weight:bold;
 	padding:2px 15px;
-	margin:0px;
+	margin:0;
 	text-decoration:none;
 }
 
@@ -455,9 +466,9 @@ span.customStyleSelectBox.changed {
 }
 
 .radius0corner {
-	-moz-border-radius:0px;
-	-webkit-border-radius:0px;
-	border-radius:0px;
+	-moz-border-radius:0;
+	-webkit-border-radius:0;
+	border-radius:0;
 }
 
 .radius03corner {
@@ -487,10 +498,10 @@ a {	color:black; text-decoration:none; font-size: 12px; }
 }
 
 table.artists td.art {
-	padding-right:0px;
+	padding-right:0;
 	vertical-align:top;
 	max-width:145px;
-	overflow-x:hidden;
+	overflow:hidden;
 }
 
 table.artists td.role, th.role {
@@ -527,6 +538,10 @@ table.artists td {
 	text-align:right !important;
 }
 
+.streaminfo {
+	width: 100%;
+}
+
 .streaminfoGenreTH {
 	padding-right:15px;
 }
@@ -550,11 +565,12 @@ table.artists td {
 }
 
 .streaminfoLasTD {
-	padding-right:0px !important;
+	padding-right:0 !important;
 }
 
 .streaminfoLLine {
 	border-top:1px dashed dimgray;
+	max-width:690px;
 }
 
 .streaminfoAV {
@@ -591,7 +607,7 @@ table.streaminfo th, table.streaminfo td {
 .filename {
 	float:left;
 	padding-right:15px;
-	max-width:500px;
+	max-width:85%;
 	overflow-x:hidden;
 }
 
@@ -602,7 +618,7 @@ table.streaminfo th, table.streaminfo td {
 input[type=checkbox] {
 	height:10px;
 	width:10px;
-	margin:0px;
+	margin:0;
 	margin-right:5px;
 }
 
@@ -619,8 +635,8 @@ input[type=checkbox] {
 
 .fanartBg {
 	position:absolute;
-	left:0px;
-	top:0px;
+	left:0;
+	top:0;
 	width:100%;
 	height:100%;
 	z-index:0;
@@ -652,7 +668,7 @@ input[type=checkbox] {
 .moviebox {
 	color:black;
 	background-color: #F4BE6C;
-	border: 0px solid #333333;
+	border: 0 solid #333333;
 	width: 500px;
 	padding: 15px;
 	display:none;
@@ -662,10 +678,10 @@ input[type=checkbox] {
 
 .moviebox2 {
 	color:black;
-	margin-right:25px;
+	margin-right:5px;
 	top:15px;
 	left:275px;
-	width: 975px;
+	width: 1000px;
 	font-size: 12px;
 	position:absolute;
 	text-align:justify;
@@ -677,7 +693,7 @@ input[type=checkbox] {
 	font-weight: normal;
 	position: relative;
 	padding-bottom: 2px;
-	left: 0px;
+	left: 0;
 
 }
 
@@ -724,17 +740,19 @@ input[type=checkbox] {
 	color:black;
 	font-size: 12px;
 	top:22px;
-	width:300px;
-	overflow-x:hidden;
+	width:280px;
+	height:550px;
 	margin-top:10px;
+	overflow:hidden;
 }
 
 .stream {
 	position:relative;
 	float:right;
-	right:0px;
+	right:10px;
 	top:20px;
 	margin-top:10px;
+	width:690px;
 }
 
 .artistbox {
@@ -758,7 +776,7 @@ input[type=checkbox] {
 .selectedfield {
 	color:black;
 	padding-top: 20px;
-	padding-left: 0px;
+	padding-left: 0;
 	padding-bottom: 35px;
 	font-size: 12px;
 	position:absolute;
@@ -784,7 +802,7 @@ table.login {
 
 .tableCheck {
 	width:10px;
-	border:0px;
+	border:0;
 }
 
 .checkboxSpan {
@@ -803,13 +821,13 @@ table.login {
 .filmRolle {
 	height:12px;
 	width:17px;
-	border:0px;
+	border:0;
 	padding-top:3px;
 }
 
 table.gallery {
 	font-size:13px;
-	font-family: 'Lucida Grande', 'Verdana', 'Arial';
+	font-family: 'Lucida Grande', 'Verdana', 'Arial', system-ui;
 	font-weight:normal;
 	margin:-10px auto 25px;
 }
@@ -838,23 +856,23 @@ table.gallery {
 	position:relative;
 	top:-117px;
 	left:70px;
-	margin:0px;
+	margin:0;
 }
 
 .galleryTD {
 	padding:9px;
-	border:0px;
+	border:0;
 }
 
 .galleryEmptyTD {
 	padding:5px;
 	text-align:center;
-	border:0px;
+	border:0;
 }
 
 .galleryDIV {
 	cursor:pointer;
-	border:0px solid #000000;
+	border:0 solid #000000;
 	color: #ffffff;
 	width:92px;
 	height:135px;
@@ -875,57 +893,57 @@ table.gallery {
 .check10v1 {
 	width:10px;
 	height:10px;
-	border:0px;
+	border:0;
 	position:relative;
-	left:0px;
+	left:0;
 	bottom:2px;
 }
 
 .check10 {
 	width:10px;
 	height:10px;
-	border:0px;
+	border:0;
 	position:relative;
-	left:0px;
+	left:0;
 	bottom:1px;
 }
 
 .icon10 {
 	width:10px;
 	height:10px;
-	border:0px;
+	border:0;
 }
 
 .icon24 {
 	width:24px;
 	height:24px;
 	bottom:8px;
-	border:0px;
+	border:0;
 }
 
 .icon32 {
 	width:32px;
 	height:32px;
-	border:0px;
+	border:0;
 }
 
 .gallery1st {
 	position:absolute;
-	border:0px;
-	left:0px;
-	top:0px;
+	border:0;
+	left:0;
+	top:0;
 }
 
 .gallery1st {
 	position: relative;
-	border:0px;
+	border:0;
 	#bottom:32px;
 	top: 120px;
 }
 
 .gallery2nd {
 	position: relative;
-	border:0px;
+	border:0;
 	#bottom:32px;
 	top: 96px;
 }
@@ -933,7 +951,7 @@ table.gallery {
 .gallery3rd {
 	#position:absolute;
 	position: relative;
-	border:0px;
+	border:0;
 	#bottom:32px;
 	top: 72px;
 }
@@ -946,7 +964,7 @@ table.gallery {
 
 .galleryPlay {
 	position:relative;
-	top:0px;
+	top:0;
 	left:-5px;
 	cursor:pointer;
 }
@@ -964,7 +982,7 @@ table.gallery {
 .galleryCheckImg {
 	width:32px;
 	height:32px;
-	border:0px;
+	border:0;
 }
 
 .flatBtn {
@@ -1032,23 +1050,23 @@ a.showlink {
 	float:left;
 }
 
-.mnuIcon    { position:relative; top:-24px; right:0px; width:24px; height:0px; }
-#showDesc   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; }
-#showInfo   { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; padding-bottom:25px; }
-#showEpDesc { border:0px; position:absolute; top:0px; left:0px; width:0px; height:0px; padding-bottom:25px; }
+.mnuIcon    { position:relative; top:-24px; right:0; width:24px; height:0; }
+#showDesc   { border:0; position:absolute; top:0; left:0; width:0; height:0; }
+#showInfo   { border:0; position:absolute; top:0; left:0; width:0; height:0; padding-bottom:25px; }
+#showEpDesc { border:0; position:absolute; top:0; left:0; width:0; height:0; padding-bottom:25px; }
 #showsTable { background-color:#FFFFFF; z-index:10; border:1px solid #69C; margin-bottom:15px; width:550px; min-width:550px; max-width:550px !important; }
-#showsTable td, #serieTable td { border-bottom:0px; }
+#showsTable td, #serieTable td { border-bottom:0; }
 #showsBody  { width:550px; min-width:550px; max-width:550px !important; }
 .emptyTR    { height:20px; border:1px solid #69C; }
 #showsCount { position:relative; right:130px; top:12px; text-align:right; float:right; }
-#showBanner { position:relative; top:0px; left:0px; border:0px; padding:10px 0px; padding--top:25px; text-align:center; }
+#showBanner { position:relative; top:0; left:0; border:0; padding:10px 0px; padding--top:25px; text-align:center; }
 
 .showShowInfo   { cursor:default; width:1px; white-space:nowrap; height:20px; width:550px; min-width:550px; max-width:550px !important; }
 .checka         { position:relative; top:-2px; }
 .checkaCheck    { padding-left:4px; padding-right:0px !important; top:0px !important; }
 .showShowInfo1  { color:silver; padding:2px 4px 2px 0px; }
 .showName       { float:left; overflow-x:hidden; cursor:pointer; }
-.airdShown      { width:150px; }
+.airdShown      { width:149px; }
 .airdShownM     { width:90px; }
 .airdHidden     { width:130px; }
 .sInfoSize      { float:right; color:silver; padding-left:10px; cursor:pointer; }
@@ -1056,19 +1074,19 @@ a.showlink {
 .galleryImage   { width:16px !important; height:16px !important; z-index:50; }
 .selectedShow   { font-weight: bold !important; }
 .unselectedShow { font-weight: normal !important; }
-.noPM           { padding:0px; margin:0px; }
+.noPM           { padding:0; margin:0; }
 .perWatched     { position:relative; right:2px; top:3px; padding-left:4px; }
 .defAirdate     { display:none; vertical-align:middle; cursor:default; }
 .noPM a, .noPM a .defAirdate { cursor:auto; }
 
-.tableDesc  { width:350px; padding:0px; margin:0px; z-index:1; }
+.tableDesc  { width:350px; padding:0; margin:0; z-index:1; }
 #tvBanner   { cursor:default; height:54px; }
 .showDescTD { padding:10px 25px 20px 25px; text-align:justify; white-space:pre-line !important; }
 .descDiv    { width:300px; margin-top:15px; }
 .fClose     { display:none; position:absolute; float:right; top:-20px; right:-35px; width:50px; height:40px; }
 .fClose img { position:absolute; width:11px; top:15px; left:9px; }
 
-#serieTable   { width: 360px; padding:0px; margin-left:0px; z-index:1; }
+#serieTable   { width: 360px; padding:0; margin-left:0; z-index:1; }
 #descTR       { cursor:default; height:20px; }
 .descTRd1     { padding:0px 0px 0px 25px; }
 .seasonTR     { cursor:default; height:20px; }
@@ -1086,7 +1104,7 @@ a.showlink {
 .showPlayItem:active,
 .showPlayItem:hover { color:black; font-size:11px; }
 
-#epDescription { position:relative; border-top:0px; width:350px; padding:0px; margin:0px; z-index:1; }
+#epDescription { position:relative; border-top:0; width:350px; padding:0; margin:0; z-index:1; }
 .showDescTD2   { padding:20px 25px; white-space:pre-line !important; }
 .epCheckSpan   { text-align:right; float:right; position:relative; top:-2px; width:24px; height:24px; }
 .thumbCheck    { width:24px !important; height:24px !important; }

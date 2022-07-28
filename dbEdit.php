@@ -39,8 +39,9 @@ include_once "globals.php";
 	$val        = getEscGPost('val',         -1);
 	$clrStream  = getEscGPost('clrStream',    0);
 	$clrSize    = getEscGPost('clrSize',      0);
-	$source     = getEscGPost('source',       -1);
-	$aRatio     = getEscGPost('aRatio',       -1);
+	$source     = getEscGPost('source',      -1);
+	$aRatio     = getEscGPost('aRatio',      -1);
+	$noForward  = getEscGPost('noForward',    0);
 
 	$dbh = getPDO();
 	try {
@@ -51,6 +52,14 @@ include_once "globals.php";
 
 		if ($idFile != -1 && ($act == 'setSeen' || $act == 'setUnseen'))  {
 			$dbh->exec('UPDATE files SET playCount='.($act == 'setSeen' ? '1' : '0').' WHERE idFile = '.$idFile.';');
+			clearMediaCache();
+
+		} else if (!empty($idFile) && $act == 'setMovieSource')  {
+			$dbh->exec('UPDATE fileinfo SET src='.($source > 0 ? $source : 'NULL').' WHERE idFile='.$idFile.';');
+			clearMediaCache();
+
+		} else if (!empty($idFile) && $act == 'toggleAtmos')  {
+			$dbh->exec('UPDATE fileinfo SET atmosx = '.($val != 1 ? 0 : 1).' WHERE idFile = '.$idFile.';');
 			clearMediaCache();
 
 		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
@@ -304,7 +313,7 @@ include_once "globals.php";
 			clearMediaCache();
 		}
 
-		if ($act == 'setAspectratio' && $idFile != -1 && $idMovie != -1) {
+		if ($act == 'setAspectRatio' && $idFile != -1 && $idMovie != -1) {
 			$SQL = "";
 			if (empty($aRatio)) {
 				$SQL = "DELETE FROM aspectratio WHERE idFile = '".$idFile."' AND idMovie = '".$idMovie."';";
@@ -347,6 +356,7 @@ include_once "globals.php";
 			}
 			echo 'Setcover was set!<br />';
 
+			/*
 			#<OLD CODE>
 			if (false) {
 			if (!empty($url)) {
@@ -412,6 +422,7 @@ include_once "globals.php";
 			} //empty url
 			} //if false
 			#</OLD CODE>
+			*/
 		}
 
 		if ($act == 'addset' && !empty($name)) {
@@ -449,13 +460,16 @@ include_once "globals.php";
 		} else if ($act == 'clearAirdate' && $idShow != -1) {
 			echo '<span style="font:12px Verdana, Arial;">Next airdate was cleared!</span>';
 
-		} else if ($act == 'setAspectratio') {
+		} else if ($act == 'toggleAtmos' && $idFile != -1) {
+			echo '<span style="font:12px Verdana, Arial;">Atmos flag was toggled!</span>';
+
+		} else if ($act == 'setAspectRatio' && $noForward != 1) {
 			header('Location:./?show=details&idShow='.$idMovie);
 
-		} else if ($act == 'addset' || $act == 'delete' || $act == 'setname' || $act == 'setMoviesetCover' || $act == 'setMoviesetCover') {
+		} else if ($act == 'addset' || $act == 'delete' || $act == 'setname' || $act == 'setMoviesetCover') {
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');
 
-		} else if ($act == 'linkInsert' || $act == 'linkUpdate'    || $act == 'linkDelete' || $act == 'addEpisode' || $act == 'updateEpisode' || $act == 'setmovieinfo') {
+		} else if ($act == 'setMovieSource' || $act == 'linkInsert' || $act == 'linkUpdate' || $act == 'linkDelete' || $act == 'addEpisode' || $act == 'updateEpisode' || $act == 'setmovieinfo') {
 			$clsFrame = true;
 		}
 

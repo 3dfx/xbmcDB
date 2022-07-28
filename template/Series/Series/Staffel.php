@@ -78,7 +78,7 @@ class Staffel {
 		if (!$this->isWatchedAny()) { return null; }
 		$watched = $this->getEpCountWatched();
 		$epCount = $this->getEpisodeCount();
-		return round($watched / $epCount * 100, 0);
+		return round($watched / $epCount * 100);
 	}
 
 	public function getLastEpNum() {
@@ -144,7 +144,7 @@ class Staffel {
 	}
 
 	public function getMissingCount() {
-		return $this->missingCount > 0 ? $this->missingCount : 0;
+		return max($this->missingCount, 0);
 	}
 
 	public function addRating($rating) {
@@ -211,7 +211,7 @@ class Staffel {
 		return $this->sources[$key];
 	}
 
-	public function addEpisode(&$episode) {
+	public function addEpisode($episode) {
 		if ($this->idShow == -1) {
 			$this->idShow = $episode->getIdShow();
 			$this->idTvdb = $episode->getIdTvdb();

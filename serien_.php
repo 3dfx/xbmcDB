@@ -369,9 +369,9 @@ function getRandomBanner() {
 		while (false !== ($entry = $d->read())) { if ($entry == '..' || $entry == '.') {continue;} $res[] = $entry; }
 		$d->close();
 
-		if (count($res) == 0) { return; }
+		if (count($res) == 0) { return ''; }
 		$img = './img/banners/'.$res[ rand(1, count($res)-1) ];
-		if (!file_exists($img)) { return; }
+		if (!file_exists($img)) { return ''; }
 		wrapItUp('banner', 'random', $img);
 	}
 

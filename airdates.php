@@ -54,11 +54,9 @@ function postSerien($serien) {
 function postSerie($serie, $counter) {
 	$airDate  = null;
 	$daysLeft = -1;
-	$missed   = false;
 	$fCol     = '';
 	$idShow   = $serie->getIdShow();
-	$idTvDb   = $serie->getIdTvdb();
-	
+
 	$checkAirDate = isset($GLOBALS['CHECK_NEXT_AIRDATE']) ? $GLOBALS['CHECK_NEXT_AIRDATE'] : false;
 	if ($checkAirDate) {
 		$airDate  = $serie->getNextAirDateStr();

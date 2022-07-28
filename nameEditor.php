@@ -162,7 +162,7 @@ if (empty($change) || $change == 'movie') {
 	<body style="margin:7px 2px; padding:0px !important;">
 	<table id="movieInfos" class="key film" style="width:350px; padding:0px; z-index:1; margin:0px !important;">
 <?php postEditor(); ?>
-		<tr><td colspan="2" class="righto" style="padding:10 0px !important;"><div style="float:right; padding:0px 11px;"><input type="button" value="Ok" class="key okButton" style="height:25px; width:275px;" onclick="setMovieInfos(this); return false;"></div></tr>
+		<tr><td colspan="2" class="righto" style="padding:10px 0px !important;"><div style="float:right; padding:0px 11px;"><input type="button" value="Ok" class="key okButton" style="height:25px; width:275px;" onclick="setMovieInfos(this); return false;"></div></tr>
 	</table>
 	</body>
 </html>

@@ -4,7 +4,9 @@ include_once "check.php";
 include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "./template/Series/_SERIEN.php";
-
+?>
+<script type="text/javascript">$(document).ready(function() { initShowFancies(); });</script>
+<?php
 	header("Content-Type: text/html; charset=UTF-8");
 
 	$isAdmin  = isAdmin();
@@ -62,17 +64,17 @@ include_once "./template/Series/_SERIEN.php";
 		$atmosx     = $row['atmosx'];
 	}
 
-	$percent;
-	$pausedAt;
-	$timeAt;
-	$timeTotal;
+	$pausedAt  = '';
+	$percent   = null;
+	$timeAt    = null;
+	$timeTotal = null;
 	if ($playCount <= 0) {
 		$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';");
 		$timeAt    = isset($result['timeAt'])    ? $result['timeAt']    : null;
 		$timeTotal = isset($result['timeTotal']) ? $result['timeTotal'] : null;
 		if (!empty($timeAt) && !empty($timeTotal)) {
 			$pausedAt  = getPausedAt($timeAt);
-			$percent   = round($timeAt / $timeTotal * 100, 0);
+			$percent   = round($timeAt / $timeTotal * 100);
 		}
 	}
 
@@ -95,7 +97,6 @@ include_once "./template/Series/_SERIEN.php";
 		$bits = $fps[0];
 		$fps  = $fps[1];
 	}
-#if (isAdmin()) { print_r( $fps ); }
 
 	$duration  = 0;
 	$ar        = null;
@@ -113,9 +114,10 @@ include_once "./template/Series/_SERIEN.php";
 		if (!empty($tmp)) {
 			if ($tmp != '') {
 				$tmp  = round($tmp, 2);
-				if ($tmp-1 != 1 && $tmp-1 != 0)
+				if ($tmp-1 != 1 && $tmp-1 != 0) {
 					$tmp .= (strlen($tmp) < 4 ? '0' : '');
-				$tmp .= ':1';
+				}
+				#$tmp .= ':1';
 			}
 			$ar = $tmp;
 		}
@@ -133,16 +135,16 @@ include_once "./template/Series/_SERIEN.php";
 		if (!empty($tmp)) { $vCodec = $tmp; }
 
 		$tmp = $stRow['strAudioCodec'];
-		if (!empty($tmp)) { $aCodec[count($aCodec)] = strtoupper($tmp); }
+		if (!empty($tmp)) { $aCodec[] = strtoupper($tmp); }
 
 		$tmp = $stRow['iAudioChannels'];
-		if (!empty($tmp)) { $aChannels[count($aChannels)] = $tmp; }
+		if (!empty($tmp)) { $aChannels[] = $tmp; }
 
 		$tmp = $stRow['strAudioLanguage'];
-		if (!empty($tmp)) { $aLang[count($aLang)] = $tmp; }
+		if (!empty($tmp)) { $aLang[] = $tmp; }
 
 		$tmp = $stRow['strSubtitleLanguage'];
-		if (!empty($tmp)) { $subtitle[count($subtitle)] = $tmp; }
+		if (!empty($tmp)) { $subtitle[] = $tmp; }
 	}
 
 	$thumbImg   = null;
@@ -243,7 +245,7 @@ include_once "./template/Series/_SERIEN.php";
 	}
 
 	if (!empty($duration)) {
-		$duration = round($duration / 60, 0);
+		$duration = round($duration / 60);
 		echo '<div class="padbot15"><span><i><b>Duration:</b></i></span><span class="flalright">'.$duration.' min</span></div>';
 	}
 
@@ -266,9 +268,17 @@ include_once "./template/Series/_SERIEN.php";
 			echo '<div class="padtop15 padbot20">';
 			echo '<span><i><b>Video:</b></i></span>';
 			if ((!empty($width) && !empty($height)) || !empty($fps)) {
+				$arSpan = !empty($ar) ? ' <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font>' : '';
+				$resultAR = fetchFromDB("SELECT ratio FROM aspectratio WHERE idMovie = ".$id.";");
+				if (!empty($resultAR) && !empty($resultAR['ratio'])) {
+					$ar = sprintf("%01.2f", round($resultAR['ratio'], 2));
+					$arSpan = '<span style="font-style:italic;" title="aspect-ratio overridden"> <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font></span>';
+				}
+				$arSpan = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$id.', '.$ar.'); return false;">'.$arSpan.'</span>';
+
 				echo '<span class="flalright">';
 				if (!empty($width) && !empty($height)) {
-					echo $width.'x'.$height.(!empty($ar) ? ' <font color="silver">[</font> '.$ar.' <font color="silver">]</font>' : '');
+					echo $width.'x'.$height.$arSpan;
 					if (!empty($fps))
 						echo '<br/>';
 				}
@@ -298,11 +308,22 @@ include_once "./template/Series/_SERIEN.php";
 		$countryMap = !empty($aCodec) || !empty($subtitle) ? getCountryMap() : null;
 		if (!empty($aCodec)) {
 			$codecs = '';
+			$atmosFound   = false;
+			$atmosFlagBtn = false;
 			for ($i = 0; $i < count($aCodec); $i++) {
 				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), (substr_count(strtoupper($aCodec[$i]), 'TRUEHD') > 0 || substr_count(strtoupper($aCodec[$i]), 'EAC3') > 0));
+				$atmosFound |= !empty($atmos) && !empty($atmos[$i]) && $atmos[$i] == 1;
+				$atmosFlagBtn |= atmosFlagPossibleToSet($aCodec[$i]);
 				$codecs .= postEditACodec($aCodec[$i], !empty($atmos) && !empty($atmos[$i])).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countryMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : '');
 			}
-			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
+
+			$atmosBtn_1 = $atmosBtn_2 = '';
+			if ($isAdmin && $atmosFlagBtn) {
+				$atmosBtn_1 = '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=toggleAtmos&idFile='.$idFile.'&val='.($atmosFound ? 0 : 1).'">';
+				$atmosBtn_2 = '</a>';
+			}
+
+			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$atmosBtn_1.$codecs.$atmosBtn_2.' <font color="silver">]</font></span></div>';
 		}
 
 		if (!empty($subtitle)) {
@@ -322,8 +343,12 @@ include_once "./template/Series/_SERIEN.php";
 
 	if (!$isDemo) {
 		if ($isAdmin) {
-			echo '<div class="padtop15"><hr style="position:width:335px; margin:0px; border-bottom-width:0px; border-color:#BBCCDD;" /></div>';
-			echo '<div class="padtop15"><span><i><b>Source:</b></i></span><span class="flalright">'.$SOURCE[$src].'</span></div>';
+			echo '<div class="padtop15"><hr style="position:width:335px; margin:0; border-bottom-width:0; border-color:#BBCCDD;" /></div>';
+			echo '<div class="padtop15"><span><i><b>Source:</b></i></span>';
+			echo '<span class="flalright">';
+			echo '<a class="fancy_changesrc" style="font-size:11px;" href="./changeSource.php?idFile='.$idFile.'">'.$SOURCE[$src].'</a>';
+			echo '</span>';
+			echo '</div>';
 		}
 		echo '<div class="padtop15"><span><i><b>Size:</b></i></span><span class="flalright">'.$fsize.'</span></div>';
 	}

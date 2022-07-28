@@ -12,6 +12,7 @@ include_once "./template/Series/_SERIEN.php";
 	$id = getEscGet('id');
 	if (empty($id) || $id < 0) { return; }
 
+	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$serien   = fetchSerien($GLOBALS['SerienSQL'], null);
 	$serie    = $serien->getSerie($id);
 	$idShow   = $serie->getIdShow();
@@ -53,7 +54,7 @@ include_once "./template/Series/_SERIEN.php";
 			$imgFile = null;
 		wrapItUp('banner', $idTvdb, $imgFile);
 		$banner = empty($imgFile) ? ($ok1 ? $imgURL : $imgURL2) : getImageWrap($imgFile, $idTvdb, 'banner', 0);
-		echo '<img id="tvBanner" class="openTvdb" src="'.$banner.'" href="'.$tvdbURL.'" />';
+		echo '<a target="_blank" href="'.$tvdbURL.'"><img id="tvBanner" src="'.$banner.'" /></a>';
 	}
 
 	echo '<div class="fClose" onclick="closeShow();"><img src="./img/close.png" style="cursor:pointer;"/></div>';
@@ -84,7 +85,7 @@ include_once "./template/Series/_SERIEN.php";
 	$end   = count($codecs);
 	foreach ($codecs as $codec => $count) {
 		$codec  = postEditVCodec($codec);
-		$prc    = round($count / $sum * 100, 0);
+		$prc    = round($count / $sum * 100);
 		$title .= $codec.': '.$prc.'%'.(++$idx < $end ? "\r\n" : '');
 	}
 
@@ -155,8 +156,6 @@ include_once "./template/Series/_SERIEN.php";
 
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			$info      = $info1.$info2;
-			#$clear1    = $isAdmin ? '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=clearAirdate&idShow='.$idShow.'">' : '';
-			#$clear2    = $isAdmin ? '</a>' : '';
 
 			echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2.'<br /><br />';
 
@@ -180,7 +179,7 @@ function genJsonData($codecs, $sum) {
 	$idx = 0;
 	$end = count($codecs);
 	foreach ($codecs as $codec => $count) {
-		$prc   = round($count / $sum * 100, 0);
+		$prc   = round($count / $sum * 100);
 		$codec = postEditVCodec($codec);
 		$perf  = decodingPerf($codec);
 		$color = $cols == null ? '#000000' : $cols[$perf];
@@ -190,6 +189,7 @@ function genJsonData($codecs, $sum) {
 		$result .= "\n\r";
 	}
 	$result .= ']';
+	$result = str_replace(array("\n","\r","\t", " "),"", $result);
 	return $result;
 }
 
@@ -199,11 +199,9 @@ function getDuration($epFirst, $epLast) {
 
 	$yrFirst = $dtFirst->format('y');
 	$yrLast  = $dtLast->format('y');
-	if ($yrFirst == $yrLast)
+	if ($yrFirst == $yrLast) {
 		return diffToString(1);
-
-	#$dtFirst = new DateTime($yrFirst.'-01-01');
-	#$dtLast  = new DateTime($yrLast.'-12-31');
+	}
 
 	$diff = $dtFirst->diff($dtLast);
 	$res  = $dtFirst->diff($dtLast)->format('%y');

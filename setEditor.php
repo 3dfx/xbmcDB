@@ -6,9 +6,9 @@ include_once "globals.php";
 
 	if (!isAdmin()) { return; }
 ?>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
 	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>Set Editor</title>
 <?php
 	$closeFrame = getEscGet('closeFrame', 0);
@@ -46,7 +46,7 @@ include_once "globals.php";
 
 		function addSet() {
 			var answer = $.trim( prompt("Enter Set Name") );
-			if (answer == null || answer == '') { return; }
+			if (answer == null || answer === '') { return; }
 
 			cursorBusy();
 			window.location.href='./dbEdit.php?act=addset&name=' + answer;
@@ -67,14 +67,14 @@ include_once "globals.php";
 	if (!empty($closeFrame)) {
 ?>
 			parent.$.fancybox.close();
-			return false;
+			// return false;
 <?php
 	}
 ?>
 	</script>
 	</head>
 	<body>
-	<table id="serieSet" class="film" style="padding:0px; margin-bottom:0px; margin-left:-9px !important; z-index:1;">
+	<table id="serieSet" class="film" style="width:99%; padding:0; margin-bottom:0; margin-left:-9px !important; z-index:1;">
 		<tr><th class="righto" style="padding:0 0 0 15px;">id</th><th colspan="2" style="padding-left:10px !important;">Setname</th></tr>
 <?php postSets(); ?>
 		<tr><td class="righto" colspan="3" style="cursor:pointer; padding-right:10px;" onclick="addSet(); return false;"><img src="./img/add.png" style="height:16px; width:16px;" title="add set"></td></tr>
@@ -88,38 +88,54 @@ function postSets() {
 	try {
 		$SQL_SETS = 'SELECT * FROM sets ORDER BY strSet;';
 		$result = $dbh->query($SQL_SETS);
-		$sets = array();
-		$s = 0;
+		$sets     = array();
+		$setNames = array();
+		$idNames  = array();
+
 		foreach($result as $row) {
-			$sets[$s]['idSet']  = $row['idSet'];
-			$sets[$s]['strSet'] = $row['strSet'];
-			$s++;
+		    $idSet  = $row['idSet'];
+		    $strSet = $row['strSet'];
+			$sets[$idSet]['idSet']  = $idSet;
+			$sets[$idSet]['strSet'] = $strSet;
+
+			$switched = switchPronoms($strSet);
+			$idNames[$switched] = $idSet;
+			$setNames[] = $switched;
 		}
+
+		sort($setNames);
 
 		$SQL_SETLINK = 'SELECT S.idSet, S.strSet, M.c00 AS filmname, M.idMovie AS idMovie FROM movie M, sets S WHERE M.idSet = S.idSet ORDER BY S.strSet, M.c00;';
 		$result = $dbh->query($SQL_SETLINK);
 		$movies = array();
-		$i = 0;
 		$counts = array();
+
 		foreach($result as $row) {
-			$idSet = $row['idSet'];
-			$movies[$i]['idSet']    = $idSet;
-			$movies[$i]['idMovie']  = $row['idMovie'];
-			$movies[$i]['strSet']   = $row['strSet'];
-			$movies[$i]['filmname'] = $row['filmname'];
+			$idSet   = $row['idSet'];
+
+			$movieArray = isset($movies[$idSet]) ? $movies[$idSet] : array();
+			$count = count($movieArray);
+
+			$movieArray['idSet']    = $idSet;
+			$movieArray['idMovie']  = $row['idMovie'];
+			$movieArray['filmname'] = switchPronoms($row['filmname']);
+			$movies[$idSet][$count] = $movieArray;
 			$counts[$idSet] = isset($counts[$idSet]) ? $counts[$idSet]+1 : 1;
-			$i++;
 		}
 
-		
-		foreach($sets as $entry) {
-			$idSet  = $entry['idSet'];
-			$strSet = $entry['strSet'];
-			postSet($idSet, $strSet, !empty($counts[$idSet]) ? $counts[$idSet] : 0);
+		foreach($setNames as $setName) {
+		    $idSet = $idNames[$setName];
+		    $set = $sets[$idSet];
+		    if ($idSet != $set['idSet']) { continue; }
 
-			foreach($movies as $movie) {
-				if ($movie['idSet'] != $idSet) { continue; }
-				postSetMovie($movie['idSet'], $movie['idMovie'], $movie['filmname']);
+			postSet($idSet, $setName, $set['strSet'], !empty($counts[$idSet]) ? $counts[$idSet] : 0);
+
+			if (isset($movies[$idSet])) {
+				$moviez = $movies[$idSet];
+				foreach($moviez as $movie) {
+					if ($movie['idSet'] != $idSet) { continue; }
+					postSetMovie($movie['idSet'], $movie['idMovie'], $movie['filmname']);
+				}
 			}
 		}
 
@@ -137,10 +153,10 @@ function postSetMovie($idSet, $idMovie, $name) {
 	echo "\r\n";
 }
 
-function postSet($id, $name, $count) {
+function postSet($id, $name, $jsName, $count) {
 	echo "\t\t".'<tr>';
-	echo '<td class="righto" style="padding-right:0px !important;">'.$id.'</td>';
-	$jsName = str_replace("'", "\'", $name);
+	echo '<td class="righto" style="padding-right:0 !important;">'.$id.'</td>';
+	$jsName = str_replace("'", "\'", $jsName);
 	echo '<td style="cursor:pointer; padding-left:10px !important;" onclick="setSetName(\''.$id.'\', \''.$jsName.'\'); return false;">'.$name.' (<b>'.$count.'</b>)</td>';
 	echo '<td class="righto" style="cursor:pointer; padding-right:8px;" onclick="deleteSet(\''.$id.'\', \''.$jsName.'\'); return false;"><img src="./img/del.png" style="height:18px; width:18px;" title="delete"></td>';
 	echo '</tr>';

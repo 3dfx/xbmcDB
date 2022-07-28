@@ -14,6 +14,7 @@
 	$PERSONINFOSEARCH   = $IMDB.'nm&q=';
 	$FILMINFOSEARCH     = $IMDB.'tt&q=';
 
+	$PRONOMS            = array('the ', 'der ', 'die ', 'das ');
 	$SHOW_NEW_VALUES    = array(10, 30, 60, 90, 120, 150, 180);
 	$COLUMNCOUNT        = 10;
 	$TVSHOW_MENU_LIMIT  = 30;
@@ -82,11 +83,13 @@
 	$SOURCE = array(
 		null => 'unknown',
 		0    => 'unknown',
-		1    => 'BluRay',
-		2    => 'WEB-DL',
-		3    => 'WEBrip',
-		4    => 'TVrip',
-		5    => 'DVDrip',
+		1    => 'TVrip',
+		2    => 'DVDrip',
+		3    => 'WEB-DL',
+		4    => 'WEBrip',
+		5    => 'BluRay',
+		6    => 'BluRay (upscaled)',
+		7    => 'UHD BluRay',
 	);
 
 	$CODEC_COLORS = array(
@@ -135,7 +138,7 @@
 			'A.c04'             => 'R.votes',
 			'A.c05'             => 'R.rating',
 			'A.c07'             => 'substr(A.premiered,1,4)',
-			'A.c07_'             => 'A.premiered',
+			'A.c07_'            => 'A.premiered',
 			'A.c09'             => 'I.value',
 //			'A.c05'             => 'A.rating',
 //			'A.c09'             => 'A.uniqueid_value',

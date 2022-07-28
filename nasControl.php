@@ -104,15 +104,15 @@ if (!isAdmin()) { return; }
 <?php
 	
 	function pingNAS($IP) {
-		if (!isAdmin()) { return; }
+		if (!isAdmin()) { return 0; }
 		exec('ping '.$IP.' -c 1 -W 1 | grep -o \'time=\' | wc -l', $output);
 		return $output[0];
 	}
 	
 	function getDelay($filename) {
-		if (!isAdmin()) { return; }
+		if (!isAdmin()) { return 0; }
 		if (!file_exists($filename)) {
-			return;
+			return 0;
 		}
 
 		$datei = file($filename);
@@ -122,25 +122,25 @@ if (!isAdmin()) { return; }
 	}
 	
 	function shutdownNAS() {
-		if (!isAdmin()) { return; }
+		if (!isAdmin()) { return 0; }
 		exec('/sbin/nas_shutdown 1', $output);
 		return $output;
 	}
 	
 	function startNAS() {
-		if (!isAdmin()) { return; }
+		if (!isAdmin()) { return 0; }
 		exec('/sbin/nas_start 1', $output);
 		return $output;
 	}
 
 	function delayShutdown($days) {
-		if (!isAdmin()) { return; }
+		if (!isAdmin()) { return 0; }
 		exec('/sbin/delay_shutdown_nas '.$days, $output);
 		return $output;
 	}
 
 	function delayRestart($days) {
-		if (!isAdmin()) { return; }
+		if (!isAdmin()) { return 0; }
 		exec('/sbin/delay_restart_nas '.$days, $output);
 		return $output;
 	}

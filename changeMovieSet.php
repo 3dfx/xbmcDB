@@ -7,21 +7,20 @@ include_once "./template/config.php";
 include_once "globals.php";
 	
 	startSession();
-	if (!isAdmin()) { return; };
+	if (!isAdmin()) { return; }
 ?>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <html>
 	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <?php
-	$closeFrame = getEscGPost('closeFrame', 0);;
-	$idMovie    = getEscGPost('idMovie', -1);
+	$closeFrame = getEscGPost('closeFrame', 0);
+$idMovie    = getEscGPost('idMovie', -1);
 	
 	$row    = fetchFromDB('SELECT idSet FROM movie WHERE idMovie = '.$idMovie.';');
 	$idSet  = $row['idSet'];
 	
 /*	FUNCTIONS	*/
-function postSets() {
-	$idSet  = $GLOBALS['idSet'];
+function postSets($idSet) {
 	$result = querySQL('SELECT * FROM sets ORDER BY strSet;');
 	foreach($result as $row) {
 		postSet($idSet, $row['idSet'], $row['strSet']);
@@ -62,12 +61,12 @@ function postSet($idSet, $id, $name) {
 			<?php echo 'var idMovie = '.(isset($GLOBALS['idMovie']) ? $GLOBALS['idMovie'] : '-1').';'."\r\n"; ?>
 			var sel = document.getElementById('setSelect');
 
-			if (idMovie == null || idMovie == -1 || sel == null) {
+			if (idMovie === null || idMovie === -1 || sel === null) {
 				return;
 			}
 
-			var action = (idSet != -1 ? 'linkUpdate' : 'linkInsert');
-			if (sel.value == -1) {
+			var action = (idSet !== -1 ? 'linkUpdate' : 'linkInsert');
+			if (sel.value === -1) {
 				action = 'linkDelete';
 			}
 
@@ -75,15 +74,15 @@ function postSet($idSet, $id, $name) {
 		}
 	</script>
 	</head>
-<body style="wdith:350px; height:50px; margin:0px; padding:15 10px;">
-	<div style="float:right; padding:0px 5px;">
-		<input type="button" value="Ok" class="okButton" onclick="setMovieSet(); return false;">
-	</div>
-	<div style="float:left; width:200px; padding:2px 0px 0px 0px;">
-		<select id="setSelect" class="styled-select" style="position:absolute; font-size:10px !important; width:195px !important; height:18px !important;" size="1">
-			<option value="-1"> </option>
-<?php postSets(); ?>
-		</select>
-	</div>
-</body>
+	<body style="width:350px; height:50px; margin:0; padding:15px 10px;">
+		<div style="float:left; width:200px; padding:2px 0 0 0;">
+			<select id="setSelect" class="styled-select" style="position:absolute; font-size:10px !important; width:195px !important; height:18px !important;" size="1">
+				<option value="-1"> </option>
+<?php postSets($idSet); ?>
+			</select>
+		</div>
+		<div style="float:right; padding:0 5px; position: relative; right: 165px;">
+			<input type="button" value="Ok" class="okButton" onclick="setMovieSet(); return false;">
+		</div>
+	</body>
 </html>

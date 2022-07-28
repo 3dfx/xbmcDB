@@ -48,7 +48,7 @@ function closeNavs() {
 
 function checkForCheck() {
 	if (unsaved)
-		return (ids != null && ids != '' ? confirm("Attention:\nUnsaved selection will be lost!") : true);
+		return (ids != null && ids !== '' ? confirm("Attention:\nUnsaved selection will be lost!") : true);
 	return true;
 }
 
@@ -63,11 +63,11 @@ function clearSelectBoxes(obj) {
 			continue;
 		}
 
-		if (a.id == 'copyAsScript' || a.id == 'clearSelectAll') {
+		if (a.id === 'copyAsScript' || a.id === 'clearSelectAll') {
 			continue;
 		}
 
-		if (a.type == 'checkbox' && a.checked != chk && !a.disabled) {
+		if (a.type === 'checkbox' && a.checked !== chk && !a.disabled) {
 			a.checked = chk;
 			selected(a, false, false, isAdmin);
 		}
@@ -110,12 +110,12 @@ function searchForString(obj, event) {
 
 	if (obj != null && event != null) {
 		var kC = getKeyCode(event);
-		if (kC != 13) { return false; }
+		if (kC !== 13) { return false; }
 	}
 
 	$('span').removeHighlight();
 
-	if (search == '' || search.length < 3) {
+	if (search === '' || search.length < 3) {
 		$('TR.searchFlag').show();
 		$('TR').find('.checka').removeAttr('disabled');
 		return false;
@@ -135,7 +135,7 @@ function searchForString(obj, event) {
 			if (span == null) { continue; }
 
 			var string = $.trim(span.innerHTML).toLowerCase();
-			if (string == null || string == '') { continue; }
+			if (string == null || string === '') { continue; }
 
 			for (var i = 0; i < srch.length; i++) {
 				if (string.indexOf(srch[i]) >= 0) {
@@ -163,7 +163,7 @@ function searchForString(obj, event) {
 			$( $( tr ).find('.checka')[0] ).attr('checked', false);
 		}
 
-		if (foundString) { continue; }
+		//if (foundString) { continue; }
 	}
 
 	for (var i = 0; i < srch.length; i++) {
@@ -184,13 +184,13 @@ function searchDbForString(obj, event) {
 	if (!checkForCheck()) { return false; }
 
 	var href = './?show=filme&dbSearch=';
-	if (search != null && search != '') { href = href + search; }
+	if (search != null && search !== '') { href = href + search; }
 
 	window.location.href=href;
 }
 
 function resetDbSearch() {
-	if (!checkForCheck() || $('#searchDBfor').val() == '') { return false; }
+	if (!checkForCheck() || $('#searchDBfor').val() === '') { return false; }
 	window.location.href='./?show=filme&dbSearch=';
 }
 

@@ -91,8 +91,8 @@ class Serien {
 		return $size;
 	}
 
-	public function addSerie($idShow, $serienname) {
-		$this->serien[$idShow] = new Serie($idShow, $serienname);
+	public function addSerie($idShow) {
+		$this->serien[$idShow] = new Serie($idShow);
 		return $this->serien[$idShow];
 	}
 
@@ -118,7 +118,7 @@ class Serien {
 	public function addEpisode($episode, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate) {
 		#public function addEpisode($episode, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate, $codecStats) {
 		$idShow = $episode->getIdShow();
-		$serienname = $episode->getSerienname();
+		#$serienname = $episode->getSerienname();
 		#$season = $episode->getSeason();
 
 		$idTvdb = $episode->getIdTvdb();
@@ -126,7 +126,7 @@ class Serien {
 
 		$serie = $this->getSerie($idShow);
 		if (empty($serie)) {
-			$serie = $this->addSerie($idShow, $serienname);
+			$serie = $this->addSerie($idShow);
 			$serie->setFsk($fsk);
 			$serie->setGenre($genre);
 			$serie->setStudio($studio);

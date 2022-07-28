@@ -90,16 +90,16 @@ function searchDbForString(obj, event) {
 	var search = $.trim(obj.value).toLowerCase();
 
 	var kC = getKeyCode(event);
-	if (kC != 13) { return false; }
+	if (kC !== 13) { return false; }
 
 	var href = './?show=serien&dbSearch=';
-	if (search != null && search != '') { href = href + search; }
+	if (search != null && search !== '') { href = href + search; }
 
 	window.location.href=href;
 }
 
 function resetDbSearch() {
-	if ($('#searchDBfor').val() == '') { return false; }
+	if ($('#searchDBfor').val() === '') { return false; }
 	window.location.href='./?show=serien&dbSearch=';
 }
 
@@ -123,17 +123,20 @@ function resizeAll(xOffest1) {
 	moveDivEpDesc(-351);
 }
 
-function toggleEps(id, eps, obj) {
+function toggleEps(id, eps, objId) {
 	epsPositioned = false;
-	toggleEps_(id, eps, obj);
+	toggleEps_(id, eps, objId);
 }
 
-function toggleEps_(id, eps, obj) {
-	if (eps == null && obj == null) { return; }
-	if (obj == null) {
-		var tglId = id.replace('iD', 'tgl');
-		obj = document.getElementById(tglId);
+function toggleEps_(id, eps, objId) {
+	var obj = null;
+	if (objId == null && id != null) {
+		objId = id.replace('iD', 'tgl');
 	}
+	if (objId != null) {
+		obj = document.getElementById(objId);
+	}
+	if (obj == null) { return; }
 	$('.plmin').removeClass('showlink').addClass('hidelink');
 
 	var show = false;
@@ -141,15 +144,15 @@ function toggleEps_(id, eps, obj) {
 	if (trs != null) {
 		for (var t = 0; t < trs.length; t++) {
 			var tr = trs[t];
-			if (tr == null || tr.className.indexOf('epTR') == -1) { continue; }
+			if (tr == null || tr.className.indexOf('epTR') === -1) { continue; }
 
 			var selectedSeason = (tr.className.indexOf(id) > -1);
 			if (!selectedSeason) {
-				if (tr.style.display != 'none') { $( tr ).hide(); }
+				if (tr.style.display !== 'none') { $( tr ).hide(); }
 				continue;
 			}
 
-			if (tr.style.display == 'none') {
+			if (tr.style.display === 'none') {
 				$( tr ).fadeIn(300, 'linear');
 				show = true;
 			} else {
@@ -158,14 +161,12 @@ function toggleEps_(id, eps, obj) {
 		}
 	}
 
-	if (obj != null) {
-		if (show) {
-			$(obj).removeClass('hidelink');
-			$(obj).addClass('showlink');
-		} else {
-			$(obj).removeClass('showlink');
-			$(obj).addClass('hidelink');
-		}
+	if (show) {
+		$(obj).removeClass('hidelink');
+		$(obj).addClass('showlink');
+	} else {
+		$(obj).removeClass('showlink');
+		$(obj).addClass('hidelink');
 	}
 
 	//moveDivR(show ? 1 : 0);
@@ -186,13 +187,13 @@ function showGuests() {
 }
 
 function setFlagsBack(objId) {
-	if (objId == '#showInfo') {
+	if (objId === '#showInfo') {
 		eplistLoading = false;
 
-	} else if (objId == '#showDesc') {
+	} else if (objId === '#showDesc') {
 		descLoading = false;
 
-	} else if (objId == '#showEpDesc') {
+	} else if (objId === '#showEpDesc') {
 		epDescLoading = false;
 	}
 }
@@ -207,7 +208,7 @@ function checkShowInfo(objId, xOffset1) {
 			return;
 		}
 		if (c++ > 100) { return; }
-	} while ($(objId).width() == 0);
+	} while ($(objId).width() === 0);
 
 	setFlagsBack(objId);
 }
@@ -217,8 +218,8 @@ function cursorBusy(state) {
 	$('#xbmcDB').css('cursor', state);
 	$('#showInfo').css('cursor', state);
 	$('td').css('cursor', state);
-	$('a').css('cursor', state == '' ? 'pointer' : state);
-	$('a.fancy_msgbox, a.fancy_addEpisode, li.dropdown-submenu>a').css('cursor', state == '' ? 'default' : state);
+	$('a').css('cursor', state === '' ? 'pointer' : state);
+	$('a.fancy_msgbox, a.fancy_addEpisode, li.dropdown-submenu>a').css('cursor', state === '' ? 'default' : state);
 }
 
 function loadLatestShowInfo(obj, sId, epId, trClass, eps) {
@@ -241,7 +242,7 @@ function loadShowInfo(obj, id) {
 }
 
 function loadShowInfoPlus(obj, id, trClass, eps) {
-	if (epDescLoading || lastIdShow == id) { return; }
+	if (epDescLoading || lastIdShow === id) { return; }
 
 	cursorBusy('progress');
 
@@ -262,7 +263,7 @@ function loadShowInfoPlus(obj, id, trClass, eps) {
 
 function loadEpDetails(obj, epId) {
 	epsPositioned = false;
-	if (epDescLoading || lastIdEp == epId) { return; }
+	if (epDescLoading || lastIdEp === epId) { return; }
 
 	$('.epTR').children('TD').removeClass('selectedShow');
 	$('#' + epId).children('TD').addClass('selectedShow');
@@ -315,14 +316,14 @@ function moveDivEpDesc(resizeOffset) {
 	var yOffset  = 1;
 	var xOffset  = $.browser.webkit ? 3 : 0;
 	var left     = $(posElem).position().left;
-	var top      = $("#showDesc").position().top + $(".showDesc").height() + yOffset;
-	var width    = $("#showDesc").width();
+	var top      = $('#showDesc').position().top + $(".showDesc").height() + yOffset;
+	var width    = $('#showDesc').width();
 	//var height   = "5px";
 	var height   = "auto";
 	var divTop   = top + "px";
 	var divLeft  = Math.floor(left + resizeOffset + xOffset) + "px";
 
-	$("#showEpDesc").css({
+	$('#showEpDesc').css({
 		"position"	: "absolute",
 		"top"		: divTop,
 		"left"		: divLeft,
@@ -380,7 +381,7 @@ function loadEplistPlus_(obj, trClass, eps) {
 					//var height = $('#serieTable').height() + "px";
 					var height = "auto";
 					checkShowInfo('#showInfo', 0);
-					$("#showInfo").css({ "width" : "385px", "height" : height });
+					$('#showInfo').css({ "width" : "385px", "height" : height });
 					if ($.browser.mozilla) { $("#showInfo").css({ "left" : "+=1px" }); }
 					toggleEps(trClass, eps, null);
 					initShowEpFancies();
@@ -462,7 +463,7 @@ function moveDivL(resizeOffset) {
 	var divTop   = top + "px";
 	var divLeft  = Math.floor(left + resizeOffset + xOffset) + "px";
 
-	$("#showDesc").css({
+	$('#showDesc').css({
 		"position"	: "absolute",
 		"top"		: divTop,
 		"left"		: divLeft,
@@ -492,7 +493,7 @@ function moveDivR(resizeOffset) {
 	var divTop   = top + "px";
 	var divLeft   = Math.floor(left + width + xOffset + resizeOffset) + "px";
 
-	$("#showInfo").css({
+	$('#showInfo').css({
 		"position"	: "absolute",
 		"top"		: divTop,
 		"left"		: divLeft,
@@ -508,7 +509,7 @@ function moveDivR(resizeOffset) {
 
 function toggleAirdates() {
 	if (!isAdmin) { return; }
-	var w = $( '#showsTable' ).width();
+	var w = $('#showsTable').width();
 
 	if (airdateVisible) {
 		//$( '.showName' ).removeClass($.browser.webkit ? 'airdShown' : 'airdShownM').addClass('airdHidden');
@@ -545,11 +546,11 @@ function clearSelectBoxes(obj) {
 			continue;
 		}
 
-		if (a.id == 'copyAsScript' || a.id == 'clearSelectAll') {
+		if (a.id === 'copyAsScript' || a.id === 'clearSelectAll') {
 			continue;
 		}
 
-		if (a.type == 'checkbox' && a.checked != chk && !a.disabled) {
+		if (a.type === 'checkbox' && a.checked !== chk && !a.disabled) {
 			a.checked = chk;
 			selected(a, false, false, isAdmin);
 		}
@@ -576,13 +577,13 @@ function drawDonut(id) {
 
 	var url     = './detailSerieDesc.php?data&id=' + id;
 	var data    = $.ajax({ url: url, dataType:'json', async: false }).responseText;
-	var gotData = data != null && data != '';
+	var gotData = data != null && data !== '';
 	if (!gotData) { return; }
 
 	// Get the context of the canvas element we want to select
 	//var ctx = document.getElementById("donutChartPir").getContext("2d");
 	var ctx = null;
-	if ( $("#donutChartPir").length ) { ctx = $("#donutChartPir").get(0).getContext('2d'); }
+	if ( $('#donutChartPir').length ) { ctx = $("#donutChartPir").get(0).getContext('2d'); }
 	else { console.log('Error: Canvas not found with selector #donutChartPir'); }
 
 	var options = { percentageInnerCutout:45, showTooltips:false, animationSteps:30, animation:true, segmentShowStroke:true, segmentStrokeWidth:1 };
@@ -595,4 +596,19 @@ function drawDonut(id) {
 			myDoughnutChart.addData({ value:obj['value'], color:obj['color'], highlight:obj['highlight'], label:obj['label'] });
 		});
 	}
+}
+
+function setAspectRatio(idFile, idEpisode, ar = "") {
+	if (idFile === null || idEpisode === null) { return; }
+
+	let answer = prompt("Enter aspect ratio", ar);
+	if (answer === null || answer.trim() === "") { ar = ""; }
+	else { answer = answer.replace(",", "."); }
+
+	if (answer !== null && answer !== "" && !isNaN(answer)) {
+		ar = Number.parseFloat(answer);
+	}
+
+	var url = './dbEdit.php?act=setAspectRatio&noForward=1&idFile=' + idFile + '&idMovie=' + idEpisode + '&' + 'aRatio=' + ar;
+	$.ajax(url);
 }

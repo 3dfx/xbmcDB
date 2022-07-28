@@ -13,6 +13,8 @@ include_once "globals.php";
 	$maself  = getEscServer('PHP_SELF');
 	$isMain  = (substr($maself, -9) == 'index.php');
 
+	$COPYASSCRIPT_ENABLED = isset($GLOBALS['COPYASSCRIPT_ENABLED']) ? $GLOBALS['COPYASSCRIPT_ENABLED'] : false;
+	$PRONOMS     = isset($GLOBALS['PRONOMS'])      ? $GLOBALS['PRONOMS']      : null;
 	$newsort     = isset($_SESSION['newsort'])     ? $_SESSION['newsort']     : 0;
 	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
 	$which       = isset($_SESSION['which'])       ? $_SESSION['which']       : null;
@@ -52,9 +54,9 @@ include_once "globals.php";
 <?php
 	postNavBar();
 
-	echo '<div class="tabDiv" onmouseover="closeNavs();">';
+	echo "\t".'<div class="tabDiv" onmouseover="closeNavs();">';
 	echo "\r\n";
-	echo '<table class="'.($gallerymode ? 'gallery' : 'film').'" cellspacing="0">';
+	echo "\t\t".'<table class="'.($gallerymode ? 'gallery' : 'film').'" cellspacing="0">';
 	echo "\r\n";
 
 	createTable($orderz);
@@ -62,7 +64,7 @@ include_once "globals.php";
 	if (isset($_SESSION['lastMovie']['seen']) && !isset($_SESSION['lastMovie']['set'])) { setLastHighest(); }
 	if ($newsort == 2 && !$gallerymode) { $_SESSION['lastMovie']['seen'] = true; }
 	if ($isAdmin && !$gallerymode) {
-		echo "\t";
+		echo "\t\t\t\t";
 		echo '<tr><td colspan="'.getColSpan().'" class="optTD">';
 		echo '<div style="float:right; padding:4px 5px;">';
 		echo '<input tabindex="-1" type="submit" value="Ok" name="submit" class="okButton">';
@@ -76,12 +78,13 @@ include_once "globals.php";
 		echo '</select>';
 		echo '</div>';
 		echo '</td></tr>';
-		echo "\r\n\t";
+		echo "\r\n";
 	}
 
-	echo '</form>';
-	echo "\r\n".'</table>';
-	echo "\r\n".'</div>';
+	echo "\t\t\t".'</form>';
+	echo "\r\n\t\t".'</table>';
+	echo "\r\n\t".'</div>';
+	echo "\r\n";
 
 	if (!$isAdmin && !$isDemo) {
 		if ($gallerymode != 1) {
@@ -208,6 +211,7 @@ function getSessionKeySQL() {
 		$sessionKey .= 'just_'.$filter.'_';
 
 	} else if ($_which == 'set') {
+		$_SESSION['newmode'] = $newmode = 0;
 		$filter = " AND A.idSet = '".$_just."'";
 		$sessionKey .= 'just_'.$filter.'_';
 
@@ -225,11 +229,12 @@ function getSessionKeySQL() {
 		$unseenCriteria = '';
 	}
 
-	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00, A.c01, A.c02, A.c14, A.c15, B.strFilename AS filename, ".
+//	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00, A.c01, A.c02, A.c03, A.c14, A.c15, B.strFilename AS filename, ".
+	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00 AS movieName, A.c14 AS genres, B.strFilename AS filename, ".
 		"M.dateAdded as dateAdded, M.value as dateValue, ".
-		mapDBC('A.c07')." AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
+//		mapDBC('A.c07')." AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
+		mapDBC('A.c07')." AS jahr, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
 		"FROM movie A, files B, path C ".
-//		"FROM movie_view A, files B, path C ".
 		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
 		mapDBC('joinIdMovie').
 		mapDBC('joinRatingMovie').
@@ -320,7 +325,9 @@ function getSessionKeySQL() {
 	$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
 	$SQL .= $params.";";
 
+	#if (isAdmin()) {
 	#echo $SQL;
+	#}
 
 	$res['SQL']         = $SQL;
 	$res['sessionKey']  = $sessionKey;
@@ -346,13 +353,13 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 
 	$filter_name   = isset($_SESSION['name']) ? $_SESSION['name'] : '';
 	$lastHighest   = $isDemo ? null : (isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null);
-	$pronoms       = array('the ', 'der ', 'die ', 'das ');
 	$counter       = 0;
 	$counter2      = 0;
 
 	$_just            = $GLOBALS['just'];
 	$_which           = $GLOBALS['which'];
 	$IMDB             = $GLOBALS['IMDB'];
+	$PRONOMS          = $GLOBALS['PRONOMS'];
 	$ANONYMIZER       = $GLOBALS['ANONYMIZER'];
 	$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
 	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
@@ -372,9 +379,9 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 		$idFile    = $row['idFile'];
 		if ($idFile < 0) { continue; }
 		$idMovie   = $row['idMovie'];
-		$filmname  = $row['c00'];
+		$filmname  = $row['movieName'];
 		$watched   = $row['playCount'];
-		$thumb     = $row['thumb'];
+		//$thumb     = $row['thumb'];
 		$filename  = $row['filename'];
 		$dateAdded = $row['dateAdded'];
 		$path      = $row['path'];
@@ -386,11 +393,16 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 		$trailer   = $row['trailer'];
 		$rating    = $row['rating'];
 		$imdbId    = $row['imdbId'];
-		$genres    = $row['c14'];
+		$genres    = $row['genres'];
 		$vRes      = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
 		$fnam      = $path.$filename;
 		$cover     = null;
 		$isNew     = !empty($lastHighest) && $idMovie > $lastHighest;
+
+		$f4Ke      = isFake4K($filename);
+		$scaled    = isUpscaled($filename);
+		$is3D      = is3d($filename);
+		$hdr       = isHDR($filename);
 
 		if (empty($dateAdded)) {
 			$dateAdded = getCreation($fnam);
@@ -409,10 +421,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 					$cover = $artCovers['movie'][$idMovie]['cover'];
 				}
 			} else {
-				if (file_exists(getCoverThumb($fnam, $cover, false))) {
-					$cover = getCoverThumb($fnam, $cover, false);
-
-				} else if ($existArtTable) {
+				if ($existArtTable) {
 					$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
 					$res2 = querySQL_($dbh, $SQL_, false);
 					foreach($res2 as $row2) {
@@ -421,6 +430,8 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 						if (!empty($url)) { $cover = getCoverThumb($url, $url, true); }
 						if ($type == 'poster') { break; }
 					}
+				} else if (file_exists(getCoverThumb($fnam, $cover, false))) {
+					$cover = getCoverThumb($fnam, $cover, false);
 				}
 			} //POWERFUL_CPU
 		}
@@ -440,24 +451,16 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 			$filmname = substr($filmname, 0, $cutoff).'...';
 			$wasCutoff = true;
 		}
+		$filmname = switchPronoms($filmname, $PRONOMS);
 
-		$pr = strtolower(substr($filmname, 0, 4));
-		for ($prs = 0; $prs < count($pronoms); $prs++) {
-			if ($pr == $pronoms[$prs]) {
-				$part1 = strtoupper(substr($filmname, 4, 1)).substr($filmname, 5, strlen($filmname));
-				$part2 = ', '.substr($filmname, 0, 3);
-				$filmname = $part1.$part2;
-			}
-		}
-
-		wrapItUp('cover', $idMovie, $cover, $sessionKey);
+		wrapItUp('cover', $idMovie, $cover);
 
 		if ($gallerymode) {
 				$zeilen[$counter][0] = $filmname.($jahr != 0 ? ' ('.$jahr.')' : '');
 				$zeilen[$counter][1] = 'show=details&idShow='.$idMovie;
 				$zeilen[$counter][2] = $watched;
 				$zeilen[$counter][3] = getImageWrap($cover, $idMovie, 'movie', 0);
-				$zeilen[$counter][4] = is3d($filename);
+				$zeilen[$counter][4] = $is3D;
 				$zeilen[$counter][5] = $path;
 				$zeilen[$counter][6] = $filename;
 				$counter++;
@@ -493,7 +496,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 
 #title
 			$suffix = '';
-			if (is3d($filename)) { $suffix = ' (3D)'; }
+			if ($is3D) { $suffix = ' (3D)'; }
 			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
 			else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
 
@@ -527,7 +530,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 
 #genre
-			$spalTmp = '<td class="genreTD'.$higlight.'"';
+			$spalTmp = '<td class="genreTD hideMobile'.$higlight.'"';
 			$genres = explode("/", $genres);
 			$genre = count($genres) > 0 ? trim($genres[0]) : '';
 			$genreId = -1;
@@ -556,7 +559,7 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 
 #artist
 if ($dirActorEnabled) {
-			$spalTmp = '<td class="actorTD'.$higlight.'"';
+			$spalTmp = '<td class="actorTD hideMobile'.$higlight.'"';
 			$firstId     = '';
 			$firstartist = '';
 			$actorpicURL = '';
@@ -602,7 +605,7 @@ if ($dirActorEnabled) {
 			}
 
 			if (!empty($firstartist) && !empty($firstId)) {
-				wrapItUp('actor', $firstId, $actorimg, $sessionKey);
+				wrapItUp('actor', $firstId, $actorimg);
 
 				$spalTmp .= '>';
 				#$spalTmp .= '<a tabindex="-1" class="openIMDB filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstartist.'">[i] </a>';
@@ -621,7 +624,7 @@ if ($dirActorEnabled) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 
 #director
-			$spalTmp = '<td class="direcTD'.$higlight.'"';
+			$spalTmp = '<td class="direcTD hideMobile'.$higlight.'"';
 			$firstId       = '';
 			$firstdirector = '';
 			$actorpicURL   = '';
@@ -665,7 +668,7 @@ if ($dirActorEnabled) {
 			}
 
 			if (!empty($firstdirector) && !empty($firstId)) {
-				wrapItUp('director', $firstId, $actorimg, $sessionKey);
+				wrapItUp('director', $firstId, $actorimg);
 
 				$spalTmp .= '>';
 				#$spalTmp .= '<a tabindex="-1" class="openImdb filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstdirector.'">[i] </a>';
@@ -687,22 +690,23 @@ if ($dirActorEnabled) {
 #resolution/codec/10bit/fps/hdr
 			if (!$isDemo) {
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-				$f4Ke      = preg_match_all('/f4Ke/',    $filename) > 0 ? true : false;
-				$hdr       = preg_match_all('/\bHDR|HDR10|HDR10p\b/', $filename) > 0 ? true : false;
+
 				$resInfo   = getResDesc($vRes);
 				$resPerf   = getResPerf($vRes, $hdr);
 				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
 				$resStyle  = '';
-				if (!empty($resColor) || $f4Ke) {
+				if (!empty($resColor) || $f4Ke || $scaled) {
 				    $resStyle = ' style="';
-				    if ($f4Ke)
+				    if ($f4Ke || $scaled)
 						$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,0.75);';
 					if (!empty($resColor))
-						$resStyle .= ($f4Ke ? ' ' : '').'color:'.$resColor.';';
+						$resStyle .= ($f4Ke || $scaled ? ' ' : '').'color:'.$resColor.';';
 					$resStyle .= '"';
 				}
 				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resStyle) ? '' : $resStyle).'>'.$resInfo.'</span>');
-				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '').($f4Ke ? ' | Fake 4K' : '');
+				$tipSuffix = $f4Ke   ? ' | Fake 4K' : '';
+				$tipSuffix = $scaled ? ' | Upscaled 4K' : $tipSuffix;
+				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '').$tipSuffix;
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
 				$fps       = array($bits, formatFps($fps));
 				$bit10     = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;
@@ -714,17 +718,17 @@ if ($dirActorEnabled) {
 					$codecST = '';
 				}
 				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" title="'.$resTip.'">'.$resTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" style="text-align:right;" title="'.$resTip.'">'.$resTD.'</td>';
 				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
 				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = ($hdr   ? 'HDR'   : '').($hdr   && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = 'title="'.$fpsTitle.'"';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right" '.$fpsTitle.'>'.$codecTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" style="text-align:right;" '.$fpsTitle.'>'.$codecTD.'</td>';
 
 #filesize
 				$filename = prepPlayFilename($path.$filename);
 				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.' hideMobile" align="right"'.$playItem.'>'.$moviesize.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.'" style="text-align:right;"'.$playItem.'>'.$moviesize.'</td>';
 			}
 
 			$zeile++;
@@ -756,13 +760,13 @@ function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
 
 		$iElems = count($zeilen);
 
-		echo "<tr>";
+		echo "\t\t\t\t<tr>";
 		$spread = -1;
 		$thumbsAddedInRow = 0;
 		for ($t = 0; $t < $iElems; $t++) {
 			if ($t % $elemsInRow == 0 && $t > 0) {
 				$thumbsAddedInRow = 0;
-				echo "\n</tr>\r\n<tr>";
+				echo "\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>";
 
 				if (($iElems - $t) < $elemsInRow) {
 					$spread = $elemsInRow - ($iElems - $t);
@@ -776,7 +780,7 @@ function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
 				$thumbsAddedInRow = echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow);
 			}
 
-			echo "\n\t";
+			echo "\n\t\t\t\t\t";
 			echo '<td class="galleryTD">';
 			$covImg = (!empty($zeilen[$t][3]) ? $zeilen[$t][3] : './img/nothumb.png');
 			echo '<div class="galleryCover" style="background:url('.$covImg.') #FFFFFF no-repeat;">';
@@ -833,13 +837,13 @@ function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
 			}
 		}
 		echo "\n";
-		echo '</tr>';
+		echo "\t\t\t\t".'</tr>';
 		echo "\n";
 
 	} else { // if ($galleryMode)
 		$titleInfo = '';
 		if (!empty($saferSearch)) { $saferSearch = '&dbSearch='.$saferSearch; }
-		echo "\t";
+		echo "\t\t\t";
 		echo '<tr><th class="th0"> </th>';
 		echo '<th class="th4">';
 		if (!$isDemo) {
@@ -847,17 +851,17 @@ function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
 		}
 
 		echo '<span style="padding-right:10px;"> </span><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='title' || $sort=='titlea')   ? ' color:red;' : '').'" href="?show=filme&sort='.($sort=='titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
-		echo '<th class="th0"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr'   || $sort=='jahra')   ? ' color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
+		echo '<th class="th02"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr'   || $sort=='jahra')   ? ' color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
 		echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? ' color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
-		echo '<th class="th3">Genre</th>';
+		echo '<th class="th3 hideMobile">Genre</th>';
 		if ($dirActorEnabled) {
-		echo '<th class="th2">Actor</th>';
-		echo '<th class="th2">Director</th>';
+		echo '<th class="th2 hideMobile">Actor</th>';
+		echo '<th class="th2 hideMobile">Director</th>';
 		}
 		if (!$isDemo) {
-			echo '<th class="th5 hideMobile">Res</th>';
-			echo '<th class="th5 hideMobile">Codec</th>';
-			echo '<th class="th5 hideMobile"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
+			echo '<th class="th5">Res</th>';
+			echo '<th class="th5">Codec</th>';
+			echo '<th class="th6"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
 		}
 		echo "\r\n";
 
@@ -865,7 +869,7 @@ function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
 
 		$zeilenCount = count($zeilen);
 		for ($z = 0; $z < $zeilenCount; $z++) {
-			echo "\t".'<tr class="searchFlag">';
+			echo "\t\t\t\t".'<tr class="searchFlag">';
 			$zeile = $zeilen[$z];
 			for ($sp = 1; $sp < count($zeile); $sp++) {
 				$spalte = str_replace('_C0UNTER_', $z+1, $zeile[$sp]);
@@ -901,7 +905,7 @@ function getColspan() {
 	$COLUMNCOUNT   = isset($GLOBALS['COLUMNCOUNT']) ? $GLOBALS['COLUMNCOUNT'] : 9;
 	if (isDemo()) { $COLUMNCOUNT = $COLUMNCOUNT - 2; }
 	$newAddedCount = getNewAddedCount();
-	return ($gallerymode != 1 ? $COLUMNCOUNT : ($newAddedCount < $elementsInRow ? $newAddedCount : $elementsInRow));
+	return ($gallerymode != 1 ? $COLUMNCOUNT : (min($newAddedCount, $elementsInRow)));
 }
 
 function generateForm() {
@@ -909,15 +913,14 @@ function generateForm() {
 	$newmode     = isset($_SESSION['newmode'])     ? $_SESSION['newmode']     : 0;
 	$newsort     = isset($_SESSION['newsort'])     ? $_SESSION['newsort']     : 0;
 
-	echo "\t";
+	echo "\t\t\t";
 	echo '<form action="" name="moviefrm" method="post">';
 	echo "\r\n";
 
 	if ($newmode) {
-		$newAddedCount = getNewAddedCount();
-
 		if (!isAdmin()) {
 			$sizes = isset($GLOBALS['SHOW_NEW_VALUES']) ? $GLOBALS['SHOW_NEW_VALUES'] : array(30, 60);
+			$newAddedCount = getNewAddedCount();
 
 			echo "\t";
 			echo '<tr>';
@@ -940,7 +943,7 @@ function generateForm() {
 
 function echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow) {
 	while ($thumbsAddedInRow < $elemsInRow && $matrix[$thumbsAddedInRow] == 0) {
-		echo "\n\t";
+		echo "\n\t\t\t\t\t";
 		echo '<td class="galleryEmptyTD">&nbsp;</td>';
 		$thumbsAddedInRow++;
 	}

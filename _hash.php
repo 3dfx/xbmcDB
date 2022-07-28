@@ -5,7 +5,8 @@ include_once "globals.php";
 	
 	startSession();
 	if (!isAdmin()) { exit; }
-	$TITLE = isset($GLOBALS['NAV_TITLE']) ? $GLOBALS['NAV_TITLE'] : 'xbmcDB';
+	$TITLE   = isset($GLOBALS['NAV_TITLE'])      ? $GLOBALS['NAV_TITLE']      : 'xbmcDB';
+    $INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;
 ?>
 
 <html>

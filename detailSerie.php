@@ -95,14 +95,15 @@ function postStaffel($staffel, $last = null) {
 	$idShow   = $staffel->getIdShow();
 	$linkId   = 'tgl'.$idShow.'.S'.$sNum;
 	$seasonId = 'iD'.$idShow.'.S'.$sNum;
+	$onClick  = ' onclick="toggleEps(\''.$seasonId.'\', '.$eps.', \''.$linkId.'\'); $(this).blur(); return false;"';
 	echo '<tr class="seasonTR">';
-	echo '<td class="seasonTRd1"><a tabindex="-1" href="#" id="'.$linkId.'" class="plmin hidelink" onclick="toggleEps(\''.$seasonId.'\', '.$eps.', this); $(this).blur(); return false;"></a>Season '.$sNum.'</td>';
+	echo '<td class="seasonTRd1"'.$onClick.'><a tabindex="-1" href="#" id="'.$linkId.'" class="plmin hidelink"></a>Season '.$sNum.'</td>';
 	$missCount = $staffel->getMissingCount();
 	$missTitle = $isAdmin && $missCount != 0 ? ' title="'.pluralize('episode', $missCount).' missing"' : '';
 	$mCountCol = $isAdmin && $missCount != 0 ? ' style="color:#FF0000;"' : '';
-	echo '<td class="seasonTRd2 righto"'.$mCountCol.$missTitle.'>'.$strAllEps.'</td>';
-	echo '<td class="lefto">'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
-	echo '<td class="righto padTD">'.$staffel->getRating().'</td>';
+	echo '<td class="seasonTRd2 righto"'.$mCountCol.$missTitle.$onClick.'>'.$strAllEps.'</td>';
+	echo '<td class="lefto"'.$onClick.'>'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
+	echo '<td class="righto padTD"'.$onClick.'>'.$staffel->getRating().'</td>';
 	echo '<td class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($isAdmin) {
@@ -222,8 +223,7 @@ function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
 		$name     = fixNameForSearch($staffel->getSerie()->getName());
 		$enNum    = getFormattedSE($sNum_, $epNum_);
 		$epSearch = !empty($enNum) ? $ANONYMIZER.$EP_SEARCH.$name.' '.$enNum : null;
-		$link     = '<a tabindex="-1" class="fancy_iframe4" onfocus="blur();" href="'.$epSearch.'">'.$linkText.'</a>';
-		return $link;
+		return '<a tabindex="-1" class="fancy_iframe4" onfocus="blur();" href="'.$epSearch.'">'.$linkText.'</a>';
 	}
 	return '';
 }

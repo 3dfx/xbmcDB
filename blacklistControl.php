@@ -28,7 +28,7 @@ include_once "./template/functions.php";
 		}
 	</script>
 </head>
-<body !oncontextmenu="return false" ondragstart="return false" style="margin:0px;">
+<body !oncontextmenu="return false" ondragstart="return false" style="width:99%;">
 <?php
 	echo "<table class='film' style='margin:15px -10px; width:99%; max-width:99%;'>\r\n";
 	echo "<tr>";
