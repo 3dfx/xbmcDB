@@ -576,26 +576,38 @@ function drawDonut(id) {
 	if (id == null || id < 0) { return; }
 
 	var url     = './detailSerieDesc.php?data&id=' + id;
-	var data    = $.ajax({ url: url, dataType:'json', async: false }).responseText;
-	var gotData = data != null && data !== '';
-	if (!gotData) { return; }
-
-	// Get the context of the canvas element we want to select
-	//var ctx = document.getElementById("donutChartPir").getContext("2d");
 	var ctx = null;
-	if ( $('#donutChartPir').length ) { ctx = $("#donutChartPir").get(0).getContext('2d'); }
-	else { console.log('Error: Canvas not found with selector #donutChartPir'); }
-
-	var options = { percentageInnerCutout:45, showTooltips:false, animationSteps:30, animation:true, segmentShowStroke:true, segmentStrokeWidth:1 };
-	var myDoughnutChart = null;
-
-	// And for a doughnut chart
-	if (ctx != null) {
-		myDoughnutChart = new Chart(ctx).Doughnut(null, options);
-		$.each($.parseJSON(data), function(idx, obj) {
-			myDoughnutChart.addData({ value:obj['value'], color:obj['color'], highlight:obj['highlight'], label:obj['label'] });
-		});
+	if ( $('#donutChartPir').length ) {
+		ctx = $("#donutChartPie").get(0).getContext('2d');
+	} else {
+		console.log('Error: Canvas not found with selector #donutChartPir');
+		return;
 	}
+
+	var myDoughnutChart = new Chart(ctx, {
+		type: 'doughnut',
+		data: {
+			labels: [],
+			datasets: [{
+				data: [],
+				backgroundColor: []
+			}]
+		},
+		options: { cutout: '40%', borderWidth: 0, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+	});
+
+	ajax_chart(myDoughnutChart, url);
+}
+
+function ajax_chart(chart, url, data) {
+	var data = data || {};
+
+	$.getJSON(url, data).done(function(response) {
+		chart.data.labels = response.labels;
+		chart.data.datasets[0].backgroundColor = response.datasets[0].backgroundColor;
+		chart.data.datasets[0].data = response.datasets[0].data;
+		chart.update();
+	});
 }
 
 function setAspectRatio(idFile, idEpisode, ar = "") {

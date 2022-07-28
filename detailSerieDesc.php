@@ -39,6 +39,7 @@ include_once "./template/Series/_SERIEN.php";
 	$data   = getEscGet('data');
 	//if (isset($data)) {
 	if (isAjax() && isset($data)) {
+		header('Content-Type: application/json');
 		echo genJsonData($codecs, $sum);
 		return;
 	}
@@ -90,7 +91,7 @@ include_once "./template/Series/_SERIEN.php";
 	}
 
 	echo '<div class="padbot15" style="overflow-x:hidden;"><i><b>Codecs:</b></i><span class="flalright" style="padding-top:2.5px;" title="'.$title.'">';
-	echo '<canvas id="donutChartPir" width="20" height="20"></canvas>';
+	echo '<canvas id="donutChartPie" width="20" height="20"></canvas>';
 	echo '</span></div>';
 
 	if (!empty($genre))  { echo '<div style="overflow-x:hidden;"><i><b>Genre:</b></i><span class="flalright">'.$genre.'</span></div>'; }
@@ -175,7 +176,10 @@ include_once "./template/Series/_SERIEN.php";
 function genJsonData($codecs, $sum) {
 	$cols = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 
-	$result = '['."\n\r";
+	$labels  = '"labels": ['."\n\t\t";
+	$data    = '"data": ['."\n\t\t\t";
+	$bgColor = '"backgroundColor": ['."\n\t\t\t";
+
 	$idx = 0;
 	$end = count($codecs);
 	foreach ($codecs as $codec => $count) {
@@ -184,11 +188,28 @@ function genJsonData($codecs, $sum) {
 		$perf  = decodingPerf($codec);
 		$color = $cols == null ? '#000000' : $cols[$perf];
 
-		$result .= "\t".'{ "value":'.$prc.', "color":"'.$color.'", "highlight":"'.$color.'", "label":"'.$codec.'" }';
-		if (++$idx < $end) { $result .= ','; }
-		$result .= "\n\r";
+		$labels  .= '"'.$codec.'"';
+		$data    .= $prc;
+		$bgColor .= '"'.$color.'"';
+
+		if (++$idx < $end) {
+			$labels  .= ',';
+			$data    .= ',';
+			$bgColor .= ',';
+		}
 	}
-	$result .= ']';
+
+	$labels  .= "\n\t"."]";
+	$data    .= "\n\t\t"."]";
+	$bgColor .= "\n\t\t"."]";
+
+	$result = "{"."\n";
+	$result .= "\t".$labels.","."\n";
+	$result .= "\t".'"datasets": [{'."\n";
+	$result .= "\t\t".$data.","."\n";
+	$result .= "\t\t".$bgColor."\n";
+	$result .= "\t"."}]"."\n";
+	$result .= "}";
 	$result = str_replace(array("\n","\r","\t", " "),"", $result);
 	return $result;
 }

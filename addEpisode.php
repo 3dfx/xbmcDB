@@ -12,7 +12,7 @@ include_once "./template/Series/_SERIEN.php";
 	$admin = isAdmin();
 	if (!$admin) { die(';-)'); }
 
-$getSeason     = -1;
+	$getSeason     = -1;
 	$getEpisode    = -1;
 	$idShow        = -1;
 	$idSeason      = -1;
