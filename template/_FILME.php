@@ -1,15 +1,17 @@
 <?php
 include_once "./template/functions.php";
 
-	function fetchMovies($dbh, $SkQL) {
+/** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection */
+function fetchMovies($dbh, $SkQL) {
 		$dbh = empty($dbh) ? getPDO() : $dbh;
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 
 		$sessionKey = $SkQL['sessionKey'];
 
 		$res = array();
-		if (isset($_SESSION[$sessionKey]) && $overrideFetch == 0) {
-			$res = unserialize($_SESSION[$sessionKey]);
+		$ids = array();
+		if (isset($_SESSION['movies'][$sessionKey]['items']) && $overrideFetch == 0) {
+			$res = unserialize($_SESSION['movies'][$sessionKey]['items']);
 
 		} else {
 			$SQL = $SkQL['SQL'];
@@ -17,6 +19,7 @@ include_once "./template/functions.php";
 			$count = 0;
 			foreach($result as $row) {
 				$res[$count]['idFile']    = isset($row['idFile'])    ? $row['idFile']    : -1;
+				$ids[] = $res[$count]['idFile'];
 				$res[$count]['idMovie']   = isset($row['idMovie'])   ? $row['idMovie']   : -1;
 				$res[$count]['movieName'] = isset($row['movieName']) ? $row['movieName'] : '';
 //				$res[$count]['sndTitle']  = isset($row['sndTitle'])  ? $row['sndTitle']  : '';
@@ -38,14 +41,15 @@ include_once "./template/functions.php";
 				$count++;
 			}
 
-			$_SESSION[$sessionKey] = serialize($res);
-			unset( $_SESSION['overrideFetch'] );
+			$_SESSION['movies'][$sessionKey]['items'] = serialize($res);
+			$_SESSION['movies'][$sessionKey]['ids']   = serialize($ids);
+			unset( $_SESSION['movies']['overrideFetch'] );
 		}
 		return $res;
 	}
 
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection */
-function getSessionKeySQL() {
+function getSessionKeySQL($newAddedCount = 0) {
 		$res = array();
 
 		//$dbVer       = fetchDbVer();
@@ -61,11 +65,13 @@ function getSessionKeySQL() {
 		//$which       = isset($_SESSION['which'])       ? $_SESSION['which']       : null;
 		$country     = isset($_SESSION['country'])     ? $_SESSION['country']     : null;
 
-		$sessionKey  = 'movies_';
+		$sqlOrder = "";
+		$sqlLimit = "";
+
 		if (!isset($unseen) || (!empty($_just) && !empty($_which) || !empty($dbSearch)) ) {
 			$unseen = 3;
 		}
-		$sessionKey .= 'unseen_'.$unseen.'_';
+		$sessionKey  = 'unseen_'.$unseen.'_';
 
 		$filter      = '';
 		$saferSearch = '';
@@ -149,7 +155,7 @@ function getSessionKeySQL() {
 			" WHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
 
 		if (!empty($sort)) {
-			if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY ".mapDBC('A.c07')." DESC, dateAdded DESC";      }
+				 if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY ".mapDBC('A.c07')." DESC, dateAdded DESC";      }
 			else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY ".mapDBC('A.c07')." ASC, dateAdded ASC";        }
 			else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                                    }
 			else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                                     }
@@ -160,7 +166,9 @@ function getSessionKeySQL() {
 
 		} else if ($newmode) {
 			$sqlOrder = " ORDER BY ".($newsort == 1 ? "dateValue" : "A.idMovie")." DESC";
+			$sqlLimit = " LIMIT ".$newAddedCount;
 			$sessionKey .= ($newsort == 1 ? 'orderDateValue_' : 'orderIdMovie_');
+			$sessionKey .= ($newAddedCount > 0 ? 'limit_'.$newAddedCount.'_' : '');
 
 		} else {
 			$sqlOrder = " ORDER BY A.c00 ASC";
@@ -225,7 +233,7 @@ function getSessionKeySQL() {
 				unset($uncut);
 		}
 
-		$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
+		$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder.$sqlLimit;
 		$SQL .= $params.";";
 
 		$res['SQL']         = $SQL;

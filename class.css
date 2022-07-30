@@ -345,7 +345,15 @@ table.film td {
 
 .fsizeTD, .resCodecTD {
 	padding-left:10px;
-	cursor:default;
+    text-align:right;
+}
+
+.resCodecTD {
+    cursor:default;
+}
+
+.fsizeTD {
+    cursor:pointer;
 }
 
 .bottomTD {

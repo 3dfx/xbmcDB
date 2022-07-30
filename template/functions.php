@@ -162,17 +162,27 @@ function getGenres($dbh) {
 	return $idGenre;
 }
 
-function getResolution($dbh, $isMovie) {
-	$idStream = array();
-	$movKey   = $isMovie ? "movie" : "episode";
+function getResolution($dbh, $SkQL, $isMovie) {
+	$idStream   = array();
+	$movKey     = $isMovie ? "movie" : "episode";
+	$sessionKey = $SkQL['sessionKey'];
+
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if (isset($_SESSION['idStream'][$movKey]) && $overrideFetch == 0) {
-		$idStream = unserialize($_SESSION['idStream'][$movKey]);
+	if (isset($_SESSION['idStream'][$movKey][$sessionKey]) && $overrideFetch == 0) {
+		$idStream = unserialize($_SESSION['idStream'][$movKey][$sessionKey]);
 
 	} else {
 		$SQL = "SELECT streamdetails.*, ".$movKey.".idFile FROM streamdetails ".
 			"LEFT JOIN ".$movKey." ON ".$movKey.".idFile = streamdetails.idFile ".
 			"WHERE streamdetails.iVideoWidth IS NOT NULL";
+
+		if (isset($_SESSION['movies'][$sessionKey]['ids'])) {
+			$ids = unserialize($_SESSION['movies'][$sessionKey]['ids']);
+			if (count($ids) < 300) {
+				$SQL .= " AND streamdetails.idFile IN (".implode(',', $ids).")";
+			}
+		}
+
 		$result = querySQL_($dbh, $SQL, false);
 		foreach($result as $row) {
 			if (!empty($id = $row['idFile'])) {
@@ -182,7 +192,7 @@ function getResolution($dbh, $isMovie) {
 			}
 		}
 
-		$_SESSION['idStream'][$movKey] = serialize($idStream);
+		$_SESSION['idStream'][$movKey][$sessionKey] = serialize($idStream);
 		unset( $_SESSION['overrideFetch'] );
 	}
 
@@ -830,7 +840,7 @@ function setSeenDelMovie($what, $checkFilme) {
 	}
 }
 
-function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies_') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') || startsWith($key, 'covers') || startsWith($key, 'thumbs') || startsWith($key, 'lastMovie') || startsWith($key, 'paths') || startsWith($key, 'TvDbCache') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
+function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') || startsWith($key, 'covers') || startsWith($key, 'thumbs') || startsWith($key, 'lastMovie') || startsWith($key, 'paths') || startsWith($key, 'TvDbCache') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
 function startsWith($haystack, $needle) { return !strncmp($haystack, $needle, strlen($needle)); }
 
 function resizeImg($SRC, $DST, $w, $h) {

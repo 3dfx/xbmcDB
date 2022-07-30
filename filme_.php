@@ -109,8 +109,9 @@ function createTable($orderz) {
 		$dbh->beginTransaction();
 		checkTables($dbh);
 
-		$SkQL   = getSessionKeySQL();
-		$zeilen = generateRows($dbh, $orderz, $SkQL);
+		$newAddedCount = getNewAddedCount();
+		$SkQL   = getSessionKeySQL($newAddedCount);
+		$zeilen = generateRows($dbh, $orderz, $newAddedCount, $SkQL);
 		postRows($zeilen, $SkQL);
 
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->commit(); }
@@ -137,7 +138,7 @@ function checkTables($dbh) {
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection
  * @noinspection PhpTernaryExpressionCanBeReplacedWithConditionInspection
  */
-function generateRows($dbh, $orderz, $SkQL, $dirActorEnabled = true) {
+function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = true) {
 	$_just            = $GLOBALS['just'];
 	$_which           = $GLOBALS['which'];
 	$IMDB             = $GLOBALS['IMDB'];
@@ -160,16 +161,14 @@ function generateRows($dbh, $orderz, $SkQL, $dirActorEnabled = true) {
 	$lastHighest   = $isDemo ? null : (isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null);
 
 	$xbmcRunning   = xbmcRunning();
-	$newAddedCount = getNewAddedCount();
 
 	$existArtTable = existsArtTable($dbh);
 	$artCovers     = fetchArtCovers($existArtTable, $dbh);
 	$actorImgs     = fetchActorCovers($dbh);
 	$directorImgs  = fetchDirectorCovers($dbh);
 	$idGenre       = getGenres($dbh);
-	$idStream      = getResolution($dbh, true);
 	$result        = fetchMovies($dbh, $SkQL);
-	//$sessionKey    = $SkQL['sessionKey'];
+	$idStream      = getResolution($dbh, $SkQL, true);
 
 	$counter  = 0;
 	$counter2 = 0;
