@@ -87,10 +87,11 @@ class Serie {
 			$calcCount++;
 		}
 
-		if ($calcCount > 0)
+		if ($calcCount > 0) {
 			$this->rating = doubleval($rating / $calcCount);
-		else
+		} else {
 			$this->rating = 0;
+		}
 		return $rating;
 	}
 

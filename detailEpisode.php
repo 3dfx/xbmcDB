@@ -4,19 +4,20 @@ include_once "check.php";
 include_once "./template/functions.php";
 include_once "./template/config.php";
 include_once "./template/Series/_SERIEN.php";
+include_once "./template/Series/StreamDetails.php";
 ?>
 <script type="text/javascript">$(document).ready(function() { initShowFancies(); });</script>
 <?php
 	header("Content-Type: text/html; charset=UTF-8");
 
-	$isAdmin  = isAdmin();
-	$isDemo   = isDemo();
-	$id       = getEscGPost('id');
-	$idSeason = getEscGPost('idSeason');
+	$isAdmin   = isAdmin();
+	$isDemo    = isDemo();
+	$idEpisode = getEscGPost('id');
+	$idSeason  = getEscGPost('idSeason');
 
-	if ($id == null || $id <= 0) { die('No id given!'); }
+	if ($idEpisode == null || $idEpisode <= 0) { die('No id given!'); }
 
-	$_SESSION['tvShowParam']['idEpisode'] = $id;
+	$_SESSION['tvShowParam']['idEpisode'] = $idEpisode;
 	$_SESSION['tvShowParam']['idSeason']  = $idSeason;
 	$SOURCE = $GLOBALS['SOURCE'];
 
@@ -34,7 +35,6 @@ include_once "./template/Series/_SERIEN.php";
 	$episode    = '';
 	$airDate    = '';
 	$filesize   = 0;
-	$fsize      = 0;
 	$src        = null;
 	$fps        = null;
 	$bits       = null;
@@ -42,7 +42,7 @@ include_once "./template/Series/_SERIEN.php";
 	$dbh = getPDO();
 	$existArtTable = existsArtTable();
 
-	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$id.';';
+	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$idEpisode.';';
 	$result = querySQL($SQL);
 	foreach($result as $row) {
 		$idFile     = $row['idFile'];
@@ -91,102 +91,13 @@ include_once "./template/Series/_SERIEN.php";
 		$episode  = $episode.$delta;
 	}
 	$path  = mapSambaDirs($path);
-	$fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, null));
-	$fps   = fetchFps($idFile, $path, $filename, array($bits, $fps), getPDO());
-	if ($fps != null) {
-		$bits = $fps[0];
-		$fps  = $fps[1];
+
+	$streamDetails = new StreamDetails($idFile, $idEpisode, $path, $filename, $filesize);
+	if ($streamDetails->getFetchedFPS() != null) {
+		$bits = $streamDetails->getFetchedFPS()[0];
+		$fps  = $streamDetails->getFetchedFPS()[1];
 	}
-
-	$duration  = 0;
-	$ar        = null;
-	$width     = null;
-	$height    = null;
-	$vCodec    = null;
-	$aCodec    = array();
-	$aChannels = array();
-	$aLang     = array();
-	$subtitle  = array();
-
-	$stream = getStreamDetails($idFile);
-	foreach($stream as $stRow) {
-		$tmp = $stRow['fVideoAspect'];
-		if (!empty($tmp)) {
-			if ($tmp != '') {
-				$tmp  = round($tmp, 2);
-				if ($tmp-1 != 1 && $tmp-1 != 0) {
-					$tmp .= (strlen($tmp) < 4 ? '0' : '');
-				}
-				#$tmp .= ':1';
-			}
-			$ar = $tmp;
-		}
-
-		$tmp = $stRow['iVideoWidth'];
-		if (!empty($tmp)) { $width = $tmp; }
-
-		$tmp = $stRow['iVideoHeight'];
-		if (!empty($tmp)) { $height = $tmp; }
-
-		$tmp = $stRow['iVideoDuration'];
-		if (!empty($tmp)) { $duration = $tmp; }
-
-		$tmp = $stRow['strVideoCodec'];
-		if (!empty($tmp)) { $vCodec = $tmp; }
-
-		$tmp = $stRow['strAudioCodec'];
-		if (!empty($tmp)) { $aCodec[] = strtoupper($tmp); }
-
-		$tmp = $stRow['iAudioChannels'];
-		if (!empty($tmp)) { $aChannels[] = $tmp; }
-
-		$tmp = $stRow['strAudioLanguage'];
-		if (!empty($tmp)) { $aLang[] = $tmp; }
-
-		$tmp = $stRow['strSubtitleLanguage'];
-		if (!empty($tmp)) { $subtitle[] = $tmp; }
-	}
-
-	$thumbImg   = null;
-	$sessionImg = null;
-	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS'])        ? $GLOBALS['TVSHOW_THUMBS']        : false;
-	$ENCODE   = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
-
-	if ($thumbsUp) {
-		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
-		if ($fromSrc) {
-			// READ EMBER GENERATED THUMBS FROM SOURCE
-			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
-
-			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename)-3).'tbn';
-			$smb = (substr($sessionImg, 0, 6) == 'smb://');
-
-			if (file_exists($sessionImg)) {
-				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encoded' : null);
-			} else {
-				unset($sessionImg);
-			}
-		}
-
-		if (empty($sessionImg)) {
-			$sessionImg = getTvShowThumb($coverP.$filename);
-			$thumbImg   = getImageWrap($sessionImg, $idFile, 'file', 0);
-
-			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
-				$SQL  = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$id."';";
-				$row2 = fetchFromDB_($dbh, $SQL, false);
-				$url = isset($row2['url']) ? $row2['url'] : null;
-				if (!empty($url)) {
-					$sessionImg = getTvShowThumb($url);
-					if (file_exists($sessionImg)) {
-						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0);
-					}
-				}
-			}
-		}
-
-		wrapItUp('file', $idFile, $sessionImg);
-	}
+	$thumbImg = getThumbImg($dbh, $idFile, $idEpisode, $path, $filename, $coverP, $existArtTable);
 
 	if (!empty($timeAt)) { echo "<script type=\"text/javascript\">$(document).ready(function() { $('.knob-dyn').knob(); });</script>"; }
 
@@ -241,11 +152,11 @@ include_once "./template/Series/_SERIEN.php";
 
 	$rating = formatRating($epRating);
 	if (!emptyRating($rating)) {
-		echo '<div'.(empty($duration) ? ' class="padbot15"' : '').'><span><i><b>Rating:</b></i></span><span class="flalright">'.$rating.'</span></div>';
+		echo '<div'.(empty($streamDetails->getDuration()) ? ' class="padbot15"' : '').'><span><i><b>Rating:</b></i></span><span class="flalright">'.$rating.'</span></div>';
 	}
 
-	if (!empty($duration)) {
-		$duration = round($duration / 60);
+	if (!empty($streamDetails->getDuration())) {
+		$duration = round($streamDetails->getDuration() / 60);
 		echo '<div class="padbot15"><span><i><b>Duration:</b></i></span><span class="flalright">'.$duration.' min</span></div>';
 	}
 
@@ -264,21 +175,24 @@ include_once "./template/Series/_SERIEN.php";
 	}
 
 	if (!$isDemo) {
-		if (!empty($vCodec) || (!empty($width) && !empty($height))) {
+		if (!empty($streamDetails->getVCodec()) || (!empty($streamDetails->getWidth()) && !empty($streamDetails->getHeight()))) {
 			echo '<div class="padtop15 padbot20">';
 			echo '<span><i><b>Video:</b></i></span>';
-			if ((!empty($width) && !empty($height)) || !empty($fps)) {
-				$arSpan = !empty($ar) ? ' <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font>' : '';
-				$resultAR = fetchFromDB("SELECT ratio FROM aspectratio WHERE idMovie = ".$id.";");
-				if (!empty($resultAR) && !empty($resultAR['ratio'])) {
-					$ar = sprintf("%01.2f", round($resultAR['ratio'], 2));
-					$arSpan = '<span style="font-style:italic;" title="aspect-ratio overridden"> <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font></span>';
+			if ((!empty($streamDetails->getWidth()) && !empty($streamDetails->getHeight())) || !empty($fps)) {
+				$arInner = "";
+				$ar   = $streamDetails->getAr();
+				$arOR = $streamDetails->getArOR();
+				if (!empty($arOR) && !empty($arOR['ratio'])) {
+					$ar = sprintf("%01.2f", round($arOR['ratio'], 2));
+					$arInner = '<span style="font-style:italic;" title="aspect-ratio overridden"> <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font></span>';
+				} else {
+					$arInner = !empty($ar) ? ' <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font>' : '';
 				}
-				$arSpan = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$id.', '.$ar.'); return false;">'.$arSpan.'</span>';
+				$arSpan = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$idEpisode.', '.$ar.'); return false;">'.$arInner.'</span>';
 
 				echo '<span class="flalright">';
-				if (!empty($width) && !empty($height)) {
-					echo $width.'x'.$height.$arSpan;
+				if (!empty($streamDetails->getWidth()) && !empty($streamDetails->getHeight())) {
+					echo $streamDetails->getWidth().'x'.$streamDetails->getHeight().$arSpan;
 					if (!empty($fps))
 						echo '<br/>';
 				}
@@ -286,12 +200,12 @@ include_once "./template/Series/_SERIEN.php";
 					echo '<span class="flalleft">'.$fps.' fps</span>';
 				echo '</span>';
 			}
-			if (!empty($vCodec) || !empty($bits)) {
+			if (!empty($streamDetails->getVCodec()) || !empty($bits)) {
 				echo '<span class="flalright">';
 				$color = '';
-				if (!empty($vCodec)) {
+				if (!empty($streamDetails->getVCodec())) {
 					$cols   = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-					$vCodec = postEditVCodec($vCodec);
+					$vCodec = postEditVCodec($streamDetails->getVCodec());
 					$perf   = decodingPerf($vCodec, !empty($bits) && $bits >= 10);
 					$color  = $cols == null ? '#000000' : $cols[$perf];
 					echo '<font color="'.$color.'">'.$vCodec.'</font>&nbsp;<font color="silver"><b>|</b></font>&nbsp;';
@@ -305,16 +219,16 @@ include_once "./template/Series/_SERIEN.php";
 			echo '</div>';
 		}
 
-		$countryMap = !empty($aCodec) || !empty($subtitle) ? getCountryMap() : null;
-		if (!empty($aCodec)) {
+		$countryMap = !empty($streamDetails->getACodec()) || !empty($streamDetails->getSubtitle()) ? getCountryMap() : null;
+		if (!empty($streamDetails->getAChannels())) {
 			$codecs = '';
 			$atmosFound   = false;
 			$atmosFlagBtn = false;
-			for ($i = 0; $i < count($aCodec); $i++) {
-				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), (substr_count(strtoupper($aCodec[$i]), 'TRUEHD') > 0 || substr_count(strtoupper($aCodec[$i]), 'EAC3') > 0));
+			for ($i = 0; $i < count($streamDetails->getACodec()); $i++) {
+				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), (substr_count(strtoupper($streamDetails->getACodec()[$i]), 'TRUEHD') > 0 || substr_count(strtoupper($streamDetails->getACodec()[$i]), 'EAC3') > 0));
 				$atmosFound |= !empty($atmos) && !empty($atmos[$i]) && $atmos[$i] == 1;
-				$atmosFlagBtn |= atmosFlagPossibleToSet($aCodec[$i]);
-				$codecs .= postEditACodec($aCodec[$i], !empty($atmos) && !empty($atmos[$i])).(isset($aChannels[$i]) ? ' '.postEditChannels($aChannels[$i]) : '').getLanguage($countryMap, $aLang, $i).($i < count($aCodec)-1 ? ' <font color="silver"><b>|</b></font> ' : '');
+				$atmosFlagBtn |= atmosFlagPossibleToSet($streamDetails->getACodec()[$i]);
+				$codecs .= postEditACodec($streamDetails->getACodec()[$i], !empty($atmos) && !empty($atmos[$i])).(isset($streamDetails->getAChannels()[$i]) ? ' '.postEditChannels($streamDetails->getAChannels()[$i]) : '').getLanguage($countryMap, $streamDetails->getALang(), $i).($i < count($streamDetails->getACodec())-1 ? ' <font color="silver"><b>|</b></font> ' : '');
 			}
 
 			$atmosBtn_1 = $atmosBtn_2 = '';
@@ -323,15 +237,14 @@ include_once "./template/Series/_SERIEN.php";
 				$atmosBtn_2 = '</a>';
 			}
 
-			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($aCodec).' <font color="silver">[</font> '.$atmosBtn_1.$codecs.$atmosBtn_2.' <font color="silver">]</font></span></div>';
+			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($streamDetails->getACodec()).' <font color="silver">[</font> '.$atmosBtn_1.$codecs.$atmosBtn_2.' <font color="silver">]</font></span></div>';
 		}
 
-		if (!empty($subtitle)) {
-			$subtitle = array_unique($subtitle);
+		if (!empty($streamDetails->getSubtitle())) {
 			$cCount = 0;
 			$codecs = '';
-			foreach ($subtitle as $i => $sub) {
-				$codec = getLanguage($countryMap, $subtitle, $i, false);
+			foreach ($streamDetails->getSubtitle() as $i => $sub) {
+				$codec = getLanguage($countryMap, $streamDetails->getSubtitle(), $i, false);
 				if (!empty($codec)) {
 					$codecs .= ($cCount > 0 && !empty($sub) ? ' <font color="silver"><b>|</b></font> ' : '') . $codec;
 				}
@@ -350,7 +263,7 @@ include_once "./template/Series/_SERIEN.php";
 			echo '</span>';
 			echo '</div>';
 		}
-		echo '<div class="padtop15"><span><i><b>Size:</b></i></span><span class="flalright">'.$fsize.'</span></div>';
+		echo '<div class="padtop15"><span><i><b>Size:</b></i></span><span class="flalright">'.$streamDetails->getFsize().'</span></div>';
 	}
 	if ($isAdmin) {
 		echo '<div style="overflow-x:hidden;"><i><b>File:</b></i><br />';
@@ -358,7 +271,7 @@ include_once "./template/Series/_SERIEN.php";
 		echo encodeString($path).$filename;
 		echo '</div>';
 
-		echo '<div class="padtop15" style="overflow-x:hidden;"><i><b>idEpisode</b>/<b>idFile:</b></i><span class="flalright">'.$id.' <b>|</b> '.$idFile.'</span></div>';
+		echo '<div class="padtop15" style="overflow-x:hidden;"><i><b>idEpisode</b>/<b>idFile:</b></i><span class="flalright">'.$idEpisode.' <b>|</b> '.$idFile.'</span></div>';
 	}
 	echo '</div>';
 	echo '</div>';
@@ -367,6 +280,50 @@ include_once "./template/Series/_SERIEN.php";
 	echo '</table>';
 
 //- FUNCTIONS -//
+function getThumbImg($dbh, int $idFile, $idEpisode, $path, string $filename, string $coverP, $existArtTable) {
+	$thumbImg = null;
+	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS']) ? $GLOBALS['TVSHOW_THUMBS'] : false;
+	if ($thumbsUp) {
+		$sessionImg = null;
+		$ENCODE = isset($GLOBALS['ENCODE_IMAGES_TVSHOW']) ? $GLOBALS['ENCODE_IMAGES_TVSHOW'] : true;
+		$fromSrc = isset($GLOBALS['TVSHOW_THUMBS_FROM_SRC']) ? $GLOBALS['TVSHOW_THUMBS_FROM_SRC'] : false;
+		if ($fromSrc) {
+			// READ EMBER GENERATED THUMBS FROM SOURCE
+			$DIRMAP_IMG = isset($GLOBALS['DIRMAP_IMG']) ? $GLOBALS['DIRMAP_IMG'] : null;
+
+			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename) - 3).'tbn';
+			$smb = (substr($sessionImg, 0, 6) == 'smb://');
+
+			if (file_exists($sessionImg)) {
+				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encoded' : null);
+			} else {
+				unset($sessionImg);
+			}
+		}
+
+		if (empty($sessionImg)) {
+			$sessionImg = getTvShowThumb($coverP.$filename);
+			$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0);
+
+			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
+				$SQL = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$idEpisode."';";
+				$row2 = fetchFromDB_($dbh, $SQL, false);
+				$url = isset($row2['url']) ? $row2['url'] : null;
+				if (!empty($url)) {
+					$sessionImg = getTvShowThumb($url);
+					if (file_exists($sessionImg)) {
+						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0);
+					}
+				}
+			}
+		}
+
+		wrapItUp('file', $idFile, $sessionImg);
+	}
+	return $thumbImg;
+}
+
+
 function getLanguage($countryMap, $languages, $i, $trenner = true) {
 	return isValidLang($countryMap, $languages, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($languages[$i]), false) : '';
 }

@@ -20,13 +20,10 @@ include_once "globals.php";
 	$which       = isset($_SESSION['which'])       ? $_SESSION['which']       : null;
 	$just        = isset($_SESSION['just'])        ? $_SESSION['just']        : null;
 
-	$orderz = findUserOrder();
-	$orderz = isset($orderz[1]) ? $orderz[1] : null;
-	$oItems = !$isAdmin && !empty($orderz) ? count($orderz) : 0;
-#	print_r( $orderz );
-	#$orderz = null;
+	$orderz      = findUserOrder();
+	$orderz      = isset($orderz[1]) ? $orderz[1] : null;
+	$oItems      = !$isAdmin && !empty($orderz) ? count($orderz) : 0;
 ?>
-
 <head>
 <?php include("head.php"); ?>
 	<script type="text/javascript">
@@ -107,29 +104,14 @@ include_once "globals.php";
 <?php
 /*          FUNCTIONS          */
 function createTable($orderz) {
-	$newmode = isset($_SESSION['newmode']) ? $_SESSION['newmode'] : 0;
-	$sort    = isset($_SESSION['sort'])    ? $_SESSION['sort']    : 0;
-	$dbh     = getPDO();
+	$dbh = getPDO();
 	try {
 		$dbh->beginTransaction();
-		$existArtTable = existsArtTable($dbh);
-		checkFileInfoTable($dbh);
-		checkFileMapTable($dbh);
-		#existsOrdersTable($dbh);
-		existsOrderzTable($dbh);
-		checkARTable($dbh);
+		checkTables($dbh);
 
-		$SkQL        = getSessionKeySQL();
-		$SQL         = $SkQL['SQL'];
-		$sessionKey  = $SkQL['sessionKey'];
-		$saferSearch = $SkQL['saferSearch'];
-
-		$dirActorEnabled = true;
-
-		$result = fetchMovies($dbh, $SQL, $sessionKey);
-		$zeilen = generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled);
-		if (!$newmode && empty($sort)) { sort($zeilen); }
-		postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled);
+		$SkQL   = getSessionKeySQL();
+		$zeilen = generateRows($dbh, $orderz, $SkQL);
+		postRows($zeilen, $SkQL);
 
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->commit(); }
 
@@ -137,225 +119,25 @@ function createTable($orderz) {
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->rollBack(); }
 		if (isAdmin()) { echo $e->getMessage(); }
 	}
-} // function createTable
+}
 
-function getSessionKeySQL() {
-	$res = array();
-
-	$dbVer       = fetchDbVer();
-	$_just       = $GLOBALS['just'];
-	$_which      = $GLOBALS['which'];
-	$mode        = isset($_SESSION['mode'])        ? $_SESSION['mode']        : 0;
-	$sort        = isset($_SESSION['sort'])        ? $_SESSION['sort']        : 0;
-	$unseen      = isset($_SESSION['unseen'])      ? $_SESSION['unseen']      : 0;
-	$dbSearch    = isset($_SESSION['dbSearch'])    ? $_SESSION['dbSearch']    : null;
-	$newmode     = isset($_SESSION['newmode'])     ? $_SESSION['newmode']     : 0;
-	$newsort     = isset($_SESSION['newsort'])     ? $_SESSION['newsort']     : 0;
-	$gallerymode = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
-	$which       = isset($_SESSION['which'])       ? $_SESSION['which']       : null;
-	$country     = isset($_SESSION['country'])     ? $_SESSION['country']     : null;
-
-	$sessionKey  = 'movies_';
-	if (!isset($unseen) || (!empty($_just) && !empty($_which) || !empty($dbSearch)) ) {
-		$unseen = 3;
-	}
-	$sessionKey .= 'unseen_'.$unseen.'_';
-
-	$filter      = '';
-	$saferSearch = '';
-	if (!empty($dbSearch)) {
-		$_SESSION['newmode'] = $newmode = 0;
-		$_SESSION['mode']    = $mode    = 0;
-		$saferSearch = strtolower(SQLite3::escapeString($dbSearch));
-/*
-//if (isAdmin()) {
-		$actorSQL = "SELECT ".mapDBC('idActor')." FROM actor WHERE lower(name) LIKE lower('%".$saferSearch."%') LIMIT 1;";
-		$idRes = querySQL_($dbh, $actorSQL, false);
-		$ids = $idRes->fetch();
-		#print_r( $ids );
-		if (isset($ids['actor_id'])) {
-			$saferSearch = null;
-			$_which = 'artist';
-			$_just  = $ids['actor_id'];
-		}
-//}
-*/
+function checkTables($dbh) {
+	$dbh = (!empty($dbh) ? $dbh : getPDO());
+	if (!$dbh->inTransaction()) {
+		$dbh->beginTransaction();
 	}
 
-	if (!empty($saferSearch)) {
-		$sessionKey .= 'search_'.str_replace(' ', '-', $saferSearch).'_';
-		$filter      =  " AND (".
-				" lower(B.strFilename) LIKE lower('%".$saferSearch."%') OR".
-				" lower(A.c00) LIKE lower('%".$saferSearch."%') OR".
-				" lower(A.c01) LIKE lower('%".$saferSearch."%') OR".
-				" lower(A.c03) LIKE lower('%".$saferSearch."%') OR".
-				" lower(A.c14) LIKE lower('%".$saferSearch."%') OR".
-				" lower(A.c15) LIKE lower('%".$saferSearch."%') OR".
-				" lower(A.c16) LIKE lower('%".$saferSearch."%')".
-				")";
+	checkFileInfoTable($dbh);
+	checkFileMapTable($dbh);
+	existsOrderzTable($dbh);
+	checkARTable($dbh);
+	#existsOrdersTable($dbh);
+}
 
-	} else if ($_which == 'artist') {
-		$filter = " AND E.".mapDBC('idActor')." = '".$_just."' AND E.".mapDBC('idMovie')." = A.idMovie AND E.media_type = 'movie'";
-		$sessionKey .= 'just_'.$filter.'_';
-
-	} else if ($_which == 'regie') {
-		$filter = " AND D.".mapDBC('idDirector')." = '".$_just."' AND D.".mapDBC('idMovie')." = A.idMovie AND D.media_type = 'movie'";
-		$sessionKey .= 'just_'.$filter.'_';
-
-	} else if ($_which == 'genre') {
-		$filter = " AND G.".mapDBC('idGenre')." = '".$_just."' AND G.".mapDBC('idMovie')." = A.idMovie AND G.media_type = 'movie'";
-		$sessionKey .= 'just_'.$filter.'_';
-
-	} else if ($_which == 'year') {
-		$filter = " AND ".mapDBC('A.c07')." = '".$_just."'";
-		$sessionKey .= 'just_'.$filter.'_';
-
-	} else if ($_which == 'set') {
-		$_SESSION['newmode'] = $newmode = 0;
-		$filter = " AND A.idSet = '".$_just."'";
-		$sessionKey .= 'just_'.$filter.'_';
-
-	} else {
-		$filter = null;
-		$_which = null;
-	}
-
-	$unseenCriteria = '';
-	if ($unseen == "0") {
-		$unseenCriteria = " AND B.playCount > 0 ";
-	} else if ($unseen == "1") {
-		$unseenCriteria = " AND (B.playCount = 0 OR B.playCount IS NULL)";
-	} else if ($unseen == "3") {
-		$unseenCriteria = '';
-	}
-
-//	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00, A.c01, A.c02, A.c03, A.c14, A.c15, B.strFilename AS filename, ".
-	$SQL =  "SELECT DISTINCT A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount, A.c00 AS movieName, A.c14 AS genres, B.strFilename AS filename, ".
-		"M.dateAdded as dateAdded, M.value as dateValue, ".
-//		mapDBC('A.c07')." AS jahr, A.c08 AS thumb, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
-		mapDBC('A.c07')." AS jahr, A.c11 AS dauer, A.c19 AS trailer, ".mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
-		"FROM movie A, files B, path C ".
-		"LEFT JOIN fileinfo F ON B.idFile = F.idFile ".
-		mapDBC('joinIdMovie').
-		mapDBC('joinRatingMovie').
-		"LEFT JOIN filemap M ON B.strFilename = M.strFilename ".
-		(isset($mode) && ($mode == 2) ? "LEFT JOIN streamdetails SD ON (B.idFile = SD.idFile AND SD.strAudioLanguage IS NOT NULL) " : '').
-		(isset($filter, $_which) && ($_which == 'artist') ? ', '.mapDBC('actorlinkmovie').' E'    : '').
-		(isset($filter, $_which) && ($_which == 'regie')  ? ', '.mapDBC('directorlinkmovie').' D' : '').
-		(isset($filter, $_which) && ($_which == 'genre')  ? ', '.mapDBC('genrelinkmovie').' G'    : '').
-		" WHERE A.idFile = B.idFile AND C.idPath = B.idPath ";
-
-	if (!empty($sort)) {
-		     if ($sort == 'jahr')    { $sessionKey .= 'orderJahr_';    $sqlOrder = " ORDER BY ".mapDBC('A.c07')." DESC, dateAdded DESC";      }
-		else if ($sort == 'jahra')   { $sessionKey .= 'orderJahrA_';   $sqlOrder = " ORDER BY ".mapDBC('A.c07')." ASC, dateAdded ASC";        }
-		else if ($sort == 'title')   { $sessionKey .= 'orderTitle_';   $sqlOrder = " ORDER BY A.c00 DESC";                                    }
-		else if ($sort == 'titlea')  { $sessionKey .= 'orderTitleA_';  $sqlOrder = " ORDER BY A.c00 ASC";                                     }
-		else if ($sort == 'rating')  { $sessionKey .= 'orderRating_';  $sqlOrder = " ORDER BY rating DESC";                                   }
-		else if ($sort == 'ratinga') { $sessionKey .= 'orderRatingA_'; $sqlOrder = " ORDER BY rating ASC";                                    }
-		else if ($sort == 'size')    { $sessionKey .= 'orderSize_';    $sqlOrder = " ORDER BY F.filesize DESC";                               }
-		else if ($sort == 'sizea')   { $sessionKey .= 'orderSizeA_';   $sqlOrder = " ORDER BY F.filesize ASC";                                }
-
-	} else if ($newmode) {
-		$sqlOrder = " ORDER BY ".($newsort == 1 ? "dateValue" : "A.idMovie")." DESC";
-		$sessionKey .= ($newsort == 1 ? 'orderDateValue_' : 'orderIdMovie_');
-
-	} else {
-		$sqlOrder = " ORDER BY A.c00 ASC";
-		$sessionKey .= 'orderName_';
-	}
-
-	switch ($mode) {
-		case 2:
-			$LANGMAP = isset($GLOBALS['LANGMAP']) ? $GLOBALS['LANGMAP'] : array();
-			$_country = '';
-			if (!empty($country)) {
-				$_country = " AND (SD.strAudioLanguage LIKE '".$country."' ";
-				if (isset($LANGMAP[$country])) {
-					$map = $LANGMAP[$country];
-					for ($c = 0; $c < count($map); $c++) {
-						$_country .= " OR SD.strAudioLanguage LIKE '".$map[$c]."' ";
-					}
-				}
-				$_country .= ") ";
-			}
-
-			$sessionKey .= $country;
-			$SQL .= $_country;
-			break;
-
-		case 3:
-			$uncut = " AND (lower(B.strFilename) LIKE '%director%' OR lower(A.c00) LIKE '%director%') ";
-			$sessionKey .= 'directorCut';
-			break;
-
-		case 4:
-			$uncut = " AND (lower(B.strFilename) LIKE '%extended%' OR lower(A.c00) LIKE '%extended%' OR lower(B.strFilename) LIKE '%see%' OR lower(A.c00) LIKE '%see%') ";
-			$sessionKey .= 'extendedCut';
-			break;
-
-		case 5:
-			$uncut = " AND (lower(B.strFilename) LIKE '%uncut%' OR lower(A.c00) LIKE '%uncut%') ";
-			$sessionKey .= 'uncutCut';
-			break;
-
-		case 6:
-			$uncut = " AND (lower(B.strFilename) LIKE '%unrated%' OR lower(A.c00) LIKE '%unrated%') ";
-			$sessionKey .= 'unratedCut';
-			break;
-
-		case 7:
-			$uncut = " AND (lower(B.strFilename) LIKE '%.3d.%' OR lower(A.c00) LIKE '%(3d)%') ";
-			$sessionKey .= '3dCut';
-			break;
-
-		case 8:
-			$uncut = " AND (lower(B.strFilename) LIKE '%remastered%' OR lower(A.c00) LIKE '%remastered%') ";
-			$sessionKey .= 'remasteredCut';
-			break;
-
-		case 9:
-			$uncut = " AND (lower(B.strFilename) LIKE '%atmos%') ";
-			$sessionKey .= 'atmos';
-			break;
-
-		default:
-			unset($uncut);
-	}
-
-	$params = (isset($filter) ? $filter : '').(isset($uncut) ? $uncut : '').$unseenCriteria.$sqlOrder;
-	$SQL .= $params.";";
-
-	#if (isAdmin()) {
-	#echo $SQL;
-	#}
-
-	$res['SQL']         = $SQL;
-	$res['sessionKey']  = $sessionKey;
-	$res['saferSearch'] = $saferSearch;
-	return $res;
-} //getSessionKeySQL
-
-function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = true) {
-	$isAdmin       = isAdmin();
-	$isDemo        = isDemo();
-	$dbVer         = fetchDbVer();
-
-	$xbmcRunning   = xbmcRunning();
-	$newAddedCount = getNewAddedCount();
-
-	$idGenre       = getGenres($dbh);
-	$idStream      = getResolution($dbh);
-
-	$existArtTable = existsArtTable($dbh);
-	$artCovers     = fetchArtCovers($existArtTable, $dbh);
-	$actorImgs     = fetchActorCovers($dbh);
-	$directorImgs  = fetchDirectorCovers($dbh);
-
-	$filter_name   = isset($_SESSION['name']) ? $_SESSION['name'] : '';
-	$lastHighest   = $isDemo ? null : (isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null);
-	$counter       = 0;
-	$counter2      = 0;
-
+/** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection
+ * @noinspection PhpTernaryExpressionCanBeReplacedWithConditionInspection
+ */
+function generateRows($dbh, $orderz, $SkQL, $dirActorEnabled = true) {
 	$_just            = $GLOBALS['just'];
 	$_which           = $GLOBALS['which'];
 	$IMDB             = $GLOBALS['IMDB'];
@@ -371,7 +153,27 @@ function generateRows($dbh, $result, $orderz, $sessionKey, $dirActorEnabled = tr
 	$EXCLUDEDIRS      = isset($GLOBALS['EXCLUDEDIRS'])      ? $GLOBALS['EXCLUDEDIRS']      : array();
 	$SHOW_TRAILER     = isset($GLOBALS['SHOW_TRAILER'])     ? $GLOBALS['SHOW_TRAILER']     : false;
 
-	$zeile  = 0;
+	//$dbVer         = fetchDbVer();
+	$isAdmin       = isAdmin();
+	$isDemo        = isDemo();
+	$filter_name   = isset($_SESSION['name']) ? $_SESSION['name'] : '';
+	$lastHighest   = $isDemo ? null : (isset($_SESSION['lastHighest']) ? $_SESSION['lastHighest'] : null);
+
+	$xbmcRunning   = xbmcRunning();
+	$newAddedCount = getNewAddedCount();
+
+	$existArtTable = existsArtTable($dbh);
+	$artCovers     = fetchArtCovers($existArtTable, $dbh);
+	$actorImgs     = fetchActorCovers($dbh);
+	$directorImgs  = fetchDirectorCovers($dbh);
+	$idGenre       = getGenres($dbh);
+	$idStream      = getResolution($dbh, true);
+	$result        = fetchMovies($dbh, $SkQL);
+	//$sessionKey    = $SkQL['sessionKey'];
+
+	$counter  = 0;
+	$counter2 = 0;
+	$zeile    = 0;
 	$zeilen = array();
 	for ($rCnt = 0; $rCnt < count($result); $rCnt++) {
 		$zeilenSpalte = 0;
@@ -718,17 +520,17 @@ if ($dirActorEnabled) {
 					$codecST = '';
 				}
 				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" style="text-align:right;" title="'.$resTip.'">'.$resTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" title="'.$resTip.'">'.$resTD.'</td>';
 				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
 				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = ($hdr   ? 'HDR'   : '').($hdr   && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = 'title="'.$fpsTitle.'"';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" style="text-align:right;" '.$fpsTitle.'>'.$codecTD.'</td>';
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" '.$fpsTitle.'>'.$codecTD.'</td>';
 
 #filesize
 				$filename = prepPlayFilename($path.$filename);
-				$playItem = $isAdmin && $xbmcRunning && !empty($path) && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;" style="cursor:pointer;"' : null;
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.'" style="text-align:right;"'.$playItem.'>'.$moviesize.'</td>';
+				$playItem = $isAdmin && $xbmcRunning && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;"' : null;
+				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.'" '.$playItem.'>'.$moviesize.'</td>';
 			}
 
 			$zeile++;
@@ -740,156 +542,182 @@ if ($dirActorEnabled) {
 	return $zeilen;
 } //generateRows
 
-function postRows($dbh, $zeilen, $saferSearch, $dirActorEnabled = true) {
-	$isAdmin       = isAdmin();
-	$isDemo        = isDemo();
-
-	$xbmcRunning   = xbmcRunning();
-	$newAddedCount = getNewAddedCount();
-	$existArtTable = existsArtTable($dbh);
-	$elemsInRow    = getElemsInRow();
-
-	$_just         = $GLOBALS['just'];
-	$_which        = $GLOBALS['which'];
+/** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection */
+function postRows($zeilen, $SkQL, $dirActorEnabled = true) {
+	$newmode       = isset($_SESSION['newmode'])     ? $_SESSION['newmode']     : 0;
 	$sort          = isset($_SESSION['sort'])        ? $_SESSION['sort']        : 0;
-	$unseen        = isset($_SESSION['unseen'])      ? $_SESSION['unseen']      : 0;
 	$gallerymode   = isset($_SESSION['gallerymode']) ? $_SESSION['gallerymode'] : 0;
 
+	if (!$newmode && empty($sort)) { sort($zeilen); }
+
 	if ($gallerymode) {
-		generateForm();
+		postGalleryRows($zeilen);
+	} else {
+		postTableRows($zeilen, $sort, $SkQL, $dirActorEnabled);
+	}
+}
 
-		$iElems = count($zeilen);
+function postTableRows($zeilen, $sort, $SkQL, $dirActorEnabled = true): void {
+	$titleInfo = '';
+	$isDemo    = isDemo();
 
-		echo "\t\t\t\t<tr>";
-		$spread = -1;
-		$thumbsAddedInRow = 0;
-		for ($t = 0; $t < $iElems; $t++) {
-			if ($t % $elemsInRow == 0 && $t > 0) {
-				$thumbsAddedInRow = 0;
-				echo "\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>";
+	$saferSearch = $SkQL['saferSearch'];
+	if (!empty($saferSearch)) {
+		$saferSearch = '&dbSearch='.$saferSearch;
+	}
+	echo "\t\t\t";
+	echo '<tr><th class="th0"> </th>';
+	echo '<th class="th4">';
+	if (!$isDemo) {
+		echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
+	}
 
-				if (($iElems - $t) < $elemsInRow) {
-					$spread = $elemsInRow - ($iElems - $t);
-					if ($spread > 0) {
-						$matrix = getMatrix($iElems - $t);
-					}
-				}
-			}
+	if (empty($sort)) {
+		$sort = "";
+	}
 
-			if (isset($matrix)) {
-				$thumbsAddedInRow = echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow);
-			}
-
-			echo "\n\t\t\t\t\t";
-			echo '<td class="galleryTD">';
-			$covImg = (!empty($zeilen[$t][3]) ? $zeilen[$t][3] : './img/nothumb.png');
-			echo '<div class="galleryCover" style="background:url('.$covImg.') #FFFFFF no-repeat;">';
-			echo '<div class="galleryCoverHref1 fancy_iframe" href="./?'.$zeilen[$t][1].'" title="'.$zeilen[$t][0].'"></div>';
-
-			$playCount = $zeilen[$t][2] >= 1 && $isAdmin;
-			$is3d      = $zeilen[$t][4];
-			$path      = $zeilen[$t][5];
-			$filename  = $zeilen[$t][6];
-
-			$showSpan = $is3d || $playCount;
-			$break3d  = $is3d && $isAdmin && $playCount;
-			$breakPl  = false;
-
-			$playItem = '';
-			$filename = prepPlayFilename($path.$filename);
-			if ($isAdmin && $xbmcRunning && !empty($path) && !empty($filename)) {
-				$showSpan = true;
-				$breakPl  = $playCount;
-				$playItem = '<img src="./img/play.png" class="icon24 galleryPlay'.($is3d ? ' galleryPlay2nd' : '').'" onclick="playItem(\''.$filename.'\'); return false;" />';
-			}
-
-			if ($showSpan) { echo '<div class="gallerySpan">'; }
-			if ($showSpan && $is3d) { echo '<img src="./img/3d.png" class="icon24 gallery3d" />'; }
-			echo $playItem;
-
-			$gCnt = 0;
-			if ($xbmcRunning) { $gCnt++; }
-			if ($break3d)     { $gCnt++; }
-			if ($playCount)   { $gCnt++; }
-
-			switch ($gCnt) {
-				case 3:
-					$gCount = '3rd';
-					break;
-				case 2:
-					$gCount = '2nd';
-					break;
-				case 1:
-				default:
-					$gCount = '1st';
-					break;
-			}
-
-			if ($playCount) { echo '<img src="./img/check.png" class="icon32 gallery'.$gCount.'" />'; }
-			if ($showSpan) { echo '</div>'; }
-			echo '</div>';
-			echo '</td>';
-
-			$thumbsAddedInRow++;
-
-			if (isset($matrix)) {
-				$thumbsAddedInRow = echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow);
-			}
-		}
-		echo "\n";
-		echo "\t\t\t\t".'</tr>';
-		echo "\n";
-
-	} else { // if ($galleryMode)
-		$titleInfo = '';
-		if (!empty($saferSearch)) { $saferSearch = '&dbSearch='.$saferSearch; }
-		echo "\t\t\t";
-		echo '<tr><th class="th0"> </th>';
-		echo '<th class="th4">';
-		if (!$isDemo) {
-			echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
-		}
-
-		echo '<span style="padding-right:10px;"> </span><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='title' || $sort=='titlea')   ? ' color:red;' : '').'" href="?show=filme&sort='.($sort=='titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
-		echo '<th class="th02"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='jahr'   || $sort=='jahra')   ? ' color:red;' : '').'" href="?sort='.($sort=='jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
-		echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='rating' || $sort=='ratinga') ? ' color:red;' : '').'" href="?sort='.($sort=='rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
-		echo '<th class="th3 hideMobile">Genre</th>';
-		if ($dirActorEnabled) {
+	echo '<span style="padding-right:10px;"> </span><a tabindex="-1" style="font-weight:bold;'.(($sort == 'title' || $sort == 'titlea') ? ' color:red;' : '').'" href="?show=filme&sort='.($sort == 'titlea' ? 'title' : 'titlea').($saferSearch).'">Title</a>'.$titleInfo.'</th>';
+	echo '<th class="th02"><a tabindex="-1" style="font-weight:bold;'.(($sort == 'jahr' || $sort == 'jahra') ? ' color:red;' : '').'" href="?sort='.($sort == 'jahr' ? 'jahra' : 'jahr').($saferSearch).'">Year</a></th>';
+	echo '<th class="th1"><a tabindex="-1" style="font-weight:bold;'.(($sort == 'rating' || $sort == 'ratinga') ? ' color:red;' : '').'" href="?sort='.($sort == 'rating' ? 'ratinga' : 'rating').($saferSearch).'">Rating</a></th>';
+	echo '<th class="th3 hideMobile">Genre</th>';
+	if ($dirActorEnabled) {
 		echo '<th class="th2 hideMobile">Actor</th>';
 		echo '<th class="th2 hideMobile">Director</th>';
-		}
-		if (!$isDemo) {
-			echo '<th class="th5">Res</th>';
-			echo '<th class="th5">Codec</th>';
-			echo '<th class="th6"><a tabindex="-1" style="font-weight:bold;'.(!empty($sort) && ($sort=='size' || $sort=='sizea') ? 'color:red;' : '').'" href="?sort='.($sort=='size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
-		}
-		echo "\r\n";
+	}
+	if (!$isDemo) {
+		echo '<th class="th5">Res</th>';
+		echo '<th class="th5">Codec</th>';
+		echo '<th class="th6"><a tabindex="-1" style="font-weight:bold;'.(($sort == 'size' || $sort == 'sizea') ? 'color:red;' : '').'" href="?sort='.($sort == 'size' ? 'sizea' : 'size').($saferSearch).'">Size</a></th></tr>';
+	}
+	echo "\r\n";
 
-		generateForm();
+	generateForm();
 
-		$zeilenCount = count($zeilen);
-		for ($z = 0; $z < $zeilenCount; $z++) {
-			echo "\t\t\t\t".'<tr class="searchFlag">';
-			$zeile = $zeilen[$z];
-			for ($sp = 1; $sp < count($zeile); $sp++) {
-				$spalte = str_replace('_C0UNTER_', $z+1, $zeile[$sp]);
-				if ($z == $zeilenCount-1) {
-					if (substr_count($spalte, '<td>') == 1) {
-						$spalte = str_replace('<td>', '<td class="bottomTD">', $spalte);
+	$zeilenCount = count($zeilen);
+	for ($z = 0; $z < $zeilenCount; $z++) {
+		echo "\t\t\t\t".'<tr class="searchFlag">';
+		$zeile = $zeilen[$z];
+		for ($sp = 1; $sp < count($zeile); $sp++) {
+			$spalte = str_replace('_C0UNTER_', $z + 1, $zeile[$sp]);
+			if ($z == $zeilenCount - 1) {
+				if (substr_count($spalte, '<td>') == 1) {
+					$spalte = str_replace('<td>', '<td class="bottomTD">', $spalte);
 
-					} else if (substr_count($spalte, 'class') >= 1) {
-						$spalte = str_replace('<td class="', '<td class="bottomTD ', $spalte);
+				} else if (substr_count($spalte, 'class') >= 1) {
+					$spalte = str_replace('<td class="', '<td class="bottomTD ', $spalte);
 
-					} else {
-						$spalte = str_replace('<td ', '<td class="bottomTD" ', $spalte);
-					}
+				} else {
+					$spalte = str_replace('<td ', '<td class="bottomTD" ', $spalte);
 				}
-				echo $spalte;
 			}
-			echo '</tr>'."\r\n";
+			echo $spalte;
 		}
-	} // if ($galleryMode)
-} //postRows
+		echo '</tr>'."\r\n";
+	}
+}
+
+function postGalleryRows($zeilen): void {
+	generateForm();
+
+	$isAdmin     = isAdmin();
+	$xbmcRunning = xbmcRunning();
+	$elemsInRow  = getElemsInRow();
+	$iElems      = count($zeilen);
+
+	echo "\t\t\t\t<tr>";
+	$spread = -1;
+	$thumbsAddedInRow = 0;
+	for ($t = 0; $t < $iElems; $t++) {
+		if ($t % $elemsInRow == 0 && $t > 0) {
+			$thumbsAddedInRow = 0;
+			echo "\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>";
+
+			if (($iElems - $t) < $elemsInRow) {
+				$spread = $elemsInRow - ($iElems - $t);
+				if ($spread > 0) {
+					$matrix = getMatrix($iElems - $t);
+				}
+			}
+		}
+
+		if (isset($matrix)) {
+			$thumbsAddedInRow = echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow);
+		}
+
+		echo "\n\t\t\t\t\t";
+		echo '<td class="galleryTD">';
+		$covImg = (!empty($zeilen[$t][3]) ? $zeilen[$t][3] : './img/nothumb.png');
+		echo '<div class="galleryCover" style="background:url('.$covImg.') #FFFFFF no-repeat;">';
+		echo '<div class="galleryCoverHref1 fancy_iframe" href="./?'.$zeilen[$t][1].'" title="'.$zeilen[$t][0].'"></div>';
+
+		$playCount = $zeilen[$t][2] >= 1 && $isAdmin;
+		$is3d = $zeilen[$t][4];
+		$path = $zeilen[$t][5];
+		$filename = $zeilen[$t][6];
+
+		$showSpan = $is3d || $playCount;
+		$break3d = $is3d && $isAdmin && $playCount;
+		$breakPl = false;
+
+		$playItem = '';
+		$filename = prepPlayFilename($path.$filename);
+		if ($isAdmin && $xbmcRunning && !empty($path) && !empty($filename)) {
+			$showSpan = true;
+			$breakPl = $playCount;
+			$playItem = '<img src="./img/play.png" class="icon24 galleryPlay'.($is3d ? ' galleryPlay2nd' : '').'" onclick="playItem(\''.$filename.'\'); return false;" />';
+		}
+
+		if ($showSpan) {
+			echo '<div class="gallerySpan">';
+		}
+		if ($showSpan && $is3d) {
+			echo '<img src="./img/3d.png" class="icon24 gallery3d" />';
+		}
+		echo $playItem;
+
+		$gCnt = 0;
+		if ($xbmcRunning) {
+			$gCnt++;
+		}
+		if ($break3d) {
+			$gCnt++;
+		}
+		if ($playCount) {
+			$gCnt++;
+		}
+
+		switch ($gCnt) {
+			case 3:
+				$gCount = '3rd';
+				break;
+			case 2:
+				$gCount = '2nd';
+				break;
+			case 1:
+			default:
+				$gCount = '1st';
+				break;
+		}
+
+		if ($playCount) {
+			echo '<img src="./img/check.png" class="icon32 gallery'.$gCount.'" />';
+		}
+		if ($showSpan) {
+			echo '</div>';
+		}
+		echo '</div>';
+		echo '</td>';
+
+		$thumbsAddedInRow++;
+
+		if (isset($matrix)) {
+			$thumbsAddedInRow = echoEmptyTdIfNeeded($matrix, $thumbsAddedInRow, $elemsInRow);
+		}
+	}
+	echo "\n";
+	echo "\t\t\t\t".'</tr>';
+	echo "\n";
+}
 
 function infobox($title, $info) {
 	echo '<div id="boxx"><a tabindex="-1" href="#">';

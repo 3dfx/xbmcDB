@@ -132,8 +132,8 @@ function getTableNames() {
 	return $result;
 }
 
-function getStreamDetails($idFile) {
-	return querySQL("SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL) AND idFile = ".$idFile.";");
+function getStreamDetails($idFile, $dbh = null) {
+	return querySQL_($dbh, "SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL) AND idFile = ".$idFile.";");
 }
 
 function getGenres($dbh) {
@@ -162,24 +162,27 @@ function getGenres($dbh) {
 	return $idGenre;
 }
 
-function getResolution($dbh) {
+function getResolution($dbh, $isMovie) {
 	$idStream = array();
+	$movKey   = $isMovie ? "movie" : "episode";
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if (isset($_SESSION['idStream']) && $overrideFetch == 0) {
-		$idStream = unserialize($_SESSION['idStream']);
+	if (isset($_SESSION['idStream'][$movKey]) && $overrideFetch == 0) {
+		$idStream = unserialize($_SESSION['idStream'][$movKey]);
 
 	} else {
-		//TODO: only ids from movie and tvshow...
-		$SQL = "SELECT * FROM streamdetails WHERE iVideoWidth IS NOT NULL";
+		$SQL = "SELECT streamdetails.*, ".$movKey.".idFile FROM streamdetails ".
+			"LEFT JOIN ".$movKey." ON ".$movKey.".idFile = streamdetails.idFile ".
+			"WHERE streamdetails.iVideoWidth IS NOT NULL";
 		$result = querySQL_($dbh, $SQL, false);
 		foreach($result as $row) {
-			$id = $row['idFile'];
-			$idStream[$id][0] = $row['iVideoWidth'];
-			$idStream[$id][1] = $row['iVideoHeight'];
-			$idStream[$id][2] = $row['strVideoCodec'];
+			if (!empty($id = $row['idFile'])) {
+				$idStream[$id][0] = $row['iVideoWidth'];
+				$idStream[$id][1] = $row['iVideoHeight'];
+				$idStream[$id][2] = $row['strVideoCodec'];
+			}
 		}
 
-		$_SESSION['idStream'] = serialize($idStream);
+		$_SESSION['idStream'][$movKey] = serialize($idStream);
 		unset( $_SESSION['overrideFetch'] );
 	}
 
@@ -3196,27 +3199,31 @@ function getIdOrder($dbh = null) {
 
 function findUserOrder() {
 	$saveOrderInDB = isset($GLOBALS['SAVE_ORDER_IN_DB']) ? $GLOBALS['SAVE_ORDER_IN_DB'] : false;
-	if (isAdmin() || !$saveOrderInDB)
+	if (isAdmin() || !$saveOrderInDB) {
 		return null;
+	}
 
 	$user = $_SESSION['user'];
 	$SQL  = "SELECT idOrder AS idOrder FROM orderz WHERE fresh=1 AND user='[USER]' ORDER BY idOrder DESC;";
 	$SQL  = str_replace('[USER]', $user, $SQL);
 	$res  = querySQL($SQL);
 	$ids  = array();
-	foreach($res as $row)
+	foreach($res as $row) {
 		$ids[] = $row['idOrder'];
+	}
 
-	if (empty($ids) || count($ids) == 0)
+	if (empty($ids) || count($ids) == 0) {
 		return null;
+	}
 
 	$_SESSION['param_idOrder'] = $ids[0];
 	$ids  = implode(',', $ids);
 	$SQL  = "SELECT movieOrShow AS movie, idElement AS id FROM orderItemz WHERE idOrder IN (".$ids.");";
 	$res  = querySQL($SQL);
 	$result = array(0=>array(), 1=>array());
-	foreach($res as $row)
+	foreach($res as $row) {
 		$result[$row['movie']][$row['id']] = $row['id'];
+	}
 
 	return $result;
 }
