@@ -22,13 +22,7 @@ class Episode {
 	private $size;
 
 	function __construct($episode, $delta, $season, $idShow, $idTvdb, $idEpisode, $idSeason, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize, $source) {
-		$pr = strtolower(substr($serienname, 0, 4));
-		$pronoms = array('the ', 'der ', 'die ', 'das ');
-		for ($prs = 0; $prs < count($pronoms); $prs++) {
-			if ($pr == $pronoms[$prs]) {
-				$serienname = strtoupper(substr($serienname, 4, 1)).substr($serienname, 5, strlen($serienname)).', '.substr($serienname, 0, 3);
-			}
-		}
+		$serienname = switchPronoms($serienname);
 
 		$this->episode     = $episode;
 		$this->delta       = $delta;
