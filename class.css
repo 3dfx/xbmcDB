@@ -513,8 +513,7 @@ table.artists td.art {
 }
 
 table.artists td.role, th.role {
-	color:black;
-	padding-left:15px;
+	padding-left: 15px;
 }
 
 table.artists td {
@@ -522,12 +521,18 @@ table.artists td {
 }
 
 .artists th {
+    color: dimgray;
 	text-align:left;
 	border-bottom: 1px dashed dimgray;
+
 }
 
 .artists tr {
 	font-size: 12px;
+}
+
+.artists td.art a, .artists td.role {
+    color: dimgray;
 }
 
 .abstand {

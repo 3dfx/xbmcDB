@@ -30,10 +30,10 @@ include_once "./template/functions.php";
 	if (!empty($movie)) {
 		if ($movie == 1) {
 			$img = str_replace('thumbs', 'covers', $img);
-			$img = str_replace('thumb', 'cover', $img);
+			$img = str_replace('thumb',  'cover',  $img);
 		} else {
 			$img = str_replace('thumbs', 'coversbig', $img);
-			$img = str_replace('thumb', 'coverbig', $img);
+			$img = str_replace('thumb',  'coverbig',  $img);
 		}
 	}
 

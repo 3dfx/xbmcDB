@@ -534,7 +534,6 @@ include_once "./template/functions.php";
 
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
 			$schauspTblOut[$actors] .= '<td class="art">';
-			#$schauspTblOut[$actors] .= '<a class="openImdbDetail filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.str_replace(' ', '+', $artist).'">[i] </a>';
 			$schauspTblOut[$actors] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
 			if (file_exists($actorimg)) {
 				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
@@ -580,7 +579,6 @@ include_once "./template/functions.php";
 
 			if ($actors > $acLimit) {
 				echo '<tr id="doTr"><td colspan="2">';
-				#echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
 				echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
 				echo '</td></tr>';
 				echo "\r\n";

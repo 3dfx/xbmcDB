@@ -97,7 +97,7 @@ function logLogin() {
 	$loggedInAs   = $GLOBALS['loggedInAs'];
 	$FAIL_        = 'FAiL';
 	if ($loggedInAs == $FAIL_) { addBlacklist(); }
-	else { removeBlacklist(); }
+	//else { removeBlacklist(); }
 
 	if (!($LOCALHOST || $HOMENETWORK)) {
 		$username       = $GLOBALS['input_username'];

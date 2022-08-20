@@ -1793,9 +1793,6 @@ function setSessionParams($isAuth = false) {
 			if (isset($_GET['show']) &&
 			   $_GET['show'] != 'logout') { $_SESSION[$key] = SQLite3::escapeString($value); }
 		}
-
-		if (isset($_POST['xlsUpload'])) { moveUploadedFile('xls', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); }
-		else { unset( $_SESSION['xlsError'], $_SESSION['xlsFile'] ); }
 	}
 
 	//unset($_GET, $_POST);

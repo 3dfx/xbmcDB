@@ -1,5 +1,6 @@
 <?php
-#include_once "./globals.php";
+	$DB_PATH = '/public';
+
 	$SEARCH_ENABLED                = true;
 	$CUTS_ENABLED                  = true;  // extended, directors, uncut / unrated
 	$DREID_ENABLED                 = true;  // 3d
