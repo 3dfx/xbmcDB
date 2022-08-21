@@ -40,7 +40,7 @@ include_once "./template/functions.php";
 	else if ($show == 'airdate')                    { include "./airdates.php"; }
 	else if ($show == 'mvids')                      { include "./mvids_.php";   }
 	else if ($show == 'filme')                      { include "./filme_.php";   }
-	else if ($show == 'mpExp' && file_exists('fExplorer.php')) { include "./fExplorer.php"; }
+	else if ($show == 'mpExp' && isFile('fExplorer.php')) { include "./fExplorer.php"; }
 
 	adminInfo($start, $show);
 

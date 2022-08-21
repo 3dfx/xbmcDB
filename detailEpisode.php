@@ -294,7 +294,7 @@ function getThumbImg($dbh, int $idFile, $idEpisode, $path, string $filename, str
 			$sessionImg = mapSambaDirs($path, $DIRMAP_IMG).substr($filename, 0, strlen($filename) - 3).'tbn';
 			$smb = (substr($sessionImg, 0, 6) == 'smb://');
 
-			if (file_exists($sessionImg)) {
+			if (isFile($sessionImg)) {
 				$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0, $ENCODE || $smb ? 'encoded' : null);
 			} else {
 				unset($sessionImg);
@@ -311,7 +311,7 @@ function getThumbImg($dbh, int $idFile, $idEpisode, $path, string $filename, str
 				$url = isset($row2['url']) ? $row2['url'] : null;
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
-					if (file_exists($sessionImg)) {
+					if (isFile($sessionImg)) {
 						$thumbImg = getImageWrap($sessionImg, $idFile, 'file', 0);
 					}
 				}

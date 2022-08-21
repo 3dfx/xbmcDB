@@ -111,7 +111,7 @@ if (!isAdmin()) { return; }
 	
 	function getDelay($filename) {
 		if (!isAdmin()) { return 0; }
-		if (!file_exists($filename)) {
+		if (!isFile($filename)) {
 			return 0;
 		}
 

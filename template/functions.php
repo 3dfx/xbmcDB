@@ -213,7 +213,7 @@ function wrapItUp($type, $id, $strFname) {
 function getImageWrap($strFname, $id, $type, $size, $dlvry = null) {
 	if (empty($dlvry)) { $dlvry = getWrapper(); }
 	if ($dlvry == 'encoded') {
-		if (!empty($strFname) && file_exists($strFname)) { return base64_encode_image($strFname); }
+		if (isFile($strFname)) { return base64_encode_image($strFname); }
 		$dlvry = 'wrapped';
 	}
 	if ($dlvry == 'wrapped') { return './?img='.$id.'&'.$type.(!empty($size) ? '='.$size : ''); }
@@ -222,7 +222,7 @@ function getImageWrap($strFname, $id, $type, $size, $dlvry = null) {
 }
 
 function loadImage($imgURL, $localfile) {
-	if (file_exists($localfile)) { return 0; }
+	if (isFile($localfile)) { return 0; }
 	if ($fd = fopen ($imgURL, "rb")) {
 		$buffer = stream_get_contents($fd);
 		if ($fh = fopen($localfile, 'w') ) {
@@ -738,7 +738,7 @@ function execCommand($file, $execString) {
 }
 
 function base64_encode_image($imagefile) {
-	$filename = file_exists($imagefile) ? htmlentities($imagefile) : '';
+	$filename = isFile($imagefile) ? htmlentities($imagefile) : '';
 	if (empty($filename)) { return null; }
 
 	$imgtype = array('jpg', 'gif', 'png', 'tbn');
@@ -870,8 +870,8 @@ function resizeImg($SRC, $DST, $w, $h) {
 
 function generateImg($SRC, $DST, $orSRC, $w, $h) {
 	$pic = false;
-	$cachedImgExist  = file_exists($SRC);
-	$resizedImgExist = file_exists($DST);
+	$cachedImgExist  = isFile($SRC);
+	$resizedImgExist = isFile($DST);
 
 	if ($resizedImgExist) {
 		return $DST;
@@ -901,7 +901,7 @@ function getTvShowThumb($file) {
 	$crc = thumbnailHash($file);
 	$cachedimg = getThumbnailDir().substr($crc, 0, 1)."/".$crc.".jpg";
 
-	return file_exists($cachedimg) ? $cachedimg : null;
+	return isFile($cachedimg) ? $cachedimg : null;
 }
 
 function getActorThumb($actor, $URL, $newmode) {
@@ -937,27 +937,18 @@ function getCover($SRC, $orSRC, $cacheDir, $subDir, $subName, $w, $h, $newmode) 
 	if ($overrideFetch == 0 && isset($_SESSION['covers'][$subName][$CACHE_KEY])) { return $_SESSION['covers'][$subName][$CACHE_KEY]; }
 
 	$crc = thumbnailHash($SRC);
-
-/*
-	$cachedimg = '';
-	if ($newmode) {
-		$cachedimg = getThumbnailDir().substr($crc, 0, 1)."/".$crc.".jpg";
-	} else {
-		$cachedimg = getThumbnailDir()."Video/".substr($crc, 0, 1)."/".$crc.".tbn";
-	}
-*/
-
 	$cachedimg = getThumbnailDir().($cacheDir != null ? $cacheDir : '').($cacheDir == null ? substr($crc, 0, 1) : '').'/'.$crc.'.jpg';
-	$cachedImgExist = file_exists($cachedimg);
 
 	$ftime = '';
 	try {
-		if ($cachedImgExist) {
-			$ftime = filemtime($cachedimg);
+		if (isFile($cachedimg)) {
+			$ftime = '_'.filemtime($cachedimg);
 		}
-	} catch (Throwable $e) { }
+	} catch (Throwable $e) {
+		$ftime = '';
+	}
 
-	$resizedfile = './img/'.$subDir.'/'.$crc.'-'.$subName.(empty($ftime) ? '' : '_').$ftime.'.jpg';
+	$resizedfile = './img/'.$subDir.'/'.$crc.'-'.$subName.$ftime.'.jpg';
 	$_SESSION['covers'][$subName][$CACHE_KEY] = generateImg($cachedimg, $resizedfile, $orSRC, $w, $h);
 	return $_SESSION['covers'][$subName][$CACHE_KEY];
 }
@@ -1469,11 +1460,11 @@ function postNavBar_($isMain) {
 		$NAS_CONTROL   = isset($GLOBALS['NAS_CONTROL'])    ? $GLOBALS['NAS_CONTROL']    : false;
 		$MP3_EXPLORER  = isset($GLOBALS['MP3_EXPLORER'])   ? $GLOBALS['MP3_EXPLORER']   : false;
 		$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
-		$upgrLog       = isLinux() && file_exists($privateFolder.'/upgradeLog.php') && file_exists('./myScripts/logs/upgrade.log');
+		$upgrLog       = isLinux() && isFile($privateFolder.'/upgradeLog.php') && isFile('./myScripts/logs/upgrade.log');
 		if ($upgrLog || $NAS_CONTROL || $MP3_EXPLORER) {
 			$res .= '<li class="divider"></li>';
 		}
-		if ($xbmcRunning && $MP3_EXPLORER && file_exists('fExplorer.php')) {
+		if ($xbmcRunning && $MP3_EXPLORER && isFile('fExplorer.php')) {
 			$res .= '<li><a href="?show=mpExp">MP3 Explorer</a></li>';
 			#$res .= '<li><a class="fancy_explorer" href="?show=mpExp">MP3 Explorer</a></li>';
 		}
@@ -1576,8 +1567,6 @@ function fetchMediaCounts() {
 		$_SESSION['param_mvC']  = fetchCount($dbh, 'musicvideo');
 	if (!isset($_SESSION['param_tvC']))
 		$_SESSION['param_tvC']  = fetchCount($dbh, 'tvshow');
-#	if (!isset($_SESSION['param_movC']))
-#		$_SESSION['param_movC'] = fetchCount($dbh, 'movie');
 }
 
 function xbmcGetPlayerId() {
@@ -1801,7 +1790,7 @@ function setSessionParams($isAuth = false) {
 function restoreSession() {
 	$orSession = $_SESSION; //save pre-login values
 	$filename  = './sessions/'.$_SESSION['user'].'.log';
-	if (file_exists($filename)) {
+	if (isFile($filename)) {
 		$sessionfile = fopen($filename, "r");
 		$sessiondata = fread($sessionfile,  4096);
 		fclose($sessionfile);
@@ -1845,7 +1834,7 @@ function adminInfo($start, $show) {
 		if (isLinux()) {
 			//cpu temp
 			$filename = './myScripts/logs/cpuTemp_.log';
-			if (file_exists($filename)) {
+			if (isFile($filename)) {
 				$log = file($filename);
 				$cpu_ = explode(' ', $log[0]);
 				echo getTempDiv($cpu_[0], 0);
@@ -1861,7 +1850,7 @@ function adminInfo($start, $show) {
 			$ssdTemp = '';
 			//hdparm
 			$filename = './myScripts/logs/hdparm.log';
-			if (file_exists($filename)) {
+			if (isFile($filename)) {
 				$log = file($filename);
 				for ($i = 0; $i < count($log); $i++) {
 				#for ($i = count($log); $i >= 0; $i--) {
@@ -1897,7 +1886,7 @@ function adminInfo($start, $show) {
 
 			//cpu load
 			unset($output);
-			if (file_exists('./myScripts/logs/cpuTemps.log'))
+			if (isFile('./myScripts/logs/cpuTemps.log'))
 				exec("tail /var/spool/myScripts/logs/cpuTemps.log -n1 | cut -d ',' -f 4", $output);
 			else
 				exec("ps -eo pcpu | awk ' {cpu_load+=$1} END {print cpu_load}'", $output);
@@ -1934,7 +1923,7 @@ function getTempDiv($output, $core, $title = '') {
 	if ($output <= $CPU_TEMPS[0]) { $tCol = ' label-success';   }
 	if ($output >= $CPU_TEMPS[1]) { $tCol = ' label-warning';   }
 	if ($output >= $CPU_TEMPS[2]) { $tCol = ' label-important'; }
-	$href = $core >= 0 && file_exists($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=0&interpolate=1"' : '';
+	$href = $core >= 0 && isFile($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=0&interpolate=1"' : '';
 	$label = $core >= 0 ? 'core '.($core+1) : $title;
 	return '<span id="spTemp'.$core.'"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-left:5px; margin-bottom:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_cpu' : '').'" title="'.$label.'">'.$output.'&deg;C</span>';
 }
@@ -1951,7 +1940,7 @@ function getLoadDiv($output) {
 	if ($output <  $CPU_LOADS[0]) { $tCol = ' label-success';   }
 	if ($output >= $CPU_LOADS[1]) { $tCol = ' label-warning';   }
 	if ($output >= $CPU_LOADS[2]) { $tCol = ' label-important'; }
-	$href = file_exists($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=1&interpolate=0"' : null;
+	$href = isFile($privateFolder.'/cpu.php') ? ' href="'.$privateFolder.'/cpu.php?load=1&interpolate=0"' : null;
 	return '<span id="spLoad"'.$href.' style="cursor:default; display:none; padding:5px 8px; margin-right:5px;" class="label'.$tCol.(!empty($href) ? ' fancy_cpu' : '').'" title="CPU load">'.$output.'%</span>';
 }
 
@@ -1966,7 +1955,7 @@ function adminInfoJS() {
 		echo "\r\n";
 		echo "function hideAdminInfo(show) {\r\n";
 		$filename = './myScripts/logs/hdparm.log';
-		if (file_exists($filename)) {
+		if (isFile($filename)) {
 			echo "\t$( '[id^=hdp]' ).toggle(show);\r\n";
 		}
 
@@ -2150,7 +2139,6 @@ function authTvDB() {
 
 	$opts = array('http' => array(
 		'method'  => 'POST',
-//		'method'  => 'GET',
 		'timeout' => getTimeOut(),
 		'header'  => 'Content-Type: application/json'."\r\n".'Accept: application/json',
 		'content' => '{"apikey": "'.$TVDB_API_KEY.'", "userkey": "", "username": ""}'
@@ -2346,6 +2334,10 @@ function trimURL($url) {
 	$url = str_replace('www.',    '', $url);
 	if (strstr($url,'/')) { $url = substr($url, 0, strpos($url, '/')); }
 	return $url;
+}
+
+function isFile($filename) {
+	return !empty($filename) && file_exists($filename);
 }
 
 function getEpisodeInfo($episodes, $getSeason, $getEpisode) {
@@ -3013,7 +3005,7 @@ function storeBlacklist($blacklisted) {
 
 function restoreBlacklist() {
 	$blFile = $GLOBALS['BLACKLIST_FILE'];
-	if (file_exists($blFile)) {
+	if (isFile($blFile)) {
 		$read = '';
 		$fp = fopen($blFile, "r");
 		while(!feof($fp)) { $read = fgets($fp, 1000); }

@@ -43,7 +43,7 @@ include_once "./template/functions.php";
 
 function shoutImage($img = null) {
 	header('Content-Type: image/jpeg');
-	if (!empty($img) && file_exists($img)) {
+	if (isFile($img)) {
 		if (!setHeaders($img)) { exit; }
 		try {
 			readfile($img);
@@ -74,7 +74,7 @@ function setHeaders($img) {
 	$oldHandler = set_error_handler('handleError');
 	$mtime = null;
 	try {
-		$mtime = isset($img) && file_exists($img) ? filemtime($img) : null;
+		$mtime = isFile($img) ? filemtime($img) : null;
 	} catch (Exception $e) {
 		try {
 			$mtime = empty($mtime) ? workaroundMTime($img) : null;

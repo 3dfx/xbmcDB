@@ -46,7 +46,7 @@ include_once "globals.php";
 	} else if (existsOrdersTable()) {
 		//to prevent spamming, no minutes and seconds in filename!
 		$fname   = './orders/'.date('Ymd_').$username.'.order';
-		$append  = file_exists($fname);
+		$append  = isFile($fname);
 		$content = $isShow ? doTheStuffTvShow($res, true) : doTheStuffMovie($res, true);
 		
 		if ($append) {

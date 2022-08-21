@@ -29,7 +29,7 @@ include_once "globals.php";
 			unset( $orderName, $unreadOrder );
 			
 		} else if (!empty($deleteOrder)) {
-			if (file_exists($fname)) { unlink($fname); }
+			if (isFile($fname)) { unlink($fname); }
 			if ($tableExists) { execSQL("DELETE FROM orders WHERE strFilename = '".$fname."';", false); }
 			unset( $orderName, $deleteOrder );
 		}
@@ -146,7 +146,7 @@ function readOrders() {
 		$fname = $dir.'/'.$entry;
 		$fresh = isset($freshs[$fname]) ? $freshs[$fname] : 0;
 		
-		if (!file_exists($fname)) { continue; }
+		if (!isFile($fname)) { continue; }
 		$size = filesize($fname);
 		if ($size > 0) {
 			postOrder($counter+1, $entry, $fname, $fresh);

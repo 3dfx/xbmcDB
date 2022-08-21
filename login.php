@@ -121,7 +121,7 @@ function logLogin() {
 		$input = $datum."|".$time."|".$ip."|".$host."|".$hostname."|".$loggedInAs."|".$username."|".$logPass."\n";
 
 		$datei = "./logs/loginLog.php";
-		if (file_exists($datei)) {
+		if (isFile($datei)) {
 			$fp = fopen($datei, "r");
 			while(!feof($fp)) {
 				$eintraege = fgets($fp, 1000);

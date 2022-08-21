@@ -205,6 +205,23 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 		$is3D      = is3d($filename);
 		$hdr       = isHDR($filename);
 
+		$filmname0 = $filmname;
+		$titel     = $filmname;
+
+		$path = mapSambaDirs($path);
+		if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
+
+		$fsize     = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
+		$moviesize = _format_bytes($fsize);
+
+		$wasCutoff = false;
+		$cutoff    = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
+		if (strlen($filmname) >= $cutoff && $cutoff > 0) {
+			$filmname = substr($filmname, 0, $cutoff).'...';
+			$wasCutoff = true;
+		}
+		$filmname = switchPronoms($filmname, $PRONOMS);
+
 		if (empty($dateAdded)) {
 			$dateAdded = getCreation($fnam);
 			$dateAdded = isset($dateAdded) ? $dateAdded : '2001-01-01 12:00:00';
@@ -216,7 +233,7 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 		if ($gallerymode || $COVER_OVER_TITLE) {
 			if (!empty($artCovers)) {
 				$cover_ = getCoverThumb($fnam, $cover, false);
-				if (!empty($cover_) && file_exists($cover_)) {
+				if (isFile($cover_)) {
 					$cover = $cover_;
 				} else if ($existArtTable && isset($artCovers['movie'][$idMovie])) {
 					$cover = $artCovers['movie'][$idMovie]['cover'];
@@ -231,28 +248,11 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 						if (!empty($url)) { $cover = getCoverThumb($url, $url, true); }
 						if ($type == 'poster') { break; }
 					}
-				} else if (file_exists(getCoverThumb($fnam, $cover, false))) {
+				} else if (isFile(getCoverThumb($fnam, $cover, false))) {
 					$cover = getCoverThumb($fnam, $cover, false);
 				}
 			} //POWERFUL_CPU
 		}
-
-		$path = mapSambaDirs($path);
-		if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
-
-		$fsize     = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
-		$moviesize = _format_bytes($fsize);
-
-		$filmname0 = $filmname;
-		$titel     = $filmname;
-
-		$wasCutoff = false;
-		$cutoff    = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
-		if (strlen($filmname) >= $cutoff && $cutoff > 0) {
-			$filmname = substr($filmname, 0, $cutoff).'...';
-			$wasCutoff = true;
-		}
-		$filmname = switchPronoms($filmname, $PRONOMS);
 
 		wrapItUp('cover', $idMovie, $cover);
 
@@ -389,7 +389,7 @@ if ($dirActorEnabled) {
 			} //POWERFUL_CPU
 
 			$actorimg = getActorThumb($firstartist, $actorpicURL, false);
-			if (!file_exists($actorimg) && !empty($firstId) && $existArtTable) {
+			if ($existArtTable && !empty($firstId) && !isFile($actorimg)) {
 				if (!empty($artCovers)) {
 					if (isset($artCovers['actor'][$firstId])) {
 						$actorimg = $artCovers['actor'][$firstId];
@@ -411,7 +411,7 @@ if ($dirActorEnabled) {
 				$spalTmp .= '>';
 				#$spalTmp .= '<a tabindex="-1" class="openIMDB filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstartist.'">[i] </a>';
 				$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=artist&just='.$firstId.'&name='.$firstartist.'"';
-				if (file_exists($actorimg)) {
+				if (isFile($actorimg)) {
 					$spalTmp .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $firstId, 'actor', 0).'" title="'.$firstartist.'"';
 				} else {
 					$spalTmp .= ' title="filter"';
@@ -452,7 +452,7 @@ if ($dirActorEnabled) {
 			} //POWERFUL_CPU
 
 			$actorimg = getActorThumb($firstdirector, $actorpicURL, false);
-			if (!file_exists($actorimg) && !empty($firstId) && $existArtTable) {
+			if ($existArtTable && !empty($firstId) && !isFile($actorimg)) {
 				if (!empty($artCovers)) {
 					if (isset($artCovers['actor'][$firstId])) {
 						$actorimg = $artCovers['actor'][$firstId];
@@ -474,7 +474,7 @@ if ($dirActorEnabled) {
 				$spalTmp .= '>';
 				#$spalTmp .= '<a tabindex="-1" class="openImdb filterX" href="'.$ANONYMIZER.$PERSONINFOSEARCH.$firstdirector.'">[i] </a>';
 				$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=regie&just='.$firstId.'&name='.$firstdirector.'"';
-				if (file_exists($actorimg)) {
+				if (isFile($actorimg)) {
 					$spalTmp .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $firstId, 'director', 0).'" title="'.$firstdirector.'"';
 				} else {
 					$spalTmp .= ' title="filter"';

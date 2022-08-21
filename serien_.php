@@ -371,7 +371,7 @@ function getRandomBanner() {
 
 		if (count($res) == 0) { return ''; }
 		$img = './img/banners/'.$res[ rand(1, count($res)-1) ];
-		if (!file_exists($img)) { return ''; }
+		if (!isFile($img)) { return ''; }
 		wrapItUp('banner', 'random', $img);
 	}
 

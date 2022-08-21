@@ -516,7 +516,7 @@ include_once "./template/functions.php";
 
 			$actorimg = getActorThumb($artist, $actorpicURL, false);
 			if ($fetchedImages < $acLimitImg) {
-				if (!file_exists($actorimg) && $existArtTable) {
+				if (isFile($actorimg) && $existArtTable) {
 					$fetchedImages++;
 					if (!empty($artCovers) && isset($artCovers['actor'][$idActor])) {
 						$actorimg = $artCovers['actor'][$idActor]['cover'];
@@ -535,7 +535,7 @@ include_once "./template/functions.php";
 			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
 			$schauspTblOut[$actors] .= '<td class="art">';
 			$schauspTblOut[$actors] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
-			if (file_exists($actorimg)) {
+			if (isFile($actorimg)) {
 				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
 			} else {
 				$schauspTblOut[$actors] .= 'title="filter"';
@@ -789,7 +789,7 @@ include_once "./template/functions.php";
 		$existArtTable = $GLOBALS['existArtTable'];
 
 		$res = array();
-		if (file_exists(getCoverMid($fnam, $cover, false))) {
+		if (isFile(getCoverMid($fnam, $cover, false))) {
 			$res[0] = getCoverMid($fnam, $cover, false); //cover
 			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
 
@@ -815,7 +815,7 @@ include_once "./template/functions.php";
 		$crc = thumbnailHash($fnam);
 		$fanart = "./img/Thumbnails/Fanart/".$crc.".jpg";
 
-		$fanartExists = file_exists($fanart);
+		$fanartExists = isFile($fanart);
 		if ($fanartExists) {
 			$ftime = '';
 			try {
