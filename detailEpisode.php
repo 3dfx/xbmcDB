@@ -10,6 +10,8 @@ include_once "./template/Series/StreamDetails.php";
 <?php
 	header("Content-Type: text/html; charset=UTF-8");
 
+	$VAL_DELIM = '&nbsp;<font color="silver"><b>|</b></font>&nbsp;';
+
 	$isAdmin   = isAdmin();
 	$isDemo    = isDemo();
 	$idEpisode = getEscGPost('id');
@@ -70,8 +72,8 @@ include_once "./template/Series/StreamDetails.php";
 	$timeTotal = null;
 	if ($playCount <= 0) {
 		$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';");
-		$timeAt    = isset($result['timeAt'])    ? $result['timeAt']    : null;
-		$timeTotal = isset($result['timeTotal']) ? $result['timeTotal'] : null;
+		$timeAt    = empty($result['timeAt'])    ? null : $result['timeAt'];
+		$timeTotal = empty($result['timeTotal']) ? null : $result['timeTotal'];
 		if (!empty($timeAt) && !empty($timeTotal)) {
 			$pausedAt  = getPausedAt($timeAt);
 			$percent   = round($timeAt / $timeTotal * 100);
@@ -193,11 +195,13 @@ include_once "./template/Series/StreamDetails.php";
 				echo '<span class="flalright">';
 				if (!empty($streamDetails->getWidth()) && !empty($streamDetails->getHeight())) {
 					echo $streamDetails->getWidth().'x'.$streamDetails->getHeight().$arSpan;
-					if (!empty($fps))
+					if (!empty($fps)) {
 						echo '<br/>';
+					}
 				}
-				if (!empty($fps))
+				if (!empty($fps)) {
 					echo '<span class="flalleft">'.$fps.' fps</span>';
+				}
 				echo '</span>';
 			}
 			if (!empty($streamDetails->getVCodec()) || !empty($bits)) {
@@ -208,12 +212,17 @@ include_once "./template/Series/StreamDetails.php";
 					$vCodec = postEditVCodec($streamDetails->getVCodec());
 					$perf   = decodingPerf($vCodec, !empty($bits) && $bits >= 10);
 					$color  = $cols == null ? '#000000' : $cols[$perf];
-					echo '<font color="'.$color.'">'.$vCodec.'</font>&nbsp;<font color="silver"><b>|</b></font>&nbsp;';
-					if (!empty($bits))
+					if (!empty($streamDetails->getHdrType())) {
+						$vCodec = $vCodec.$VAL_DELIM.postEditHdrType($streamDetails->getHdrType());
+					}
+					echo '<font color="'.$color.'">'.$vCodec.'</font>'.$VAL_DELIM;
+					if (!empty($bits)) {
 						echo '<br/>';
+					}
 				}
-				if (!empty($bits))
-					echo $bits.' bit&nbsp;<font color="silver"><b>|</b></font>&nbsp;';
+				if (!empty($bits)) {
+					echo $bits.' bit'.$VAL_DELIM;
+				}
 				echo '</span>';
 			}
 			echo '</div>';
@@ -225,10 +234,13 @@ include_once "./template/Series/StreamDetails.php";
 			$atmosFound   = false;
 			$atmosFlagBtn = false;
 			for ($i = 0; $i < count($streamDetails->getACodec()); $i++) {
-				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), (substr_count(strtoupper($streamDetails->getACodec()[$i]), 'TRUEHD') > 0 || substr_count(strtoupper($streamDetails->getACodec()[$i]), 'EAC3') > 0));
-				$atmosFound |= !empty($atmos) && !empty($atmos[$i]) && $atmos[$i] == 1;
 				$atmosFlagBtn |= atmosFlagPossibleToSet($streamDetails->getACodec()[$i]);
-				$codecs .= postEditACodec($streamDetails->getACodec()[$i], !empty($atmos) && !empty($atmos[$i])).(isset($streamDetails->getAChannels()[$i]) ? ' '.postEditChannels($streamDetails->getAChannels()[$i]) : '').getLanguage($countryMap, $streamDetails->getALang(), $i).($i < count($streamDetails->getACodec())-1 ? ' <font color="silver"><b>|</b></font> ' : '');
+				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), $atmosFlagBtn);
+				$atmosFound |= !empty($atmos) && !empty($atmos[$i]) && $atmos[$i] == 1;
+				$codecs .= postEditACodec($streamDetails->getACodec()[$i], !empty($atmos) && !empty($atmos[$i])).
+					(isset($streamDetails->getAChannels()[$i]) ? ' '.postEditChannels($streamDetails->getAChannels()[$i]) : '').
+					getLanguage($countryMap, $streamDetails->getALang(), $i).
+					($i < count($streamDetails->getACodec())-1 ? (($i+1 % 3 == 0) ? '<br />' : $VAL_DELIM) : '');
 			}
 
 			$atmosBtn_1 = $atmosBtn_2 = '';
@@ -237,7 +249,7 @@ include_once "./template/Series/StreamDetails.php";
 				$atmosBtn_2 = '</a>';
 			}
 
-			echo '<div style="overflow-x:hidden;"><span><i><b>Audio:</b></i></span><span class="flalright">'.count($streamDetails->getACodec()).' <font color="silver">[</font> '.$atmosBtn_1.$codecs.$atmosBtn_2.' <font color="silver">]</font></span></div>';
+			echo '<div style="overflow-x:hidden;"><span><i><b>Audio</b></i> <font color="silver">[</font> '.count($streamDetails->getACodec()).' <font color="silver">]</font><b>:</b> </span><span class="flalright">'.$atmosBtn_1.$codecs.$atmosBtn_2.'</span></div>';
 		}
 
 		if (!empty($streamDetails->getSubtitle())) {
@@ -246,11 +258,12 @@ include_once "./template/Series/StreamDetails.php";
 			foreach ($streamDetails->getSubtitle() as $i => $sub) {
 				$codec = getLanguage($countryMap, $streamDetails->getSubtitle(), $i, false);
 				if (!empty($codec)) {
-					$codecs .= ($cCount > 0 && !empty($sub) ? ' <font color="silver"><b>|</b></font> ' : '') . $codec;
+					$codecs .= ($cCount > 0 && !empty($sub) ? (($cCount % 6 == 0) ? '<br />' : $VAL_DELIM) : '') . $codec;
+					$cCount++;
 				}
-				$cCount++;
 			}
-			echo '<div style="overflow-x:hidden;"><span title="Count is not unique"><i><b>Sub:</b></i></span><span class="flalright">'.$cCount.' <font color="silver">[</font> '.$codecs.' <font color="silver">]</font></span></div>';
+
+			echo '<div style="overflow-x:hidden; padding-top: 8px;"><span title="Count is not unique"><i><b>Sub</b></i> <font color="silver">[</font> '.$streamDetails->getSubtitleCount().' <font color="silver">]</font><b>:</b> </span><span class="flalright">'.$codecs.'</span></div>';
 		}
 	} // !isDemo
 
@@ -263,6 +276,7 @@ include_once "./template/Series/StreamDetails.php";
 			echo '</span>';
 			echo '</div>';
 		}
+
 		echo '<div class="padtop15"><span><i><b>Size:</b></i></span><span class="flalright">'.$streamDetails->getFsize().'</span></div>';
 	}
 	if ($isAdmin) {

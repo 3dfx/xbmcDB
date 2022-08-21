@@ -65,16 +65,18 @@ include_once "globals.php";
 		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
 			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL WHERE src IS NOT NULL AND idFile IN('.$idFiles.');');
 			$dbh->exec('DELETE FROM fileinfo WHERE src IS NULL AND idFile IN('.$idFiles.');');
-			if ($clrStream == 1)
+			if ($clrStream == 1) {
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile IN('.$idFiles.');');
+			}
 
 			clearMediaCache();
 
 		} else if ($idFile != -1 && $act == 'clearFileSize')  {
 			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL WHERE src IS NOT NULL AND idFile='.$idFile.';');
 			$dbh->exec('DELETE FROM fileinfo WHERE src IS NULL AND idFile='.$idFile.';');
-			if ($clrStream == 1)
+			if ($clrStream == 1) {
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+			}
 
 			clearMediaCache();
 
@@ -127,8 +129,9 @@ include_once "globals.php";
 			else
 				$dbh->exec('UPDATE fileinfo SET src='.$source.' WHERE idFile='.$idFile.';');
 
-			if ($clrStream == 1)
+			if ($clrStream == 1) {
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+			}
 
 			clearMediaCache();
 
@@ -355,74 +358,6 @@ include_once "globals.php";
 				exit;
 			}
 			echo 'Setcover was set!<br />';
-
-			/*
-			#<OLD CODE>
-			if (false) {
-			if (!empty($url)) {
-				$docRoot = getEscServer('DOCUMENT_ROOT');
-				$path    = $GLOBALS['THUMBNAIL_DIR'];
-				$path    = str_replace('./', $docRoot, $path);
-
-				$crc    = thumbnailHash($url);
-				$crcSet = thumbnailHash('videodb://1/7/'.$id.'/');
-
-				$go         = true;
-				$movieCover = $path.substr($crc, 0, 1)."/".$crc.".jpg";
-				$setCover   = $path.substr($crcSet, 0, 1)."/".$crcSet.".jpg";
-
-				if (!empty($setCover)) {
-					if (is_file($setCover)) {
-						if ( unlink($setCover) === false ) {
-							$go = false;
-							echo 'Old cover could NOT be deleted!<br />';
-						} else {
-							echo 'Old cover was deleted!<br />';
-						}
-					}
-
-					if ($go) {
-						if ( copy($movieCover, $setCover) or die ('DENiED!') ) {
-							echo 'Setcover was set!<br />';
-						} else {
-							echo 'Setcover was NOT set!<br />';
-						}
-					}
-				} //empty setCover
-
-				echo '<br />';
-
-				$movieFanart = $path.$crc.".jpg";
-				$setFanart = '';
-				$go = true;
-				if (!empty($movieFanart) && is_file($movieFanart)) {
-					$setFanart = $path.$crcSet.".jpg";
-
-					if (!empty($setFanart)) {
-						if (is_file($setFanart)) {
-							if ( unlink($setFanart) === false ) {
-								$go = false;
-								echo 'Old fanart could NOT be deleted!<br />';
-							} else {
-								echo 'Old fanart was deleted!<br />';
-							}
-						}
-
-						if ($go) {
-							if ( copy($movieFanart, $setFanart) or die ('DENiED!') ) {
-								echo 'Setfanart was set!<br />';
-							} else {
-								echo 'Setfanart was NOT set!<br />';
-							}
-						}
-					} //empty setFanart
-				} //empty movieFanart
-
-				exit;
-			} //empty url
-			} //if false
-			#</OLD CODE>
-			*/
 		}
 
 		if ($act == 'addset' && !empty($name)) {

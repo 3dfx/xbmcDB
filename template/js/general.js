@@ -28,8 +28,7 @@ function getKeyCode(event) {
 function newMoviesAvailable() {
 	if (!gotoConfirmation()) { return; }
 
-	var href = './?show=filme&newmode=1&newsort=2&unseen=3&dbSearch&which&just&sort&mode&country';
-	window.location.href=href;
+	window.location.href='./?show=filme&newmode=1&newsort=2&unseen=3&dbSearch&which&just&sort&mode&country';
 }
 
 function gotoConfirmation() {
@@ -48,6 +47,7 @@ function doRequest__(isShow, ids) {
 		url: "request.php",
 		data: "contentpage="+(isShow ? "&isShow=1" : "")+"&ids=" + ids + "&copyAsScript=" + asscript,
 		success: function(data) {
+			// noinspection EqualityComparisonWithCoercionJS
 			if (data == '-3') { alert('Session expired!'); setTimeout("location.reload(true);", 150); }
 			$("#result").html(data);
 		}
@@ -103,7 +103,7 @@ function selected(obj, changeMaster, postRequest, admin) {
 	var listDiv = document.getElementById('movieList');
 	if (listDiv == null) { return; }
 	var clearSelectAll = document.getElementById('clearSelectAll');
-	if (ids == '') {
+	if (ids == null || ids === '') {
 		listDiv.style.display = 'none';
 		resBox.innerHTML = '';
 
@@ -112,7 +112,7 @@ function selected(obj, changeMaster, postRequest, admin) {
 	}
 
 	if (changeMaster) {
-		clearSelectAll.checked = ids == '' ? false : true;
+		clearSelectAll.checked = ids !== '';
 	}
 
 	if (postRequest) {
@@ -128,46 +128,15 @@ function collectIds__() {
 	for (var r = 0; r < tds.length; r++) {
 		var td = tds[r];
 		var obj = $( td ).find('.checka')[0];
-		if (obj == null || obj.type != "checkbox") { continue; }
+		if (obj == null || obj.type !== "checkbox") { continue; }
 		if (obj.disabled || !obj.checked) { continue; }
 		addId(obj.value);
 	}
 }
 
 function addId(id) {
-	if (ids.search(id + ',') != -1 || ids.search(', ' + id) != -1)
+	if (ids.search(id + ',') !== -1 || ids.search(', ' + id) !== -1) {
 		return;
-	ids = ids + (ids.length == 0 ? '' : ', ') + id;
-}
-
-/*
-function removeId(id) {
-console.log( '0: ' + ids );
-	var arr = ids.split(', ');
-console.log( '1: ' + arr );
-	var idx = arr.indexOf(id);
-console.log( '2: ' + id + ' idx: ' + idx );
-	if (idx > -1) {
-		arr.splice(idx, 1);
-		ids = arr.join(',');
 	}
-console.log( '2: ' + ids );
-	ids = ids.replace(', ', ',');
-	ids = ids.replace(',', ', ');
-
-/--*
-	if (ids.indexOf(id + ', ') != -1) {
-console.log( '^1' );
-		ids = ids.replace(id + ', ', '');
-
-	} else if (ids.indexOf(', ' + id) != -1) {
-console.log( '^2' );
-		ids = ids.replace(', ' + id, '');
-
-	} else if (ids.indexOf(',') == -1) {
-console.log( '^3' );
-		ids = ids.replace(id, '');
-	}
-//console.log( '4: ' + ids );
+	ids = ids + (ids.length === 0 ? '' : ', ') + id;
 }
-*/

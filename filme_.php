@@ -72,6 +72,7 @@ include_once "globals.php";
 		echo '<option value="1">mark as unseen</option>';
 		echo '<option value="2">mark as seen</option>';
 		echo '<option value="3">delete</option>';
+		echo '<option value="4">clear StreamDetails</option>';
 		echo '</select>';
 		echo '</div>';
 		echo '</td></tr>';
@@ -203,7 +204,6 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 		$f4Ke      = isFake4K($filename);
 		$scaled    = isUpscaled($filename);
 		$is3D      = is3d($filename);
-		$hdr       = isHDR($filename);
 
 		$filmname0 = $filmname;
 		$titel     = $filmname;
@@ -490,6 +490,12 @@ if ($dirActorEnabled) {
 
 #resolution/codec/10bit/fps/hdr
 			if (!$isDemo) {
+				$hdrType   = postEditHdrType($vRes[3]);
+				$hdr       = isHDR($filename, $hdrType);
+				if ($hdr && empty($hdrType)) {
+					$hdrType = 'HDR';
+				}
+
 				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 
 				$resInfo   = getResDesc($vRes);
@@ -507,7 +513,7 @@ if ($dirActorEnabled) {
 				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resStyle) ? '' : $resStyle).'>'.$resInfo.'</span>');
 				$tipSuffix = $f4Ke   ? ' | Fake 4K' : '';
 				$tipSuffix = $scaled ? ' | Upscaled 4K' : $tipSuffix;
-				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | HDR' : '').$tipSuffix;
+				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | '.$hdrType : '').$tipSuffix;
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
 				$fps       = array($bits, formatFps($fps));
 				$bit10     = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;
@@ -522,7 +528,7 @@ if ($dirActorEnabled) {
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" title="'.$resTip.'">'.$resTD.'</td>';
 				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
 				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
-				$fpsTitle  = ($hdr   ? 'HDR'   : '').($hdr   && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
+				$fpsTitle  = ($hdr   ? $hdrType : '').($hdr && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
 				$fpsTitle  = 'title="'.$fpsTitle.'"';
 				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" '.$fpsTitle.'>'.$codecTD.'</td>';
 

@@ -12,6 +12,7 @@ class StreamDetails {
 	private $aChannels  = array();
 	private $aLang      = array();
 	private $subtitle   = array();
+	private $hdrType    = null;
 	private $fetchedFPS = null;
 	private $fps        = null;
 	private $bits       = null;
@@ -56,6 +57,9 @@ class StreamDetails {
 
 			$tmp = $stRow['strSubtitleLanguage'];
 			if (!empty($tmp)) { $this->subtitle[] = $tmp; }
+
+			$tmp = $stRow['strHdrType'];
+			if (!empty($tmp)) { $this->hdrType = $tmp; }
 		}
 
 		if (!empty($this->subtitle)) {
@@ -111,12 +115,20 @@ class StreamDetails {
 		return $this->subtitle;
 	}
 
+	public function getSubtitleCount() {
+		return count($this->subtitle);
+	}
+
 	public function getFetchedFPS() {
 		return $this->fetchedFPS;
 	}
 
 	public function getFps() {
 		return $this->fps;
+	}
+
+	public function getHdrType() {
+		return $this->hdrType;
 	}
 
 	public function getBits() {

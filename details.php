@@ -198,7 +198,6 @@ include_once "./template/functions.php";
 		$f4Ke   = isFake4K($filename);
 		$scaled = isUpscaled($filename);
 		$is3D   = is3d($filename);
-		$hdr    = isHDR($filename);
 		if ($is3D) {
 			$titel .= ' (3D)';
 		}
@@ -255,25 +254,6 @@ include_once "./template/functions.php";
 			echo '</div>';
 			echo "\r\n";
 		}
-
-		/*
-		if (!empty($country)) {
-			echo "\r\n";
-			echo '<div class="originalTitle" style="top:10px;">';
-			echo '<b>Made in</b>: '.$country;
-			echo '</div>';
-			echo "\r\n";
-		}
-
-		$studio = getStudio($idMovie);
-		if (!empty($studio)) {
-			echo "\r\n";
-			echo '<div class="originalTitle" style="top:12px;">';
-			echo '<b>Studio</b>: '.$studio;
-			echo '</div>';
-			echo "\r\n";
-		}
-		*/
 
 		$studio = getStudio($idMovie);
 		if (!empty($country) || !empty($studio)) {
@@ -339,6 +319,7 @@ include_once "./template/functions.php";
 		$width     = '';
 		$height    = '';
 		$vCodec    = '';
+		$hdrType   = '';
 		$genre     = array();
 		$aCodec    = array();
 		$aChannels = array();
@@ -377,6 +358,7 @@ include_once "./template/functions.php";
 		foreach($result3 as $row3) {
 			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
 			if (!empty($tmp = $row3['iVideoHeight'])) { $height = $tmp; }
+			if (!empty($tmp = $row3['strHdrType']) && !isDemo()) { $hdrType = trim($tmp); }
 			if (!empty($tmp = $row3['strVideoCodec']) && !isDemo()) { $vCodec = trim($tmp); }
 			if (!empty($tmp = $row3['strAudioCodec']) && !isDemo()) { $aCodec[] = strtoupper($tmp); }
 			if (!empty($tmp = $row3['iAudioChannels']) && !isDemo()) { $aChannels[] = $tmp; }
@@ -394,6 +376,8 @@ include_once "./template/functions.php";
 			}
 			$run++;
 		}
+
+		$hdr = isHDR($filename, $hdrType);
 
 		if (empty($ar) || intval($ar) == 0){
 			$ar = sprintf("%01.2f", round($width/$height, 2));
@@ -455,7 +439,6 @@ include_once "./template/functions.php";
 		$res[1][$COLS['DUR']]  = $minutes;
 		$res[0][$COLS['RATE']] = $rating;
 		$res[1][$COLS['RATE']] = '<span title="votes">'.$stimmen.'</span>';
-		#$res[0][$COLS['VOTE']] = $stimmen;
 		$res[0][$COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
 		if (!empty($width) && !empty($height)) {
 			$vRes[0] = $width;
@@ -489,6 +472,14 @@ include_once "./template/functions.php";
 			$fPerf = getFpsPerf($fps[1]);
 			$color = ($cols === null || $fPerf < 4 ? null : $cols[$fPerf]);
 			$res[1][$COLS['VIDEO2']] = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$fps[1].' fps</span>' : $fps[1].' fps');
+		}
+
+		if (!empty($hdrType)) {
+			$hPerf  = getResPerf(null, true);
+			$color = ($cols === null || $hPerf < 4 ? null : $cols[$hPerf]);
+			if (!empty($color)) {
+				$res[2][$COLS['VIDEO2']] = '<span style="color:'.$color.'; font-weight:bold;">'.postEditHdrType($hdrType).'</span>';
+			}
 		}
 
 		$vCodec = postEditVCodec($vCodec);
@@ -692,18 +683,20 @@ include_once "./template/functions.php";
 				$zeilen++;
 			}
 
-			if ($zeilen > 2 && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
-		echo '<tr id="genreDots"><td colspan="'.($COLS['GENRE']).'"></td><td class="streaminfoGenre lefto">';
-		if ($hiddenGenres >= 1) {
-			echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
-		}
-		echo '</td>';
-		echo '<td colspan="'.($hiddenSubs >= 1 ? count($COLS)-($COLS['GENRE']+2) : count($COLS)-($COLS['GENRE']+1)).'"></td>';
-		if ($hiddenSubs >= 1) {
-			echo '<td class="streaminfoLasTD streaminfoBorder"><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
-		}
-		echo '</tr>';
-		echo "\r\n";
+			if ($zeilen > (empty($hdrType) ? 2 : 3) && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
+				echo '<tr id="genreDots">';
+				echo '<td colspan="'.($COLS['GENRE']).'"></td>';
+				echo '<td class="streaminfoGenre lefto">';
+				if ($hiddenGenres >= 1) {
+					echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
+				}
+				echo '</td>';
+					echo '<td colspan="'.($hiddenSubs >= 1 ? count($COLS)-($COLS['GENRE']+2) : count($COLS)-($COLS['GENRE']+1)).'"></td>';
+				if ($hiddenSubs >= 1) {
+					echo '<td class="streaminfoLasTD streaminfoBorder"><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
+				}
+				echo '</tr>';
+				echo "\r\n";
 			}
 
 			$smb = (substr($filename, 0, 6) == 'smb://');

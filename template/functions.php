@@ -75,8 +75,9 @@ function querySQL_($dbh, $SQL, $throw = true) {
 
 function fetchCount($dbh, $table) {
 	$result = querySQL_($dbh, "SELECT COUNT(*) AS c FROM ".$table.";", false);
-	foreach($result as $row)
+	foreach($result as $row) {
 		return $row['c'];
+	}
 	return 0;
 }
 
@@ -133,7 +134,7 @@ function getTableNames() {
 }
 
 function getStreamDetails($idFile, $dbh = null) {
-	return querySQL_($dbh, "SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL) AND idFile = ".$idFile.";");
+	return querySQL_($dbh, "SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL OR strHdrType IS NOT NULL) AND idFile = ".$idFile.";");
 }
 
 function getGenres($dbh) {
@@ -186,9 +187,10 @@ function getResolution($dbh, $SkQL, $isMovie) {
 		$result = querySQL_($dbh, $SQL, false);
 		foreach($result as $row) {
 			if (!empty($id = $row['idFile'])) {
-				$idStream[$id][0] = $row['iVideoWidth'];
-				$idStream[$id][1] = $row['iVideoHeight'];
-				$idStream[$id][2] = $row['strVideoCodec'];
+				$idStream[$id][] = $row['iVideoWidth'];
+				$idStream[$id][] = $row['iVideoHeight'];
+				$idStream[$id][] = $row['strVideoCodec'];
+				$idStream[$id][] = $row['strHdrType'];
 			}
 		}
 
@@ -807,30 +809,40 @@ function setSeenDelMovie($what, $checkFilme) {
 	$dbh = getPDO();
 	try {
 		if (!$dbh->inTransaction()) { $dbh->beginTransaction(); }
-		for ($i = 0; $i < count($checkFilme); $i++) {
-			$id = $checkFilme[$i];
+		$SQL     = "SELECT idFile FROM movie WHERE idMovie IN (".implode(',', $checkFilme).")";
 
-			if ($id != null) {
-				$sql = "SELECT idFile FROM movie WHERE idMovie = '$id'";
-				$result = $dbh->query($sql);
-				$row    = $result->fetch();
-				$idFile = $row['idFile'];
+		$qryRes  = $dbh->query($SQL);
+		$result  = $qryRes->fetchAll();
+		$idFiles = array();
+		for ($i = 0; $i < count($result); $i++) {
+			if (!empty($result[$i]['idFile'])) {
+				$idFiles[] = $result[$i]['idFile'];
+			}
+		}
 
-				if ($what == 1) { // unseen
-					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile = '$idFile';");
+		if (!empty($idFiles)) {
+			switch ($what) {
+				case 1: // unseen
+					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile IN (".implode(',', $idFiles).");");
+					break;
 
-				} else if ($what == 2) { // seen
-					$dbh->exec("UPDATE files SET playcount=1 WHERE idFile = '$idFile';");
+				case 2: // seen
+					$dbh->exec("UPDATE files SET playcount=1 WHERE idFile IN (".implode(',', $idFiles).");");
+					break;
 
-				} else if ($what == 3) { // delete
-					$dbh->exec("DELETE FROM movie WHERE idMovie = '$id';");
-					$dbh->exec("DELETE FROM fileinfo WHERE idFile = '$idFile';");
-					$dbh->exec("DELETE FROM files WHERE idFile = '$idFile';");
-				}
+				case 3: // delete
+					$dbh->exec("DELETE FROM movie WHERE idFile IN (".implode(',', $idFiles).");");
+					$dbh->exec("DELETE FROM fileinfo WHERE idFile IN (".implode(',', $idFiles).");");
+					$dbh->exec("DELETE FROM files WHERE idFile IN (".implode(',', $idFiles).");");
+					break;
 
-				clearMediaCache();
-			} // id is not null
-		} // for each keys
+				case 4: // clear streamdetails
+					$dbh->exec("DELETE FROM streamdetails WHERE idFile IN (".implode(',', $idFiles).");");
+					break;
+			}
+
+			clearMediaCache();
+		}
 
 		if ($dbh->inTransaction()) { $dbh->commit(); }
 
@@ -2681,7 +2693,11 @@ function is3d($filename) {
 	return matchString('/\b\.3D\.\b/', $filename);
 }
 
-function isHDR($filename) {
+function isHDR($filename, $hdrType = null) {
+	if (!empty($hdrType)) {
+		return true;
+	}
+
 	#mediainfo --Inform="Video;%HDR_Format_Compatibility%"
 	return matchString('/\bHDR|HDR10|HDR10P|DV\b/', $filename);
 }
@@ -2736,6 +2752,16 @@ function postEditLanguage($str, $buildLink = true) {
 function makeLangLink($strSource, $strToReplace, $strReplaceToken, $strFilter, $strTitle, $buildLink = true) {
 	$url = '?show=filme&mode=2&newmode=0&unseen=3&which=&just=&country=';
 	return str_replace($strToReplace, '<span title="'.$strTitle.'">'.($buildLink ? '<a href="'.$url.$strFilter.'" target="_parent" class="detailLink">' : '').$strReplaceToken.($buildLink ? '</a>' : '').'</span>', $strSource);
+}
+
+function postEditHdrType($str) {
+	if (empty($str)) { return null; }
+
+	$str = strtoupper($str);
+
+	$str = str_replace('DOLBYVISION', 'DV', $str);
+
+	return $str;
 }
 
 /** @noinspection PhpUnnecessaryLocalVariableInspection */
@@ -2822,11 +2848,17 @@ function getResDesc($vRes) {
 }
 
 function getResPerf($vRes, $hdr = false) {
-	if (empty($vRes))
-		return 0;
+	if ($hdr) {
+		return 5;
+	}
 
-	if ($vRes[0] >= 2200 || $hdr)
-		return $hdr ? 5 : 4;
+	if (empty($vRes)) {
+		return 0;
+	}
+
+	if ($vRes[0] >= 2200) {
+		return 4;
+	}
 
 	return 0;
 }
@@ -2838,33 +2870,37 @@ function getFpsPerf($fps) {
 	return 5;
 }
 
-function atmosFlagPossibleToSet($str) {
-	return ($str == 'A_EAC3' || $str == 'EAC3');
+function atmosFlagPossibleToSet($codec) {
+	return (
+		$codec == 'EAC3'   ||
+		$codec == 'A_EAC3' ||
+		$codec == 'TRUEHD'
+	);
 }
 
-function postEditACodec($str, $atmosx = null) {
-	if ($atmosx && ($str == 'TRUEHD' || $str == 'EAC3' || $str == 'A_EAC3')) {
-		$tipp = 'Dolby Atmos with '.($str == 'TRUEHD' ? 'True-HD' : 'E-AC3');
-		$str = '<span title="'.$tipp.'">Atmos</span>';
+function postEditACodec($codec, $atmosx = null) {
+	if ($atmosx && ($codec == 'TRUEHD' || $codec == 'EAC3' || $codec == 'A_EAC3')) {
+		$tipp = 'Dolby Atmos with '.($codec == 'TRUEHD' ? 'True-HD' : 'E-AC3');
+		$codec = '<span title="'.$tipp.'">Atmos</span>';
 
-	} else if ($atmosx && ($str == 'DCA' || $str == 'DTS' || $str == 'DTSHD_MA' || $str == 'DTSHD_HRA')) {
+	} else if ($atmosx && ($codec == 'DCA' || $codec == 'DTS' || $codec == 'DTSHD_MA' || $codec == 'DTSHD_HRA')) {
 		$tipp = 'DTS - High Definition';
-		$str = '<span title="'.$tipp.'">DTS:X</span>';
+		$codec = '<span title="'.$tipp.'">DTS:X</span>';
 
 	} else {
-		$str = str_replace('MP3FLOAT', 'MP3', $str);
+		$codec = str_replace('MP3FLOAT', 'MP3', $codec);
 		//$str = str_replace('AC3', '<span title="Audio Coding 3">AC3</span>', $str);
-		$str = str_replace('A_EAC3', '<span title="Enhanced AC3">E-AC3</span>', $str);
-		$str = str_replace('EAC3', '<span title="Enhanced AC3">E-AC3</span>', $str);
-		$str = str_replace('AAC', '<span title="Advanced Audio Coding">AAC</span>', $str);
+		$codec = str_replace('A_EAC3', '<span title="Enhanced AC3">E-AC3</span>', $codec);
+		$codec = str_replace('EAC3', '<span title="Enhanced AC3">E-AC3</span>', $codec);
+		$codec = str_replace('AAC', '<span title="Advanced Audio Coding">AAC</span>', $codec);
 		//$str = str_replace('VORBIS', '<span title="Vorbis">VORBIS</span>', $str);
-		$str = str_replace('DCA', 'DTS', $str);
-		$str = str_replace('TRUEHD', '<span title="True High Definition">True-HD</span>', $str);
-		$str = str_replace('DTSHD_MA', '<span title="DTS - High Definition (Master Audio)">DTS-HD MA</span>', $str);
-		$str = str_replace('DTSHD_HRA', '<span title="DTS - High Definition (High Resolution Audio)">DTS-HD HRA</span>', $str);
+		$codec = str_replace('DCA', 'DTS', $codec);
+		$codec = str_replace('TRUEHD', '<span title="True High Definition">True-HD</span>', $codec);
+		$codec = str_replace('DTSHD_MA', '<span title="DTS - High Definition (Master Audio)">DTS-HD MA</span>', $codec);
+		$codec = str_replace('DTSHD_HRA', '<span title="DTS - High Definition (High Resolution Audio)">DTS-HD HRA</span>', $codec);
 	}
 
-	return $str;
+	return $codec;
 }
 
 function postEditChannels($str) {
