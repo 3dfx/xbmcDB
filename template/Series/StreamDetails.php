@@ -31,7 +31,10 @@ class StreamDetails {
 						$tmp .= (strlen($tmp) < 4 ? '0' : '');
 					}
 				}
-				$this->ar = $tmp;
+
+				if (is_numeric($tmp)) {
+					$this->ar = sprintf("%01.2f", round($tmp, 2));
+				}
 			}
 
 			$tmp = $stRow['iVideoWidth'];
@@ -66,12 +69,17 @@ class StreamDetails {
 			$this->subtitle = array_unique($this->subtitle);
 		}
 
-		$this->arOR = fetchFromDB_($dbh, "SELECT ratio FROM aspectratio WHERE idMovie = ".$idEpisode.";");
 		$this->fsize = _format_bytes(fetchFileSize($idFile, $path, $filename, $filesize, $dbh));
 		$this->fetchedFPS = fetchFps($idFile, $path, $filename, array($this->bits, $this->fps), $dbh);
-		if ($this->fetchedFPS != null) {
+		if (!empty($this->fetchedFPS)) {
 			$this->bits = $this->fetchedFPS[0];
 			$this->fps  = $this->fetchedFPS[1];
+		}
+
+		$this->arOR = getOverrideAR($dbh, $idFile, $idEpisode);
+		if (!empty($this->arOR)) {
+			$this->arOR = sprintf("%01.2f", $this->arOR);
+			$this->ar = null;
 		}
 	}
 

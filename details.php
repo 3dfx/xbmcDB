@@ -145,19 +145,14 @@ include_once "./template/functions.php";
 		$orTitel      = trim($row['orTitle']);
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['desc'];
-		$ar           = '';
+		$ar           = null;
+		$arOR         = null;
 		$arSpan       = '';
 		$country      = getCountry($idMovie);
 		$atmosx       = fetchAudioFormat($idFile, $path, $filename, $row['atmosx'], getPDO());
 		$fps          = fetchFps($idFile, $path, $filename, array($bit, $fps), getPDO());
 		if ($fps === null && $fps[0] === null) {
 			$bit10 = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
-		}
-
-		$resultAR = fetchFromDB("SELECT ratio FROM aspectratio WHERE idMovie = ".$idMovie.";");
-		if (!empty($resultAR) && !empty($resultAR['ratio'])) {
-			$ar = sprintf("%01.2f", round($resultAR['ratio'], 2));
-			$arSpan = '<span style="font-style:italic;" title="aspect-ratio overridden">'.$ar.':1</span>';
 		}
 
 		$percent = null;
@@ -377,12 +372,18 @@ include_once "./template/functions.php";
 			$run++;
 		}
 
-		$hdr = isHDR($filename, $hdrType);
+		$arOR = getOverrideAR(null, $idFile, $idMovie);
+		if (!empty($arOR) && !empty($arOR['ratio'])) {
+			$ar = $arOR;
+			$arSpan = '<span style="font-style:italic;" title="aspect-ratio // overridden">'.$ar.':1</span>';
+		}
 
 		if (empty($ar) || intval($ar) == 0){
 			$ar = sprintf("%01.2f", round($width/$height, 2));
 			$arSpan = $ar.':1';
 		}
+
+		$hdr = isHDR($filename, $hdrType);
 
 		$sqlG = "SELECT * FROM genre";
 		$resultG = querySQL($sqlG);
@@ -443,11 +444,10 @@ include_once "./template/functions.php";
 		if (!empty($width) && !empty($height)) {
 			$vRes[0] = $width;
 			$vRes[1] = $height;
-			$resInfo  = $width.'x'.$height;
 			$cols     = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 			$resPerf  = getResPerf($vRes, $hdr);
-			$title    = $f4Ke   ? 'title="Fake 4K"; '     : '';
-			$title    = $scaled ? 'title="Upscaled 4K"; ' : $title;
+			$title    = $f4Ke   ? 'Fake 4K'     : '';
+			$title    = $scaled ? 'Upscaled 4K' : $title;
 			$resColor = ($cols === null || $resPerf < 4 ? null : $cols[$resPerf]);
 			$resStyle  = '';
 			if (!empty($resColor) || $f4Ke || $scaled) {
@@ -461,7 +461,27 @@ include_once "./template/functions.php";
 					$resStyle .= ' color:'.$resColor.';';
 				}
 			}
-			$resInfo  = '<span '.$title.'style="'.$resStyle.'">'.$resInfo.'</span>';
+
+			$resSP1 = '';
+			$resSP2 = '';
+
+			if (!empty($arOR)) {
+				if (!empty($title)) {
+					$title .= ' // ';
+				}
+				$title .= 'overridden';
+				$resSP1 = '<span style="font-style:italic;">';
+				$resSP2 = '</span>';
+
+				$height = intval($width / $arOR);
+			}
+
+			$resInner = $width.'x'.$height;
+			if (!empty($title)) {
+				$title = 'title="'.$title.'"; ';
+			}
+
+			$resInfo  = '<span '.$title.'style="'.$resStyle.'">'.$resSP1.$resInner.$resSP2.'</span>';
 			$res[0][$COLS['VIDEO1']] = $resInfo;
 		}
 		$res[1][$COLS['VIDEO1']] = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$idMovie.', '.$ar.'); return false;">'.$arSpan.'</span>';

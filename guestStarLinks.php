@@ -116,7 +116,6 @@ function startImport() {
 
 		$countAfter = fetchActorlinkCount($dbh, $dbVer);
 		$count = $countAfter - $countBefore;
-		//$count = $count + $fixed;
 
 		if (!empty($dbh) && $dbh->inTransaction()) {
 			if ($count > 0) { $dbh->commit(); }
@@ -134,13 +133,19 @@ function startImport() {
 function fetchActorlinkCount($dbh, $dbVer) {
 	$count  = 0;
 	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM ".mapDBC('actorlinkepisode').";");
-	$count += $res['count'];
+	if (!empty($res)) {
+		$count += $res['count'];
+	}
 
-	if ($dbVer >= 93) //dbVer 93 an above, the tables are the same
+	if ($dbVer >= 93) {
+		//dbVer 93 an above, the tables are the same
 		return $count;
+	}
 
 	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM ".mapDBC('actorlinktvshow').";");
-	$count += $res['count'];
+	if (!empty($res)) {
+		$count += $res['count'];
+	}
 
 	return $count;
 }

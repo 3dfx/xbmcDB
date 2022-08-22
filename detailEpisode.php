@@ -184,12 +184,21 @@ include_once "./template/Series/StreamDetails.php";
 				$arInner = "";
 				$ar   = $streamDetails->getAr();
 				$arOR = $streamDetails->getArOR();
-				if (!empty($arOR) && !empty($arOR['ratio'])) {
-					$ar = sprintf("%01.2f", round($arOR['ratio'], 2));
-					$arInner = '<span style="font-style:italic;" title="aspect-ratio overridden"> <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font></span>';
-				} else {
-					$arInner = !empty($ar) ? ' <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font>' : '';
+
+				$arInner = '';
+				$arSP1   = '';
+				$arSP2   = '';
+
+				if (!empty($arOR)) {
+					$ar = $arOR;
+					$arSP1 = '<span style="font-style:italic;" title="aspect-ratio // overridden"> ';
+					$arSP2 = '</span>';
 				}
+
+				if (!empty($ar)) {
+					$arInner = $arSP1.' <font color="silver">[</font> '.$ar.':1 <font color="silver">]</font>'.$arSP2;
+				}
+
 				$arSpan = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$idEpisode.', '.$ar.'); return false;">'.$arInner.'</span>';
 
 				echo '<span class="flalright">';
@@ -322,7 +331,7 @@ function getThumbImg($dbh, int $idFile, $idEpisode, $path, string $filename, str
 			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
 				$SQL = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$idEpisode."';";
 				$row2 = fetchFromDB_($dbh, $SQL, false);
-				$url = isset($row2['url']) ? $row2['url'] : null;
+				$url = !empty($row2) && isset($row2['url']) ? $row2['url'] : null;
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);
 					if (isFile($sessionImg)) {

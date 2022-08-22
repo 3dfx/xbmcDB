@@ -100,15 +100,14 @@ include_once "globals.php";
 			if (!emptyRating($rating) || intval($rating) == 0) {
 				$GETID_SQL = "SELECT c03 FROM episode WHERE idEpisode=".$idEpisode.";";
 				$row       = fetchFromDB_($dbh, $GETID_SQL, false);
-				$idRating  = $row['c03'];
-				if ($idRating == null || $idRating == '' || $idRating == -1)
+				$idRating  = empty($row) ? null : $row['c03'];
+				if ($idRating == null || $idRating == '' || $idRating == -1) {
 					$idRating = getNextId($dbh, 'rating', 'rating_id');
+				}
 
-				$SQLrating = 'REPLACE INTO rating (rating_id,media_id,media_type,rating_type,rating,votes) VALUES([RATING_ID],[idEpisode],"episode","[default]","[RATING]",0);';
-				$SQLrating = str_replace('[idEpisode]',   $idEpisode,  $SQLrating);
-				$SQLrating = str_replace('[RATING_ID]',   $idRating,   $SQLrating);
-				$SQLrating = str_replace('[RATING]',      $rating,     $SQLrating);
-				$dbh->exec($SQLrating);
+				if (!empty($idRating)) {
+					$dbh->exec(createRatingSQL('REPLACE', $idEpisode, 'episode', $idRating, $rating));
+				}
 			}
 
 			$gast_autor = str_replace('"', "''", $gast_autor);
@@ -119,8 +118,11 @@ include_once "globals.php";
 			$SQLepi = str_replace('[GUEST_AUTOR]', $gast_autor, $SQLepi);
 			$SQLepi = str_replace('[AIRED]',       $airdate,    $SQLepi);
 			$SQLepi = str_replace('[REGIE]',       $regie,      $SQLepi);
-			$SQLepi = str_replace('[RATING_ID]',   $idRating,   $SQLepi);
 			$SQLepi = str_replace('[FILENAME]', ($strPath != '-1' ? $strPath : '').$file, $SQLepi);
+			if (!empty($idRating)) {
+				$SQLepi = str_replace('[RATING_ID]',   $idRating,   $SQLepi);
+			}
+
 			$dbh->exec($SQLepi);
 
 			$source = $source > 0 ? $source : 'NULL';
@@ -155,6 +157,10 @@ include_once "globals.php";
 
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
 			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+			if (empty($row)) {
+				return;
+			}
+
 			$lastId    = $row['idFile'];
 			$idFile    = $lastId + 1;
 			$added     = date("Y-m-d H:i:s", time());
@@ -172,13 +178,14 @@ include_once "globals.php";
 			if (!emptyRating($rating)) {
 				$idRating  = getNextId($dbh, 'rating',  'rating_id');
 
-				$SQLrating = 'INSERT INTO rating VALUES([RATING_ID],[idEpisode],"episode","[default]","[RATING]",0);';
-				$SQLrating = str_replace('[idEpisode]',    $idEpisode,     $SQLrating);
-				$SQLrating = str_replace('[RATING_ID]',    $idRating,      $SQLrating);
-				$rating = empty($rating) ? 0 : $rating;
-				$SQLrating = str_replace('[RATING]',       $rating,        $SQLrating);
-				$dbh->exec($SQLrating);
-		        }
+				if (!empty($idRating)) {
+					$dbh->exec(createRatingSQL('INSERT', $idEpisode, 'episode', $idRating, $rating));
+				}
+			}
+
+			if (empty($idRating)) {
+				$idRating = 'NULL';
+			}
 
 			$showEpi = explode('-', $showEpi);
 			$SQLepi = 'INSERT INTO episode '.
@@ -241,23 +248,16 @@ include_once "globals.php";
 				$idRating = findRatingId($dbh, $idMovie);
 				if (empty($idRating)) {
 					$idRating = getNextId($dbh, 'rating', 'rating_id');
-					$dbh->exec('UPDATE movie SET c05='.$idRating.' WHERE idMovie = '.$idMovie.';');
 				}
 
-				$SQLrating = 'REPLACE INTO rating (rating_id,media_id,media_type,rating_type,rating,votes) VALUES([RATING_ID],[idMovie],"movie","[default]","[RATING]",0);';
-				$SQLrating = str_replace('[idMovie]',   $idMovie,  $SQLrating);
-				$SQLrating = str_replace('[RATING_ID]', $idRating,   $SQLrating);
-				$SQLrating = str_replace('[RATING]',    $rating,     $SQLrating);
-				$dbh->exec($SQLrating);
+				if (!empty($idRating)) {
+					$dbh->exec('UPDATE movie SET c05='.$idRating.' WHERE idMovie = '.$idMovie.';');
+					$dbh->exec(createRatingSQL('REPLACE', $idMovie, 'movie', $idRating, $rating));
+				}
 			}
 
 			$params = '';
 			if (!empty($file)) {
-				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
-				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);
-				$row     = fetchFromDB_($dbh, $SQLpth, false);
-				$strPath = $row['strPath'];
-
 				$file    = str_replace("''", "'", $file);
 				$params  = "strFilename='".$file."'";
 				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
@@ -266,6 +266,11 @@ include_once "globals.php";
 					$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
 					$dbh->exec('DELETE FROM filemap  WHERE idFile='.$idFile.';');
 				}
+
+				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
+				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);
+				$row     = fetchFromDB_($dbh, $SQLpth, false);
+				$strPath = empty($row) ? null : $row['strPath'];
 				if (!empty($strPath)) {
 					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
 				}
@@ -363,11 +368,13 @@ include_once "globals.php";
 		if ($act == 'addset' && !empty($name)) {
 			$GETID_SQL = 'SELECT idSet FROM sets ORDER BY idSet DESC LIMIT 0, 1';
 			$row = fetchFromDB_($dbh, $GETID_SQL, false);
-			$lastId = $row['idSet'];
-			$id = $lastId + 1;
+			if (!empty($row)) {
+				$lastId = $row['idSet'];
+				$id = $lastId + 1;
 
-			$SQL = 'REPLACE INTO sets (idSet, strSet) VALUES('.$id.', "'.$name.'");';
-			$dbh->exec($SQL);
+				$SQL = 'REPLACE INTO sets (idSet, strSet) VALUES('.$id.', "'.$name.'");';
+				$dbh->exec($SQL);
+			}
 		}
 
 		if ($act == 'delete' && $id != -1) {
@@ -420,13 +427,28 @@ include_once "globals.php";
 function findRatingId($dbh, $mediaId, $mediaType = 'movie') {
 	$GETID_SQL = "SELECT rating_id FROM rating WHERE media_id=".$mediaId." AND media_type='".$mediaType."';";
 	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
-	return isset($row['rating_id']) ? $row['rating_id'] : null;
+	return !empty($row) && !empty($row['rating_id']) ? $row['rating_id'] : null;
 }
 
 function getNextId($dbh, $table, $column) {
 	$GETID_SQL = "SELECT ".$column." FROM ".$table." ORDER BY ".$column." DESC LIMIT 0, 1;";
 	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	if (empty($row)) {
+		return null;
+	}
 	$lastId    = $row[$column];
 	return $lastId + 1;
+}
+
+function createRatingSQL($command, $idMedia, $idType, $idRating, $rating) {
+	$rating = empty($rating) ? 0 : $rating;
+
+	$SQLrating = $command.' INTO rating (rating_id,media_id,media_type,rating_type,rating,votes) VALUES([RATING_ID],[ID_MEDIA],"[TYP_MEDIA]","[default]","[RATING]",0);';
+	$SQLrating = str_replace('[ID_MEDIA]',  $idMedia,  $SQLrating);
+	$SQLrating = str_replace('[TYP_MEDIA]', $idType,  $SQLrating);
+	$SQLrating = str_replace('[RATING_ID]', $idRating,   $SQLrating);
+	$SQLrating = str_replace('[RATING]',    $rating,     $SQLrating);
+
+	return $SQLrating;
 }
 ?>

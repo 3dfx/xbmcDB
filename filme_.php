@@ -502,18 +502,32 @@ if ($dirActorEnabled) {
 				$resPerf   = getResPerf($vRes, $hdr);
 				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
 				$resStyle  = '';
-				if (!empty($resColor) || $f4Ke || $scaled) {
-				    $resStyle = ' style="';
-				    if ($f4Ke || $scaled)
+				$arOR = getOverrideAR($dbh, $idFile, $idMovie);
+
+				if ($f4Ke || $scaled || !empty($resColor) || !empty($arOR)) {
+				    if ($f4Ke || $scaled) {
 						$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,0.75);';
-					if (!empty($resColor))
-						$resStyle .= ($f4Ke || $scaled ? ' ' : '').'color:'.$resColor.';';
-					$resStyle .= '"';
+					}
+					if (!empty($resColor)) {
+						$resStyle .= (!empty($resStyle) ? ' ' : '').'color:'.$resColor.';';
+					}
+					if (!empty($arOR)) {
+						$resStyle .= (!empty($resStyle) ? ' ' : '').'font-style:italic;';
+					}
+					if (!empty($resStyle)) {
+						$resStyle = ' style="'.$resStyle.'"';
+					}
 				}
+
 				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resStyle) ? '' : $resStyle).'>'.$resInfo.'</span>');
 				$tipSuffix = $f4Ke   ? ' | Fake 4K' : '';
 				$tipSuffix = $scaled ? ' | Upscaled 4K' : $tipSuffix;
-				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).($hdr ? ' | '.$hdrType : '').$tipSuffix;
+
+				if (!empty($arOR)) {
+					$vRes[1] = intval($vRes[0] / $arOR);
+				}
+
+				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).(!empty($arOR) ? ' // overridden' : '').$tipSuffix;
 				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
 				$fps       = array($bits, formatFps($fps));
 				$bit10     = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;

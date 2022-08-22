@@ -107,7 +107,10 @@ function fetchFromDB_($dbh, $SQL, $throw = true) {
 
 	try {
 		$result = $dbh->query($SQL);
-		return $result->fetch();
+		$fetched = $result->fetch();
+		if ($fetched !== false) {
+			return $fetched;
+		}
 
 	} catch(Throwable $e) {
 		if ($throw || isAdmin()) { echo $e->getMessage(); }
@@ -161,6 +164,15 @@ function getGenres($dbh) {
 	}
 
 	return $idGenre;
+}
+
+function getOverrideAR($dbh, $idFile, $idMedia) {
+	$result = fetchFromDB_($dbh, "SELECT ratio FROM aspectratio WHERE idFile = ".$idFile." AND idMovie = ".$idMedia.";");
+	if (empty($result) || empty($result['ratio']) || !is_numeric($result['ratio'])) {
+		return null;
+	}
+
+	return $result['ratio'];
 }
 
 function getResolution($dbh, $SkQL, $isMovie) {
@@ -2864,8 +2876,9 @@ function getResPerf($vRes, $hdr = false) {
 }
 
 function getFpsPerf($fps) {
-	if (empty($fps) || $fps <= 30)
+	if (empty($fps) || $fps <= 30) {
 		return 0;
+	}
 
 	return 5;
 }
