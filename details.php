@@ -373,8 +373,8 @@ include_once "./template/functions.php";
 		}
 
 		$arOR = getOverrideAR(null, $idFile, $idMovie);
-		if (!empty($arOR) && !empty($arOR['ratio'])) {
-			$ar = $arOR;
+		if (!empty($arOR)) {
+			$ar = $arOR = sprintf("%01.2f", $arOR);
 			$arSpan = '<span style="font-style:italic;" title="aspect-ratio // overridden">'.$ar.':1</span>';
 		}
 
@@ -397,8 +397,7 @@ include_once "./template/functions.php";
 			$idGenre[$str] = $rowG[mapDBC('idGenre')];
 		}
 
-		/** @noinspection PhpNestedMinMaxCallInspection */
-		$max = max(max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre)), 2);
+		$max = max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre), (empty($hdrType) ? 2 : 3));
 		$spalten = count($COLS);
 		for ($g = 0; $g < $max; $g++) {
 			for ($x = 0; $x < $spalten; $x++) {
@@ -600,6 +599,7 @@ include_once "./template/functions.php";
 			echo "\r\n";
 		}
 
+//		$streamTDs  = "";
 		if ($run > 0) {
 			echo '<div class="stream">';
 			echo '<table cellspacing="0" class="streaminfo">';
@@ -620,58 +620,35 @@ include_once "./template/functions.php";
 			echo "\r\n";
 
 			$zeilen = 0;
+			$colspan = 0;
 			$hiddenGenres = count($genre)-2;
 			$hiddenSubs   = count($sLang)-2;
 			for ($i = 0; $i < $max; $i++) {
 				echo '<tr'.($i >= 2 && ($hiddenGenres > 1 || $hiddenSubs > 1) ? ' name="genres" style="display:none;"' : '').'>';
-				$emptyGenreFilled = false;
 				for ($j = 0; $j < count($res[$i]); $j++) {
 					$val = $res[$i][$j];
-					if (count($genre) == 0 && $j == $COLS['GENRE']) {
-						if ($emptyGenreFilled) { continue; }
-					} else if ($val === null && $j > 0 && $j != $COLS['GENRE']+1) {
-						continue;
-					}
+					$val = (empty($val) ? '' : trim($val));
 
 					echo '<td';
-					$colspan = getNeededColspan($COLS, $res[$i], $j+1);
-					if (count($genre) == 0 && $j == $COLS['YEAR']) {
-						$colspan = 1;
-					}
-					if ($colspan > 1) {
-						echo ' colspan="'.$colspan.'"';
-					}
 
 					switch ($j) {
 						case $COLS['DUR']:
 							if ($i > 0 && $i >= count($genre) && $colspan > 1) {
 								echo ' class="streaminfoGenre"';
-								$emptyGenreFilled = true;
 							}
 							break;
 
 						case $COLS['RATE']:
-							if (!$emptyGenreFilled && $i > 0 && $i >= count($genre)) {
-								echo ' class="streaminfoGenre"';
-								$emptyGenreFilled = true;
-							}
 							break;
 
 						case $COLS['YEAR']:
-							if (!$emptyGenreFilled && $colspan > 1) {
-								echo ' class="streaminfoGenre"';
-								$emptyGenreFilled = true;
-							}
 							break;
 
 						case $COLS['GENRE']:
-							if (!$emptyGenreFilled) {
-								echo ' class="streaminfoGenre"';
-							}
 							break;
 
 						case $COLS['VIDEO1']:
-							echo ' class="streaminfoAV"';
+							echo ' class="streaminfoAV streaminfoBorder"';
 							break;
 
 						case $COLS['VIDEO2']:
@@ -696,14 +673,31 @@ include_once "./template/functions.php";
 					}
 
 					echo '>';
-					echo ($val === null || $val == '' ? '&nbsp;' : $val);
+					echo $val;
 					echo '</td>';
 				}
 				echo '</tr>';
 				$zeilen++;
 			}
+//			echo $streamTDs;
 
-			if ($zeilen > (empty($hdrType) ? 2 : 3) && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
+/*
+			$dom = new domDocument;
+			$dom->recover = true;
+			$dom->strictErrorChecking = false;
+			$dom->preserveWhiteSpace = true;
+
+			@$dom->loadHTML($streamTDs);
+			$trs = $dom->getElementsByTagName('tr');
+			foreach ($trs as $row) {
+				$cols = $row->getElementsByTagName('td');
+				foreach ($cols as $col) {
+					$xa = 1;
+				}
+			}
+*/
+
+			if ($zeilen > 2 && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
 				echo '<tr id="genreDots">';
 				echo '<td colspan="'.($COLS['GENRE']).'"></td>';
 				echo '<td class="streaminfoGenre lefto">';
@@ -778,13 +772,13 @@ include_once "./template/functions.php";
 //- FUNCTIONS -//
 	function getNeededColspan($COLS, $res, $spalte) {
 		$colspan = 1;
-		if ($spalte == $COLS['VIDEO1']) {
+		if ($spalte == $COLS['VIDEO1'] || $spalte == $COLS['AUDIO1'] || $spalte == $COLS['SUB']) {
 			return $colspan;
 		}
 
 		for ($j = $spalte; $j < count($res); $j++) {
-			$val = trim($res[$j]);
-			if ($val != null || $val != '') {
+			$val = empty($res[$j]) ? null : trim($res[$j]);
+			if (!empty($val)) {
 				break;
 			}
 

@@ -191,14 +191,17 @@ include_once "StreamDetails.php";
 			$showPath    = isset($dirs[$idShow]) ? $dirs[$idShow] : '';
 			$filesize    = $row['filesize'];
 			$source      = $row['source'];
+			$atmosx      = $row['atmosx'];
 			$epDesc      = '';
 			$running     = (!empty($runs) && isset($runs[$idShow]['running']) ? true : false);
 			$nextAirDate = (!empty($runs) && isset($runs[$idShow]['nextairdate']) ? $runs[$idShow]['nextairdate'] : null);
 
-			$ep = new Episode($episodeNum, $delta, $season, $idShow, $idTvdb, $idEpisode, $idSeason, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize, $source);
-			if (is_object($serien) && is_object($ep)) {
-				#$serien->addEpisode($ep, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate, $codecs[$idShow]);
-				$serien->addEpisode($ep, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate);
+			$ep = new Episode($episodeNum, $delta, $season, $idShow, $idTvdb, $idEpisode, $idSeason, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize, $source, $atmosx);
+			if (is_object($ep)) {
+				//TODO: check reasoning //$_SESSION['episodes'][$idEpisode] = serialize($ep);
+				if (is_object($serien)) {
+					$serien->addEpisode($ep, $fsk, $genre, $studio, $showDesc, $showPath, $running, $nextAirDate);
+				}
 			}
 		}
 
@@ -215,4 +218,13 @@ include_once "StreamDetails.php";
 
 		return $codecs;
 	}
+
+/* TODO: check reasoning
+	function getCachedEpisode($idEpisode) {
+		if (!empty($_SESSION['episodes'])) {
+			return $_SESSION['episodes'][$idEpisode];
+		}
+		return null;
+	}
+*/
 ?>

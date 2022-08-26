@@ -20,8 +20,9 @@ class Episode {
 	private $filesize;
 	private $source;
 	private $size;
+	private $atmosx;
 
-	function __construct($episode, $delta, $season, $idShow, $idTvdb, $idEpisode, $idSeason, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize, $source) {
+	function __construct($episode, $delta, $season, $idShow, $idTvdb, $idEpisode, $idSeason, $idFile, $idPath, $path, $epName, $epDesc, $rating, $serienname, $airDate, $duration, $playcount, $filename, $filesize, $source, $atmosx) {
 		$serienname = switchPronoms($serienname);
 
 		$this->episode     = $episode;
@@ -44,6 +45,7 @@ class Episode {
 		$this->filesize    = $filesize;
 		$this->source      = $source;
 		$this->airDate     = $airDate;
+		$this->atmosx 	   = $atmosx;
 	}
 
 	public function getName() {
@@ -152,6 +154,10 @@ class Episode {
 
 	public function isWatched() {
 		return $this->playcount >= 1 ? true : false;
+	}
+
+	public function getAtmosx() {
+		return $this->atmosx;
 	}
 }
 ?>

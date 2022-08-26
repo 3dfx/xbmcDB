@@ -44,6 +44,13 @@ include_once "./template/Series/StreamDetails.php";
 	$dbh = getPDO();
 	$existArtTable = existsArtTable();
 
+/* TODO: check reasoning
+	$ep = getCachedEpisode($idEpisode);
+	if (!empty($ep)) {
+		$ep = unserialize($ep);
+	}
+*/
+
 	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$idEpisode.';';
 	$result = querySQL($SQL);
 	foreach($result as $row) {
@@ -163,17 +170,17 @@ include_once "./template/Series/StreamDetails.php";
 	}
 
 	if (!empty($airDate)) {
-		$dayOfWk = dayOfWeekShort($airDate);
-		$airDate = toEuropeanDateFormat($airDate);
-		echo '<div><span><i><b>Airdate:</b></i></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span> <span class="flalright" style="padding-right:3px;">'.$airDate.'</span> </div>';
+		echo '<div><span><i><b>Airdate:</b></i></span>';
+		echo '<span class="flalright" style="width:45px;"><font color="silver">[ </font>'.dayOfWeekShort($airDate).'<font color="silver"> ]</font></span> ';
+		echo '<span class="flalright" style="padding-right:3px;">'.toEuropeanDateFormat($airDate).'</span> ';
+		echo '</div>';
 	}
 
-	if ($isAdmin) {
-		if (!empty($lastPlayed) && $playCount > 0) {
-			$dayOfWk    = dayOfWeekShort($lastPlayed);
-			$lastPlayed = toEuropeanDateFormat(substr($lastPlayed, 0, 10));
-			echo '<div><span><i><b>Watched:</b></i></span><span class="flalright" style="width:45px;"><font color="silver">[ </font>'.$dayOfWk.'<font color="silver"> ]</font></span><span class="flalright" style="padding-right:5px;">'.$lastPlayed.'</span></div>';
-		}
+	if ($isAdmin && $playCount > 0 && !empty($lastPlayed)) {
+		echo '<div><span><i><b>Watched:</b></i></span>';
+		echo '<span class="flalright" style="width:45px;"><font color="silver">[ </font>'.dayOfWeekShort($lastPlayed).'<font color="silver"> ]</font></span>';
+		echo '<span class="flalright" style="padding-right:5px;">'.toEuropeanDateFormat(substr($lastPlayed, 0, 10)).'</span>';
+		echo '</div>';
 	}
 
 	if (!$isDemo) {

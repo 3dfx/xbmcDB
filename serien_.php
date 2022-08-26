@@ -20,12 +20,8 @@ include_once "globals.php";
 	$SQL    = $GLOBALS['SerienSQL'].';';
 	checkFileInfoTable($dbh);
 	$serien = fetchSerien($SQL, null, $dbh);
-	#$serien->setUnsorted();
 	$serien->sortSerien();
-	#$serien->sortSerienRatingAsc();
-	#$serien->sortSerienRatingDesc();
 	fetchNextEpisodesFromDB($dbh);
-	#existsOrdersTable($dbh);
 	existsOrderzTable($dbh);
 	$gallerymode        = isset($_SESSION['gallerymode'])       ? $_SESSION['gallerymode']       : 0;
 	$TVSHOW_GAL_ENABLED = isset($GLOBALS['TVSHOW_GAL_ENABLED']) ? $GLOBALS['TVSHOW_GAL_ENABLED'] : false;
@@ -35,6 +31,7 @@ include_once "globals.php";
 			echo unserialize($_SESSION['param_tvShowJsVars']);
 		return;
 	}
+
 	//if (getEscGet('data')) {
 	if (isAjax()) {
 		if ($TVSHOW_GAL_ENABLED && $gallerymode && $isAdmin) {
