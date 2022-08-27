@@ -29,7 +29,6 @@ include_once "StreamDetails.php";
 			   "V.c09 AS duration, ".
 			   "V.c12 AS season, ".
 			   "V.c13 AS episode, ".
-			   #"T.c16 AS showPath, ".
 			   "V.strTitle AS serie, ".
 			   "V.idFile AS idFile, ".
 			   "V.strFilename AS filename, ".
@@ -49,8 +48,30 @@ include_once "StreamDetails.php";
 			   "LEFT JOIN fileinfo F ON V.idFile = F.idFile ".
 			   "LEFT JOIN files FS ON V.idFile=FS.idFile ".
 			   "LEFT JOIN path P ON P.idPath=FS.idPath ".
-//			   mapDBC('joinIdShow').
 			   "WHERE T.idShow = V.idShow";
+
+	$EpisodeSQL      = "SELECT ".
+				"V.c00 AS epName, ".
+				"V.c01 AS epDesc, ".
+				"V.rating AS epRating, ".
+				"V.c04 AS guests, ".
+				"V.c05 AS airDate, ".
+				"V.c09 AS duration, ".
+				"V.c12 AS season, ".
+				"V.c13 AS episode, ".
+				"V.lastPlayed AS lastPlayed, ".
+				"V.playCount AS playCount, ".
+				"V.strTitle AS serie, ".
+				"V.idFile AS idFile, ".
+				"V.strFilename AS filename, ".
+				"V.strPath AS path, ".
+				"F.filesize AS filesize, ".
+				"F.fps AS fps, ".
+				"F.bit AS bits, ".
+				"F.src AS source, ".
+				"F.atmosx AS atmosx ".
+				"FROM ".mapDBC('episodeview')." V ".
+				"LEFT JOIN fileinfo F ON V.idFile = F.idFile";
 
 	function fetchSearchSerien($search) {
 		$SQL = $GLOBALS['SearchSerienSQL'].';';
@@ -224,6 +245,7 @@ include_once "StreamDetails.php";
 		if (!empty($_SESSION['episodes'])) {
 			return $_SESSION['episodes'][$idEpisode];
 		}
+
 		return null;
 	}
 */

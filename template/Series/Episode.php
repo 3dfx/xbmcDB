@@ -152,6 +152,10 @@ class Episode {
 		return $this->idFile;
 	}
 
+	public function getPlayCount() {
+		return $this->playcount;
+	}
+
 	public function isWatched() {
 		return $this->playcount >= 1 ? true : false;
 	}

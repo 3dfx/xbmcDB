@@ -51,7 +51,7 @@ include_once "./template/Series/StreamDetails.php";
 	}
 */
 
-	$SQL    = $GLOBALS['SerienSQL'].' AND V.idEpisode = '.$idEpisode.';';
+	$SQL    = $GLOBALS['EpisodeSQL'].' WHERE V.idEpisode = '.$idEpisode.';';
 	$result = querySQL($SQL);
 	foreach($result as $row) {
 		$idFile     = $row['idFile'];
