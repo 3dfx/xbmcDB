@@ -109,6 +109,7 @@ include_once "./template/functions.php";
 
 		$isAdmin = isAdmin();
 		$idFile  = -1;
+		$dbh = getPDO();
 
 		$existArtTable = existsArtTable();
 
@@ -118,16 +119,16 @@ include_once "./template/functions.php";
 			mapDBC('joinIdMovie').
 			mapDBC('joinRatingMovie').
 			"LEFT JOIN fileinfo D ON A.idFile = D.idFile WHERE A.idFile = B.idFile AND C.idPath = B.idPath AND idMovie = '".$id."' ";
-		$row = fetchFromDB($SQL, false);
+		$row = fetchFromDB($SQL, false, $dbh);
 
 		if (empty($row)) { die('not found...'); }
 
 		$SQL2     = "SELECT B.".mapDBC('strActor').", A.".mapDBC('strRole').", A.".mapDBC('idActor').", B.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC("actorlinkmovie")." A, ".mapDBC("actors")." B WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND A.media_type='movie' AND A.".mapDBC('idMovie')." = '".$id."' ORDER BY A.".mapDBC('iOrder').";";
-		$result2  = querySQL($SQL2);
-		$result2_ = querySQL($SQL2);
+		$result2  = querySQL($SQL2, false, $dbh);
+		$result2_ = querySQL($SQL2, false, $dbh);
 
 		$idFile   = $row['idFile'];
-		$result3  = getStreamDetails($idFile);
+		$result3  = getStreamDetails($idFile, $dbh);
 
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
@@ -148,9 +149,9 @@ include_once "./template/functions.php";
 		$ar           = null;
 		$arOR         = null;
 		$arSpan       = '';
-		$country      = getCountry($idMovie);
-		$atmosx       = fetchAudioFormat($idFile, $path, $filename, $row['atmosx'], getPDO());
-		$fps          = fetchFps($idFile, $path, $filename, array($bit, $fps), getPDO());
+		$country      = getCountry($idMovie, $dbh);
+		$atmosx       = fetchAudioFormat($idFile, $path, $filename, $row['atmosx'], $dbh);
+		$fps          = fetchFps($idFile, $path, $filename, array($bit, $fps), $dbh);
 		if ($fps === null && $fps[0] === null) {
 			$bit10 = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 		}
@@ -160,7 +161,7 @@ include_once "./template/functions.php";
 		$pausedAt = null;
 		$timeTotal = null;
 		if ($isAdmin) {
-			$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';");
+			$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';", false, $dbh);
 			$timeAt    = isset($result['timeAt'])    ? $result['timeAt']    : null;
 			$timeTotal = isset($result['timeTotal']) ? $result['timeTotal'] : null;
 			if (!empty($timeAt) && !empty($timeTotal)) {
@@ -172,13 +173,13 @@ include_once "./template/functions.php";
 		}
 
 		$fanart    = '';
-		$covers    = getCovers($fnam, '', $idMovie);
+		$covers    = getCovers($fnam, '', $idMovie, $dbh);
 		$cover     = getImageWrap($covers[0], $idMovie, 'movie', 1);
 		$cover_big = getImageWrap($covers[1], $idMovie, 'movie', 2);
 
 		$fanartExists = false;
 		if ($DETAILFANART) {
-			$fanart = getFanartCover($fnam, $idMovie);
+			$fanart = getFanartCover($fnam, $idMovie, $dbh);
 			wrapItUp('fanart', $idMovie, $fanart);
 			$fanartExists = !empty($fanart);
 		}
@@ -250,7 +251,7 @@ include_once "./template/functions.php";
 			echo "\r\n";
 		}
 
-		$studio = getStudio($idMovie);
+		$studio = getStudio($idMovie, $dbh);
 		if (!empty($country) || !empty($studio)) {
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:8px;">';
@@ -372,7 +373,7 @@ include_once "./template/functions.php";
 			$run++;
 		}
 
-		$arOR = getOverrideAR(null, $idFile, $idMovie);
+		$arOR = getOverrideAR($idFile, $idMovie);
 		if (!empty($arOR)) {
 			$ar = $arOR = sprintf("%01.2f", $arOR);
 			$arSpan = '<span style="font-style:italic;" title="aspect-ratio // overridden">'.$ar.':1</span>';
@@ -386,7 +387,7 @@ include_once "./template/functions.php";
 		$hdr = isHDR($filename, $hdrType);
 
 		$sqlG = "SELECT * FROM genre";
-		$resultG = querySQL($sqlG);
+		$resultG = querySQL($sqlG, false, $dbh);
 		$idGenre = array();
 		foreach($resultG as $rowG) {
 			if (!isset($rowG[mapDBC('strGenre')])) { continue; }
@@ -516,7 +517,7 @@ include_once "./template/functions.php";
 		$acLimitImg = 15;
 		$fetchedImages = 0;
 		$schauspTblOut = array();
-		$artCovers = fetchArtCovers($existArtTable);
+		$artCovers = fetchArtCovers($existArtTable, $dbh);
 		foreach($result2_ as $row2) { $actCnt++; }
 		if ($actCnt-1 == $acLimit) { $acLimit++; }
 		foreach($result2 as $row2) {
@@ -531,7 +532,7 @@ include_once "./template/functions.php";
 					if (!empty($artCovers) && isset($artCovers['actor'][$idActor])) {
 						$actorimg = $artCovers['actor'][$idActor]['cover'];
 					} else {
-						$row3 = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';");
+						$row3 = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';", false, $dbh);
 						$url = isset($row3['url']) ? $row3['url'] : null;
 						if (!empty($url)) {
 							$actorimg = getActorThumb($url, $url, true);
@@ -740,7 +741,7 @@ include_once "./template/functions.php";
 			}
 
 			$SQL_SET = 'SELECT S.strSet, S.idSet FROM sets S, movie M WHERE M.idSet = S.idSet AND M.idMovie = '.$id.';';
-			$result = querySQL($SQL_SET);
+			$result = querySQL($SQL_SET, false, $dbh);
 			if (!empty($result)) {
 				echo '<tr><td class="streaminfoLasTD" style="padding-top:10px;" colspan="'.$spalten.'">';
 				$row   = $result->fetch();
@@ -792,7 +793,7 @@ include_once "./template/functions.php";
 		return $colspan;
 	}
 
-	function getCovers($fnam, $cover, $idMovie) {
+	function getCovers($fnam, $cover, $idMovie, $dbh = null) {
 		$existArtTable = $GLOBALS['existArtTable'];
 
 		$res = array();
@@ -801,7 +802,7 @@ include_once "./template/functions.php";
 			$res[1] = getCoverBig($fnam, $cover, false); //cover_big
 
 		} else if ($existArtTable) {
-			$res2 = querySQL("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';");
+			$res2 = querySQL("SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';", false, $dbh);
 			foreach($res2 as $row2) {
 				$type = isset($row2['type']) ? $row2['type'] : null;
 				$url  = isset($row2['url']) ? $row2['url'] : null;
@@ -816,7 +817,7 @@ include_once "./template/functions.php";
 		return $res;
 	}
 
-	function getFanartCover($fnam, $idMovie) {
+	function getFanartCover($fnam, $idMovie, $dbh = null) {
 		$existArtTable = $GLOBALS['existArtTable'];
 
 		$crc = thumbnailHash($fnam);
@@ -833,7 +834,7 @@ include_once "./template/functions.php";
 			return getFanart0($fanart, $fanartThumb);
 
 		} else if ($existArtTable) {
-			$row2 = fetchFromDB("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '".$idMovie."';");
+			$row2 = fetchFromDB("SELECT url FROM art WHERE media_type = 'movie' AND type = 'fanart' AND media_id = '".$idMovie."';", false, $dbh);
 			$url  = isset($row2['url']) ? $row2['url'] : null;
 			if (!empty($url)) {
 				return getFanart($url, $url, true);
@@ -843,15 +844,15 @@ include_once "./template/functions.php";
 		return null;
 	}
 
-	function getCountry($idMovie) {
+	function getCountry($idMovie, $dbh = null) {
 		$SQL = "SELECT c.".mapDBC('strCountry')." FROM ".mapDBC('countrylinkmovie')." cl, country c, movie m WHERE m.idMovie = cl.".mapDBC('idMovie')." AND cl.".mapDBC('idCountry')." = c.".mapDBC('idCountry')." AND m.idMovie = '".$idMovie."';";
-		$res = querySQL($SQL, false);
+		$res = querySQL($SQL, false, $dbh);
 		$row = $res->fetch();
 		return isset($row[mapDBC('strCountry')]) ? $row[mapDBC('strCountry')] : null;
 	}
 
-	function getStudio($idMovie) {
-		$res = querySQL("SELECT name FROM studio WHERE studio_id = (SELECT studio_id FROM studio_link WHERE media_type = 'movie' AND media_id = '".$idMovie."');", false);
+	function getStudio($idMovie, $dbh = null) {
+		$res = querySQL("SELECT name FROM studio WHERE studio_id = (SELECT studio_id FROM studio_link WHERE media_type = 'movie' AND media_id = '".$idMovie."');", false, $dbh);
 		$row = $res->fetch();
 		return isset($row['name']) ? $row['name'] : null;
 

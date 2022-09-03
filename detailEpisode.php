@@ -106,7 +106,7 @@ include_once "./template/Series/StreamDetails.php";
 		$bits = $streamDetails->getFetchedFPS()[0];
 		$fps  = $streamDetails->getFetchedFPS()[1];
 	}
-	$thumbImg = getThumbImg($dbh, $idFile, $idEpisode, $path, $filename, $coverP, $existArtTable);
+	$thumbImg = getThumbImg($idFile, $idEpisode, $path, $filename, $coverP, $existArtTable, $dbh);
 
 	if (!empty($timeAt)) { echo "<script type=\"text/javascript\">$(document).ready(function() { $('.knob-dyn').knob(); });</script>"; }
 
@@ -247,11 +247,16 @@ include_once "./template/Series/StreamDetails.php";
 		$countryMap = !empty($streamDetails->getACodec()) || !empty($streamDetails->getSubtitle()) ? getCountryMap() : null;
 		if (!empty($streamDetails->getAChannels())) {
 			$codecs = '';
-			$atmosFound   = false;
-			$atmosFlagBtn = false;
+			$atmosFound      = false;
+			$eventuallyAtmos = false;
+			$atmosx = explode(',', $atmosx);
+			if (count($atmosx) < count($streamDetails->getACodec())) {
+				$atmosx = null;
+			}
+
 			for ($i = 0; $i < count($streamDetails->getACodec()); $i++) {
-				$atmosFlagBtn |= atmosFlagPossibleToSet($streamDetails->getACodec()[$i]);
-				$atmos = fetchAudioFormat($idFile, $path, $filename, $atmosx, getPDO(), $atmosFlagBtn);
+				$eventuallyAtmos |= atmosFlagPossibleToSet($streamDetails->getACodec()[$i]);
+				$atmos = $atmosx = fetchAudioFormat($idFile, $path, $filename, $atmosx, $dbh, $eventuallyAtmos);
 				$atmosFound |= !empty($atmos) && !empty($atmos[$i]) && $atmos[$i] == 1;
 				$codecs .= postEditACodec($streamDetails->getACodec()[$i], !empty($atmos) && !empty($atmos[$i])).
 					(isset($streamDetails->getAChannels()[$i]) ? ' '.postEditChannels($streamDetails->getAChannels()[$i]) : '').
@@ -260,7 +265,7 @@ include_once "./template/Series/StreamDetails.php";
 			}
 
 			$atmosBtn_1 = $atmosBtn_2 = '';
-			if ($isAdmin && $atmosFlagBtn) {
+			if ($isAdmin && $eventuallyAtmos) {
 				$atmosBtn_1 = '<a tabindex="-1" class="fancy_msgbox" style="font-size:11px;" href="./dbEdit.php?act=toggleAtmos&idFile='.$idFile.'&val='.($atmosFound ? 0 : 1).'">';
 				$atmosBtn_2 = '</a>';
 			}
@@ -310,7 +315,7 @@ include_once "./template/Series/StreamDetails.php";
 	echo '</table>';
 
 //- FUNCTIONS -//
-function getThumbImg($dbh, int $idFile, $idEpisode, $path, string $filename, string $coverP, $existArtTable) {
+function getThumbImg(int $idFile, $idEpisode, $path, string $filename, string $coverP, $existArtTable, $dbh = null) {
 	$thumbImg = null;
 	$thumbsUp = isset($GLOBALS['TVSHOW_THUMBS']) ? $GLOBALS['TVSHOW_THUMBS'] : false;
 	if ($thumbsUp) {
@@ -337,7 +342,7 @@ function getThumbImg($dbh, int $idFile, $idEpisode, $path, string $filename, str
 
 			if ((empty($sessionImg) || !file_exists($sessionImg)) && $existArtTable) {
 				$SQL = "SELECT url FROM art WHERE url NOT NULL AND url NOT LIKE '' AND media_type = 'episode' AND type = 'thumb' AND media_id = '".$idEpisode."';";
-				$row2 = fetchFromDB_($dbh, $SQL, false);
+				$row2 = fetchFromDB($SQL, false, $dbh);
 				$url = !empty($row2) && isset($row2['url']) ? $row2['url'] : null;
 				if (!empty($url)) {
 					$sessionImg = getTvShowThumb($url);

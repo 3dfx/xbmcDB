@@ -59,7 +59,7 @@ include_once "globals.php";
 			clearMediaCache();
 
 		} else if (!empty($idFile) && $act == 'toggleAtmos')  {
-			$dbh->exec('UPDATE fileinfo SET atmosx = '.($val != 1 ? 0 : 1).' WHERE idFile = '.$idFile.';');
+			$dbh->exec('UPDATE fileinfo SET atmosx = '.(empty($val) ? '' : 1).' WHERE idFile = '.$idFile.';');
 			clearMediaCache();
 
 		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
@@ -99,10 +99,10 @@ include_once "globals.php";
 			$idRating = null;
 			if (!emptyRating($rating) || intval($rating) == 0) {
 				$GETID_SQL = "SELECT c03 FROM episode WHERE idEpisode=".$idEpisode.";";
-				$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+				$row       = fetchFromDB($GETID_SQL, false, $dbh);
 				$idRating  = empty($row) ? null : $row['c03'];
 				if ($idRating == null || $idRating == '' || $idRating == -1) {
-					$idRating = getNextId($dbh, 'rating', 'rating_id');
+					$idRating = getNextId('rating', 'rating_id', $dbh);
 				}
 
 				if (!empty($idRating)) {
@@ -156,7 +156,7 @@ include_once "globals.php";
 			$desc     = str_replace("  ", " ", $desc);
 
 			$GETID_SQL = 'SELECT idFile FROM files ORDER BY idFile DESC LIMIT 0, 1;';
-			$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+			$row       = fetchFromDB($GETID_SQL, false, $dbh);
 			if (empty($row)) {
 				return;
 			}
@@ -172,11 +172,11 @@ include_once "globals.php";
 			$SQLfile = str_replace('[ADDED]',    $added,  $SQLfile);
 			$dbh->exec($SQLfile);
 
-			$idEpisode = getNextId($dbh, 'episode', 'idEpisode');
+			$idEpisode = getNextId('episode', 'idEpisode', $dbh);
 			$idRating  = null;
 
 			if (!emptyRating($rating)) {
-				$idRating  = getNextId($dbh, 'rating',  'rating_id');
+				$idRating  = getNextId('rating',  'rating_id', $dbh);
 
 				if (!empty($idRating)) {
 					$dbh->exec(createRatingSQL('INSERT', $idEpisode, 'episode', $idRating, $rating));
@@ -245,9 +245,9 @@ include_once "globals.php";
 			}
 
 			if (!empty($rating) && $dbVer >= 107) {
-				$idRating = findRatingId($dbh, $idMovie);
+				$idRating = findRatingId($idMovie, $dbh);
 				if (empty($idRating)) {
-					$idRating = getNextId($dbh, 'rating', 'rating_id');
+					$idRating = getNextId('rating', 'rating_id', $dbh);
 				}
 
 				if (!empty($idRating)) {
@@ -269,7 +269,7 @@ include_once "globals.php";
 
 				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
 				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);
-				$row     = fetchFromDB_($dbh, $SQLpth, false);
+				$row     = fetchFromDB($SQLpth, false, $dbh);
 				$strPath = empty($row) ? null : $row['strPath'];
 				if (!empty($strPath)) {
 					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
@@ -367,7 +367,7 @@ include_once "globals.php";
 
 		if ($act == 'addset' && !empty($name)) {
 			$GETID_SQL = 'SELECT idSet FROM sets ORDER BY idSet DESC LIMIT 0, 1';
-			$row = fetchFromDB_($dbh, $GETID_SQL, false);
+			$row = fetchFromDB($GETID_SQL, false);
 			if (!empty($row)) {
 				$lastId = $row['idSet'];
 				$id = $lastId + 1;
@@ -424,15 +424,15 @@ include_once "globals.php";
 
 	exit;
 
-function findRatingId($dbh, $mediaId, $mediaType = 'movie') {
+function findRatingId($mediaId, string $mediaType = 'movie', $dbh = null) {
 	$GETID_SQL = "SELECT rating_id FROM rating WHERE media_id=".$mediaId." AND media_type='".$mediaType."';";
-	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	$row       = fetchFromDB($GETID_SQL, false, $dbh);
 	return !empty($row) && !empty($row['rating_id']) ? $row['rating_id'] : null;
 }
 
-function getNextId($dbh, $table, $column) {
+function getNextId($table, $column, $dbh = null) {
 	$GETID_SQL = "SELECT ".$column." FROM ".$table." ORDER BY ".$column." DESC LIMIT 0, 1;";
-	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	$row       = fetchFromDB($GETID_SQL, false, $dbh);
 	if (empty($row)) {
 		return null;
 	}

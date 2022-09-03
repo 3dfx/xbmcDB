@@ -351,7 +351,7 @@ function postSerie($serie, $counter, $runningItalic = false) {
 function fetchRunCount($dbh = null) {
 	$runCount = isset($_SESSION['param_runCount']) ? $_SESSION['param_runCount'] : null;
 	if (empty($runCount)) {
-		$runCount = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM tvshowrunning;");
+		$runCount = fetchFromDB("SELECT COUNT(*) AS count FROM tvshowrunning;", false, $dbh);
 		$runCount = !empty($runCount) && is_array($runCount) ? $runCount['count'] : '-';
 		$_SESSION['param_runCount'] = $runCount;
 	}

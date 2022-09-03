@@ -2,7 +2,7 @@
 include_once "./template/functions.php";
 
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection */
-function fetchMovies($dbh, $SkQL) {
+function fetchMovies($SkQL, $dbh = null) {
 		$dbh = empty($dbh) ? getPDO() : $dbh;
 		$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 
@@ -15,7 +15,7 @@ function fetchMovies($dbh, $SkQL) {
 
 		} else {
 			$SQL = $SkQL['SQL'];
-			$result = querySQL_($dbh, $SQL);
+			$result = querySQL($SQL, false, $dbh);
 			$count = 0;
 			foreach($result as $row) {
 				$res[$count]['idFile']    = isset($row['idFile'])    ? $row['idFile']    : -1;
@@ -82,7 +82,7 @@ function getSessionKeySQL($newAddedCount = 0) {
 			/*
 			//if (isAdmin()) {
 					$actorSQL = "SELECT ".mapDBC('idActor')." FROM actor WHERE lower(name) LIKE lower('%".$saferSearch."%') LIMIT 1;";
-					$idRes = querySQL_($dbh, $actorSQL, false);
+					$idRes = querySQL($actorSQL, false, $dbh);
 					$ids = $idRes->fetch();
 					#print_r( $ids );
 					if (isset($ids['actor_id'])) {

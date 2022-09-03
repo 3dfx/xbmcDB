@@ -16,7 +16,7 @@ function startImport() {
 	try {
 		//$actorsSQL = 'SELECT idActor, strActor FROM actors WHERE strActor NOT LIKE "%Gast Star%" AND strActor NOT LIKE "%Guest Star%" AND strActor NOT LIKE "%Autor%";';
 		$actorsSQL = "SELECT ".mapDBC('idActor').", ".mapDBC('strActor')." FROM ".mapDBC('actors')." WHERE ".mapDBC('strActor')." NOT LIKE '%Gast Star%' AND ".mapDBC('strActor')." NOT LIKE '%Guest Star%' AND ".mapDBC('strActor')." NOT LIKE '%Autor%';";
-		$res = querySQL_($dbh, $actorsSQL);
+		$res = querySQL($actorsSQL, false, $dbh);
 		$actors = array();
 		foreach($res as $row) {
 			$id  = $row[mapDBC('idActor')];
@@ -30,7 +30,7 @@ function startImport() {
 		}
 
 		$guestSQL = 'SELECT idEpisode,idShow,c04 FROM episode WHERE c04 LIKE "%Gast Star%" OR c04 LIKE "%Guest Star%" ORDER BY idEpisode DESC;';
-		$res = querySQL_($dbh, $guestSQL);
+		$res = querySQL($guestSQL, false, $dbh);
 		$linkActs = array();
 		foreach($res as $row) {
 			$idEp   = $row['idEpisode'];
@@ -71,7 +71,7 @@ function startImport() {
 			}
 		}
 
-		$countBefore = fetchActorlinkCount($dbh, $dbVer);
+		$countBefore = fetchActorlinkCount($dbVer, $dbh);
 
 		if (!empty($dbh) && !$dbh->inTransaction()) { $dbh->beginTransaction(); }
 		foreach ($actors as $key => $actor) {
@@ -83,16 +83,16 @@ function startImport() {
 
 			foreach($actLink['idEp'] as $idEp) {
 				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinkepisode').' VALUES('.$idActor.', '.$idEp.', '.($dbVer >= 93 ? '"episode", ' : '').'"Gast Star", 1337);';
-				execSQL_($dbh, $SQL);
+				execSQL($SQL, false, $dbh);
 			}
 			foreach($actLink['idShow'] as $idShow) {
 				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", 1337);';
-				execSQL_($dbh, $SQL);
+				execSQL($SQL, false, $dbh);
 			}
 		}
 
 		$NOT_LINKED = 'SELECT media_id,actor_id FROM actor_link WHERE media_type="episode" AND cast_order=1337 AND actor_id NOT IN(SELECT actor_id FROM actor_link WHERE media_type="tvshow" AND cast_order=1337);';
-		$res = querySQL_($dbh, $NOT_LINKED);
+		$res = querySQL($NOT_LINKED, false, $dbh);
 		$idEps = '';
 		$idEpActor = array();
 		foreach($res as $row) {
@@ -103,7 +103,7 @@ function startImport() {
 		$idEps = substr($idEps, 0, -1);
 
 		$SHOW_EP_SQL = 'SELECT idShow,idEpisode FROM episode WHERE idEpisode IN('.$idEps.');';
-		$res = querySQL_($dbh, $SHOW_EP_SQL);
+		$res = querySQL($SHOW_EP_SQL, false, $dbh);
 		$fixed = 0;
 		foreach($res as $row) {
 			$fixed++;
@@ -111,10 +111,10 @@ function startImport() {
 			$idEpisode = $row['idEpisode'];
 			$idActor   = $idEpActor[$idEpisode];
 			$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", 1337);';
-			execSQL_($dbh, $SQL);
+			execSQL($SQL, false, $dbh);
 		}
 
-		$countAfter = fetchActorlinkCount($dbh, $dbVer);
+		$countAfter = fetchActorlinkCount($dbVer, $dbh);
 		$count = $countAfter - $countBefore;
 
 		if (!empty($dbh) && $dbh->inTransaction()) {
@@ -130,9 +130,9 @@ function startImport() {
 	return $count;
 }
 
-function fetchActorlinkCount($dbh, $dbVer) {
+function fetchActorlinkCount($dbVer, $dbh = null) {
 	$count  = 0;
-	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM ".mapDBC('actorlinkepisode').";");
+	$res    = fetchFromDB("SELECT COUNT(*) AS count FROM ".mapDBC('actorlinkepisode').";", false, $dbh);
 	if (!empty($res)) {
 		$count += $res['count'];
 	}
@@ -142,7 +142,7 @@ function fetchActorlinkCount($dbh, $dbVer) {
 		return $count;
 	}
 
-	$res    = fetchFromDB_($dbh, "SELECT COUNT(*) AS count FROM ".mapDBC('actorlinktvshow').";");
+	$res    = fetchFromDB("SELECT COUNT(*) AS count FROM ".mapDBC('actorlinktvshow').";", false, $dbh);
 	if (!empty($res)) {
 		$count += $res['count'];
 	}

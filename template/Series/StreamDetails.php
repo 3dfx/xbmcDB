@@ -76,7 +76,7 @@ class StreamDetails {
 			$this->fps  = $this->fetchedFPS[1];
 		}
 
-		$this->arOR = getOverrideAR($dbh, $idFile, $idEpisode);
+		$this->arOR = getOverrideAR($idFile, $idEpisode, $dbh);
 		if (!empty($this->arOR)) {
 			$this->arOR = sprintf("%01.2f", $this->arOR);
 			$this->ar = null;

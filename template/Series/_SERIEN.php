@@ -163,12 +163,12 @@ include_once "StreamDetails.php";
 		checkTvshowRunningTable($dbh);
 
 		$SQLepLnk= $GLOBALS['episodeLinkSQL'];
-		$resL    = querySQL_($dbh, $SQLepLnk, false);
+		$resL    = querySQL($SQLepLnk, false, $dbh);
 		$links   = array();
 		foreach($resL as $row) { $links[$row['idFile']] = $row['delta']; }
 
 		$SQLrunning = $GLOBALS['SQLrunning'];
-		$resF       = querySQL_($dbh, $SQLrunning, false);
+		$resF       = querySQL($SQLrunning, false, $dbh);
 		foreach($resF as $run_) {
 			$idShow      = $run_['idShow'];
 			$running     = isset($run_['running']) ? true : false;
@@ -178,7 +178,7 @@ include_once "StreamDetails.php";
 		}
 
 		$SQLdirs = $GLOBALS['SeasonDirSQL'];
-		$resD    = querySQL_($dbh, $SQLdirs, false);
+		$resD    = querySQL($SQLdirs, false, $dbh);
 		$dirs    = array();
 		foreach($resD as $row) {
 			$idShow  = $row['idShow'];
@@ -186,7 +186,7 @@ include_once "StreamDetails.php";
 			if (empty($dirs[$idShow])) { $dirs[$idShow] = $strPath; }
 		}
 
-		$result = querySQL_($dbh, $SQL, false);
+		$result = querySQL($SQL, false, $dbh);
 		foreach($result as $row) {
 			$idFile      = $row['idFile'];
 			$idShow      = $row['idShow'];
@@ -232,7 +232,7 @@ include_once "StreamDetails.php";
 	function fetchShowCodecs($idShow, $dbh = null) {
 		$SQLcodec = $GLOBALS['ShowCodecSQL'];
 		$SQLcodec = str_replace('[IDSHOW]', $idShow, $SQLcodec);
-		$resC     = querySQL_($dbh, $SQLcodec, false);
+		$resC     = querySQL($SQLcodec, false, $dbh);
 		$codecs   = array();
 		foreach($resC as $row)
 			$codecs[$row['codec']] = $row['count'];

@@ -29,12 +29,11 @@ function getTimeOut($intra = false) {
 	return $intra ? 1 : 5;
 }
 
-function execSQL($SQL, $throw = true) {
-	$dbh = getPDO();
-	return execSQL_($dbh, $SQL, $throw);
+function execSQL($SQL, $throw = true, $dbh = null) {
+	return execSQL_($SQL, $throw, true, $dbh);
 }
 
-function execSQL_($dbh, $SQL, $throw = true, $commitExtern = true) {
+function execSQL_($SQL, $throw = true, $commitExtern = true, $dbh = null) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 
 	try {
@@ -57,11 +56,7 @@ function execSQL_($dbh, $SQL, $throw = true, $commitExtern = true) {
 	return null;
 }
 
-function querySQL($SQL, $throw = true) {
-	return querySQL_(null, $SQL, $throw);
-}
-
-function querySQL_($dbh, $SQL, $throw = true) {
+function querySQL($SQL, $throw = true, $dbh = null) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 
 	try {
@@ -73,19 +68,15 @@ function querySQL_($dbh, $SQL, $throw = true) {
 	return null;
 }
 
-function fetchCount($dbh, $table) {
-	$result = querySQL_($dbh, "SELECT COUNT(*) AS c FROM ".$table.";", false);
+function fetchCount($table, $dbh = null) {
+	$result = querySQL("SELECT COUNT(*) AS c FROM ".$table.";", false, $dbh);
 	foreach($result as $row) {
 		return $row['c'];
 	}
 	return 0;
 }
 
-function singleSQL($SQL, $throw = true) {
-	return singleSQL_(null, $SQL, $throw);
-}
-
-function singleSQL_($dbh, $SQL, $throw = true) {
+function singleSQL($SQL, $throw = true, $dbh = null) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 
 	try {
@@ -97,12 +88,7 @@ function singleSQL_($dbh, $SQL, $throw = true) {
 	return null;
 }
 
-function fetchFromDB($SQL, $throw = true) {
-	$dbh = getPDO();
-	return fetchFromDB_($dbh, $SQL, $throw);
-}
-
-function fetchFromDB_($dbh, $SQL, $throw = true) {
+function fetchFromDB($SQL, $throw = true, $dbh = null) {
 	if (empty($dbh)) { $dbh = getPDO(); }
 
 	try {
@@ -137,7 +123,7 @@ function getTableNames() {
 }
 
 function getStreamDetails($idFile, $dbh = null) {
-	return querySQL_($dbh, "SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL OR strHdrType IS NOT NULL) AND idFile = ".$idFile.";");
+	return querySQL("SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL OR strHdrType IS NOT NULL) AND idFile = ".$idFile.";", false, $dbh);
 }
 
 function getGenres($dbh) {
@@ -166,8 +152,8 @@ function getGenres($dbh) {
 	return $idGenre;
 }
 
-function getOverrideAR($dbh, $idFile, $idMedia) {
-	$result = fetchFromDB_($dbh, "SELECT ratio FROM aspectratio WHERE idFile = ".$idFile." AND idMovie = ".$idMedia.";");
+function getOverrideAR($idFile, $idMedia, $dbh = null) {
+	$result = fetchFromDB("SELECT ratio FROM aspectratio WHERE idFile = ".$idFile." AND idMovie = ".$idMedia.";", false, $dbh);
 	if (empty($result) || empty($result['ratio']) || !is_numeric($result['ratio'])) {
 		return null;
 	}
@@ -175,7 +161,7 @@ function getOverrideAR($dbh, $idFile, $idMedia) {
 	return $result['ratio'];
 }
 
-function getResolution($dbh, $SkQL, $isMovie) {
+function getResolution($SkQL, $isMovie, $dbh = null) {
 	$idStream   = array();
 	$movKey     = $isMovie ? "movie" : "episode";
 	$sessionKey = $SkQL['sessionKey'];
@@ -196,7 +182,7 @@ function getResolution($dbh, $SkQL, $isMovie) {
 			}
 		}
 
-		$result = querySQL_($dbh, $SQL, false);
+		$result = querySQL($SQL, false, $dbh);
 		foreach($result as $row) {
 			if (!empty($id = $row['idFile'])) {
 				$idStream[$id][] = $row['iVideoWidth'];
@@ -332,12 +318,12 @@ function existsSetTable($dbh = null) {
 
 function checkEpLinkEpTable($dbh = null) {
 	$exist = existsTable('episodelinkepisode', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS episodelinkepisode(idFile INTEGER NOT NULL, delta INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS episodelinkepisode(idFile INTEGER NOT NULL, delta INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false, $dbh); }
 }
 
 function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false, $dbh); }
 	else {
 		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'fps',    'FLOAT',     $dbh);
 		checkAndAlterTableCol('fileinfo', 'param_srcColChecked', 'src',    'TINYINT',   $dbh);
@@ -349,7 +335,7 @@ function checkFileInfoTable($dbh = null) {
 function checkARTable($dbh = null) {
 	$exist = existsTable('aspectratio', 'table', $dbh);
 	if (!$exist) {
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS aspectratio(idFile INTEGER NOT NULL, idMovie INTEGER NOT NULL, ratio FLOAT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false);
+		execSQL("CREATE TABLE IF NOT EXISTS aspectratio(idFile INTEGER NOT NULL, idMovie INTEGER NOT NULL, ratio FLOAT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false, $dbh);
 	}
 }
 
@@ -372,17 +358,17 @@ function checkAndAlterTableCol($table, $sessionKey, $col, $colType, $dbh = null)
 
 function checkMyEpisodeView($dbh = null) {
 	$exist = existsTable('episodeviewMy', 'view', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE VIEW IF NOT EXISTS episodeviewMy AS SELECT episode.*, files.strFileName AS strFileName, path.idPath AS idPath, path.strPath AS strPath, files.playCount AS playCount, files.lastPlayed AS lastPlayed, tvshow.c00 AS strTitle, tvshow.c14 AS strStudio, tvshow.idShow AS idShow, tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false); }
+	if (!$exist) { execSQL("CREATE VIEW IF NOT EXISTS episodeviewMy AS SELECT episode.*, files.strFileName AS strFileName, path.idPath AS idPath, path.strPath AS strPath, files.playCount AS playCount, files.lastPlayed AS lastPlayed, tvshow.c00 AS strTitle, tvshow.c14 AS strStudio, tvshow.idShow AS idShow, tvshow.c05 AS premiered, tvshow.c13 AS mpaa, tvshow.c16 AS strShowPath FROM tvshow JOIN episode ON episode.idShow=tvshow.idShow JOIN files ON files.idFile=episode.idFile JOIN path ON files.idPath=path.idPath;", false, $dbh); }
 }
 
 function checkTvshowRunningTable($dbh = null) {
 	$exist = existsTable('tvshowrunning', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS tvshowrunning(idShow INTEGER NOT NULL, running INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS tvshowrunning(idShow INTEGER NOT NULL, running INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false, $dbh); }
 }
 
 function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, maxSeason INTEGER, maxEpisode INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false); }
+	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, maxSeason INTEGER, maxEpisode INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false, $dbh); }
 	else {
 		checkAndAlterTableCol('nextairdate', 'param_lStColChecked', 'maxSeason',  'INTEGER', $dbh);
 		checkAndAlterTableCol('nextairdate', 'param_lEpColChecked', 'maxEpisode', 'INTEGER', $dbh);
@@ -395,8 +381,8 @@ function existsOrderzTable($dbh = null) {
 
 	$exist = existsTable('orderz', 'table', $dbh);
 	if (!$exist) {
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderz(idOrder INTEGER primary key, dateAdded INTEGER, user TEXT, fresh INTEGER, CONSTRAINT 'C01_idOrder' UNIQUE (idOrder));", false, false);
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orderItemz(idOrder INTEGER, idElement INTEGER, movieOrShow INTEGER, CONSTRAINT 'C01_ids' UNIQUE (idOrder, idElement), CONSTRAINT 'C02_idOrder' FOREIGN KEY (idOrder) REFERENCES orderz (idOrder) ON DELETE CASCADE);", false, false);
+		execSQL_("CREATE TABLE IF NOT EXISTS orderz(idOrder INTEGER primary key, dateAdded INTEGER, user TEXT, fresh INTEGER, CONSTRAINT 'C01_idOrder' UNIQUE (idOrder));", false, false, $dbh);
+		execSQL_("CREATE TABLE IF NOT EXISTS orderItemz(idOrder INTEGER, idElement INTEGER, movieOrShow INTEGER, CONSTRAINT 'C01_ids' UNIQUE (idOrder, idElement), CONSTRAINT 'C02_idOrder' FOREIGN KEY (idOrder) REFERENCES orderz (idOrder) ON DELETE CASCADE);", false, false, $dbh);
 		$exist = existsTable('orderz', 'table', $dbh);
 	}
 	return $exist;
@@ -404,7 +390,7 @@ function existsOrderzTable($dbh = null) {
 
 function existsFilemapTable($dbh = null) {
 	$exist = existsTable('filemap', 'table', $dbh);
-	if (!$exist) { execSQL_($dbh, "CREATE TABLE IF NOT EXISTS filemap( idFile integer primary key, strFilename text, dateAdded text, value longint );", false); }
+	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS filemap( idFile integer primary key, strFilename text, dateAdded text, value longint );", false, $dbh); }
 }
 
 function checkFileMapTable($dbh) {
@@ -414,7 +400,7 @@ function checkFileMapTable($dbh) {
 function existsOrdersTable($dbh = null) {
 	$exist = existsTable('orders', 'table', $dbh);
 	if (!$exist) {
-		execSQL_($dbh, "CREATE TABLE IF NOT EXISTS orders(strFilename TEXT primary key, dateAdded INTEGER, user TEXT, fresh INTEGER);", false, false);
+		execSQL_("CREATE TABLE IF NOT EXISTS orders(strFilename TEXT primary key, dateAdded INTEGER, user TEXT, fresh INTEGER);", false, false, $dbh);
 		$exist = existsTable('orders', 'table', $dbh);
 	}
 	return $exist;
@@ -449,7 +435,7 @@ function fetchSeasonIds($idShow) {
 		$SQL = "SELECT idSeason,season FROM seasons WHERE idShow = ".$idShow.";";
 
 		$dbh = getPDO();
-		$res = querySQL_($dbh, $SQL, false);
+		$res = querySQL($SQL, false, $dbh);
 
 		$index = 0;
 		foreach($res as $row) {
@@ -477,7 +463,7 @@ function fetchPaths() {
 		$SQL = "SELECT idPath,strPath FROM path WHERE strPath IN (SELECT DISTINCT(strPath) FROM ".mapDBC('episodeview').");";
 
 		$dbh = getPDO();
-		$res = querySQL_($dbh, $SQL, false);
+		$res = querySQL($SQL, false, $dbh);
 
 		$index = 0;
 		foreach($res as $row) {
@@ -499,7 +485,7 @@ function fetchAudioFormat($idFile, $path, $filename, $atmosx, $dbh, $eventuallyA
 	if (!$enabled) { return null; }
 
 	if (!empty($atmosx)) {
-		return explode(',', $atmosx);
+		return $atmosx;
 	}
 
 	$fname = strtolower($filename);
@@ -507,7 +493,10 @@ function fetchAudioFormat($idFile, $path, $filename, $atmosx, $dbh, $eventuallyA
 	if (!$eventuallyAtmos) { return 0; }
 
 	$res = getAudioProfile($path.$filename, $fname);
-	if (empty($res)) { return 0; }
+	if (empty($res)) {
+		persistAtmosFlag(null, $idFile, $dbh);
+		return 0;
+	}
 
 	$atmosRes = array();
 	for ($i = 0; $i < count($res); ++$i) {
@@ -516,7 +505,13 @@ function fetchAudioFormat($idFile, $path, $filename, $atmosx, $dbh, $eventuallyA
 		$atmosRes[$i] = $isAtmos ? 1 : 0;
 	}
 
-	$dbValue = implode(',', $atmosRes);
+	persistAtmosFlag($atmosRes, $idFile, $dbh);
+
+	return $atmosRes;
+}
+
+function persistAtmosFlag($atmosRes, $idFile, $dbh) {
+	$dbValue = empty($atmosRes) ? '' : implode(',', $atmosRes);
 	$dbhIsNull = ($dbh === null);
 	try {
 		if ($dbhIsNull) { $dbh = getPDO(); }
@@ -531,8 +526,6 @@ function fetchAudioFormat($idFile, $path, $filename, $atmosx, $dbh, $eventuallyA
 		if ($dbhIsNull && $dbh->inTransaction()) { $dbh->rollBack(); }
 		if (isAdmin()) { echo $e->getMessage(); }
 	}
-
-	return $atmosRes;
 }
 
 function fetchFps($idFile, $path, $filename, $fps, $dbh) {
@@ -683,27 +676,29 @@ function getFps($file) {
 function getAudioProfile($file, $fname) {
 	if (!isLinux()) { return null; }
 
-	$output = '';
 	$res 	= null;
 	$resDTS = null;
 	if (substr_count($fname, 'atmos') > 0) {
-		$output = execCommand($file, 'mediainfo --Inform="Audio;%Format_Profile%\n" ');
-
-		$res = checkAudioOutput($output);
+		$res = checkAudioOutput(
+			execCommand($file, 'mediainfo --Inform="Audio;%Format_Profile%\n" ')
+		);
 		if (!empty($res) && "Blu-ray Disc" !== $res[0]) { return $res; }
 
-		$output = execCommand($file, 'mediainfo --Language=raw -f --Inform="Audio;%Format_Commercial%\n" ');
-		$res = checkAudioOutput($output);
+		$res = checkAudioOutput(
+			execCommand($file, 'mediainfo --Language=raw -f --Inform="Audio;%Format_Commercial%\n" ')
+		);
 	}
 
 	if (substr_count($fname, 'dtsx') > 0) {
-		$output = execCommand($file, 'mediainfo --Inform="Audio;%ChannelLayout_Original%\n" ');
-		$resDTS = checkAudioOutput($output);
+		$resDTS = checkAudioOutput(
+			execCommand($file, 'mediainfo --Inform="Audio;%ChannelLayout_Original%\n" ')
+		);
 
-		if (empty($resDTS)) {
-			$output = execCommand($file, 'mediainfo --Inform="Audio;%Title%\n" ');
-			$resDTS = checkAudioOutput($output);
-		}
+	}
+	if (empty($resDTS)) {
+		$resDTS = checkAudioOutput(
+			execCommand($file, 'mediainfo --Inform="Audio;%Title%\n" ')
+		);
 	}
 
 	if (empty($res)) {
@@ -717,9 +712,7 @@ function getAudioProfile($file, $fname) {
 		}
 	}
 
-	if (!empty($res)) { return $res; }
-
-	return null;
+	return empty($res) ? null : $res;
 }
 
 function checkAudioOutput($output) {
@@ -1001,7 +994,7 @@ function fetchArtCovers($existArtTable, $dbh = null) {
 
 	$result = array();
 	$SQL    = "SELECT media_id AS idMedia, media_type AS media, type, url FROM art WHERE url NOT NULL AND (media_type = 'movie' OR media_type = 'actor') AND (type = 'poster' OR type = 'thumb');";
-	$res    = querySQL_($dbh, $SQL, false);
+	$res    = querySQL($SQL, false, $dbh);
 
 	foreach($res as $row) {
 		$idMedia = $row['idMedia'];
@@ -1026,7 +1019,7 @@ function fetchActorCovers($dbh = null) {
 
 	$result = array();
 	$SQL    = "SELECT B.".mapDBC('idMovie')." AS idMovie, A.".mapDBC('strActor')." AS strActor, B.".mapDBC('idActor')." AS idActor, A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.".mapDBC('iOrder')." = 0;";
-	$res    = querySQL_($dbh, $SQL, false);
+	$res    = querySQL($SQL, false, $dbh);
 
 	foreach($res as $row) {
 		$idMovie = $row['idMovie'];
@@ -1051,7 +1044,7 @@ function fetchDirectorCovers($dbh = null) {
 
 	$result = array();
 	$SQL    = "SELECT B.".mapDBC('idMovie')." AS idMovie, A.".mapDBC('strActor')." AS strActor, B.".mapDBC('idDirector')." AS idDirector, A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor').";";
-	$res    = querySQL_($dbh, $SQL, false);
+	$res    = querySQL($SQL, false, $dbh);
 
 	foreach($res as $row) {
 		$idMovie     = $row['idMovie'];
@@ -1587,10 +1580,12 @@ function createEpisodeSubmenu($result) {
 
 function fetchMediaCounts() {
 	$dbh = getPDO();
-	if (!isset($_SESSION['param_mvC']))
-		$_SESSION['param_mvC']  = fetchCount($dbh, 'musicvideo');
-	if (!isset($_SESSION['param_tvC']))
-		$_SESSION['param_tvC']  = fetchCount($dbh, 'tvshow');
+	if (!isset($_SESSION['param_mvC'])) {
+		$_SESSION['param_mvC']  = fetchCount('musicvideo', $dbh);
+	}
+	if (!isset($_SESSION['param_tvC'])) {
+		$_SESSION['param_tvC']  = fetchCount('tvshow', $dbh);
+	}
 }
 
 function xbmcGetPlayerId() {
@@ -2436,7 +2431,7 @@ function fetchAndUpdateAirdate($idShow, $dbh = null) {
 function clearAirdateInDb($idShow, $dbh = null) {
 	if (!checkAirDate()) { return; }
 	$SQL = "DELETE FROM nextairdate WHERE idShow = ".$idShow.";";
-	execSQL_($dbh, $SQL, false, false);
+	execSQL_($SQL, false, false, $dbh);
 }
 
 function updateAirdateInDb($idShow, $season, $episode, $airdate, $last = null, $dbh = null) {
@@ -2444,7 +2439,7 @@ function updateAirdateInDb($idShow, $season, $episode, $airdate, $last = null, $
 	if ($idShow == -1 || $season == -1 || $episode == -1 || empty($episode) || empty($airdate)) { return; }
 	if (empty($last)) { $last = array('ms'=>null,'me'=>null); }
 	$SQL = "REPLACE INTO nextairdate (idShow, season, episode, airdate, maxSeason, maxEpisode) VALUES ('".$idShow."', '".$season."', '".$episode."', '".strtotime($airdate)."', '".$last['ms']."', '".$last['me']."'".");";
-	execSQL_($dbh, $SQL, false, false);
+	execSQL_($SQL, false, false, $dbh);
 }
 
 function fetchNextEpisodeFromDB($idShow, $dbh = null) {
@@ -2460,7 +2455,7 @@ function fetchNextEpisodesFromDB($dbh = null) {
 	if ($overrideFetch == 0 && isset($_SESSION['param_nextEpisodes'])) { return $_SESSION['param_nextEpisodes']; }
 
 	$SQL = "SELECT idShow, season, episode, airdate, maxSeason, maxEpisode FROM nextairdate;";
-	$result = querySQL_($dbh, $SQL, false);
+	$result = querySQL($SQL, false, $dbh);
 	$res    = array();
 	foreach($result as $row) {
 		$res[$row['idShow']]['s']   = $row['season'];
@@ -2892,11 +2887,11 @@ function atmosFlagPossibleToSet($codec) {
 }
 
 function postEditACodec($codec, $atmosx = null) {
-	if ($atmosx && ($codec == 'TRUEHD' || $codec == 'EAC3' || $codec == 'A_EAC3')) {
+	if (!empty($atmosx) && ($codec == 'TRUEHD' || $codec == 'EAC3' || $codec == 'A_EAC3')) {
 		$tipp = 'Dolby Atmos with '.($codec == 'TRUEHD' ? 'True-HD' : 'E-AC3');
 		$codec = '<span title="'.$tipp.'">Atmos</span>';
 
-	} else if ($atmosx && ($codec == 'DCA' || $codec == 'DTS' || $codec == 'DTSHD_MA' || $codec == 'DTSHD_HRA')) {
+	} else if (!empty($atmosx) && ($codec == 'DCA' || $codec == 'DTS' || $codec == 'DTSHD_MA' || $codec == 'DTSHD_HRA')) {
 		$tipp = 'DTS - High Definition';
 		$codec = '<span title="'.$tipp.'">DTS:X</span>';
 
@@ -3240,7 +3235,7 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 
 function getIdOrder($dbh = null) {
 	$GETID_SQL = 'SELECT idOrder FROM orderz ORDER BY idOrder DESC LIMIT 0, 1;';
-	$row       = fetchFromDB_($dbh, $GETID_SQL, false);
+	$row       = fetchFromDB($GETID_SQL, false, $dbh);
 	$lastId    = $row['idOrder'];
 	return $lastId+1;
 }

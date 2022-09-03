@@ -112,7 +112,7 @@ function createTable($orderz) {
 
 		$newAddedCount = getNewAddedCount();
 		$SkQL   = getSessionKeySQL($newAddedCount);
-		$zeilen = generateRows($dbh, $orderz, $newAddedCount, $SkQL);
+		$zeilen = generateRows($orderz, $newAddedCount, $SkQL, $dbh);
 		postRows($zeilen, $SkQL);
 
 		if (!empty($dbh) && $dbh->inTransaction()) { $dbh->commit(); }
@@ -139,7 +139,8 @@ function checkTables($dbh) {
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection
  * @noinspection PhpTernaryExpressionCanBeReplacedWithConditionInspection
  */
-function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = true) {
+function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
+	$dirActorEnabled  = true;
 	$_just            = $GLOBALS['just'];
 	$_which           = $GLOBALS['which'];
 	$IMDB             = $GLOBALS['IMDB'];
@@ -168,8 +169,8 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 	$actorImgs     = fetchActorCovers($dbh);
 	$directorImgs  = fetchDirectorCovers($dbh);
 	$idGenre       = getGenres($dbh);
-	$result        = fetchMovies($dbh, $SkQL);
-	$idStream      = getResolution($dbh, $SkQL, true);
+	$result        = fetchMovies($SkQL, $dbh);
+	$idStream      = getResolution($SkQL, true, $dbh);
 
 	$counter  = 0;
 	$counter2 = 0;
@@ -226,7 +227,7 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 			$dateAdded = getCreation($fnam);
 			$dateAdded = isset($dateAdded) ? $dateAdded : '2001-01-01 12:00:00';
 			$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".strtotime($dateAdded)."');";
-			execSQL_($dbh, $SQL_, false, true);
+			execSQL_($SQL_, false, true, $dbh);
 		}
 
 #covers
@@ -241,7 +242,7 @@ function generateRows($dbh, $orderz, $newAddedCount, $SkQL, $dirActorEnabled = t
 			} else {
 				if ($existArtTable) {
 					$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
-					$res2 = querySQL_($dbh, $SQL_, false);
+					$res2 = querySQL($SQL_, false, $dbh);
 					foreach($res2 as $row2) {
 						$type = isset($row2['type']) ? $row2['type'] : null;
 						$url  = isset($row2['url'])  ? $row2['url']  : null;
@@ -372,7 +373,7 @@ if ($dirActorEnabled) {
 				}
 			} else {
 				$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie." ORDER BY B.".mapDBC('iOrder').";";
-				$result2 = querySQL_($dbh, $SQL_, false);
+				$result2 = querySQL($SQL_, false, $dbh);
 				foreach($result2 as $row2) {
 					$artist      = $row2[mapDBC('strActor')];
 					$idActor     = $row2[mapDBC('idActor')];
@@ -396,7 +397,7 @@ if ($dirActorEnabled) {
 					}
 				} else {
 					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
-					$res3 = querySQL_($dbh, $SQL_, false);
+					$res3 = querySQL($SQL_, false, $dbh);
 					$row3 = $res3->fetch();
 					$url  = isset($row3['url']) ? $row3['url'] : null;
 					if (!empty($url)) {
@@ -437,7 +438,7 @@ if ($dirActorEnabled) {
 				}
 			} else {
 				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type = 'movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
-				$result3 = querySQL_($dbh, $SQL_, false);
+				$result3 = querySQL($SQL_, false, $dbh);
 				foreach($result3 as $row3) {
 					$artist      = $row3[mapDBC('strActor')];
 					$idActor     = $row3[mapDBC('idDirector')];
@@ -459,7 +460,7 @@ if ($dirActorEnabled) {
 					}
 				} else {
 					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$firstId."';";
-					$res3 = querySQL_($dbh, $SQL_, false);
+					$res3 = querySQL($SQL_, false, $dbh);
 					$row3 = $res3->fetch();
 					$url  = isset($row3['url']) ? $row3['url'] : null;
 					if (!empty($url)) {
@@ -502,7 +503,7 @@ if ($dirActorEnabled) {
 				$resPerf   = getResPerf($vRes, $hdr);
 				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
 				$resStyle  = '';
-				$arOR = getOverrideAR($dbh, $idFile, $idMovie);
+				$arOR = getOverrideAR($idFile, $idMovie, $dbh);
 
 				if ($f4Ke || $scaled || !empty($resColor) || !empty($arOR)) {
 				    if ($f4Ke || $scaled) {

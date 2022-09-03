@@ -34,7 +34,7 @@
 			$SQL .= ' ASC;';
 			
 			$dbh = getPDO();
-			$result = querySQL_($dbh, $SQL);
+			$result = querySQL($SQL, false, $dbh);
 			
 			$count = 0;
 			foreach($result as $row) {
