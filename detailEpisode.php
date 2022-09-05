@@ -232,9 +232,8 @@ include_once "./template/Series/StreamDetails.php";
 				if (!empty($streamDetails->getVCodec())) {
 					$vCodec = postEditVCodec($streamDetails->getVCodec());
 					$perf   = decodingPerf($vCodec, !empty($bits) && $bits >= 10);
-					echo '<font color="'.CODEC_COLORS[$perf].'">'.$vCodec.'</font>';
+					echo '<font color="'.CODEC_COLORS[$perf].'">'.$vCodec.'</font>'.$VAL_DELIM;
 					if (!empty($streamDetails->getHdrType())) {
-						echo $VAL_DELIM;
 						echo '<font color="'.CODEC_COLORS[$perf].'">'.postEditHdrType($streamDetails->getHdrType()).'</font>';
 						if ($streamDetails->getHdrToneMapParam() != null) {
 							echo '<span class="tonemap" title="'.$streamDetails->getHdrToneMapMethod().': '.$streamDetails->getHdrToneMapParam().'"> (t)</span>';
