@@ -219,17 +219,28 @@ include_once "./template/Series/StreamDetails.php";
 				}
 				echo '</span>';
 			}
+
 			if (!empty($streamDetails->getVCodec()) || !empty($bits)) {
-				echo '<span class="flalright">';
+				$cAction = '';
+				if (!empty($streamDetails->getHdrType())) {
+					$param = empty($streamDetails->getHdrToneMapParam()) ? 1.0 : $streamDetails->getHdrToneMapParam();
+					$cAction = ' style="cursor:pointer;" onclick="setToneMapParam('.$idFile.', '.$param.'); return false;"';
+				}
+
+				echo '<span'.$cAction.' class="flalright">';
 				$color = '';
 				if (!empty($streamDetails->getVCodec())) {
 					$vCodec = postEditVCodec($streamDetails->getVCodec());
 					$perf   = decodingPerf($vCodec, !empty($bits) && $bits >= 10);
-					$color  = CODEC_COLORS[$perf];
+					echo '<font color="'.CODEC_COLORS[$perf].'">'.$vCodec.'</font>';
 					if (!empty($streamDetails->getHdrType())) {
-						$vCodec = $vCodec.$VAL_DELIM.postEditHdrType($streamDetails->getHdrType());
+						echo $VAL_DELIM;
+						echo '<font color="'.CODEC_COLORS[$perf].'">'.postEditHdrType($streamDetails->getHdrType()).'</font>';
+						if ($streamDetails->getHdrToneMapParam() != null) {
+							echo '<span class="tonemap" title="'.$streamDetails->getHdrToneMapMethod().': '.$streamDetails->getHdrToneMapParam().'"> (t)</span>';
+						}
+						echo $VAL_DELIM;
 					}
-					echo '<font color="'.$color.'">'.$vCodec.'</font>'.$VAL_DELIM;
 					if (!empty($bits)) {
 						echo '<br/>';
 					}

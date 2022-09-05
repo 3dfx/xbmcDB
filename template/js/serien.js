@@ -614,7 +614,8 @@ function setAspectRatio(idFile, idEpisode, ar = "") {
 	if (idFile === null || idEpisode === null) { return; }
 
 	let answer = prompt("Enter aspect ratio", ar);
-	if (answer === null || answer.trim() === "") { ar = ""; }
+	if (answer === null) { return; }
+	if (answer.trim() === "") { ar = ""; }
 	else { answer = answer.replace(",", "."); }
 
 	if (answer !== null && answer !== "" && !isNaN(answer)) {
@@ -622,5 +623,21 @@ function setAspectRatio(idFile, idEpisode, ar = "") {
 	}
 
 	var url = './dbEdit.php?act=setAspectRatio&noForward=1&idFile=' + idFile + '&idMovie=' + idEpisode + '&' + 'aRatio=' + ar;
+	$.ajax(url);
+}
+
+function setToneMapParam(idFile, par = "") {
+	if (idFile === null) { return; }
+
+	let answer = prompt("Enter ToneMap Param", par);
+	if (answer === null) { return; }
+	if (answer.trim() === "") { par = ""; }
+	else { answer = answer.replace(",", "."); }
+
+	if (answer !== "" && !isNaN(par)) {
+		par = Number.parseFloat(par);
+	}
+
+	var url = './dbEdit.php?act=setToneMapParam&noForward=1&idFile=' + idFile + '&' + 'tomParam=' + par;
 	$.ajax(url);
 }

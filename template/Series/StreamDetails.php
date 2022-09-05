@@ -147,6 +147,14 @@ class StreamDetails {
 		return $this->hdrType;
 	}
 
+	public function getHdrToneMapMethod() {
+		return $this->hdrToneMapMethod;
+	}
+
+	public function getHdrToneMapParam() {
+		return $this->hdrToneMapParam;
+	}
+
 	public function getBits() {
 		return $this->bits;
 	}

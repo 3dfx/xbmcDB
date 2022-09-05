@@ -2771,13 +2771,7 @@ function makeLangLink($strSource, $strToReplace, $strReplaceToken, $strFilter, $
 }
 
 function postEditHdrType($str) {
-	if (empty($str)) { return null; }
-
-	$str = strtoupper($str);
-
-	$str = str_replace('DOLBYVISION', 'DV', $str);
-
-	return $str;
+	return empty($str) ? null : str_replace('DOLBYVISION', 'DV', strtoupper($str));
 }
 
 /** @noinspection PhpUnnecessaryLocalVariableInspection */
