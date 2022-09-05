@@ -174,8 +174,6 @@ include_once "./template/Series/_SERIEN.php";
 	echo '</table>';
 
 function genJsonData($codecs, $sum) {
-	$cols = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-
 	$labels  = '"labels": ['."\n\t\t";
 	$data    = '"data": ['."\n\t\t\t";
 	$bgColor = '"backgroundColor": ['."\n\t\t\t";
@@ -186,7 +184,7 @@ function genJsonData($codecs, $sum) {
 		$prc   = round($count / $sum * 100);
 		$codec = postEditVCodec($codec);
 		$perf  = decodingPerf($codec);
-		$color = $cols == null ? '#000000' : $cols[$perf];
+		$color = CODEC_COLORS[$perf];
 
 		$labels  .= '"'.$codec.'"';
 		$data    .= $prc;

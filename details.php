@@ -62,7 +62,8 @@ include_once "./template/functions.php";
 			if (idFile === null || idMovie === null) { return; }
 
 			let answer = prompt("Enter aspect ratio", ar);
-			if (answer === null || answer.trim() === "") { ar = ""; }
+			if (answer === null) { return; }
+			if (answer.trim() === "") { ar = ""; }
 			else { answer = answer.replace(",", "."); }
 
 			if (answer !== "" && !isNaN(answer)) {
@@ -70,6 +71,21 @@ include_once "./template/functions.php";
 			}
 
 			window.location.href='./dbEdit.php?act=setAspectRatio&idFile=' + idFile + '&idMovie=' + idMovie + '&' + 'aRatio=' + ar;
+		}
+
+		function setToneMapParam(idFile, par = "") {
+			if (idFile === null) { return; }
+
+			let answer = prompt("Enter ToneMap Param", par);
+			if (answer === null) { return; }
+			if (answer.trim() === "") { par = ""; }
+			else { answer = answer.replace(",", "."); }
+
+			if (answer !== "" && !isNaN(par)) {
+				par = Number.parseFloat(par);
+			}
+
+			window.location.href='./dbEdit.php?act=setToneMapParam&idFile=' + idFile + '&' + 'tomParam=' + par;
 		}
 <?php /*
 		function Show_Image(IDS) {
@@ -92,7 +108,6 @@ include_once "./template/functions.php";
 	$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
 	$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
 	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
-	$SOURCE           = $GLOBALS['SOURCE'];
 
 		$COLS = array(
 			'DUR'    =>  0,
@@ -373,7 +388,7 @@ include_once "./template/functions.php";
 			$run++;
 		}
 
-		$arOR = getOverrideAR($idFile, $idMovie);
+		$arOR = getOverrideAR($idFile, $idMovie, $dbh);
 		if (!empty($arOR)) {
 			$ar = $arOR = sprintf("%01.2f", $arOR);
 			$arSpan = '<span style="font-style:italic;" title="aspect-ratio // overridden">'.$ar.':1</span>';
@@ -384,6 +399,7 @@ include_once "./template/functions.php";
 			$arSpan = $ar.':1';
 		}
 
+		$tone = getToneMapping($idFile, $dbh);
 		$hdr = isHDR($filename, $hdrType);
 
 		$sqlG = "SELECT * FROM genre";
@@ -444,11 +460,10 @@ include_once "./template/functions.php";
 		if (!empty($width) && !empty($height)) {
 			$vRes[0] = $width;
 			$vRes[1] = $height;
-			$cols     = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 			$resPerf  = getResPerf($vRes, $hdr);
 			$title    = $f4Ke   ? 'Fake 4K'     : '';
 			$title    = $scaled ? 'Upscaled 4K' : $title;
-			$resColor = ($cols === null || $resPerf < 4 ? null : $cols[$resPerf]);
+			$resColor = ($resPerf < 4 ? null : CODEC_COLORS[$resPerf]);
 			$resStyle  = '';
 			if (!empty($resColor) || $f4Ke || $scaled) {
 				if ($f4Ke || $scaled) {
@@ -490,22 +505,29 @@ include_once "./template/functions.php";
 			$bit10 = $fps[0] >= 10;
 
 			$fPerf = getFpsPerf($fps[1]);
-			$color = ($cols === null || $fPerf < 4 ? null : $cols[$fPerf]);
+			$color = ($fPerf < 4 ? null : CODEC_COLORS[$fPerf]);
 			$res[1][$COLS['VIDEO2']] = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$fps[1].' fps</span>' : $fps[1].' fps');
 		}
 
 		if (!empty($hdrType)) {
 			$hPerf  = getResPerf(null, true);
-			$color = ($cols === null || $hPerf < 4 ? null : $cols[$hPerf]);
+			$color = ($hPerf < 4 ? null : CODEC_COLORS[$hPerf]);
 			if (!empty($color)) {
-				$res[2][$COLS['VIDEO2']] = '<span style="color:'.$color.'; font-weight:bold;">'.postEditHdrType($hdrType).'</span>';
+				$param = isset($tone['Param']) ? $tone['Param'] : 1.0;
+				$res[2][$COLS['VIDEO2']]  = '<span class="hdrType" style="color:'.$color.'; font-weight:bold;" onclick="setToneMapParam('.$idFile.', '.$param.'); return false;">';
+				$res[2][$COLS['VIDEO2']] .= postEditHdrType($hdrType);
+				if (!empty($tone)) {
+					$res[2][$COLS['VIDEO2']] .= '<span class="tonemap" title="'.$tone['Method'].': '.$tone['Param'].'">';
+					$res[2][$COLS['VIDEO2']] .= '(t)';
+					$res[2][$COLS['VIDEO2']] .= '</span>';
+				}
+				$res[2][$COLS['VIDEO2']] .= '</span>';
 			}
 		}
 
 		$vCodec = postEditVCodec($vCodec);
-		$cols   = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 		$perf   = (!empty($vCodec) ? decodingPerf($vCodec, $bit10) : 0);
-		$color  = ($cols === null || $perf < 4 ? null : $cols[$perf]);
+		$color  = ($perf < 4 ? null : CODEC_COLORS[$perf]);
 		$vCodec = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.($bit10 ? ' 10bit' : '').'</span>' : $vCodec);
 		$res[0][$COLS['VIDEO2']] = $vCodec;
 
@@ -682,22 +704,6 @@ include_once "./template/functions.php";
 			}
 //			echo $streamTDs;
 
-/*
-			$dom = new domDocument;
-			$dom->recover = true;
-			$dom->strictErrorChecking = false;
-			$dom->preserveWhiteSpace = true;
-
-			@$dom->loadHTML($streamTDs);
-			$trs = $dom->getElementsByTagName('tr');
-			foreach ($trs as $row) {
-				$cols = $row->getElementsByTagName('td');
-				foreach ($cols as $col) {
-					$xa = 1;
-				}
-			}
-*/
-
 			if ($zeilen > 2 && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
 				echo '<tr id="genreDots">';
 				echo '<td colspan="'.($COLS['GENRE']).'"></td>';
@@ -735,7 +741,7 @@ include_once "./template/functions.php";
 				if ($isAdmin) {
 					$href .= ' <a class="fancy_movieset" href="./changeSource.php?idFile='.$idFile. '"><img style="border:0; height:9px;" src="img/edit-pen.png" title="change source" alt="change source"/></a>';
 				}
-				echo '<span class="filename lefto">Source: '.$SOURCE[$source].' '.$href.'</span>';
+				echo '<span class="filename lefto">Source: '.SOURCE[$source].' '.$href.'</span>';
 				echo '</td></tr>';
 				echo "\r\n";
 			}

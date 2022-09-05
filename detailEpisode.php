@@ -21,7 +21,6 @@ include_once "./template/Series/StreamDetails.php";
 
 	$_SESSION['tvShowParam']['idEpisode'] = $idEpisode;
 	$_SESSION['tvShowParam']['idSeason']  = $idSeason;
-	$SOURCE = $GLOBALS['SOURCE'];
 
 	$idFile     = 0;
 	$title      = '';
@@ -224,10 +223,9 @@ include_once "./template/Series/StreamDetails.php";
 				echo '<span class="flalright">';
 				$color = '';
 				if (!empty($streamDetails->getVCodec())) {
-					$cols   = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
 					$vCodec = postEditVCodec($streamDetails->getVCodec());
 					$perf   = decodingPerf($vCodec, !empty($bits) && $bits >= 10);
-					$color  = $cols == null ? '#000000' : $cols[$perf];
+					$color  = CODEC_COLORS[$perf];
 					if (!empty($streamDetails->getHdrType())) {
 						$vCodec = $vCodec.$VAL_DELIM.postEditHdrType($streamDetails->getHdrType());
 					}
@@ -293,7 +291,7 @@ include_once "./template/Series/StreamDetails.php";
 			echo '<div class="padtop15"><hr style="position:width:335px; margin:0; border-bottom-width:0; border-color:#BBCCDD;" /></div>';
 			echo '<div class="padtop15"><span><i><b>Source:</b></i></span>';
 			echo '<span class="flalright">';
-			echo '<a class="fancy_changesrc" style="font-size:11px;" href="./changeSource.php?idFile='.$idFile.'">'.$SOURCE[$src].'</a>';
+			echo '<a class="fancy_changesrc" style="font-size:11px;" href="./changeSource.php?idFile='.$idFile.'">'.SOURCE[$src].'</a>';
 			echo '</span>';
 			echo '</div>';
 		}

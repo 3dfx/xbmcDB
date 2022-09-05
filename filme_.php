@@ -497,11 +497,9 @@ if ($dirActorEnabled) {
 					$hdrType = 'HDR';
 				}
 
-				$cols      = isset($GLOBALS['CODEC_COLORS']) ? $GLOBALS['CODEC_COLORS'] : null;
-
 				$resInfo   = getResDesc($vRes);
 				$resPerf   = getResPerf($vRes, $hdr);
-				$resColor  = ($cols == null || $resPerf < 4 ? null : $cols[$resPerf]);
+				$resColor  = ($resPerf < 4 ? null : CODEC_COLORS[$resPerf]);
 				$resStyle  = '';
 				$arOR = getOverrideAR($idFile, $idMovie, $dbh);
 
@@ -533,7 +531,7 @@ if ($dirActorEnabled) {
 				$fps       = array($bits, formatFps($fps));
 				$bit10     = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;
 				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
-				$color     = ($cols == null || $perf < 4 ? null : $cols[$perf]);
+				$color     = ($perf < 4 ? null : CODEC_COLORS[$perf]);
 				$codecST   = (empty($color) ? '' : ' style="color:'.$color.';"');
 				if (isAdmin()) {
 					$codec = '<a tabindex="-1" class="fancy_msgbox clearFileSize"'.$codecST.' href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$idFile.'">'.$codec.'</a>';

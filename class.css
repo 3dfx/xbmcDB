@@ -768,6 +768,17 @@ input[type=checkbox] {
 	width:690px;
 }
 
+.hdrType, .tonemap {
+    cursor: pointer;
+}
+
+.tonemap {
+    color:dimgray;
+    font-weight:lighter;
+    font-style:italic;
+    font-size:7pt;
+}
+
 .artistbox {
 	background-color: #F4BE6C;
 	border: 1px solid #333333;

@@ -13,7 +13,6 @@ include_once "globals.php";
 	<head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <?php
-    $SOURCES    = $GLOBALS['SOURCE'];
 	$closeFrame = getEscGPost('closeFrame', 0);
 $idFile     = getEscGPost('idFile', -1);
 
@@ -22,8 +21,7 @@ $idFile     = getEscGPost('idFile', -1);
 
 /*	FUNCTIONS	*/
 function postSources($actual) {
-	$SOURCES = $GLOBALS['SOURCE'];
-	foreach($SOURCES as $value => $name) {
+	foreach(SOURCE as $value => $name) {
         if ($value == null) { continue; }
 		postSource($actual, $value < 0 ? '-1' : $value, $name);
 	}

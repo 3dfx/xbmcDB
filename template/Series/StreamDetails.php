@@ -2,21 +2,23 @@
 include_once "./template/functions.php";
 
 class StreamDetails {
-	private $duration  = 0;
-	private $ar         = null;
-	private $arOR       = null;
-	private $width      = null;
-	private $height     = null;
-	private $vCodec     = null;
-	private $aCodec     = array();
-	private $aChannels  = array();
-	private $aLang      = array();
-	private $subtitle   = array();
-	private $hdrType    = null;
-	private $fetchedFPS = null;
-	private $fps        = null;
-	private $bits       = null;
-	private $fsize      = 0;
+	private $duration        = 0;
+	private $ar               = null;
+	private $arOR             = null;
+	private $width            = null;
+	private $height           = null;
+	private $vCodec           = null;
+	private $aCodec           = array();
+	private $aChannels        = array();
+	private $aLang            = array();
+	private $subtitle         = array();
+	private $fetchedFPS       = null;
+	private $fps              = null;
+	private $bits             = null;
+	private $fsize            = 0;
+	private $hdrType          = null;
+	private $hdrToneMapMethod = null;
+	private $hdrToneMapParam  = null;
 
 	public function __construct($idFile, $idEpisode, $path, $filename, $filesize) {
 		$dbh = getPDO();
@@ -80,6 +82,12 @@ class StreamDetails {
 		if (!empty($this->arOR)) {
 			$this->arOR = sprintf("%01.2f", $this->arOR);
 			$this->ar = null;
+		}
+
+		$tone = getToneMapping($idFile, $dbh);
+		if (!empty($tone)) {
+			$this->hdrToneMapMethod = $tone['Method'];
+			$this->hdrToneMapParam  = $tone['Param'];
 		}
 	}
 

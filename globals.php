@@ -35,7 +35,7 @@
 		$HOMENETWORK = ($check == $local0 || $check == $local1);
 	}
 
-	$COUNTRY_MAP =	array(
+	const COUNTRY_MAP =	array(
 		'DE' => array(
 				'GER' => 'Deutsch',
 				'GMH' => 'Deutsch',
@@ -81,7 +81,7 @@
 			)
 	);
 
-	$SOURCE = array(
+	const SOURCE = array(
 		null => 'unknown',
 		0    => 'unknown',
 		1    => 'TVrip',
@@ -93,7 +93,7 @@
 		7    => 'UHD BluRay',
 	);
 
-	$CODEC_COLORS = array(
+	const CODEC_COLORS = array(
 		0 => '#000000',
 		1 => '#00FF00', //MPEG
 		2 => '#009900', //DivX
@@ -102,7 +102,15 @@
 		5 => '#DD0000', //x265 10bit
 	);
 
-	$DB_MAPPINGS = array(
+	const TONEMAPMETHOD = array(
+		0 => 'OFF',
+		1 => 'Reinhard',
+		2 => 'Aces',
+		3 => 'Hable',
+		4 => 'Max'
+	);
+
+	const DB_MAPPINGS = array(
 		93 => array(
 			'actorlinkmovie'    => 'actor_link',
 			'actorlinkepisode'  => 'actor_link',
@@ -155,7 +163,7 @@ function mergeMapping($dbVer) {
 	if (isset($_SESSION['DB_MAPPING'])) { return unserialize($_SESSION['DB_MAPPING']); }
 
 	$merged   = array();
-	$mappings = $GLOBALS['DB_MAPPINGS'];
+	$mappings = DB_MAPPINGS;
 	sort($mappings);
 	foreach($mappings as $key => $value) {
 		if ($key > $dbVer) { continue; }

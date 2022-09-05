@@ -330,12 +330,9 @@ include_once "./template/Series/_SERIEN.php";
 			<select id="source" name="source" class="styled-select" style="position:absolute; opacity:0; font-size:10px !important; width:435px !important; height:18px !important;" size="1">
 				<option value="-1"> </option>
 <?php
-				$SOURCE = $GLOBALS['SOURCE'];
 				$i = 0;
-				for ($i = 1; $i < count($SOURCE); ++$i) {
-					if (empty($SOURCE[$i]))
-						continue;
-					echo "\t\t\t\t".'<option value="'.$i.'"'.($source == $i ? ' SELECTED' : '').'>'.$SOURCE[$i].'</option>'."\r\n";
+				for ($i = 1; $i < count(SOURCE); ++$i) {
+					echo "\t\t\t\t".'<option value="'.$i.'"'.($source == $i ? ' SELECTED' : '').'>'.SOURCE[$i].'</option>'."\r\n";
 				}
 ?>
 			</select>

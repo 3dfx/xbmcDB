@@ -161,6 +161,18 @@ function getOverrideAR($idFile, $idMedia, $dbh = null) {
 	return $result['ratio'];
 }
 
+function getToneMapping($idFile, $dbh = null) {
+	$result = fetchFromDB("SELECT TonemapMethod, TonemapParam FROM settings WHERE idFile = ".$idFile.";", false, $dbh);
+	if (empty($result) || !is_numeric($result['TonemapParam']) || $result['TonemapParam'] == 1.0) {
+		return null;
+	}
+
+	return array(
+		'Method' => TONEMAPMETHOD[$result['TonemapMethod']],
+		'Param'  => $result['TonemapParam']
+	);
+}
+
 function getResolution($SkQL, $isMovie, $dbh = null) {
 	$idStream   = array();
 	$movKey     = $isMovie ? "movie" : "episode";
@@ -2722,11 +2734,8 @@ function matchString($pattern, $string) {
 }
 
 function getCountryMap() {
-	$COUNTRY_MAP = isset($GLOBALS['COUNTRY_MAP']) ? $GLOBALS['COUNTRY_MAP'] : null;
-	if (empty($COUNTRY_MAP)) { return null; }
-
 	$LANG = isset($GLOBALS['LANG']) ? $GLOBALS['LANG'] : 'EN';
-	return $COUNTRY_MAP[$LANG];
+	return COUNTRY_MAP[$LANG];
 }
 
 function postEditLanguage($str, $buildLink = true) {

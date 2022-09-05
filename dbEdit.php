@@ -41,6 +41,7 @@ include_once "globals.php";
 	$clrSize    = getEscGPost('clrSize',      0);
 	$source     = getEscGPost('source',      -1);
 	$aRatio     = getEscGPost('aRatio',      -1);
+	$tomParam   = getEscGPost('tomParam',   1.0);
 	$noForward  = getEscGPost('noForward',    0);
 
 	$dbh = getPDO();
@@ -332,6 +333,12 @@ include_once "globals.php";
 			//clearMediaCache();
 		}
 
+		if ($act == 'setToneMapParam' && $idFile != -1) {
+			$SQL = "";
+			$SQL = "UPDATE settings SET TonemapParam = ".$tomParam." WHERE idFile = '".$idFile."';";
+			$dbh->exec($SQL);
+		}
+
 		if ($act == 'setMoviesetCover' && $id != -1 && $idMovie != -1) {
 			$url = '';
 			try {
@@ -405,7 +412,7 @@ include_once "globals.php";
 		} else if ($act == 'toggleAtmos' && $idFile != -1) {
 			echo '<span style="font:12px Verdana, Arial;">Atmos flag was toggled!</span>';
 
-		} else if ($act == 'setAspectRatio' && $noForward != 1) {
+		} else if ($noForward != 1 && ($act == 'setAspectRatio' || $act == 'setToneMapParam')) {
 			header('Location:./?show=details&idShow='.$idMovie);
 
 		} else if ($act == 'addset' || $act == 'delete' || $act == 'setname' || $act == 'setMoviesetCover') {
