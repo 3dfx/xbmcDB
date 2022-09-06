@@ -2890,28 +2890,68 @@ function atmosFlagPossibleToSet($codec) {
 }
 
 function postEditACodec($codec, $atmosx = null) {
-	if (!empty($atmosx) && ($codec == 'TRUEHD' || $codec == 'EAC3' || $codec == 'A_EAC3')) {
-		$tipp = 'Dolby Atmos with '.($codec == 'TRUEHD' ? 'True-HD' : 'E-AC3');
-		$codec = '<span title="'.$tipp.'">Atmos</span>';
+	$tipp = null;
+	if (!empty($atmosx)) {
+		switch ($codec) {
+			case 'EAC3':
+			case 'A_EAC3':
+			case 'TRUEHD':
+				$tipp = ($codec == 'TRUEHD' ? 'True-HD' : 'E-AC3').' with Dolby Atmos';
+				$codec = 'Atmos';
+				break;
 
-	} else if (!empty($atmosx) && ($codec == 'DCA' || $codec == 'DTS' || $codec == 'DTSHD_MA' || $codec == 'DTSHD_HRA')) {
-		$tipp = 'DTS - High Definition';
-		$codec = '<span title="'.$tipp.'">DTS:X</span>';
+			case 'DCA':
+			case 'DTS':
+			case 'DTSHD_MA':
+			case 'DTSHD_HRA':
+				$tipp = 'DTS - High Definition';
+				$codec = 'DTS:X';
+				break;
+		}
 
 	} else {
-		$codec = str_replace('MP3FLOAT', 'MP3', $codec);
-		//$str = str_replace('AC3', '<span title="Audio Coding 3">AC3</span>', $str);
-		$codec = str_replace('A_EAC3', '<span title="Enhanced AC3">E-AC3</span>', $codec);
-		$codec = str_replace('EAC3', '<span title="Enhanced AC3">E-AC3</span>', $codec);
-		$codec = str_replace('AAC', '<span title="Advanced Audio Coding">AAC</span>', $codec);
-		//$str = str_replace('VORBIS', '<span title="Vorbis">VORBIS</span>', $str);
-		$codec = str_replace('DCA', 'DTS', $codec);
-		$codec = str_replace('TRUEHD', '<span title="True High Definition">True-HD</span>', $codec);
-		$codec = str_replace('DTSHD_MA', '<span title="DTS - High Definition (Master Audio)">DTS-HD MA</span>', $codec);
-		$codec = str_replace('DTSHD_HRA', '<span title="DTS - High Definition (High Resolution Audio)">DTS-HD HRA</span>', $codec);
+
+		switch ($codec) {
+			case 'MP3FLOAT':
+				$codec = 'MP3';
+				break;
+			case 'AAC':
+				$tipp = 'Advanced Audio Coding';
+				$codec = 'AAC';
+				break;
+
+			case 'EAC3':
+			case 'A_EAC3':
+				$tipp = 'Enhanced AC3';
+				$codec = 'E-AC3';
+				break;
+			case 'TRUEHD':
+				$tipp = 'True High Definition';
+				$codec = 'True-HD';
+				break;
+
+			case 'DCA':
+			case 'DTS':
+				$codec = 'DTS';
+				break;
+			case 'DTSHD_MA':
+				$tipp = '"DTS - High Definition (Master Audio)';
+				$codec = 'DTS-HD MA';
+				break;
+			case 'DTSHD_HRA':
+				$tipp = 'DTS - High Definition (High Resolution Audio)';
+				$codec = 'DTS-HD HRA';
+				break;
+		}
 	}
 
-	return $codec;
+	$result  = '<span>';
+	if (!empty($tipp)) {
+		$result  = '<span title="'.$tipp.'">';
+	}
+	$result .= $codec.'</span>';
+
+	return $result;
 }
 
 function postEditChannels($str) {
