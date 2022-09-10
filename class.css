@@ -743,6 +743,7 @@ input[type=checkbox] {
 }
 
 .moreDots {
+	color:dimgray;
 	cursor:pointer;
 	font-weight:bold;
 }

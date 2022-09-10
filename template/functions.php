@@ -2622,16 +2622,18 @@ function dayOfWeekShort($given) {
 function toEuropeanDateFormatWDay($given) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
 	$strFormat = $eurDateFormat ? 'd.m.y \(D\)' : 'Y-m-d \(D\)';
-	if (checkIfDateIsString($given))
+	if (checkIfDateIsString($given)) {
 		$given = strtotime($given);
+	}
 	return (empty($given) ? $given : date($strFormat, $given));
 }
 
 function toEuropeanDateFormat($given) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
 	$strFormat = $eurDateFormat ? 'd.m.y' : 'Y-m-d';
-	if (checkIfDateIsString($given))
+	if (checkIfDateIsString($given)) {
 		$given = strtotime($given);
+	}
 	return (empty($given) ? $given : date($strFormat, $given));
 }
 

@@ -121,7 +121,8 @@ include_once "./template/Series/StreamDetails.php";
 		echo '<span class="epCheckSpan"'.($isAdmin && !empty($percent) ? ' title="'.$pausedAt.' ('.$percent.'%)"' : '').'>';
 			if ($isAdmin) {
 				if ($playCount > 0) {
-					echo '<img src="./img/check.png" class="galleryImage thumbCheck" style="position:relative; bottom:4px;" title="watched" />';
+					echo '<img src="./img/check.png" class="galleryImage thumbCheck" style="position:relative; bottom:4px;" />';
+
 				} else if (!empty($percent)) {
 					echo '<input type="text" class="knob-dyn" data-width="15" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
 				}
@@ -175,11 +176,17 @@ include_once "./template/Series/StreamDetails.php";
 		echo '</div>';
 	}
 
-	if ($isAdmin && $playCount > 0 && !empty($lastPlayed)) {
-		echo '<div><span><i><b>Watched:</b></i></span>';
-		echo '<span class="flalright" style="width:45px;"><font color="silver">[ </font>'.dayOfWeekShort($lastPlayed).'<font color="silver"> ]</font></span>';
-		echo '<span class="flalright" style="padding-right:5px;">'.toEuropeanDateFormat(substr($lastPlayed, 0, 10)).'</span>';
-		echo '</div>';
+	if ($isAdmin) {
+		if (!empty($lastPlayed)) {
+			echo '<div><span><i><b>Watched:</b></i></span>';
+			echo '<span class="flalright" style="width:45px;"><font color="silver">[ </font>'.dayOfWeekShort($lastPlayed).'<font color="silver"> ]</font></span>';
+			echo '<span class="flalright" style="padding-right:5px;">'.toEuropeanDateFormat(substr($lastPlayed, 0, 10)).'</span>';
+			echo '</div>';
+		}
+
+		if ($playCount > 1) {
+			echo '<div><span><i><b>Count:</b></i></span><span class="flalright" style="padding-right:5px;">'.$playCount.'x</span></div>';
+		}
 	}
 
 	if (!$isDemo) {

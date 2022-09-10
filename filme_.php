@@ -178,36 +178,36 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 	$zeilen = array();
 	for ($rCnt = 0; $rCnt < count($result); $rCnt++) {
 		$zeilenSpalte = 0;
-		$row       = $result[$rCnt];
-		$idFile    = $row['idFile'];
+		$row        = $result[$rCnt];
+		$idFile     = $row['idFile'];
 		if ($idFile < 0) { continue; }
-		$idMovie   = $row['idMovie'];
-		$filmname  = $row['movieName'];
-		$watched   = $row['playCount'];
-		//$thumb     = $row['thumb'];
-		$filename  = $row['filename'];
-		$dateAdded = $row['dateAdded'];
-		$path      = $row['path'];
-		$jahr      = substr($row['jahr'], 0, 4);
-		$filesize  = $row['filesize'];
-		$fps       = $row['fps'];
-		$bits      = $row['bits'];
-		$playCount = $row['playCount'];
-		$trailer   = $row['trailer'];
-		$rating    = $row['rating'];
-		$imdbId    = $row['imdbId'];
-		$genres    = $row['genres'];
-		$vRes      = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
-		$fnam      = $path.$filename;
-		$cover     = null;
-		$isNew     = !empty($lastHighest) && $idMovie > $lastHighest;
+		$idMovie    = $row['idMovie'];
+		$filmname   = $row['movieName'];
+		//$thumb    = $row['thumb'];
+		$filename   = $row['filename'];
+		$dateAdded  = $row['dateAdded'];
+		$path       = $row['path'];
+		$jahr       = substr($row['jahr'], 0, 4);
+		$filesize   = $row['filesize'];
+		$fps        = $row['fps'];
+		$bits       = $row['bits'];
+		$playCount  = $row['playCount'];
+		$lastPlayed = $row['lastPlayed'];
+		$trailer    = $row['trailer'];
+		$rating     = $row['rating'];
+		$imdbId     = $row['imdbId'];
+		$genres     = $row['genres'];
+		$vRes       = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
+		$fnam       = $path.$filename;
+		$cover      = null;
+		$isNew      = !empty($lastHighest) && $idMovie > $lastHighest;
 
-		$f4Ke      = isFake4K($filename);
-		$scaled    = isUpscaled($filename);
-		$is3D      = is3d($filename);
+		$f4Ke       = isFake4K($filename);
+		$scaled     = isUpscaled($filename);
+		$is3D       = is3d($filename);
 
-		$filmname0 = $filmname;
-		$titel     = $filmname;
+		$filmname0  = $filmname;
+		$titel      = $filmname;
 
 		$path = mapSambaDirs($path);
 		if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
@@ -259,8 +259,8 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 
 		if ($gallerymode) {
 				$zeilen[$counter][0] = $filmname.($jahr != 0 ? ' ('.$jahr.')' : '');
-				$zeilen[$counter][1] = 'show=details&idShow='.$idMovie;
-				$zeilen[$counter][2] = $watched;
+				$zeilen[$counter][1] = 'show=details&idMovie='.$idMovie;
+				$zeilen[$counter][2] = $playCount;
 				$zeilen[$counter][3] = getImageWrap($cover, $idMovie, 'movie', 0);
 				$zeilen[$counter][4] = $is3D;
 				$zeilen[$counter][5] = $path;
@@ -290,17 +290,21 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 
 #seen
 			if ($isAdmin) {
+				$when = toEuropeanDateFormat($lastPlayed);
+				if ($playCount > 1) {
+					$when = $playCount.'x: '.$when;
+				}
 				$chk      = $playCount >= 1;
 				$spalTmp .= '<span'.(!$chk ? ' style="padding-right:10px;"' : '').'>';
-				$spalTmp .= $chk ? '<img src="img/check.png" class="check10v1">' : ' ';
+				$spalTmp .= $chk ? '<img src="img/check.png" class="check10v1" title="'.$when.'">' : ' ';
 				$spalTmp .= '</span> ';
 			}
 
 #title
 			$suffix = '';
 			if ($is3D) { $suffix = ' (3D)'; }
-			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
-			else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idShow='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
+			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idMovie='.$idMovie.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
+			else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idMovie='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
 
 #trailer
 			if ($SHOW_TRAILER && !empty($trailer)) {
@@ -686,7 +690,7 @@ function postGalleryRows($zeilen): void {
 		}
 
 		if ($showSpan) {
-			echo '<div class="gallerySpan">';
+			echo '<div class="gallerySpan" style="cursor:pointer;">';
 		}
 		if ($showSpan && $is3d) {
 			echo '<img src="./img/3d.png" class="icon24 gallery3d" />';
@@ -718,7 +722,7 @@ function postGalleryRows($zeilen): void {
 		}
 
 		if ($playCount) {
-			echo '<img src="./img/check.png" class="icon32 gallery'.$gCount.'" />';
+			echo '<img src="./img/check.png" class="icon32 gallery'.$gCount.'" style="cursor:default;" />';
 		}
 		if ($showSpan) {
 			echo '</div>';

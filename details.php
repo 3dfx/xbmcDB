@@ -4,11 +4,11 @@ include_once "globals.php";
 include_once "./template/config.php";
 include_once "./template/functions.php";
 
-	$id = isset($_SESSION['idShow']) ? $_SESSION['idShow'] : null;
-	#if (empty($id)) { $id = getEscGPost('idShow'); }
+	$id = isset($_SESSION['idMovie']) ? $_SESSION['idMovie'] : null;
+	#if (empty($id)) { $id = getEscGPost('idMovie'); }
 	if (empty($id)) { die('<br/>no param!<br/>'); }
 
-    $DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
+	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
 ?>
 
 <head>
@@ -73,19 +73,19 @@ include_once "./template/functions.php";
 			window.location.href='./dbEdit.php?act=setAspectRatio&idFile=' + idFile + '&idMovie=' + idMovie + '&' + 'aRatio=' + ar;
 		}
 
-		function setToneMapParam(idFile, par = "") {
-			if (idFile === null) { return; }
+		function setToneMapParam(idFile, idMovie, par = "") {
+			if (idFile === null || idMovie === null) { return; }
 
 			let answer = prompt("Enter ToneMap Param", par);
 			if (answer === null) { return; }
 			if (answer.trim() === "") { par = ""; }
 			else { answer = answer.replace(",", "."); }
 
-			if (answer !== "" && !isNaN(par)) {
-				par = Number.parseFloat(par);
+			if (answer !== "" && !isNaN(answer)) {
+				par = Number.parseFloat(answer);
 			}
 
-			window.location.href='./dbEdit.php?act=setToneMapParam&idFile=' + idFile + '&' + 'tomParam=' + par;
+			window.location.href='./dbEdit.php?act=setToneMapParam&idFile=' + idFile + '&idMovie=' + idMovie + '&' + 'tomParam=' + par;
 		}
 <?php /*
 		function Show_Image(IDS) {
@@ -129,7 +129,7 @@ include_once "./template/functions.php";
 		$existArtTable = existsArtTable();
 
 		$SQL = "SELECT c00 AS movieName, c01 AS desc, A.c03 AS sndTitle, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c11 AS seconds, c14 AS genres, c16 AS orTitle, ".
-			"C.strPath AS path, D.filesize, D.fps, D.bit, D.atmosx, D.src, A.idFile, B.playCount AS playCount ".
+			"C.strPath AS path, D.filesize, D.fps, D.bit, D.atmosx, D.src, A.idFile, B.playCount AS playCount , B.lastPlayed AS lastPlayed ".
 			"FROM movie A, files B, path C ".
 			mapDBC('joinIdMovie').
 			mapDBC('joinRatingMovie').
@@ -154,7 +154,8 @@ include_once "./template/functions.php";
 		$idMovie      = $row['idMovie'];
 		$path         = $row['path'];
 		$filename     = $row['filename'];
-		$watched      = $row['playCount'];
+		$playCount    = $row['playCount'];
+		$lastPlayed   = $row['lastPlayed'];
 		$fnam         = $path.$filename;
 		$titel        = trim($row['movieName']);
 		$sndTitle     = trim($row['sndTitle']);
@@ -282,8 +283,13 @@ include_once "./template/functions.php";
 			echo '<span class="epCheckSpan fancy_movieset" href="./dbEdit.php?act=clearBookmark&idFile='.$idFile.'"'.$hint.' style="position:absolute; right:0px;">';
 			if (!empty($percent)) {
 				echo '<input type="text" class="knob-dyn" data-width="25" data-height="25" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
-			} else if ($watched > 0) {
-				echo '<img src="./img/check.png" class="icon32" title="watched" />';
+
+			} else if ($playCount > 0) {
+				$when = toEuropeanDateFormat($lastPlayed);
+				if ($playCount > 1) {
+					$when = $playCount.'x: '.$when;
+				}
+				echo '<img src="./img/check.png" class="icon32" title="'.$when.'" />';
 			}
 			echo '</span>';
 		}
@@ -308,7 +314,7 @@ include_once "./template/functions.php";
 
 			$descHidden = '';
 			$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
-			if ($spProtect && ($isAdmin && (empty($watched) && empty($percent)))) {
+			if ($spProtect && ($isAdmin && (empty($playCount) && empty($percent)))) {
 				$descHidden = ' style="display:none;"';
 				echo '<div id="spoiler" style="padding-top:15px; color:red; cursor:pointer;" onclick="spoilIt(); return false;"><u><i><b>spoil it!</b></i></u></div>';
 			}
@@ -514,7 +520,7 @@ include_once "./template/functions.php";
 			$color = ($hPerf < 4 ? null : CODEC_COLORS[$hPerf]);
 			if (!empty($color)) {
 				$param = isset($tone['Param']) ? $tone['Param'] : 1.0;
-				$res[2][$COLS['VIDEO2']]  = '<span class="hdrType" style="color:'.$color.'; font-weight:bold;" onclick="setToneMapParam('.$idFile.', '.$param.'); return false;">';
+				$res[2][$COLS['VIDEO2']]  = '<span class="hdrType" style="cursor:pointer; color:'.$color.'; font-weight:bold;" onclick="setToneMapParam('.$idFile.', '.$idMovie.', '.$param.'); return false;">';
 				$res[2][$COLS['VIDEO2']] .= postEditHdrType($hdrType);
 				if (!empty($tone)) {
 					$res[2][$COLS['VIDEO2']] .= '<span class="tonemap" title="'.$tone['Method'].': '.$tone['Param'].'">';
@@ -757,7 +763,7 @@ include_once "./template/functions.php";
 
 				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>Not in any set!</i>');
 				if ($isSet) {
-					$href = '<a href="?show=filme&which=set&sort=titlea&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
+					$href = '<a style="color:dimgray;" href="?show=filme&which=set&sort=titlea&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
 				}
 				if ($isAdmin) {
 					$href .= ' <a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id. '"><img style="border:0; height:9px;" src="img/edit-pen.png" title="change set" alt="change set"/></a>';
@@ -773,7 +779,7 @@ include_once "./template/functions.php";
 			echo "\r\n";
 		}
 
-	unset( $_SESSION['show'], $_SESSION['idShow'] );
+	unset( $_SESSION['show'], $_SESSION['idMovie'] );
 
 
 //- FUNCTIONS -//

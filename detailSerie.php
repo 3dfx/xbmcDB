@@ -137,7 +137,7 @@ function postStaffel($staffel, $last = null) {
 	foreach ($staffel->getEpisoden() as $epi) {
 		if (!is_object($epi)) { continue; }
 
-		$chk    = intval(1);
+		$chk    = 1;
 		$epNum_ = intval($epi->getEpNum());
 		if (!empty($lastEp)) {
 			$delta = $lastEp->getDelta();
@@ -190,7 +190,12 @@ function postStaffel($staffel, $last = null) {
 		if ($isAdmin) {
 			$watched = $epi->isWatched();
 			echo '<a tabindex="-1" class="fancy_msgbox" href="./dbEdit.php?act='.($watched ? 'setUnseen' : 'setSeen').'&idFile='.$epi->getIdFile().'">';
-			echo '<img src="./img/check'.($watched ? '' : 'R').'.png" class="galleryImage" title="'.($watched ? 'watched' : 'set watched').'" /> ';
+			$wTitle = 'set watched';
+			if ($watched) {
+				$playCount = $epi->getPlayCount();
+				$wTitle = ($playCount > 1 ? $playCount.'x' : 'watched');
+			}
+			echo '<img src="./img/check'.($watched ? '' : 'R').'.png" class="galleryImage" title="'.$wTitle.'" /> ';
 			echo '</a>';
 		}
 		echo '</td>';
