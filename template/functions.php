@@ -335,12 +335,19 @@ function checkEpLinkEpTable($dbh = null) {
 
 function checkFileInfoTable($dbh = null) {
 	$exist = existsTable('fileinfo', 'table', $dbh);
-	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false, $dbh); }
-	else {
-		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'fps',    'FLOAT',     $dbh);
-		checkAndAlterTableCol('fileinfo', 'param_srcColChecked', 'src',    'TINYINT',   $dbh);
-		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'bit',    'TINYINT',   $dbh);
-		checkAndAlterTableCol('fileinfo', 'param_atmColChecked', 'atmosx', 'CHARACTER', $dbh);
+	if (!$exist) {
+		execSQL("CREATE TABLE IF NOT EXISTS fileinfo(idFile INTEGER NOT NULL, filesize LONGINT, fps FLOAT, src INTEGER, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false, $dbh);
+		execSQL("CREATE UNIQUE INDEX IF NOT EXISTS ix_fileinfo_1 ON fileinfo (idFile);", false, $dbh);
+
+	} else {
+		$IGNORE = isset($GLOBALS['IGNORE_COL_CHECKS']) ? $GLOBALS['IGNORE_COL_CHECKS'] : null;
+		if (!empty($IGNORE)) {
+			$IGNORE = isset($IGNORE['fileinfo']) ? $IGNORE['fileinfo'] : null;
+		}
+		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'fps',    'FLOAT',     $IGNORE, $dbh);
+		checkAndAlterTableCol('fileinfo', 'param_srcColChecked', 'src',    'TINYINT',   $IGNORE, $dbh);
+		checkAndAlterTableCol('fileinfo', 'param_fpsColChecked', 'bit',    'TINYINT',   $IGNORE, $dbh);
+		checkAndAlterTableCol('fileinfo', 'param_atmColChecked', 'atmosx', 'CHARACTER', $IGNORE, $dbh);
 	}
 }
 
@@ -348,24 +355,9 @@ function checkARTable($dbh = null) {
 	$exist = existsTable('aspectratio', 'table', $dbh);
 	if (!$exist) {
 		execSQL("CREATE TABLE IF NOT EXISTS aspectratio(idFile INTEGER NOT NULL, idMovie INTEGER NOT NULL, ratio FLOAT, CONSTRAINT 'C01_idFile' UNIQUE (idFile), CONSTRAINT 'C02_idFile' FOREIGN KEY (idFile) REFERENCES files (idFile) ON DELETE CASCADE);", false, $dbh);
+		execSQL("CREATE UNIQUE INDEX IF NOT EXISTS ix_aspectratio_1 ON aspectratio (idFile, idMovie);", false, $dbh);
+		execSQL("CREATE UNIQUE INDEX IF NOT EXISTS ix_aspectratio_2 ON aspectratio (idMovie, idFile);", false, $dbh);
 	}
-}
-
-function checkAndAlterTableCol($table, $sessionKey, $col, $colType, $dbh = null) {
-	if (isset($_SESSION[$sessionKey]))
-		return;
-	$colFound = false;
-	$dbh = (!empty($dbh) ? $dbh : getPDO());
-	$res = $dbh->query("PRAGMA TABLE_INFO('".$table."');");
-	foreach($res as $row) {
-		if ($row[1] == $col) {
-			$colFound = true;
-			break;
-		}
-	}
-
-	if (!$colFound) { $dbh->exec("ALTER TABLE ".$table." ADD ".$col." ".$colType.";"); }
-	$_SESSION[$sessionKey] = true;
 }
 
 function checkMyEpisodeView($dbh = null) {
@@ -382,9 +374,36 @@ function checkNextAirDateTable($dbh = null) {
 	$exist = existsTable('nextairdate', 'table', $dbh);
 	if (!$exist) { execSQL("CREATE TABLE IF NOT EXISTS nextairdate(idShow INTEGER NOT NULL, season INTEGER, episode INTEGER, lastEpisode INTEGER, airdate LONGINT, maxSeason INTEGER, maxEpisode INTEGER, CONSTRAINT 'C01_idShow' UNIQUE (idShow), CONSTRAINT 'C02_idShow' FOREIGN KEY (idShow) REFERENCES tvshow (idShow) ON DELETE CASCADE);", false, $dbh); }
 	else {
-		checkAndAlterTableCol('nextairdate', 'param_lStColChecked', 'maxSeason',  'INTEGER', $dbh);
-		checkAndAlterTableCol('nextairdate', 'param_lEpColChecked', 'maxEpisode', 'INTEGER', $dbh);
+		$IGNORE = isset($GLOBALS['IGNORE_COL_CHECKS']) ? $GLOBALS['IGNORE_COL_CHECKS'] : null;
+		if (!empty($IGNORE)) {
+			$IGNORE = isset($IGNORE['nextairdate']) ? $IGNORE['nextairdate'] : null;
+		}
+		checkAndAlterTableCol('nextairdate', 'param_lStColChecked', 'maxSeason',  'INTEGER', $IGNORE, $dbh);
+		checkAndAlterTableCol('nextairdate', 'param_lEpColChecked', 'maxEpisode', 'INTEGER', $IGNORE, $dbh);
 	}
+}
+
+function checkAndAlterTableCol($table, $sessionKey, $col, $colType, $IGNORE, $dbh = null) {
+	if (isset($_SESSION[$sessionKey])) {
+		return;
+	}
+	if (!empty($IGNORE) && isset($IGNORE[$col])) {
+		$_SESSION[$sessionKey] = true;
+		return;
+	}
+
+	$colFound = false;
+	$dbh = (!empty($dbh) ? $dbh : getPDO());
+	$res = $dbh->query("PRAGMA TABLE_INFO('".$table."');");
+	foreach($res as $row) {
+		if ($row[1] == $col) {
+			$colFound = true;
+			break;
+		}
+	}
+
+	if (!$colFound) { $dbh->exec("ALTER TABLE ".$table." ADD ".$col." ".$colType.";"); }
+	$_SESSION[$sessionKey] = true;
 }
 
 function existsOrderzTable($dbh = null) {
@@ -1338,15 +1357,16 @@ function postNavBar_($isMain) {
 
 		if ($isAdmin) {
 			$res .= '<li class="divider"></li>';
-			$res .= '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) ? ' class="selectedItem"' : '').'>unseen</a></li>';
-			$res .= '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetParams.$unsetMode.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) ? ' class="selectedItem"' : '').'>seen</a></li>';
+			$res .= '<li><a href="?show=filme'.$unsetMode.$unsetCountry.$unsetParams.'=pCount&unseen=0&newmode=0" onclick="return checkForCheck();"'.($sort == 'pCount' && empty($just) ? ' class="selectedItem"' : '').'>most seen</a></li>';
+			$res .= '<li><a href="?show=filme&unseen=1&newmode=0'.$unsetMode.$unsetCountry.$unsetParams.'" onclick="return checkForCheck();"'.($unseen == 1 && empty($just) && $sort != 'pCount' ? ' class="selectedItem"' : '').'>unseen</a></li>';
+			$res .= '<li><a href="?show=filme&unseen=0&newmode=0'.$unsetMode.$unsetCountry.$unsetParams.'" onclick="return checkForCheck();"'.($unseen == 0 && empty($just) && $sort != 'pCount' ? ' class="selectedItem"' : '').'>seen</a></li>';
 		}
 
 		if ($CUTSENABLED || $DREIDENABLED || $ATMOSENABLED) {
 			$res .= '<li class="divider"></li>';
 		}
 		if ($ATMOSENABLED) {
-			$res .= '<li><a href="?show=filme&mode=9'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 9 && empty($just) ? ' class="selectedItem"' : '').'>Atmos</a></li>';
+			$res .= '<li><a href="?show=filme&mode=9'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 9 && empty($just) ? ' class="selectedItem"' : '').'>Atmos / DTS:X</a></li>';
 		}
 		if ($DREIDENABLED) {
 			$res .= '<li><a href="?show=filme&mode=7'.$unsetParams.$unsetCountry.'" onclick="return checkForCheck();"'.($mode == 7 && empty($just) ? ' class="selectedItem"' : '').'>3D</a></li>';
@@ -2300,10 +2320,6 @@ function getShowInfo($idTvDb, $lastStaffel = null) {
 	//$LANG         = isset($GLOBALS['TVDB_LANGUAGE']) ? $GLOBALS['TVDB_LANGUAGE'] : 'en';
 	$TVDB_API_KEY = isset($GLOBALS['TVDB_API_KEY'])  ? $GLOBALS['TVDB_API_KEY']  : null;
 	if (empty($TVDB_API_KEY)) { return null; }
-
-	#$URL = 'http://www.thetvdb.com/api/'.$TVDB_API_KEY.'/series/'.$idTvDb.'/all/'.$LANG.'.xml';
-#	if (!urlCheck($URL))
-#		return null;
 
 	$count    = 1;
 	$episodes = array();

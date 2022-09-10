@@ -32,7 +32,7 @@ include_once "./template/functions.php";
 
 	echo "<table class='film' style='margin-top:15px; max-width:850px; width:850px;'>\r\n";
 	echo "<tr>";
-	echo "<th colspan='".($which == 1 ? 6 : 8)."' style='padding:5px 5px;'>".$title."</th>";
+	echo "<th colspan='".($which == 1 ? 6 : 8)."' style='padding:5px 5px; text-align:center;'>".$title."</th>";
 	echo "</tr>";
 	echo "<tr>";
 	echo "<th style='padding:2px 5px; text-align:right;'>#</th>";

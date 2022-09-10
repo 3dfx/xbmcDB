@@ -6,6 +6,7 @@
 	$DREID_ENABLED                 = true;  // 3d
 	$ATMOS_ENABLED                 = true;
 	$CHOOSELANGUAGES               = true;
+	$IGNORE_COL_CHECKS             = array();
 
 	$TVDB_API_KEY       = '00A91C42DCF02C8A';
 	$ANONYMIZER         = 'https://anon.to/?';
@@ -142,19 +143,16 @@
 		),
 		107 => array(
 			'joinIdMovie'       => 'LEFT JOIN uniqueid I ON (I.media_type="movie" AND I.type="imdb" AND I.media_id=A.idMovie) ',
-			'joinRatingMovie'   => 'LEFT JOIN rating R ON (R.media_type="movie" AND R.media_id=A.idMovie) ',
+			'joinRatingMovie'   => 'LEFT JOIN rating   R ON (R.media_type="movie" AND R.media_id=A.idMovie) ',
 
 			'A.c04'             => 'R.votes',
 			'A.c05'             => 'R.rating',
 			'A.c07'             => 'substr(A.premiered,1,4)',
 			'A.c07_'            => 'A.premiered',
 			'A.c09'             => 'I.value',
-//			'A.c05'             => 'A.rating',
-//			'A.c09'             => 'A.uniqueid_value',
 
 			'T.c12'             => 'T.uniqueid_value',
 			'V.rating'          => 'R.rating',
-//			'V.c03'             => 'R.rating',
 			'V.c03'             => 'V.c03 AS rating_, (SELECT R.rating FROM rating R WHERE R.media_id = V.idEpisode AND R.media_type="episode")',
 		)
 	);

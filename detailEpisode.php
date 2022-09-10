@@ -134,7 +134,7 @@ include_once "./template/Series/StreamDetails.php";
 		echo '<div class="thumbDiv"><img id="thumbImg" class="thumbImg" src="'.$thumbImg.'" /></div>';
 	}
 
-	echo '<div style="padding-right:5px;">';
+	echo '<div style="width:300px;">';
 	if (!empty($epDesc)) {
 		$spProtect = isset($GLOBALS['SPOILPROTECTION']) ? $GLOBALS['SPOILPROTECTION'] : true;
 
