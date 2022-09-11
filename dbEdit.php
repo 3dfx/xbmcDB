@@ -241,8 +241,9 @@ include_once "globals.php";
 					$params .= (!empty($jahr)   ? (!empty($params) ? ', ' : '').'premiered="'.$jahr.'-01-01"'   : '');
 				}
 
-				if ($params != '')
+				if ($params != '') {
 					$dbh->exec('UPDATE movie SET '.$params.' WHERE idMovie = '.$idMovie.';');
+				}
 			}
 
 			if (!empty($rating) && $dbVer >= 107) {
@@ -387,6 +388,47 @@ include_once "globals.php";
 		if ($act == 'delete' && $id != -1) {
 			$dbh->exec('DELETE FROM sets WHERE idSet = '.$id.';');
 			$dbh->exec('UPDATE movie SET idSet=NULL WHERE idSet = '.$id.';');
+		}
+
+		if ($act == 'fixRunTime') {
+			$FAILS_SQL = 'SELECT count(M.idFile) AS fails FROM movie M, streamdetails S WHERE S.iVideoDuration IS NOT NULL AND S.iVideoDuration != 0 AND S.iVideoDuration != M.c11 AND M.idFile = S.idFile;';
+
+			$row = fetchFromDB($FAILS_SQL, false);
+			$fails_1 = null;
+			$fails_2 = null;
+			$hasErr  = false;
+
+			if (empty($row)) {
+				$hasErr = true;
+
+			} else {
+				$fails_1 = $row['fails'];
+			}
+
+			if (!$hasErr) {
+				if ($fails_1 != 0) {
+					$dbh->exec('UPDATE movie SET c11=(SELECT iVideoDuration FROM streamdetails S WHERE S.iVideoDuration IS NOT NULL AND S.iVideoDuration != 0 AND S.iVideoDuration != movie.c11 AND movie.idFile = S.idFile);');
+				}
+
+				$row = fetchFromDB($FAILS_SQL, false);
+				if (empty($row)) {
+					$hasErr = true;
+
+				} else {
+					$fails_2 = $row['fails'];
+				}
+			}
+
+			$fails = $hasErr || ($fails_1 != 0 && $fails_1 == $fails_2) ? null : $fails_1;
+			if ($fails === null) {
+				$hasErr = true;
+			}
+
+			if ($hasErr) {
+				echo '<span style="font:12px Verdana, Arial;">Runtimes couldn\'t be fixed!</span>';
+			} else {
+				echo '<span style="font:12px Verdana, Arial;">'.($fails == 0 ? 'Everything was fine.' : $fails.' runtime'.($fails == 1 ? '' : 's').' fixed!').'</span>';
+			}
 		}
 
 		if (!empty($dbh) && $dbh->inTransaction()) {

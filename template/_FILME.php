@@ -86,7 +86,7 @@ function getSessionKeySQL($newAddedCount = 0) {
 
 	$SQL =  "SELECT DISTINCT ".
 		"A.idFile, A.idMovie, ".mapDBC('A.c05')." AS rating, B.playCount AS playCount, B.lastPlayed AS lastPlayed, A.c00 AS movieName, A.c14 AS genres, B.strFilename AS filename, ".
-		"M.dateAdded AS dateAdded, M.value AS dateValue, ".mapDBC('A.c07')." AS jahr, A.c11 AS dauer, A.c19 AS trailer, ".
+		"M.dateAdded AS dateAdded, M.value AS dateValue, ".mapDBC('A.c07')." AS jahr, A.c19 AS trailer, ".
 		mapDBC('A.c09')." AS imdbId, C.strPath AS path, F.filesize, F.fps, F.bit ".
 		"FROM movie A, files B, path C ".
 		"LEFT JOIN filemap  M ON B.strFilename = M.strFilename ".

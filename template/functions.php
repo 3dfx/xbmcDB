@@ -1491,7 +1491,9 @@ function postNavBar_($isMain) {
 			}
 			$res .= '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
 		}
+		$res .= '<li class="divider"></li>';
 		$res .= '<li><a class="fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
+		$res .= '<li><a class="fancy_msgbox" href="dbEdit.php?act=fixRunTime">Fix runtime</a></li>';
 		$res .= '<li class="divider"></li>';
 
 		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
@@ -2689,6 +2691,17 @@ function getPausedAt($timeAt) {
 	return sprintf('%02d:%02d:%02d', $hrs, $min, $sec);
 }
 
+function convertSecondsToHM($seconds) {
+	$result = array('hrs' => null, 'min' => null);
+	if (!empty($seconds)) {
+		$minutes = floor($seconds/60);
+		$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
+		$result['hrs'] = $hours;
+		$result['min'] = $minutes.'\'';
+	}
+	return $result;
+}
+
 function switchPronoms($medianame, $PRONOMS = null) {
 	if (empty($PRONOMS)) {
 		$PRONOMS = isset($GLOBALS['PRONOMS']) ? $GLOBALS['PRONOMS'] : null;
@@ -2706,6 +2719,10 @@ function switchPronoms($medianame, $PRONOMS = null) {
 }
 
 function formatRating($rating) {
+	if (empty($rating) || substr($rating, 0, 1) == "0") {
+		return NULL;
+	}
+
 	return sprintf('%2.1f', $rating);
 }
 

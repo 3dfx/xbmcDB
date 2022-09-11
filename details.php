@@ -130,7 +130,7 @@ include_once "./template/functions.php";
 
 		$SQL = "SELECT ".
 			"c00 AS movieName, c01 AS desc, A.c03 AS sndTitle, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, ".
-			"A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c11 AS seconds, c14 AS genres, c16 AS orTitle, ".
+			"A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c14 AS genres, c16 AS orTitle, ".
 			"C.strPath AS path, D.filesize, D.fps, D.bit, D.atmosx, D.src, A.idFile, B.playCount AS playCount , B.lastPlayed AS lastPlayed ".
 			"FROM movie A, files B, path C ".
 			mapDBC('joinIdMovie').
@@ -151,8 +151,8 @@ include_once "./template/functions.php";
 
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
 		$size         = $row['filesize'];
-		$fps          = $row['fps'];
 		$bit          = isset($row['bit']) ? $row['bit'] : 0;
+		$fps          = $row['fps'];
 		$bit10        = $bit >= 10;
 		$source       = $row['src'];
 		$idMovie      = $row['idMovie'];
@@ -166,9 +166,27 @@ include_once "./template/functions.php";
 		$orTitel      = trim($row['orTitle']);
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['desc'];
+		$imdbId       = $row['imdbId'];
+		$hours        = null;
+		$minutes      = null;
+		$run          = 0;
+		$width        = '';
+		$height       = '';
+		$vCodec       = '';
+		$hdrType      = '';
+		$arSpan       = '';
 		$ar           = null;
 		$arOR         = null;
-		$arSpan       = '';
+		$aCodec       = array();
+		$aChannels    = array();
+		$aLang        = array();
+		$sLang        = array();
+		$res          = array();
+		$vRes         = array();
+		$imdbLink     = $ANONYMIZER.(empty($imdbId) ? $FILMINFOSEARCH.$titel : $IMDBFILMTITLE.$imdbId);
+		$genre        = empty($row['genres']) ? array() : explode(" / ", $row['genres']);
+		$rating       = empty($row['rating']) ? '' : '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.formatRating($row['rating']).'</a>';
+		$votes        = '<span title="votes"><a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.$row['votes'].'</a></span>';
 		$country      = getCountry($idMovie, $dbh);
 		$atmosx       = fetchAudioFormat($idFile, $path, $filename, $row['atmosx'], $dbh);
 		$fps          = fetchFps($idFile, $path, $filename, array($bit, $fps), $dbh);
@@ -176,9 +194,9 @@ include_once "./template/functions.php";
 			$bit10 = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 		}
 
-		$percent = null;
-		$timeAt = null;
-		$pausedAt = null;
+		$percent   = null;
+		$timeAt    = null;
+		$pausedAt  = null;
 		$timeTotal = null;
 		if ($isAdmin) {
 			$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';", false, $dbh);
@@ -207,14 +225,13 @@ include_once "./template/functions.php";
 <body>
 <?php
 		if ($fanartExists) {
-			$fanart  = getImageWrap($fanart, $idMovie, 'fanart', 0);
+			$fanart = getImageWrap($fanart, $idMovie, 'fanart', 0);
 			echo '<div class="fanartBg"><img src="'.$fanart.'" style="width:100%; height:100%;"/></div>'."\r\n";
 		}
 
-		$f4Ke   = isFake4K($filename);
 		$scaled = isUpscaled($filename);
-		$is3D   = is3d($filename);
-		if ($is3D) {
+		$f4Ke   = isFake4K($filename);
+		if (is3d($filename)) {
 			$titel .= ' (3D)';
 		}
 
@@ -233,13 +250,10 @@ include_once "./template/functions.php";
 
 		echo '<div class="moviebox2">';
 		echo '<div class="movieTitle">';
-		$imdbLink = $ANONYMIZER.$FILMINFOSEARCH.$titel;
-		if (!empty($imdbId)) {
-			$imdbLink = $ANONYMIZER.$IMDBFILMTITLE.$imdbId;
-		}
+
 		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$imdbLink.'">'.$titel.' ('.$jahr.')'.'</a>';
-		$trailer = $row['trailer'];
 		if ($SHOW_TRAILER && !empty($trailer)) {
+			$trailer = $row['trailer'];
 			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>'."\r\n";
 		}
 
@@ -258,7 +272,7 @@ include_once "./template/functions.php";
 			#$checkDelta++;
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:2px; font-style:italic; color:dimgray;">';
-			echo $row['sndTitle'];
+			echo $sndTitle;
 			echo '</div>';
 			echo "\r\n";
 		}
@@ -266,7 +280,7 @@ include_once "./template/functions.php";
 		if (!empty($cmpOrTit) && $cmpTitel != $cmpOrTit) {
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:8px;">';
-			echo '<b style="color:dimgray;">Original title</b>: '.$row['orTitle'];
+			echo '<b style="color:dimgray;">Original title</b>: '.$orTitel;
 			echo '</div>';
 			echo "\r\n";
 		}
@@ -332,50 +346,9 @@ include_once "./template/functions.php";
 		echo '<div style="width:700px; height:2px;"></div>';
 		echo "\r\n";
 
-		$size1     = '';
-		$minutes   = '';
-		$hours     = '';
-		$rating    = '';
-		$stimmen   = '';
-		$width     = '';
-		$height    = '';
-		$vCodec    = '';
-		$hdrType   = '';
-		$genre     = array();
-		$aCodec    = array();
-		$aChannels = array();
-		$aLang     = array();
-		$sLang     = array();
-		$res       = array();
-		$vRes      = array();
-		$run       = 0;
-
-		if ($row['movieName'] != $row['orTitle']) {
-			$orTitle = $row['orTitle'];
+		if ($titel != $orTitel || !empty($seconds) || !empty($genre) || !empty($rating)) {
 			$run = 1;
 		}
-		if (!empty($row['seconds'])) {
-			$secs    = $row['seconds'];
-			$minutes = floor($secs/60);
-			$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
-			$minutes = $minutes.'\'';
-			$run = 1;
-		}
-		if (substr($row['rating'], 0, 1) != "0") {
-			$rating  = formatRating($row['rating']);
-			$rating  = '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.$rating.'</a>';
-			$stimmen = '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.$row['votes'].'</a>';
-			$run = 1;
-		}
-		if (!empty($row['genres'])) {
-			$genre = explode(" / ", $row['genres']);
-			$run = 1;
-		}
-
-		if (!empty($size)) {
-			$size1 = _format_bytes($size);
-		}
-
 		foreach($result3 as $row3) {
 			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
 			if (!empty($tmp = $row3['iVideoHeight'])) { $height = $tmp; }
@@ -390,10 +363,9 @@ include_once "./template/functions.php";
 				$arSpan = $ar.':1';
 			}
 			if (!empty($tmp = $row3['iVideoDuration'])) {
-				$secs    = $tmp;
-				$minutes = floor($secs/60);
-				$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
-				$minutes = $minutes.'\'';
+				$converted = convertSecondsToHM($tmp);
+				$hours   = $converted['hrs'];
+				$minutes = $converted['min'];
 			}
 			$run++;
 		}
@@ -465,7 +437,7 @@ include_once "./template/functions.php";
 		$res[0][$COLS['DUR']]  = $hours;
 		$res[1][$COLS['DUR']]  = $minutes;
 		$res[0][$COLS['RATE']] = $rating;
-		$res[1][$COLS['RATE']] = '<span title="votes">'.$stimmen.'</span>';
+		$res[1][$COLS['RATE']] = $votes;
 		$res[0][$COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
 		if (!empty($width) && !empty($height)) {
 			$vRes[0] = $width;
@@ -740,7 +712,7 @@ include_once "./template/functions.php";
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
 			if (!isDemo()) {
 				echo '<span class="filename lefto"'.($isAdmin ? ' title="'.$path.'"' : '').'>'.encodeString($filename).'</span>';
-				echo '<span class="filesize righto" title="'.formatToDeNotation($size).'">'.$size1.'</span>';
+				echo '<span class="filesize righto" title="'.formatToDeNotation($size).'">'._format_bytes($size).'</span>';
 			}
 			echo '</td></tr>';
 			echo "\r\n";
