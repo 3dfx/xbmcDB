@@ -2646,9 +2646,9 @@ function toEuropeanDateFormatWDay($given) {
 	return (empty($given) ? $given : date($strFormat, $given));
 }
 
-function toEuropeanDateFormat($given) {
+function toEuropeanDateFormat($given, $short = true) {
 	$eurDateFormat = isset($GLOBALS['EUROPEAN_DATE_FORMAT']) ? $GLOBALS['EUROPEAN_DATE_FORMAT'] : false;
-	$strFormat = $eurDateFormat ? 'd.m.y' : 'Y-m-d';
+	$strFormat = $eurDateFormat ? ($short ? 'd.m.y' : 'd.m.Y') : 'Y-m-d';
 	if (checkIfDateIsString($given)) {
 		$given = strtotime($given);
 	}

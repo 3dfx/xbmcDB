@@ -235,10 +235,12 @@ function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
 
 function postMissingRow($staffel, $seasonId, $idEpisode, $sNum_, $epNum_, $missing = true, $airdate = null) {
 	$epTitle = ($missing ? 'missing' : 'unaired').' episode';
-	if (!empty($airdate))
+	if (!empty($airdate)) {
 		$airdate = toEuropeanDateFormat(addRlsDiffToDate($airdate));
-	if (!empty($airdate) && !$missing)
+	}
+	if (!empty($airdate) && !$missing) {
 		$epTitle = 'unaired: '.$airdate;
+	}
 	$color = $missing ? '#FF0000' : '#DCDCDC';
 	$bold  = $missing ? ' font-weight:bold;' : '';
 	$epNum = sprintf("%02d", $epNum_);

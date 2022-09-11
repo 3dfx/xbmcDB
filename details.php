@@ -303,7 +303,7 @@ include_once "./template/functions.php";
 				echo '<input type="text" class="knob-dyn" data-width="25" data-height="25" data-fgColor="#6CC829" data-angleOffset="180" data-thickness=".4" data-displayInput="false" data-readOnly="true" value="'.$percent.'" style="display:none;" />';
 
 			} else if ($playCount > 0) {
-				$when = toEuropeanDateFormat($lastPlayed);
+				$when = toEuropeanDateFormat($lastPlayed, false);
 				if ($playCount > 1) {
 					$when = $playCount.'x: '.$when;
 				}

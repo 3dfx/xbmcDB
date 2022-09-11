@@ -290,7 +290,7 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 
 #seen
 			if ($isAdmin) {
-				$when = toEuropeanDateFormat($lastPlayed);
+				$when = toEuropeanDateFormat($lastPlayed, false);
 				if ($playCount > 1) {
 					$when = $playCount.'x: '.$when;
 				}
