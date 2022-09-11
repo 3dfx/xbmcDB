@@ -106,16 +106,17 @@ include_once "./template/functions.php";
 		$isAdmin = isAdmin();
 		$dbh = getPDO();
 
-		$SQL = "SELECT ".
-			"c00 AS movieName, c01 AS desc, A.c03 AS sndTitle, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, ".
-			"A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c14 AS genres, c16 AS orTitle, ".
+		$row = fetchFromDB(
+			"SELECT ".
+			"c00 AS movieName, c01 AS desc, A.c03 AS sndTitle, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, ".
+			"B.strFilename AS filename, A.c19 AS trailer, ".mapDBC('A.c04')." AS votes, ".mapDBC('A.c05')." AS rating, c14 AS genres, c16 AS orTitle, ".
 			"C.strPath AS path, D.filesize, D.fps, D.bit, D.atmosx, D.src, A.idFile, B.playCount AS playCount , B.lastPlayed AS lastPlayed ".
 			"FROM movie A, files B, path C ".
 			mapDBC('joinIdMovie').
 			mapDBC('joinRatingMovie').
 			"LEFT JOIN fileinfo D ON A.idFile = D.idFile ".
-			"WHERE idMovie = '".$id."' AND A.idFile = B.idFile AND C.idPath = B.idPath ";
-		$row = fetchFromDB($SQL, false, $dbh);
+			"WHERE idMovie = '".$id."' AND A.idFile = B.idFile AND C.idPath = B.idPath;",
+		false, $dbh);
 
 		if (empty($row)) { die('not found...'); }
 
@@ -128,7 +129,7 @@ include_once "./template/functions.php";
 		$existArtTable = existsArtTable();
 
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
-		$idFile   = $row['idFile'];
+		$idFile       = $row['idFile'];
 		$size         = $row['filesize'];
 		$bit          = isset($row['bit']) ? $row['bit'] : 0;
 		$fps          = $row['fps'];
@@ -163,7 +164,7 @@ include_once "./template/functions.php";
 		$sLang        = array();
 		$res          = array();
 		$imdbLink     = $ANONYMIZER.(empty($imdbId) ? $FILMINFOSEARCH.$titel : $IMDBFILMTITLE.$imdbId);
-		$genre        = empty($row['genres']) ? array() : explode(" / ", $row['genres']);
+		$genres       = empty($row['genres']) ? array() : explode(" / ", $row['genres']);
 		$rating       = empty($row['rating']) ? '' : '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.formatRating($row['rating']).'</a>';
 		$votes        = '<span title="votes"><a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.$row['votes'].'</a></span>';
 		$country      = getCountry($idMovie, $dbh);
@@ -328,7 +329,7 @@ include_once "./template/functions.php";
 		echo '<div style="width:700px; height:2px;"></div>';
 		echo "\r\n";
 
-		if ($titel != $orTitel || !empty($seconds) || !empty($genre) || !empty($rating)) {
+		if ($titel != $orTitel || !empty($seconds) || !empty($genres) || !empty($rating)) {
 			$run = 1;
 		}
 
@@ -362,45 +363,31 @@ include_once "./template/functions.php";
 			$arSpan = '<span style="font-style:italic;" title="aspect-ratio // overridden">'.$ar.':1</span>';
 		}
 
-		if (empty($ar) || intval($ar) == 0){
+		if (empty($ar) || intval($ar) == 0) {
 			$ar = sprintf("%01.2f", round($width/$height, 2));
 			$arSpan = $ar.':1';
 		}
 
-		$tone = getToneMapping($idFile, $dbh);
-		$hdr = isHDR($filename, $hdrType);
+		$genreIDs = fetchGenresIDs($genres, $dbh);
 
-		$sqlG = "SELECT * FROM genre";
-		$resultG = querySQL($sqlG, false, $dbh);
-		$idGenre = array();
-		foreach($resultG as $rowG) {
-			if (!isset($rowG[mapDBC('strGenre')])) { continue; }
-			$str = ucwords(strtolower(trim($rowG[mapDBC('strGenre')])));
-			if (empty($str)) { continue; }
-			if (!isset($rowG[mapDBC('idGenre')])) { continue; }
-
-			$idGenre[$str] = $rowG[mapDBC('idGenre')];
-		}
-
-		$max = max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre), (empty($hdrType) ? 2 : 3));
+		$max = max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genres), (empty($hdrType) ? 2 : 3));
 		$spalten = count(DETAIL_COLS);
 		for ($g = 0; $g < $max; $g++) {
 			for ($x = 0; $x < $spalten; $x++) {
 				$res[$g][$x] = null;
 			}
 
-			if ($g < count($genre)) {
+			if ($g < count($genres)) {
 				$genreId = -1;
-				$strGenre = ucwords(strtolower(trim($genre[$g])));
-				if (!empty($strGenre) && isset($idGenre[$strGenre]))
-					$genreId = $idGenre[$strGenre];
+				$strGenre = ucwords(strtolower(trim($genres[$g])));
+				if (!empty($strGenre) && isset($genreIDs[$strGenre])) {
+					$genreId = $genreIDs[$strGenre];
+				}
 
 				$strGenre = shortenGenre($strGenre);
-				if ($genreId != -1) {
-					$res[$g][DETAIL_COLS['GENRE']] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
-				} else {
-					$res[$g][DETAIL_COLS['GENRE']] = $strGenre;
-				}
+				$res[$g][DETAIL_COLS['GENRE']] = $genreId != -1 ?
+					'<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>' :
+					$strGenre;
 			}
 
 			if ($g < count($aLang)) {
@@ -425,7 +412,9 @@ include_once "./template/functions.php";
 		$res[0][DETAIL_COLS['RATE']] = $rating;
 		$res[1][DETAIL_COLS['RATE']] = $votes;
 		$res[0][DETAIL_COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
+
 		if (!empty($width) && !empty($height)) {
+			$hdr      = isHDR($filename, $hdrType);
 			$resPerf  = getResPerf([$width, $height], $hdr);
 			$title    = $f4Ke   ? 'Fake 4K'     : '';
 			$title    = $scaled ? 'Upscaled 4K' : $title;
@@ -460,7 +449,8 @@ include_once "./template/functions.php";
 		}
 
 		if (!empty($hdrType)) {
-			$hPerf  = getResPerf(null, true);
+			$tone  = getToneMapping($idFile, $dbh);
+			$hPerf = getResPerf(null, true);
 			$color = ($hPerf < 4 ? null : CODEC_COLORS[$hPerf]);
 			if (!empty($color)) {
 				$param = isset($tone['Param']) ? $tone['Param'] : 1.0;
@@ -586,7 +576,7 @@ include_once "./template/functions.php";
 
 			$zeilen = 0;
 			$colspan = 0;
-			$hiddenGenres = count($genre)-2;
+			$hiddenGenres = count($genres)-2;
 			$hiddenSubs   = count($sLang)-2;
 			for ($i = 0; $i < $max; $i++) {
 				echo '<tr'.($i >= 2 && ($hiddenGenres > 1 || $hiddenSubs > 1) ? ' name="genres" style="display:none;"' : '').'>';
@@ -597,7 +587,7 @@ include_once "./template/functions.php";
 					$tdClass = '';
 					switch ($j) {
 						case DETAIL_COLS['DUR']:
-							if ($i > 0 && $i >= count($genre) && $colspan > 1) {
+							if ($i > 0 && $i >= count($genres) && $colspan > 1) {
 								$tdClass = ' class="streaminfoGenre"';
 							}
 							break;
@@ -676,8 +666,7 @@ include_once "./template/functions.php";
 				echo "\r\n";
 			}
 
-			$SQL_SET = 'SELECT S.strSet, S.idSet FROM sets S, movie M WHERE M.idSet = S.idSet AND M.idMovie = '.$id.';';
-			$result = fetchFromDB($SQL_SET, false, $dbh);
+			$result = fetchFromDB("SELECT S.strSet, S.idSet FROM sets S, movie M WHERE M.idSet = S.idSet AND M.idMovie = ".$id.";", false, $dbh);
 			if (!empty($result)) {
 				echo '<tr><td class="streaminfoLasTD" style="padding-top:10px;" colspan="'.$spalten.'">';
 				$set   = isset($result['strSet']) ? $result['strSet'] : null;
@@ -785,14 +774,15 @@ include_once "./template/functions.php";
 		$SQL = "SELECT c.".mapDBC('strCountry')." FROM ".mapDBC('countrylinkmovie')." cl, country c, movie m WHERE m.idMovie = cl.".mapDBC('idMovie')." AND cl.".mapDBC('idCountry')." = c.".mapDBC('idCountry')." AND m.idMovie = '".$idMovie."';";
 		$res = querySQL($SQL, false, $dbh);
 		$row = $res->fetch();
+
 		return isset($row[mapDBC('strCountry')]) ? $row[mapDBC('strCountry')] : null;
 	}
 
 	function getStudio($idMovie, $dbh = null) {
 		$res = querySQL("SELECT name FROM studio WHERE studio_id = (SELECT studio_id FROM studio_link WHERE media_type = 'movie' AND media_id = '".$idMovie."');", false, $dbh);
 		$row = $res->fetch();
-		return isset($row['name']) ? $row['name'] : null;
 
+		return isset($row['name']) ? $row['name'] : null;
 	}
 
 	function convertSecondsToHM($seconds) {
@@ -803,6 +793,7 @@ include_once "./template/functions.php";
 			$result['hrs'] = $hours;
 			$result['min'] = $minutes.'\'';
 		}
+
 		return $result;
 	}
 
@@ -817,6 +808,31 @@ include_once "./template/functions.php";
 		unset($result);
 
 		return $acLimit;
+	}
+
+	function fetchGenresIDs($genres, $dbh = null) {
+		for ($g = 0; $g < count($genres); $g++) {
+			$genres[$g] = "'".$genres[$g]."'";
+		}
+
+		$resultG = querySQL("SELECT * FROM genre WHERE ".mapDBC('strGenre')." IN (".implode(',', $genres).");", false, $dbh);
+		$idGenre = array();
+		foreach ($resultG as $rowG) {
+			if (!isset($rowG[mapDBC('strGenre')])) {
+				continue;
+			}
+			$str = ucwords(strtolower(trim($rowG[mapDBC('strGenre')])));
+			if (empty($str)) {
+				continue;
+			}
+			if (!isset($rowG[mapDBC('idGenre')])) {
+				continue;
+			}
+
+			$idGenre[$str] = $rowG[mapDBC('idGenre')];
+		}
+
+		return $idGenre;
 	}
 //- FUNCTIONS -//
 ?>
