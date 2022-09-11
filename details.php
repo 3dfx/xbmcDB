@@ -368,7 +368,7 @@ include_once "./template/functions.php";
 			$arSpan = $ar.':1';
 		}
 
-		$genreIDs = fetchGenresIDs($genres, $dbh);
+		$genreIDs = fetchGenreIDs($dbh);
 
 		$max = max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genres), (empty($hdrType) ? 2 : 3));
 		$spalten = count(DETAIL_COLS);
@@ -808,31 +808,6 @@ include_once "./template/functions.php";
 		unset($result);
 
 		return $acLimit;
-	}
-
-	function fetchGenresIDs($genres, $dbh = null) {
-		for ($g = 0; $g < count($genres); $g++) {
-			$genres[$g] = "'".$genres[$g]."'";
-		}
-
-		$resultG = querySQL("SELECT * FROM genre WHERE ".mapDBC('strGenre')." IN (".implode(',', $genres).");", false, $dbh);
-		$idGenre = array();
-		foreach ($resultG as $rowG) {
-			if (!isset($rowG[mapDBC('strGenre')])) {
-				continue;
-			}
-			$str = ucwords(strtolower(trim($rowG[mapDBC('strGenre')])));
-			if (empty($str)) {
-				continue;
-			}
-			if (!isset($rowG[mapDBC('idGenre')])) {
-				continue;
-			}
-
-			$idGenre[$str] = $rowG[mapDBC('idGenre')];
-		}
-
-		return $idGenre;
 	}
 //- FUNCTIONS -//
 ?>

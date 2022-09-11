@@ -168,7 +168,7 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 	$artCovers     = fetchArtCovers($existArtTable, $dbh);
 	$actorImgs     = fetchActorCovers($dbh);
 	$directorImgs  = fetchDirectorCovers($dbh);
-	$idGenre       = getGenres($dbh);
+	$genreIDs      = fetchGenreIDs($dbh);
 	$result        = fetchMovies($SkQL, $dbh);
 	$idStream      = getResolution($SkQL, true, $dbh);
 
@@ -344,9 +344,8 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 			if (!empty($genre)) {
 				$spalTmp .= '>';
 				$genre = ucwords(strtolower($genre));
-				if (isset($idGenre[$genre])) {
-					$genreId = $idGenre[$genre][0];
-					$idGenre[$genre][1] = $idGenre[$genre][1] + 1;
+				if (isset($genreIDs[$genre])) {
+					$genreId = $genreIDs[$genre];
 				}
 
 				if (isset($_just) && !empty($_just) && $_which == 'genre' && !empty($filter_name)) {

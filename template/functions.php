@@ -126,30 +126,32 @@ function getStreamDetails($idFile, $dbh = null) {
 	return querySQL("SELECT * FROM streamdetails WHERE (strAudioLanguage IS NOT NULL OR strVideoCodec IS NOT NULL OR strSubtitleLanguage IS NOT NULL OR strHdrType IS NOT NULL) AND idFile = ".$idFile.";", false, $dbh);
 }
 
-function getGenres($dbh) {
-	$idGenre = array();
+function fetchGenreIDs($dbh = null) {
+	$genreIDs = array();
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if (isset($_SESSION['idGenre']) && $overrideFetch == 0) {
-		$idGenre = unserialize($_SESSION['idGenre']);
+		$genreIDs = unserialize($_SESSION['idGenre']);
 
 	} else {
-		$sqlG = "SELECT * FROM genre";
-		$resultG = $dbh->query($sqlG);
-		foreach($resultG as $rowG) {
-			if (empty($rowG[mapDBC('strGenre')])) { continue; }
-			$str = ucwords(strtolower(trim($rowG[mapDBC('strGenre')])));
-			if (empty($str)) { continue; }
+		$result = querySQL("SELECT * FROM genre;", false, $dbh);
+		foreach($result as $genre) {
+			$genreID  = $genre[mapDBC('idGenre')];
+			if (empty($genreID)) { continue; }
 
-			if (empty($rowG[mapDBC('idGenre')])) { continue; }
-			$idGenre[$str][0] = $rowG[mapDBC('idGenre')];
-			$idGenre[$str][1] = 0;
+			$strGenre = $genre[mapDBC('strGenre')];
+			if (empty($strGenre)) { continue; }
+
+			$strGenre = ucwords(strtolower(trim($strGenre)));
+			if (empty($strGenre)) { continue; }
+
+			$genreIDs[$strGenre] = $genreID;
 		}
 
-		$_SESSION['idGenre'] = serialize($idGenre);
+		$_SESSION['idGenre'] = serialize($genreIDs);
 		unset( $_SESSION['overrideFetch'] );
 	}
 
-	return $idGenre;
+	return $genreIDs;
 }
 
 function getOverrideAR($idFile, $idMedia, $dbh = null) {
