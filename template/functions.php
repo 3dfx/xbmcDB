@@ -2691,17 +2691,6 @@ function getPausedAt($timeAt) {
 	return sprintf('%02d:%02d:%02d', $hrs, $min, $sec);
 }
 
-function convertSecondsToHM($seconds) {
-	$result = array('hrs' => null, 'min' => null);
-	if (!empty($seconds)) {
-		$minutes = floor($seconds/60);
-		$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
-		$result['hrs'] = $hours;
-		$result['min'] = $minutes.'\'';
-	}
-	return $result;
-}
-
 function switchPronoms($medianame, $PRONOMS = null) {
 	if (empty($PRONOMS)) {
 		$PRONOMS = isset($GLOBALS['PRONOMS']) ? $GLOBALS['PRONOMS'] : null;

@@ -111,6 +111,19 @@
 		4 => 'Max'
 	);
 
+	const DETAIL_COLS = array(
+		'DUR'    =>  0,
+		'RATE'   =>  1,
+		'YEAR'   =>  2,
+		'GENRE'  =>  3,
+		'VIDEO1' =>  4,
+		'VIDEO2' =>  5,
+		'AUDIO1' =>  6,
+		'AUDIO2' =>  7,
+		'AUDIO3' =>  8,
+		'SUB'    =>  9
+	);
+
 	const DB_MAPPINGS = array(
 		93 => array(
 			'actorlinkmovie'    => 'actor_link',

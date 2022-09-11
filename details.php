@@ -103,30 +103,8 @@ include_once "./template/functions.php";
 
 
 <?php
-	$ANONYMIZER       = $GLOBALS['ANONYMIZER'];
-	$IMDB             = $GLOBALS['IMDB'];
-	$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
-	$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
-	$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
-
-		$COLS = array(
-			'DUR'    =>  0,
-			'RATE'   =>  1,
-			'YEAR'   =>  2,
-			'GENRE'  =>  3,
-			'VIDEO1' =>  4,
-			'VIDEO2' =>  5,
-			'AUDIO1' =>  6,
-			'AUDIO2' =>  7,
-			'AUDIO3' =>  8,
-			'SUB'    =>  9
-		);
-
 		$isAdmin = isAdmin();
-		$idFile  = -1;
 		$dbh = getPDO();
-
-		$existArtTable = existsArtTable();
 
 		$SQL = "SELECT ".
 			"c00 AS movieName, c01 AS desc, A.c03 AS sndTitle, idMovie, ".mapDBC('A.c07')." AS jahr, c08 AS thumb, ".mapDBC('A.c09')." AS imdbId, B.strFilename AS filename, ".
@@ -141,15 +119,16 @@ include_once "./template/functions.php";
 
 		if (empty($row)) { die('not found...'); }
 
-		$SQL2     = "SELECT B.".mapDBC('strActor').", A.".mapDBC('strRole').", A.".mapDBC('idActor').", B.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC("actorlinkmovie")." A, ".
-			mapDBC("actors")." B WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND A.media_type='movie' AND A.".mapDBC('idMovie')." = '".$id."' ORDER BY A.".mapDBC('iOrder').";";
-		$result2  = querySQL($SQL2, false, $dbh);
-		$result2_ = querySQL($SQL2, false, $dbh);
+		$ANONYMIZER       = $GLOBALS['ANONYMIZER'];
+		$IMDB             = $GLOBALS['IMDB'];
+		$PERSONINFOSEARCH = $GLOBALS['PERSONINFOSEARCH'];
+		$IMDBFILMTITLE    = $GLOBALS['IMDBFILMTITLE'];
+		$FILMINFOSEARCH   = $GLOBALS['FILMINFOSEARCH'];
 
-		$idFile   = $row['idFile'];
-		$result3  = getStreamDetails($idFile, $dbh);
+		$existArtTable = existsArtTable();
 
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
+		$idFile   = $row['idFile'];
 		$size         = $row['filesize'];
 		$bit          = isset($row['bit']) ? $row['bit'] : 0;
 		$fps          = $row['fps'];
@@ -167,6 +146,7 @@ include_once "./template/functions.php";
 		$jahr         = $row['jahr'];
 		$inhalt       = $row['desc'];
 		$imdbId       = $row['imdbId'];
+		$trailer      = $row['trailer'];
 		$hours        = null;
 		$minutes      = null;
 		$run          = 0;
@@ -182,7 +162,6 @@ include_once "./template/functions.php";
 		$aLang        = array();
 		$sLang        = array();
 		$res          = array();
-		$vRes         = array();
 		$imdbLink     = $ANONYMIZER.(empty($imdbId) ? $FILMINFOSEARCH.$titel : $IMDBFILMTITLE.$imdbId);
 		$genre        = empty($row['genres']) ? array() : explode(" / ", $row['genres']);
 		$rating       = empty($row['rating']) ? '' : '<a class="openImdbDetail detailLink" href="'.$imdbLink.'">'.formatRating($row['rating']).'</a>';
@@ -193,6 +172,8 @@ include_once "./template/functions.php";
 		if ($fps === null && $fps[0] === null) {
 			$bit10 = preg_match_all('/\b1(0|2)bit\b/', $filename) > 0 ? true : false;
 		}
+		$row = null;
+		unset($row);
 
 		$percent   = null;
 		$timeAt    = null;
@@ -202,6 +183,8 @@ include_once "./template/functions.php";
 			$result    = fetchFromDB("SELECT timeInSeconds AS timeAt, totalTimeInSeconds AS timeTotal FROM bookmark WHERE idFile = '".$idFile."';", false, $dbh);
 			$timeAt    = isset($result['timeAt'])    ? $result['timeAt']    : null;
 			$timeTotal = isset($result['timeTotal']) ? $result['timeTotal'] : null;
+			$result = null;
+			unset($result);
 			if (!empty($timeAt) && !empty($timeTotal)) {
 				$timeAt    = intval($timeAt);
 				$timeTotal = intval($timeTotal);
@@ -253,7 +236,6 @@ include_once "./template/functions.php";
 
 		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$imdbLink.'">'.$titel.' ('.$jahr.')'.'</a>';
 		if ($SHOW_TRAILER && !empty($trailer)) {
-			$trailer = $row['trailer'];
 			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>'."\r\n";
 		}
 
@@ -349,26 +331,30 @@ include_once "./template/functions.php";
 		if ($titel != $orTitel || !empty($seconds) || !empty($genre) || !empty($rating)) {
 			$run = 1;
 		}
-		foreach($result3 as $row3) {
-			if (!empty($tmp = $row3['iVideoWidth']))  { $width  = $tmp; }
-			if (!empty($tmp = $row3['iVideoHeight'])) { $height = $tmp; }
-			if (!empty($tmp = $row3['strHdrType']) && !isDemo()) { $hdrType = trim($tmp); }
-			if (!empty($tmp = $row3['strVideoCodec']) && !isDemo()) { $vCodec = trim($tmp); }
-			if (!empty($tmp = $row3['strAudioCodec']) && !isDemo()) { $aCodec[] = strtoupper($tmp); }
-			if (!empty($tmp = $row3['iAudioChannels']) && !isDemo()) { $aChannels[] = $tmp; }
-			if (!empty($tmp = $row3['strAudioLanguage']) && !isDemo()) { $aLang[] = strtoupper($tmp); }
-			if (!empty($tmp = $row3['strSubtitleLanguage']) && !isDemo()) { $sLang[] = strtoupper($tmp); }
-			if (!empty($tmp = $row3['fVideoAspect']) && empty($ar)) {
+
+		$result = getStreamDetails($idFile, $dbh);
+		foreach($result as $detail) {
+			if (!empty($tmp = $detail['iVideoWidth']))  { $width  = $tmp; }
+			if (!empty($tmp = $detail['iVideoHeight'])) { $height = $tmp; }
+			if (!empty($tmp = $detail['strHdrType']) && !isDemo()) { $hdrType = trim($tmp); }
+			if (!empty($tmp = $detail['strVideoCodec']) && !isDemo()) { $vCodec = trim($tmp); }
+			if (!empty($tmp = $detail['strAudioCodec']) && !isDemo()) { $aCodec[] = strtoupper($tmp); }
+			if (!empty($tmp = $detail['iAudioChannels']) && !isDemo()) { $aChannels[] = $tmp; }
+			if (!empty($tmp = $detail['strAudioLanguage']) && !isDemo()) { $aLang[] = strtoupper($tmp); }
+			if (!empty($tmp = $detail['strSubtitleLanguage']) && !isDemo()) { $sLang[] = strtoupper($tmp); }
+			if (!empty($tmp = $detail['fVideoAspect']) && empty($ar)) {
 				$ar = sprintf("%01.2f", round($tmp, 2));
 				$arSpan = $ar.':1';
 			}
-			if (!empty($tmp = $row3['iVideoDuration'])) {
+			if (!empty($tmp = $detail['iVideoDuration'])) {
 				$converted = convertSecondsToHM($tmp);
 				$hours   = $converted['hrs'];
 				$minutes = $converted['min'];
 			}
 			$run++;
 		}
+		$result = null;
+		unset($result);
 
 		$arOR = getOverrideAR($idFile, $idMovie, $dbh);
 		if (!empty($arOR)) {
@@ -397,7 +383,7 @@ include_once "./template/functions.php";
 		}
 
 		$max = max(count($aCodec), count($aChannels), count($aLang), count($sLang), count($genre), (empty($hdrType) ? 2 : 3));
-		$spalten = count($COLS);
+		$spalten = count(DETAIL_COLS);
 		for ($g = 0; $g < $max; $g++) {
 			for ($x = 0; $x < $spalten; $x++) {
 				$res[$g][$x] = null;
@@ -411,56 +397,43 @@ include_once "./template/functions.php";
 
 				$strGenre = shortenGenre($strGenre);
 				if ($genreId != -1) {
-					$res[$g][$COLS['GENRE']] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
+					$res[$g][DETAIL_COLS['GENRE']] = '<a href="?show=filme&which=genre&just='.$genreId.'&name='.$strGenre.'" target="_parent" class="detailLink" title="filter">'.$strGenre.'</a>';
 				} else {
-					$res[$g][$COLS['GENRE']] = $strGenre;
+					$res[$g][DETAIL_COLS['GENRE']] = $strGenre;
 				}
 			}
 
 			if ($g < count($aLang)) {
-				$res[$g][$COLS['AUDIO1']] = postEditLanguage($aLang[$g]);
+				$res[$g][DETAIL_COLS['AUDIO1']] = postEditLanguage($aLang[$g]);
 			}
 
 			if ($g < count($aCodec)) {
-				$res[$g][$COLS['AUDIO2']] = postEditACodec($aCodec[$g], isset($atmosx[$g]) ? $atmosx[$g] : null);
+				$res[$g][DETAIL_COLS['AUDIO2']] = postEditACodec($aCodec[$g], isset($atmosx[$g]) ? $atmosx[$g] : null);
 			}
 
 			if ($g < count($aChannels)) {
-				$res[$g][$COLS['AUDIO3']] = postEditChannels($aChannels[$g]);
+				$res[$g][DETAIL_COLS['AUDIO3']] = postEditChannels($aChannels[$g]);
 			}
 
 			if ($g < count($sLang)) {
-				$res[$g][$COLS['SUB']] = postEditLanguage($sLang[$g], false);
+				$res[$g][DETAIL_COLS['SUB']] = postEditLanguage($sLang[$g], false);
 			}
 		}
 
-		$res[0][$COLS['DUR']]  = $hours;
-		$res[1][$COLS['DUR']]  = $minutes;
-		$res[0][$COLS['RATE']] = $rating;
-		$res[1][$COLS['RATE']] = $votes;
-		$res[0][$COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
+		$res[0][DETAIL_COLS['DUR']]  = $hours;
+		$res[1][DETAIL_COLS['DUR']]  = $minutes;
+		$res[0][DETAIL_COLS['RATE']] = $rating;
+		$res[1][DETAIL_COLS['RATE']] = $votes;
+		$res[0][DETAIL_COLS['YEAR']] = isset($jahr) ? '<a href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" target="_parent" class="detailLink" title="filter">'.$jahr.'</a>' : '';
 		if (!empty($width) && !empty($height)) {
-			$vRes[0] = $width;
-			$vRes[1] = $height;
-			$resPerf  = getResPerf($vRes, $hdr);
+			$resPerf  = getResPerf([$width, $height], $hdr);
 			$title    = $f4Ke   ? 'Fake 4K'     : '';
 			$title    = $scaled ? 'Upscaled 4K' : $title;
 			$resColor = ($resPerf < 4 ? null : CODEC_COLORS[$resPerf]);
-			$resStyle  = '';
-			if (!empty($resColor) || $f4Ke || $scaled) {
-				if ($f4Ke || $scaled) {
-					$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,1.75);';
-				} else {
-					$resStyle .= 'font-weight:bold;';
-				}
-
-				if (!empty($resColor)) {
-					$resStyle .= ' color:'.$resColor.';';
-				}
-			}
-
-			$resSP1 = '';
-			$resSP2 = '';
+			$resStyle = ($f4Ke || $scaled ? 'text-shadow: 0 0 2px rgba(222,0,0,1.75);' : 'font-weight:bold;').(!empty($resColor) ? ' color:'.$resColor.';' : '');
+			$resInner = $width.'x'.$height;
+			$resSP1   = '';
+			$resSP2   = '';
 
 			if (!empty($arOR)) {
 				if (!empty($title)) {
@@ -473,22 +446,17 @@ include_once "./template/functions.php";
 				$height = intval($width / $arOR);
 			}
 
-			$resInner = $width.'x'.$height;
-			if (!empty($title)) {
-				$title = 'title="'.$title.'"; ';
-			}
-
-			$resInfo  = '<span '.$title.'style="'.$resStyle.'">'.$resSP1.$resInner.$resSP2.'</span>';
-			$res[0][$COLS['VIDEO1']] = $resInfo;
+			$title = empty($title) ? '' : 'title="'.$title.'"; ';
+			$res[0][DETAIL_COLS['VIDEO1']] = '<span '.$title.'style="'.$resStyle.'">'.$resSP1.$resInner.$resSP2.'</span>';
 		}
-		$res[1][$COLS['VIDEO1']] = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$idMovie.', '.$ar.'); return false;">'.$arSpan.'</span>';
+		$res[1][DETAIL_COLS['VIDEO1']] = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$idMovie.', '.$ar.'); return false;">'.$arSpan.'</span>';
 
 		if (!empty($fps)) {
 			$bit10 = $fps[0] >= 10;
 
 			$fPerf = getFpsPerf($fps[1]);
 			$color = ($fPerf < 4 ? null : CODEC_COLORS[$fPerf]);
-			$res[1][$COLS['VIDEO2']] = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$fps[1].' fps</span>' : $fps[1].' fps');
+			$res[1][DETAIL_COLS['VIDEO2']] = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$fps[1].' fps</span>' : $fps[1].' fps');
 		}
 
 		if (!empty($hdrType)) {
@@ -496,14 +464,14 @@ include_once "./template/functions.php";
 			$color = ($hPerf < 4 ? null : CODEC_COLORS[$hPerf]);
 			if (!empty($color)) {
 				$param = isset($tone['Param']) ? $tone['Param'] : 1.0;
-				$res[2][$COLS['VIDEO2']]  = '<span class="hdrType" style="cursor:pointer; color:'.$color.'; font-weight:bold;" onclick="setToneMapParam('.$idFile.', '.$idMovie.', '.$param.'); return false;">';
-				$res[2][$COLS['VIDEO2']] .= postEditHdrType($hdrType);
+				$res[2][DETAIL_COLS['VIDEO2']]  = '<span class="hdrType" style="cursor:pointer; color:'.$color.'; font-weight:bold;" onclick="setToneMapParam('.$idFile.', '.$idMovie.', '.$param.'); return false;">';
+				$res[2][DETAIL_COLS['VIDEO2']] .= postEditHdrType($hdrType);
 				if (!empty($tone)) {
-					$res[2][$COLS['VIDEO2']] .= '<span class="tonemap" title="'.$tone['Method'].': '.$tone['Param'].'">';
-					$res[2][$COLS['VIDEO2']] .= '(t)';
-					$res[2][$COLS['VIDEO2']] .= '</span>';
+					$res[2][DETAIL_COLS['VIDEO2']] .= '<span class="tonemap" title="'.$tone['Method'].': '.$tone['Param'].'">';
+					$res[2][DETAIL_COLS['VIDEO2']] .= '(i)';
+					$res[2][DETAIL_COLS['VIDEO2']] .= '</span>';
 				}
-				$res[2][$COLS['VIDEO2']] .= '</span>';
+				$res[2][DETAIL_COLS['VIDEO2']] .= '</span>';
 			}
 		}
 
@@ -511,68 +479,62 @@ include_once "./template/functions.php";
 		$perf   = (!empty($vCodec) ? decodingPerf($vCodec, $bit10) : 0);
 		$color  = ($perf < 4 ? null : CODEC_COLORS[$perf]);
 		$vCodec = (!empty($color) ? '<span style="color:'.$color.'; font-weight:bold;">'.$vCodec.($bit10 ? ' 10bit' : '').'</span>' : $vCodec);
-		$res[0][$COLS['VIDEO2']] = $vCodec;
+		$res[0][DETAIL_COLS['VIDEO2']] = $vCodec;
 
-		$artist  = '';
-		$actors  = 0;
-		$actCnt  = 0;
-		$counter = 1;
-		$acLimit = 5;
-		$acLimitImg = 15;
+		$counter       = 0;
 		$fetchedImages = 0;
+		$acLimitImg    = 15;
 		$schauspTblOut = array();
 		$artCovers = fetchArtCovers($existArtTable, $dbh);
-		foreach($result2_ as $row2) { $actCnt++; }
-		if ($actCnt-1 == $acLimit) { $acLimit++; }
-		foreach($result2 as $row2) {
-			$artist      = $row2[mapDBC('strActor')];
-			$idActor     = $row2[mapDBC('idActor')];
-			$actorpicURL = $row2['actorimage'];
 
-			$actorimg = getActorThumb($artist, $actorpicURL, false);
+		$SQL_ACTORS = "SELECT B.".mapDBC('strActor').", A.".mapDBC('strRole').", A.".mapDBC('idActor').", B.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC("actorlinkmovie")." A, ".
+			mapDBC("actors")." B WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND A.media_type='movie' AND A.".mapDBC('idMovie')." = '".$id."' ORDER BY A.".mapDBC('iOrder').";";
+
+		$acLimit = getActorLimitCount($SQL_ACTORS, 5, $dbh);
+		$actors  = querySQL($SQL_ACTORS, false, $dbh);
+		foreach($actors as $actor) {
+			$artist      = $actor[mapDBC('strActor')];
+			$idActor     = $actor[mapDBC('idActor')];
+			$actorpicURL = $actor['actorimage'];
+
+			$actorimg = null;
 			if ($fetchedImages < $acLimitImg) {
+				$actorimg = getActorThumb($artist, $actorpicURL, false);
 				if (isFile($actorimg) && $existArtTable) {
 					$fetchedImages++;
 					if (!empty($artCovers) && isset($artCovers['actor'][$idActor])) {
 						$actorimg = $artCovers['actor'][$idActor]['cover'];
+
 					} else {
-						$row3 = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';", false, $dbh);
-						$url = isset($row3['url']) ? $row3['url'] : null;
+						$detail = fetchFromDB("SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '$idActor';", false, $dbh);
+						$url = isset($detail['url']) ? $detail['url'] : null;
 						if (!empty($url)) {
 							$actorimg = getActorThumb($url, $url, true);
 						}
 					}
 				}
+
+				wrapItUp('actor', $idActor, $actorimg);
 			}
 
-			wrapItUp('actor', $idActor, $actorimg);
+			$schauspTblOut[$counter]  = '<tr'.($counter >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
+			$schauspTblOut[$counter] .= '<td class="art">';
+			$schauspTblOut[$counter] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
+			$schauspTblOut[$counter] .= !isFile($actorimg) ? 'title="filter"' : ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
+			$schauspTblOut[$counter] .= '>'.$artist.'</a>';
+			$schauspTblOut[$counter] .= '</td>';
+			$schauspTblOut[$counter] .= '<td class="role">';
+			$schauspTblOut[$counter] .= isset($actor[mapDBC('strRole')]) ? str_replace('/', ' / ', $actor[mapDBC('strRole')]) : '&nbsp;';
+			$schauspTblOut[$counter] .= '</td>';
+			$schauspTblOut[$counter] .= '</tr>';
+			$schauspTblOut[$counter] .= "\r\n";
 
-			$schauspTblOut[$actors]  = '<tr'.($actors >= $acLimit ? ' name="artists" style="display:none;"' : '').'>';
-			$schauspTblOut[$actors] .= '<td class="art">';
-			$schauspTblOut[$actors] .= '<a href="?show=filme&which=artist&just='.$idActor.'&name='.$artist.'" target="_parent" ';
-			if (isFile($actorimg)) {
-				$schauspTblOut[$actors] .= ' class="hoverpic" rel="'.getImageWrap($actorimg, $idActor, 'actor', 0).'" title="'.$artist.'"';
-			} else {
-				$schauspTblOut[$actors] .= 'title="filter"';
-			}
-			$schauspTblOut[$actors] .= '>'.$artist.'</a>';
-
-			$schauspTblOut[$actors] .= '</td>';
-			$schauspTblOut[$actors] .= '<td class="role">';
-			if (isset($row2[mapDBC('strRole')])) {
-				$strRole = $row2[mapDBC('strRole')];
-				$schauspTblOut[$actors] .= str_replace('/', ' / ', $strRole);
-			} else {
-				$schauspTblOut[$actors] .= '&nbsp;';
-			}
-			$schauspTblOut[$actors] .= '</td>';
-			$schauspTblOut[$actors] .= '</tr>';
-			$schauspTblOut[$actors] .= "\r\n";
-
-			$actors++;
+			$counter++;
 		}
+		$actors = null;
+		unset($actors);
 
-		if ($actors > 0) {
+		if ($counter > 0) {
 			echo '<div class="artitabbox">';
 			echo "\r\n";
 			echo '<table cellspacing="0" class="artists">';
@@ -592,7 +554,7 @@ include_once "./template/functions.php";
 				echo $schauspTblOut[$i];
 			}
 
-			if ($actors > $acLimit) {
+			if ($counter > $acLimit) {
 				echo '<tr id="doTr"><td colspan="2">';
 				echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', true);" title="mehr...">...</span>';
 				echo '</td></tr>';
@@ -604,14 +566,12 @@ include_once "./template/functions.php";
 			echo "\r\n";
 		}
 
-//		$streamTDs  = "";
 		if ($run > 0) {
 			echo '<div class="stream">';
 			echo '<table cellspacing="0" class="streaminfo">';
 			echo "\r\n";
 			echo '<tr>';
 			echo '<th>Duration</th><th>Rating</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
-			#<th>Votes</th>
 			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th>';
 			if (!empty($aCodec)) {
 				echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
@@ -621,7 +581,7 @@ include_once "./template/functions.php";
 			} else { $spalten--; }
 			echo '</tr>';
 			echo "\r\n";
-			echo '<tr class="abstand"><td colspan="'.count($COLS).'"></td></tr>';
+			echo '<tr class="abstand"><td colspan="'.count(DETAIL_COLS).'"></td></tr>';
 			echo "\r\n";
 
 			$zeilen = 0;
@@ -634,67 +594,55 @@ include_once "./template/functions.php";
 					$val = $res[$i][$j];
 					$val = (empty($val) ? '' : trim($val));
 
-					echo '<td';
-
+					$tdClass = '';
 					switch ($j) {
-						case $COLS['DUR']:
+						case DETAIL_COLS['DUR']:
 							if ($i > 0 && $i >= count($genre) && $colspan > 1) {
-								echo ' class="streaminfoGenre"';
+								$tdClass = ' class="streaminfoGenre"';
 							}
 							break;
 
-						case $COLS['RATE']:
+						case DETAIL_COLS['AUDIO1']:
+						case DETAIL_COLS['VIDEO1']:
+							$tdClass = ' class="streaminfoAV streaminfoBorder"';
 							break;
 
-						case $COLS['YEAR']:
+						case DETAIL_COLS['AUDIO2']:
+						case DETAIL_COLS['VIDEO2']:
+							$tdClass = ' class="streaminfoAV"';
 							break;
 
-						case $COLS['GENRE']:
+						case DETAIL_COLS['AUDIO3']:
+							$tdClass = ' class="'.(empty($sLang) ? 'streaminfoLasTD' : 'streaminfoAV').'"';
 							break;
 
-						case $COLS['VIDEO1']:
-							echo ' class="streaminfoAV streaminfoBorder"';
+						case DETAIL_COLS['SUB']:
+							$tdClass = ' class="streaminfoLasTD streaminfoBorder"';
 							break;
 
-						case $COLS['VIDEO2']:
-							echo ' class="streaminfoAV"';
-							break;
-
-						case $COLS['AUDIO1']:
-							echo ' class="streaminfoAV streaminfoBorder"';
-							break;
-
-						case $COLS['AUDIO2']:
-							echo ' class="streaminfoAV"';
-							break;
-
-						case $COLS['AUDIO3']:
-							echo ' class="'.(empty($sLang) ? 'streaminfoLasTD' : 'streaminfoAV').'"';
-							break;
-
-						case $COLS['SUB']:
-							echo ' class="streaminfoLasTD streaminfoBorder"';
+						case DETAIL_COLS['GENRE']:
+						case DETAIL_COLS['YEAR']:
+						case DETAIL_COLS['RATE']:
+						default:
 							break;
 					}
 
-					echo '>';
-					echo $val;
-					echo '</td>';
+					echo '<td'.$tdClass.'>'.$val.'</td>';
 				}
+
 				echo '</tr>';
 				$zeilen++;
 			}
-//			echo $streamTDs;
 
 			if ($zeilen > 2 && ($hiddenGenres > 1 || $hiddenSubs > 1)) {
 				echo '<tr id="genreDots">';
-				echo '<td colspan="'.($COLS['GENRE']).'"></td>';
+				echo '<td colspan="'.(DETAIL_COLS['GENRE']).'"></td>';
 				echo '<td class="streaminfoGenre lefto">';
 				if ($hiddenGenres >= 1) {
 					echo '<span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span>';
 				}
 				echo '</td>';
-					echo '<td colspan="'.($hiddenSubs >= 1 ? count($COLS)-($COLS['GENRE']+2) : count($COLS)-($COLS['GENRE']+1)).'"></td>';
+					echo '<td colspan="'.($hiddenSubs >= 1 ? count(DETAIL_COLS)-(DETAIL_COLS['GENRE']+2) : count(DETAIL_COLS)-(DETAIL_COLS['GENRE']+1)).'"></td>';
 				if ($hiddenSubs >= 1) {
 					echo '<td class="streaminfoLasTD streaminfoBorder"><span class="moreDots" onclick="showHiddenTRs(\'genreDots\', \'genres\', true);" title="mehr...">...</span></td>';
 				}
@@ -708,7 +656,7 @@ include_once "./template/functions.php";
 				$filename = '';
 			}
 
-			echo '<tr class="abstand"><td colspan="'.count($COLS).'"></td></tr>';
+			echo '<tr class="abstand"><td colspan="'.count(DETAIL_COLS).'"></td></tr>';
 			echo '<tr><td class="streaminfoLLine streaminfoLasTD" colspan="'.$spalten.'">';
 			if (!isDemo()) {
 				echo '<span class="filename lefto"'.($isAdmin ? ' title="'.$path.'"' : '').'>'.encodeString($filename).'</span>';
@@ -729,13 +677,14 @@ include_once "./template/functions.php";
 			}
 
 			$SQL_SET = 'SELECT S.strSet, S.idSet FROM sets S, movie M WHERE M.idSet = S.idSet AND M.idMovie = '.$id.';';
-			$result = querySQL($SQL_SET, false, $dbh);
+			$result = fetchFromDB($SQL_SET, false, $dbh);
 			if (!empty($result)) {
 				echo '<tr><td class="streaminfoLasTD" style="padding-top:10px;" colspan="'.$spalten.'">';
-				$row   = $result->fetch();
-				$set   = isset($row['strSet']) ? $row['strSet'] : null;
-				$idSet = isset($row['idSet'])  ? $row['idSet']  : null;
+				$set   = isset($result['strSet']) ? $result['strSet'] : null;
+				$idSet = isset($result['idSet'])  ? $result['idSet']  : null;
 				$isSet = !empty($set) && isset($idSet);
+				$result = null;
+				unset($result);
 
 				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>Not in any set!</i>');
 				if ($isSet) {
@@ -759,9 +708,9 @@ include_once "./template/functions.php";
 
 
 //- FUNCTIONS -//
-	function getNeededColspan($COLS, $res, $spalte) {
+	function getNeededColspan($res, $spalte) {
 		$colspan = 1;
-		if ($spalte == $COLS['VIDEO1'] || $spalte == $COLS['AUDIO1'] || $spalte == $COLS['SUB']) {
+		if ($spalte == DETAIL_COLS['VIDEO1'] || $spalte == DETAIL_COLS['AUDIO1'] || $spalte == DETAIL_COLS['SUB']) {
 			return $colspan;
 		}
 
@@ -775,7 +724,7 @@ include_once "./template/functions.php";
 		}
 
 		if ($spalte == 1) {
-			return (min($colspan, $COLS['GENRE'] + 1));
+			return (min($colspan, DETAIL_COLS['GENRE'] + 1));
 		}
 
 		return $colspan;
@@ -844,6 +793,30 @@ include_once "./template/functions.php";
 		$row = $res->fetch();
 		return isset($row['name']) ? $row['name'] : null;
 
+	}
+
+	function convertSecondsToHM($seconds) {
+		$result = array('hrs' => null, 'min' => null);
+		if (!empty($seconds)) {
+			$minutes = floor($seconds/60);
+			$hours   = floor($minutes/60).':'.sprintf ("%02d", $minutes % 60).'\'';
+			$result['hrs'] = $hours;
+			$result['min'] = $minutes.'\'';
+		}
+		return $result;
+	}
+
+	function getActorLimitCount($SQL, $acLimit, $dbh = null) {
+		$result = querySQL($SQL, false, $dbh);
+
+		$actCnt  = 0;
+		foreach($result as $tmp) { $actCnt++; }
+		if ($actCnt-1 == $acLimit) { $acLimit++; }
+
+		$result = null;
+		unset($result);
+
+		return $acLimit;
 	}
 //- FUNCTIONS -//
 ?>
