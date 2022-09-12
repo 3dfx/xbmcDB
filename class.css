@@ -1,10 +1,12 @@
 /* Large desktop */
 @media (max-width: 1400px) {
+    body { min-width: 481px; }
 	#adminInfo { display:none; }
 }
 
 /* Portrait tablet to landscape and desktop */
 @media (min-width: 600px) and (max-width: 1024px) {
+    body { min-width: 481px; }
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
 	.hideMobile { display:none; }
@@ -13,6 +15,7 @@
 
 /* Landscape phone to portrait tablet */
 @media (max-width: 1200px) {
+    body { min-width: 481px; }
 	#plaYTdivide, #plaYoutube_, #xbmControlWrap { display:none; }
 	#showsTable, #showsBody, .showShowInfo { min-width:300px !important; width:300px !important; }
 	.hideMobile { display:none; }
@@ -35,13 +38,18 @@
 	.th02, .yearTD { display:none; }
 }
 
+@media (max-width: 400px) {
+    body {  min-width: unset; max-width: 400px; }
+
+    .tvRandomBanner { width: 280px !important; }
+
+    .th5, .resCodecTD { display:none; }
+    .tabDiv { max-width: 100% !important; }
+    .fim    { max-width: 99% !important; }
+}
+
 body 	{
-	min-width: 481px;
 	/*max-device-width: 1024px;*/
-	#min-width: 481px;
-	#max-width: 1024px;
-	#min-height: 768px;
-	#max-height: 768px;
 	padding:10px;
 	font-family: 'Lucida Grande', 'Verdana', 'Arial', system-ui;
 	font-size: 13px;

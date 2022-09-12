@@ -33,22 +33,38 @@ function cursorBusy(state) {
 	$('a').css('cursor', state);
 }
 
-function openNav(objId) {
-	closeNavs();
+function openNav(objId, all) { openNav_(objId); }
+function openNav_(objId) {
+	if (window.innerWidth < 980) {
+		return;
+	}
+
+	closeNavs(objId);
 	$(objId).addClass('open');
 }
 
-function closeNavs() {
-	$('#dropOptions').removeClass('open');
-	$('#dropViewmode').removeClass('open');
-	$('#dropLanguage').removeClass('open');
-	$('#dropAdmin').removeClass('open');
-	$('#dropSearch').removeClass('open');
+function closeNavs(objId) {
+	if (window.innerWidth < 980) {
+		return;
+	}
+
+	let items = Array('#dropOptions', '#dropLanguage', '#dropAdmin', '#dropSearch', '#dropViewmode');
+	for (let i = 0; i < items.length; i++) {
+		if (objId != null && objId !== '' && objId === items[i]) {
+			continue;
+		}
+		if (isAdmin && objId === '#dropViewmode') {
+			continue;
+		}
+
+		$(items[i]).removeClass('open');
+	}
 }
 
 function checkForCheck() {
-	if (unsaved)
+	if (unsaved) {
 		return (ids != null && ids !== '' ? confirm("Attention:\nUnsaved selection will be lost!") : true);
+	}
 	return true;
 }
 

@@ -59,21 +59,32 @@ function selSpanText(obj) {
 
 function openNav(objId) { openNav_(objId, true); }
 function openNav_(objId, all) {
-	closeNavs_(all);
+	if (window.innerWidth < 980) {
+		return;
+	}
+
+	closeNavs_(objId, all);
 	$(objId).addClass('open');
 }
 
-function closeNavs() { closeNavs_(true); }
-function closeNavs_(all) {
-	$('.dropdown-submenu').removeClass('open');
-
-	$('#dropAdmin').removeClass('open');
-	$('#dropSearch').removeClass('open');
-	if (isAdmin) {
-		$('#dropViewmode').removeClass('open');
+function closeNavs() { closeNavs_(null, true); }
+function closeNavs_(objId, all) {
+	if (window.innerWidth < 980) {
+		return;
 	}
-	if (all) {
-		$('#dropLatestEps').removeClass('open');
+
+	let items = Array('.dropdown-submenu', '#dropLatestEps', '#dropAdmin', '#dropSearch', '#dropViewmode');
+	for (let i = 0; i < items.length; i++) {
+		if (objId != null && objId !== '' && objId === items[i]) {
+			continue;
+		}
+		else if (all && objId === '#dropLatestEps') {
+			continue;
+		} else if (isAdmin && objId === '#dropViewmode') {
+			continue;
+		}
+
+		$(items[i]).removeClass('open');
 	}
 }
 
