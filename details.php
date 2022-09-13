@@ -666,27 +666,28 @@ include_once "./template/functions.php";
 				echo "\r\n";
 			}
 
+			echo '<tr><td class="streaminfoLasTD" style="padding-top:10px;" colspan="'.$spalten.'">';
+			$set = $idSet = null;
 			$result = fetchFromDB("SELECT S.strSet, S.idSet FROM sets S, movie M WHERE M.idSet = S.idSet AND M.idMovie = ".$id.";", false, $dbh);
 			if (!empty($result)) {
-				echo '<tr><td class="streaminfoLasTD" style="padding-top:10px;" colspan="'.$spalten.'">';
 				$set   = isset($result['strSet']) ? $result['strSet'] : null;
 				$idSet = isset($result['idSet'])  ? $result['idSet']  : null;
-				$isSet = !empty($set) && isset($idSet);
 				$result = null;
 				unset($result);
-
-				$href = ($isSet ? '<b>'.$set.'</b>' : '<i>Not in any set!</i>');
-				if ($isSet) {
-					$href = '<a style="color:dimgray;" href="?show=filme&which=set&sort=titlea&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
-				}
-				if ($isAdmin) {
-					$href .= ' <a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id. '"><img style="border:0; height:9px;" src="img/edit-pen.png" title="change set" alt="change set"/></a>';
-				}
-
-				echo '<span class="filename lefto">'.$href.'</span>';
-				echo '</td></tr>';
-				echo "\r\n";
 			}
+
+			$isSet = !empty($set) && isset($idSet);
+			$href = ($isSet ? '<b>'.$set.'</b>' : '<i>Not in any set!</i>');
+			if ($isSet) {
+				$href = '<a style="color:dimgray;" href="?show=filme&which=set&sort=titlea&just='.$idSet.'&name='.$set.'" target="_parent">'.$href.'</a>';
+			}
+			if ($isAdmin) {
+				$href .= ' <a class="fancy_movieset" href="./changeMovieSet.php?idMovie='.$id. '"><img style="border:0; height:9px;" src="img/edit-pen.png" title="change set" alt="change set"/></a>';
+			}
+
+			echo '<span class="filename lefto">'.$href.'</span>';
+			echo '</td></tr>';
+			echo "\r\n";
 
 			echo '</table>';
 			echo '</div>';

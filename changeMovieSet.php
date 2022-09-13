@@ -14,7 +14,7 @@ include_once "globals.php";
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <?php
 	$closeFrame = getEscGPost('closeFrame', 0);
-$idMovie    = getEscGPost('idMovie', -1);
+	$idMovie    = getEscGPost('idMovie', -1);
 	
 	$row    = fetchFromDB('SELECT idSet FROM movie WHERE idMovie = '.$idMovie.';');
 	$idSet  = $row['idSet'];
@@ -74,14 +74,14 @@ function postSet($idSet, $id, $name) {
 		}
 	</script>
 	</head>
-	<body style="width:350px; height:50px; margin:0; padding:15px 10px;">
+	<body style="width:350px !important;; max-width:unset !important; height:50px; margin:0; padding:15px 10px;">
 		<div style="float:left; width:200px; padding:2px 0 0 0;">
 			<select id="setSelect" class="styled-select" style="position:absolute; font-size:10px !important; width:195px !important; height:18px !important;" size="1">
 				<option value="-1"> </option>
 <?php postSets($idSet); ?>
 			</select>
 		</div>
-		<div style="float:right; padding:0 5px; position: relative; right: 165px;">
+		<div style="float:right; padding:0 5px; position: relative; right: 50px;">
 			<input type="button" value="Ok" class="okButton" onclick="setMovieSet(); return false;">
 		</div>
 	</body>
