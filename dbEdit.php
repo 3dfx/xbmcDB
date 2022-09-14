@@ -455,7 +455,7 @@ include_once "globals.php";
 			echo '<span style="font:12px Verdana, Arial;">Atmos flag was toggled!</span>';
 
 		} else if ($noForward != 1 && ($act == 'setAspectRatio' || $act == 'setToneMapParam')) {
-			header('Location:./?show=details&idShow='.$idMovie);
+			header('Location: ./?show=details&idMovie='.$idMovie);
 
 		} else if ($act == 'addset' || $act == 'delete' || $act == 'setname' || $act == 'setMoviesetCover') {
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');

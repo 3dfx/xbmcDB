@@ -5,7 +5,6 @@ include_once "./template/config.php";
 include_once "./template/functions.php";
 
 	$id = isset($_SESSION['idMovie']) ? $_SESSION['idMovie'] : null;
-	#if (empty($id)) { $id = getEscGPost('idMovie'); }
 	if (empty($id)) { die('<br/>no param!<br/>'); }
 
 	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
@@ -14,10 +13,11 @@ include_once "./template/functions.php";
 <head>
 	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
-	<script type="text/javascript" src="./template/js/myfancy.js"></script>
 <?php if (isAdmin()) { ?>
+	<script type="text/javascript" src="./template/js/myfancy.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
 <?php } else { ?>
+	<script type="text/javascript" src="./template/js/myfancy.min.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
 <?php } ?>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
@@ -87,15 +87,6 @@ include_once "./template/functions.php";
 
 			window.location.href='./dbEdit.php?act=setToneMapParam&idFile=' + idFile + '&idMovie=' + idMovie + '&' + 'tomParam=' + par;
 		}
-<?php /*
-		function Show_Image(IDS) {
-			document.getElementById(IDS).style.display = 'block';
-		}
-
-		function Hide_Image(IDS) {
-			document.getElementById(IDS).style.display = 'none';
-		}
-*/ ?>
 
 		$(document).ready(function() { $('.knob-dyn').knob(); });
 	</script>
@@ -435,7 +426,7 @@ include_once "./template/functions.php";
 				$height = intval($width / $arOR);
 			}
 
-			$title = empty($title) ? '' : 'title="'.$title.'"; ';
+			$title = empty($title) ? '' : 'title="'.$title.'" ';
 			$res[0][DETAIL_COLS['VIDEO1']] = '<span '.$title.'style="'.$resStyle.'">'.$resSP1.$resInner.$resSP2.'</span>';
 		}
 		$res[1][DETAIL_COLS['VIDEO1']] = '<span style="cursor:pointer;" onclick="setAspectRatio('.$idFile.', '.$idMovie.', '.$ar.'); return false;">'.$arSpan.'</span>';
@@ -531,7 +522,6 @@ include_once "./template/functions.php";
 			echo "\r\n";
 			echo '<tr>';
 			echo '<th>';
-			#echo '<span class="moreDots" style="margin-left:10px;" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actors</span>';
 			echo '<span class="moreDots" onclick="showHiddenTRs(\'doTr\', \'artists\', flag);">Actor</span>';
 			echo '</th>';
 			echo '<th class="role">';
@@ -620,7 +610,7 @@ include_once "./template/functions.php";
 					echo '<td'.$tdClass.'>'.$val.'</td>';
 				}
 
-				echo '</tr>';
+				echo '</tr>'."\r\n";
 				$zeilen++;
 			}
 
