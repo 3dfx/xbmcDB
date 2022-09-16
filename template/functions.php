@@ -1476,32 +1476,34 @@ function postNavBar_($isMain) {
 			#$msgStr = '<span style="padding-left:15px; color:silver;"><sub>['.$msgs.']</sub></span>';
 		}
 		$res .= '<li class="dropdown" id="dropAdmin" onmouseover="openNav(\'#dropAdmin\');">';
-		$res .= '<a tabindex="60" href="#" class="dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
+		$res .= '<a tabindex="60" href="#" class="nopo dropdown-toggle" onclick="this.blur();" data-toggle="dropdown" style="font-weight:bold;'.($bs211).'">admin <b class="caret"></b></a>';
 		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
 
-		$res .= '<li><a class="fancy_sets'.$selected.'" href="'.$viewerPage.'">Order Viewer'.$msgStr.'</a></li>';
+		$res .= '<li><a class="nopo fancy_sets'.$selected.'" href="'.$viewerPage.'">Order Viewer'.$msgStr.'</a></li>';
 
 		$USESETS = isset($GLOBALS['USESETS']) ? $GLOBALS['USESETS'] : true;
 		if ($USESETS) {
-			$res .= '<li><a class="fancy_sets" href="setEditor.php">Set Editor</a></li>';
+			$res .= '<li><a class="nopo fancy_sets" href="setEditor.php">Set Editor</a></li>';
 		}
 
-		$res .= '<li class="divider"></li>';
 		if ($XBMCCONTROL_ENABLED) {
-			if (xbmcRunning() != 0) {
-				$res .= '<li><a href="" onclick="scanLib(); return false;">Scan Library</a></li>';
-			}
-			$res .= '<li><a href="" onclick="clearCache(); return false;">Clear cache</a></li>';
-		}
-		$res .= '<li class="divider"></li>';
-		$res .= '<li><a class="fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
-		$res .= '<li><a class="fancy_msgbox" href="dbEdit.php?act=fixRunTime">Fix runtime</a></li>';
-		$res .= '<li class="divider"></li>';
+			$res .= '<li class="divider"></li>';
 
-		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
-		$res .= '<li><a class="fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
-		$res .= '<li><a class="fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
-		$res .= '<li><a class="fancy_logs" href="./_hash.php">Pass Generator</a></li>';
+			if (xbmcRunning() != 0) {
+				$res .= '<li><a class="nopo" href="" onclick="scanLib(); return false;">Scan Library</a></li>';
+			}
+			$res .= '<li><a class="nopo" href="" onclick="clearCache(); return false;">Clear cache</a></li>';
+		}
+
+		$res .= '<li class="divider"></li>';
+		$res .= '<li><a class="nopo fancy_msgbox" href="guestStarLinks.php">Import guest links</a></li>';
+		$res .= '<li><a class="nopo fancy_msgbox" href="dbEdit.php?act=fixRunTime">Fix runtime</a></li>';
+
+		$res .= '<li class="divider"></li>';
+		$res .= '<li><a class="nopo fancy_logs" href="./loginPanel.php?which=2">Login-log</a></li>';
+		$res .= '<li><a class="nopo fancy_logs" href="./loginPanel.php?which=1">Refferer-log</a></li>';
+		$res .= '<li><a class="nopo fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
+		$res .= '<li><a class="nopo fancy_logs" href="./_hash.php">Pass Generator</a></li>';
 
 		/*
 		$res .= '<li class="divider"></li>';
@@ -1518,14 +1520,14 @@ function postNavBar_($isMain) {
 			$res .= '<li class="divider"></li>';
 		}
 		if ($xbmcRunning && $MP3_EXPLORER && isFile('fExplorer.php')) {
-			$res .= '<li><a href="?show=mpExp">MP3 Explorer</a></li>';
-			#$res .= '<li><a class="fancy_explorer" href="?show=mpExp">MP3 Explorer</a></li>';
+			$res .= '<li><a class="nopo" href="?show=mpExp">MP3 Explorer</a></li>';
+			#$res .= '<li><a class="nopo fancy_explorer" href="?show=mpExp">MP3 Explorer</a></li>';
 		}
 		if ($NAS_CONTROL) {
-			$res .= '<li><a class="fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
+			$res .= '<li><a class="nopo fancy_iframe3" href="./nasControl.php">NAS Control</a></li>';
 		}
 		if ($upgrLog) {
-			$res .= '<li><a class="fancy_logs" href="'.$privateFolder.'/upgradeLog.php">Upgrade-log</a></li>';
+			$res .= '<li><a class="nopo fancy_logs" href="'.$privateFolder.'/upgradeLog.php">Upgrade-log</a></li>';
 		}
 
 		$res .= '</ul>';
@@ -2003,7 +2005,7 @@ function adminInfoJS() {
 	$adminInfo = isset($GLOBALS['ADMIN_INFO']) ? $GLOBALS['ADMIN_INFO'] : true;
 	if (isAdmin() && $adminInfo) {
 		echo '<script type="text/javascript">'."\r\n";
-		echo "$(document).ready(function() {\r\n";
+		echo "jQuery(document).ready(function($){\r\n";
 		echo "\tvar info = document.getElementById('adminInfo');\r\n";
 		echo "\tif (info != null) { $('.bs-docs').addClass('info'); }\r\n";
 		echo "});\r\n";

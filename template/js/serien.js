@@ -230,7 +230,7 @@ function cursorBusy(state) {
 	$('#showInfo').css('cursor', state);
 	$('td').css('cursor', state);
 	$('a').css('cursor', state === '' ? 'pointer' : state);
-	$('a.fancy_msgbox, a.fancy_addEpisode, li.dropdown-submenu>a').css('cursor', state === '' ? 'default' : state);
+	$('a.nopo, a.fancy_msgbox, a.fancy_addEpisode, li.dropdown-submenu>a').css('cursor', state === '' ? 'default' : state);
 }
 
 function loadLatestShowInfo(obj, sId, epId, trClass, eps) {
