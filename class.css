@@ -820,11 +820,6 @@ table.login {
 	font-weight: normal;
 }
 
-.nopo,
-.fancy_addEpisode,
-.fancy_msgbox {
-	cursor:default;
-}
 
 .fancy_movieEdit,
 .fancy_msgbox,
@@ -832,6 +827,12 @@ table.login {
 .fancy_iframe2,
 .fancy_iframe3 {
 	cursor:pointer;
+}
+
+.nopo,
+.fancy_addEpisode,
+.fancy_msgbox {
+    cursor:default;
 }
 
 .tableCheck {

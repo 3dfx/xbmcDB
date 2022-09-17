@@ -31,6 +31,7 @@ function cursorBusy(state) {
 	$('#xbmcDB').css('cursor', state);
 	$('td').css('cursor', state);
 	$('a').css('cursor', state);
+	$('a.nopo, a.fancy_msgbox, li.dropdown-submenu>a').css('cursor', state === '' ? 'default' : state);
 }
 
 function openNav(objId, all) { openNav_(objId); }
