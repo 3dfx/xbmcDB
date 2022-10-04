@@ -10,6 +10,7 @@ include_once "globals.php";
 
 	$hostname = $_SERVER['HTTP_HOST'];
 	$path = dirname($_SERVER['PHP_SELF']);
+	$errMsg = null;
 
 	$act        = getEscGPost('act',         '');
 	$id         = getEscGPost('id',          -1);
@@ -260,21 +261,26 @@ include_once "globals.php";
 
 			$params = '';
 			if (!empty($file)) {
-				$file    = str_replace("''", "'", $file);
-				$params  = "strFilename='".$file."'";
-				$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
-				if (!$keepMeta) {
-					$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
-					$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
-					$dbh->exec('DELETE FROM filemap  WHERE idFile='.$idFile.';');
-				}
+				$file     = str_replace("''", "'", $file);
+				$params   = "strFilename='".$file."'";
 
-				$SQLpth  = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
-				$SQLpth  = str_replace('[idFile]', $idFile, $SQLpth);
-				$row     = fetchFromDB($SQLpth, false, $dbh);
-				$strPath = empty($row) ? null : $row['strPath'];
-				if (!empty($strPath)) {
-					$dbh->exec('UPDATE movie SET c22="'.$strPath.$file.'" WHERE idFile='.$idFile.';');
+				$SQLpth   = "SELECT strPath FROM path WHERE idPath=(SELECT idPath FROM files WHERE idFile=[idFile]);";
+				$SQLpth   = str_replace('[idFile]', $idFile, $SQLpth);
+				$row      = fetchFromDB($SQLpth, false, $dbh);
+				$strPath  = empty($row) ? null : $row['strPath'];
+				$fileName = empty($strPath) ? null : $strPath.$file;
+				$isFile   = isFile($fileName);
+				if ($isFile) {
+					$dbh->exec('UPDATE files SET '.$params.' WHERE idFile='.$idFile.';');
+					$dbh->exec('UPDATE movie SET c22="'.$fileName.'" WHERE idFile='.$idFile.';');
+
+					if (!$keepMeta) {
+						$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
+						$dbh->exec('DELETE FROM fileinfo WHERE idFile='.$idFile.';');
+						$dbh->exec('DELETE FROM filemap  WHERE idFile='.$idFile.';');
+					}
+				} else {
+					$errMsg = '<span style="font:12px Verdana, Arial;">File: "'.$fileName.'" not found!<br/>Nothing was changed!</span>';
 				}
 			}
 
@@ -461,7 +467,11 @@ include_once "globals.php";
 			header('Location: '.($path == '/' ? '' : $path).'/setEditor.php');
 
 		} else if ($act == 'setMovieSource' || $act == 'linkInsert' || $act == 'linkUpdate' || $act == 'linkDelete' || $act == 'addEpisode' || $act == 'updateEpisode' || $act == 'setmovieinfo') {
-			$clsFrame = true;
+			$clsFrame = empty($errMsg);
+		}
+
+		if (!empty($errMsg)) {
+			echo $errMsg;
 		}
 
 		if ($clsFrame) { header('Location: '.($path == '/' ? '' : $path).'/closeFrame.php'); }
