@@ -52,20 +52,20 @@ include_once "globals.php";
 		}
 		$SQL = '';
 
-		if ($idFile != -1 && ($act == 'setSeen' || $act == 'setUnseen'))  {
+		if ($idFile != -1 && ($act == 'setSeen' || $act == 'setUnseen')) {
 			$dbh->exec('UPDATE files SET playCount='.($act == 'setSeen' ? '1' : '0').' WHERE idFile = '.$idFile.';');
 			clearMediaCache();
 
-		} else if (!empty($idFile) && $act == 'setMovieSource')  {
+		} else if (!empty($idFile) && $act == 'setMovieSource') {
 			$dbh->exec('UPDATE fileinfo SET src='.($source > 0 ? $source : 'NULL').' WHERE idFile='.$idFile.';');
 			clearMediaCache();
 
-		} else if (!empty($idFile) && $act == 'toggleAtmos')  {
+		} else if (!empty($idFile) && $act == 'toggleAtmos') {
 			$dbh->exec('UPDATE fileinfo SET atmosx = '.(empty($val) ? '' : 1).' WHERE idFile = '.$idFile.';');
 			clearMediaCache();
 
-		} else if (!empty($idFiles) && $act == 'clearFileSizes')  {
-			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL WHERE src IS NOT NULL AND idFile IN('.$idFiles.');');
+		} else if (!empty($idFiles) && $act == 'clearFileSizes') {
+			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL,atmosx=NULL WHERE src IS NOT NULL AND idFile IN('.$idFiles.');');
 			$dbh->exec('DELETE FROM fileinfo WHERE src IS NULL AND idFile IN('.$idFiles.');');
 			if ($clrStream == 1) {
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile IN('.$idFiles.');');
@@ -73,8 +73,8 @@ include_once "globals.php";
 
 			clearMediaCache();
 
-		} else if ($idFile != -1 && $act == 'clearFileSize')  {
-			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL WHERE src IS NOT NULL AND idFile='.$idFile.';');
+		} else if ($idFile != -1 && $act == 'clearFileSize') {
+			$dbh->exec('UPDATE fileinfo SET filesize=NULL,fps=NULL,bit=NULL,atmosx=NULL WHERE src IS NOT NULL AND idFile='.$idFile.';');
 			$dbh->exec('DELETE FROM fileinfo WHERE src IS NULL AND idFile='.$idFile.';');
 			if ($clrStream == 1) {
 				$dbh->exec('DELETE FROM streamdetails WHERE idFile='.$idFile.';');
@@ -219,7 +219,7 @@ include_once "globals.php";
 
 			clearMediaCache();
 
-		} else if ($idFile != -1 && $act == 'clearBookmark')  {
+		} else if ($idFile != -1 && $act == 'clearBookmark') {
 			$dbh->exec('DELETE FROM bookmark WHERE idFile='.$idFile.';');
 		}
 
