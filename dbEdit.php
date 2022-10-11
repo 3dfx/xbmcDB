@@ -248,7 +248,7 @@ include_once "globals.php";
 			}
 
 			if (!empty($rating) && $dbVer >= 107) {
-				$idRating = findRatingId($idMovie, $dbh);
+				$idRating = findRatingId($idMovie, 'movie', $dbh);
 				if (empty($idRating)) {
 					$idRating = getNextId('rating', 'rating_id', $dbh);
 				}
@@ -489,7 +489,7 @@ function findRatingId($mediaId, string $mediaType = 'movie', $dbh = null) {
 	return !empty($row) && !empty($row['rating_id']) ? $row['rating_id'] : null;
 }
 
-function getNextId($table, $column, $dbh = null) {
+function getNextId(string $table, string $column, $dbh = null) {
 	$GETID_SQL = "SELECT ".$column." FROM ".$table." ORDER BY ".$column." DESC LIMIT 0, 1;";
 	$row       = fetchFromDB($GETID_SQL, false, $dbh);
 	if (empty($row)) {
