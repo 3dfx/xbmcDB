@@ -397,6 +397,22 @@ function getThumbImg(int $idFile, $idEpisode, $path, string $filename, string $c
 	return $thumbImg;
 }
 
+function getActorImg($existArtTable, $covers, $actorId, $artist, $dbh = null) {
+	$actorImg = null;
+	if (isset($covers)) {
+		$actorImg = getActorThumb($artist, $covers['image'], false);
+		if ($existArtTable && !empty($actorId) && !isFile($actorImg)) {
+			$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$actorId."';";
+			$res3 = querySQL($SQL_, false, $dbh);
+			$row3 = !empty($res3) ? $res3->fetch() : null;
+			$url  = !empty($row3) && isset($row3['url']) ? $row3['url'] : null;
+			if (!empty($url)) {
+				$actorImg = getActorThumb($url, $url, true);
+			}
+		}
+	}
+	return $actorImg;
+}
 
 function getLanguage($countryMap, $languages, $i, $trenner = true) {
 	return isValidLang($countryMap, $languages, $i) ? ($trenner ? ' - ' : '').postEditLanguage(strtoupper($languages[$i]), false) : '';
@@ -404,23 +420,6 @@ function getLanguage($countryMap, $languages, $i, $trenner = true) {
 
 function isValidLang($countryMap, $languages, $i) {
 	return isset($languages[$i]) && isset($countryMap[strtoupper($languages[$i])]);
-}
-
-function getActorImg($existArtTable, $covers, $actorId, $artist, $dbh = null) {
-	$actorimg = null;
-	if (isset($covers)) {
-		$actorimg = getActorThumb($artist, $covers['image'], false);
-		if ($existArtTable && !empty($actorId) && !isFile($actorimg)) {
-			$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$actorId."';";
-			$res3 = querySQL($SQL_, false, $dbh);
-			$row3 = $res3->fetch();
-			$url = isset($row3['url']) ? $row3['url'] : null;
-			if (!empty($url)) {
-				$actorimg = getActorThumb($url, $url, true);
-			}
-		}
-	}
-	return $actorimg;
 }
 //- FUNCTIONS -//
 ?>
