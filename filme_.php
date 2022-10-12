@@ -320,17 +320,15 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 
 #rating
-			$rating = substr($rating, 0, 4);
-			$rating = substr($rating, 0, substr($rating, 2, 1) == '.' ? 4 : 3);
 
-			$spalTmp = '<td class="ratingTD'.$higlight.($rating > 0 ? ' righto' : ' centro').'">';
+			$spalTmp = '<td class="ratingTD righto'.$higlight.'">';
 			if (!empty($imdbId)) {
 				$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
 			} else {
 				$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';
 			}
 
-			$spalTmp .= ($rating > 0 ? $rating : '&nbsp;&nbsp;-');
+			$spalTmp .= (empty($rating) ? '-&nbsp;&nbsp;' : sprintf("%02.1f", round($rating, 1)));
 			$spalTmp .= '</a>';
 			$spalTmp .= '</td>';
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;

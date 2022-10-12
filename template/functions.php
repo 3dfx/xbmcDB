@@ -2591,6 +2591,30 @@ function getGuests($guests) {
 	return $gs;
 }
 
+function fetchActorCoversEpisode($idEpisode, $guests, $dbh = null) {
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	if ($overrideFetch == 0 && isset($_SESSION['covers']['episodes'][$idEpisode]['actors'])) { return $_SESSION['covers']['episodes'][$idEpisode]['actors']; }
+
+	$SQL = "SELECT ".mapDBC('idActor')." AS idActor, ".mapDBC('strActor')." AS strActor, ".mapDBC('strThumb')." AS actorimage FROM actor WHERE ".mapDBC('strThumb')." != '' AND ".mapDBC('idActor')." IN ( SELECT ".mapDBC('idActor')." FROM ".mapDBC('actorlinkepisode')." WHERE media_id=".$idEpisode." AND cast_order=1337 );";
+
+	$result = array();
+	$res    = querySQL($SQL, false, $dbh);
+	foreach($res as $row) {
+		$idActor = $row['idActor'];
+		$artist  = $row['strActor'];
+		$image   = $row['actorimage'];
+		$image   = str_replace('<thumb>',  '', $image);
+		$image   = str_replace('</thumb>', '', $image);
+
+		if (isset($result[$artist])) { continue; }
+		$result[$artist]['id']    = $idActor;
+		$result[$artist]['image'] = $image;
+	}
+
+	$_SESSION['covers']['episodes'][$idEpisode]['actors'] = $result;
+	return $result;
+}
+
 function getDateColor($airDate, $daysLeft) {
 	$color = 'silver';
 	if (isAdmin() && !empty($airDate)) {

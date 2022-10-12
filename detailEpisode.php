@@ -6,7 +6,19 @@ include_once "./template/config.php";
 include_once "./template/Series/_SERIEN.php";
 include_once "./template/Series/StreamDetails.php";
 ?>
-<script type="text/javascript">$(document).ready(function() { initShowFancies(); });</script>
+<head>
+	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
+	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
+<?php if (isAdmin()) { ?>
+		<script type="text/javascript" src="./template/js/myfancy.js"></script>
+		<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
+<?php } else { ?>
+		<script type="text/javascript" src="./template/js/myfancy.min.js"></script>
+		<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
+<?php } ?>
+	<script type="text/javascript">$(document).ready(function() { initShowFancies(); });</script>
+	<link rel="stylesheet" type="text/css" href="class.css" />
+</head>
 <?php
 	header("Content-Type: text/html; charset=UTF-8");
 
@@ -152,9 +164,39 @@ include_once "./template/Series/StreamDetails.php";
 
 	$guests = getGuests($guests);
 	if (!empty($guests)) {
-		$gString = '';
+		$covers = fetchActorCoversEpisode($idEpisode, $guests, $dbh);
+		$existArtTable = existsArtTable($dbh);
+
+		$gString  = '';
 		$len = count($guests);
-		for ($i = 0; $i < $len; $i++) { $gString .= $guests[$i].($i < $len-1 ? '<br />' : ''); }
+		for ($i = 0; $i < $len; $i++) {
+			$artist = $guests[$i];
+
+			$actorimg = null;
+			if (isset($covers[$artist])) {
+				$actorId  = $covers[$artist]['id'];
+				$actorimg = getActorThumb($artist, $covers[$artist]['image'], false);
+				if ($existArtTable && !empty($actorId) && !isFile($actorimg)) {
+					$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$actorId."';";
+					$res3 = querySQL($SQL_, false, $dbh);
+					$row3 = $res3->fetch();
+					$url  = isset($row3['url']) ? $row3['url'] : null;
+					if (!empty($url)) {
+						$actorimg = getActorThumb($url, $url, true);
+					}
+				}
+			}
+
+			if (isFile($actorimg)) {
+				wrapItUp('actor', $actorId, $actorimg);
+				$gString .= '<a tabindex="-1" class="hoverpic" style="font-size:11px;" rel="'.getImageWrap($actorimg, $actorId, 'actor', 0).'" title="'.$artist.'">'.$artist.'</a>';
+			} else {
+				$gString .= $artist;
+			}
+
+			$gString .= ($i < $len-1 ? '<br />' : '');
+		}
+
 		echo '<div id="epGuest" class="padbot15" onclick="showGuests(); return false;"><i><b>Guests:</b></i> <span style="color:red; cursor:pointer; float:right;">show guests!</span></div>';
 		echo '<div id="epGuests" class="padbot15" style="display:none;"><i><b>Guests:</b></i><br />'.$gString.'</div>';
 	}
