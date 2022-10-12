@@ -7,17 +7,11 @@ include_once "./template/Series/_SERIEN.php";
 include_once "./template/Series/StreamDetails.php";
 ?>
 <head>
-	<script type="text/javascript" src="./template/js/jquery.min.js"></script>
-	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 <?php if (isAdmin()) { ?>
-		<script type="text/javascript" src="./template/js/myfancy.js"></script>
-		<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
+	<script type="text/javascript" src="./template/js/hoverpic.js"></script>
 <?php } else { ?>
-		<script type="text/javascript" src="./template/js/myfancy.min.js"></script>
-		<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
+	<script type="text/javascript" src="./template/js/hoverpic.min.js"></script>
 <?php } ?>
-	<script type="text/javascript">$(document).ready(function() { initShowFancies(); });</script>
-	<link rel="stylesheet" type="text/css" href="class.css" />
 </head>
 <?php
 	header("Content-Type: text/html; charset=UTF-8");
