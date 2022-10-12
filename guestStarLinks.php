@@ -82,16 +82,16 @@ function startImport() {
 			$actLink  = $linkActs[$key];
 
 			foreach($actLink['idEp'] as $idEp) {
-				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinkepisode').' VALUES('.$idActor.', '.$idEp.', '.($dbVer >= 93 ? '"episode", ' : '').'"Gast Star", 1337);';
+				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinkepisode').' VALUES('.$idActor.', '.$idEp.', '.($dbVer >= 93 ? '"episode", ' : '').'"Gast Star", GUEST_STAR_ID);';
 				execSQL($SQL, false, $dbh);
 			}
 			foreach($actLink['idShow'] as $idShow) {
-				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", 1337);';
+				$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", GUEST_STAR_ID);';
 				execSQL($SQL, false, $dbh);
 			}
 		}
 
-		$NOT_LINKED = 'SELECT media_id,actor_id FROM actor_link WHERE media_type="episode" AND cast_order=1337 AND actor_id NOT IN(SELECT actor_id FROM actor_link WHERE media_type="tvshow" AND cast_order=1337);';
+		$NOT_LINKED = 'SELECT media_id,actor_id FROM actor_link WHERE media_type="episode" AND cast_order=GUEST_STAR_ID AND actor_id NOT IN(SELECT actor_id FROM actor_link WHERE media_type="tvshow" AND cast_order=GUEST_STAR_ID);';
 		$res = querySQL($NOT_LINKED, false, $dbh);
 		$idEps = '';
 		$idEpActor = array();
@@ -110,7 +110,7 @@ function startImport() {
 			$idShow    = $row['idShow'];
 			$idEpisode = $row['idEpisode'];
 			$idActor   = $idEpActor[$idEpisode];
-			$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", 1337);';
+			$SQL = 'INSERT OR IGNORE INTO '.mapDBC('actorlinktvshow').' VALUES('.$idActor.', '.$idShow.', '.($dbVer >= 93 ? '"tvshow", ' : '').'"Gast Star", GUEST_STAR_ID);';
 			execSQL($SQL, false, $dbh);
 		}
 

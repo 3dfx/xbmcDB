@@ -36,6 +36,8 @@
 		$HOMENETWORK = ($check == $local0 || $check == $local1);
 	}
 
+	const GUEST_STAR_ID = 1337;
+
 	const COUNTRY_MAP =	array(
 		'DE' => array(
 				'GER' => 'Deutsch',
@@ -140,6 +142,7 @@
 			'idDirector'        => 'actor_id',
 			'idGenre'           => 'genre_id',
 			'idMovie'           => 'media_id',
+			'idEpisode'         => 'media_id',
 			'strActor'          => 'name',
 			'strCountry'        => 'name',
 			'strGenre'          => 'name',

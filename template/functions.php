@@ -2591,24 +2591,43 @@ function getGuests($guests) {
 	return $gs;
 }
 
-function fetchActorCoversEpisode($idEpisode, $guests, $dbh = null) {
+function fetchActorCoversEpisode($idEpisode, $dbh = null) {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if ($overrideFetch == 0 && isset($_SESSION['covers']['episodes'][$idEpisode]['actors'])) { return $_SESSION['covers']['episodes'][$idEpisode]['actors']; }
 
-	$SQL = "SELECT ".mapDBC('idActor')." AS idActor, ".mapDBC('strActor')." AS strActor, ".mapDBC('strThumb')." AS actorimage FROM actor WHERE ".mapDBC('strThumb')." != '' AND ".mapDBC('idActor')." IN ( SELECT ".mapDBC('idActor')." FROM ".mapDBC('actorlinkepisode')." WHERE media_id=".$idEpisode." AND cast_order=1337 );";
+//	$SQL = "SELECT ".mapDBC('idActor')." AS idActor, ".mapDBC('strActor')." AS strActor, ".mapDBC('strThumb')." AS actorimage FROM actor WHERE ".mapDBC('strThumb')." != '' AND ".mapDBC('idActor')." IN ( SELECT ".mapDBC('idActor')." FROM ".mapDBC('actorlinkepisode')." WHERE media_id=".$idEpisode." AND cast_order=1337 );";
+	$SQL = "SELECT ".
+				"A.".mapDBC('iOrder')."   AS cOrder, ".
+				"A.".mapDBC('idActor')."  AS idActor, ".
+				"B.".mapDBC('strActor')." AS strActor, ".
+				"A.".mapDBC('strRole')."  AS role, ".
+				"B.".mapDBC('strThumb')." AS actorimage ".
+			"FROM ".
+					mapDBC("actorlinkepisode")." A, ".
+					mapDBC("actors")." B ".
+			"WHERE ".
+//				mapDBC('strThumb')." != '' AND ".
+				"A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND ".
+				"A.media_type='episode' AND ".
+				"A.".mapDBC('idEpisode')." = '".$idEpisode."' ".
+			"ORDER BY A.".mapDBC('iOrder').";";
 
 	$result = array();
 	$res    = querySQL($SQL, false, $dbh);
 	foreach($res as $row) {
 		$idActor = $row['idActor'];
 		$artist  = $row['strActor'];
+		$role    = $row['role'];
+		$cOrder  = $row['cOrder'];
 		$image   = $row['actorimage'];
 		$image   = str_replace('<thumb>',  '', $image);
 		$image   = str_replace('</thumb>', '', $image);
 
-		if (isset($result[$artist])) { continue; }
-		$result[$artist]['id']    = $idActor;
-		$result[$artist]['image'] = $image;
+		if (isset($result[$cOrder][$artist])) { continue; }
+		$result[$cOrder][$artist]['id']     = $idActor;
+		$result[$cOrder][$artist]['role']   = $role;
+		$result[$cOrder][$artist]['cOrder'] = $cOrder;
+		$result[$cOrder][$artist]['image']  = $image;
 	}
 
 	$_SESSION['covers']['episodes'][$idEpisode]['actors'] = $result;
