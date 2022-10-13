@@ -166,8 +166,6 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 
 	$existArtTable = existsArtTable($dbh);
 	$artCovers     = fetchArtCovers($existArtTable, $dbh);
-	$actorImgs     = fetchActorCovers($dbh);
-	$directorImgs  = fetchDirectorCovers($dbh);
 	$genreIDs      = fetchGenreIDs($dbh);
 	$result        = fetchMovies($SkQL, $dbh);
 	$idStream      = getResolution($SkQL, true, $dbh);
@@ -366,29 +364,23 @@ if ($dirActorEnabled) {
 			$firstId     = '';
 			$firstartist = '';
 			$actorpicURL = '';
-			if (!empty($actorImgs)) {
-				if (isset($actorImgs[$idMovie])) {
-					$firstId     = $actorImgs[$idMovie]['id'];
-					$actorpicURL = $actorImgs[$idMovie]['image'];
-					$firstartist = $actorImgs[$idMovie]['artist'];
-				}
-			} else {
-				$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie." ORDER BY B.".mapDBC('iOrder').";";
-				$result2 = querySQL($SQL_, false, $dbh);
-				foreach($result2 as $row2) {
-					$artist      = $row2[mapDBC('strActor')];
-					$idActor     = $row2[mapDBC('idActor')];
-					$actorpicURL = $row2['actorimage'];
 
-					if (empty($firstartist)) {
-						if (empty($artist) || empty($idActor))
-							continue;
-						$firstartist = $artist;
-						$firstId     = $idActor;
-						break;
+			$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie." ORDER BY B.".mapDBC('iOrder').";";
+			$result2 = querySQL($SQL_, false, $dbh);
+			foreach($result2 as $row2) {
+				$artist      = $row2[mapDBC('strActor')];
+				$idActor     = $row2[mapDBC('idActor')];
+				$actorpicURL = $row2['actorimage'];
+
+				if (empty($firstartist)) {
+					if (empty($artist) || empty($idActor)) {
+						continue;
 					}
+					$firstartist = $artist;
+					$firstId     = $idActor;
+					break;
 				}
-			} //POWERFUL_CPU
+			}
 
 			$actorimg = getActorThumb($firstartist, $actorpicURL, false);
 			if ($existArtTable && !empty($firstId) && !isFile($actorimg)) {
@@ -431,27 +423,20 @@ if ($dirActorEnabled) {
 			$firstId       = '';
 			$firstdirector = '';
 			$actorpicURL   = '';
-			if (!empty($directorImgs)) {
-				if (isset($directorImgs[$idMovie])) {
-					$firstId       = $directorImgs[$idMovie]['id'];
-					$actorpicURL   = $directorImgs[$idMovie]['image'];
-					$firstdirector = $directorImgs[$idMovie]['artist'];
-				}
-			} else {
-				$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type = 'movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
-				$result3 = querySQL($SQL_, false, $dbh);
-				foreach($result3 as $row3) {
-					$artist      = $row3[mapDBC('strActor')];
-					$idActor     = $row3[mapDBC('idDirector')];
-					$actorpicURL = $row3['actorimage'];
 
-					if (empty($firstdirector)) {
-						$firstdirector = $artist;
-						$firstId = $idActor;
-						break;
-					}
+			$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type = 'movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
+			$result3 = querySQL($SQL_, false, $dbh);
+			foreach($result3 as $row3) {
+				$artist      = $row3[mapDBC('strActor')];
+				$idActor     = $row3[mapDBC('idDirector')];
+				$actorpicURL = $row3['actorimage'];
+
+				if (empty($firstdirector)) {
+					$firstdirector = $artist;
+					$firstId = $idActor;
+					break;
 				}
-			} //POWERFUL_CPU
+			}
 
 			$actorimg = getActorThumb($firstdirector, $actorpicURL, false);
 			if ($existArtTable && !empty($firstId) && !isFile($actorimg)) {

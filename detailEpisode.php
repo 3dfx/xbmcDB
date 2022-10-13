@@ -12,6 +12,7 @@ include_once "./template/Series/StreamDetails.php";
 <?php } else { ?>
 	<script type="text/javascript" src="./template/js/hoverpic.min.js"></script>
 <?php } ?>
+	<script type="text/javascript">$(document).ready(function() { initShowFancies(); });</script>
 </head>
 <?php
 	header("Content-Type: text/html; charset=UTF-8");
@@ -156,31 +157,14 @@ include_once "./template/Series/StreamDetails.php";
 		}
 	}
 
-	$covers = fetchActorCoversEpisode($idEpisode, $dbh);
+	$covers = fetchActorCovers($idEpisode, 'episode', true, $dbh);
 	if (!empty($covers)) {
-		$existArtTable = existsArtTable($dbh);
+		$output = createActorsDiv($covers, $dbh);
 
-		$gString  = '';
-		foreach ($covers as $item) {
-			foreach ($item as $artist => $elem) {
-				$actorId = $elem['id'];
-
-				$gString .= '<div><span>';
-
-				$actorimg = getActorImg($existArtTable, $elem, $actorId, $artist, $dbh);
-				if (isFile($actorimg)) {
-					wrapItUp('actor', $actorId, $actorimg);
-					$gString .= '<a tabindex="-1" class="hoverpic" style="font-size:11px;" rel="'.getImageWrap($actorimg, $actorId, 'actor', 0).'" title="'.$artist.'">'.$artist.'</a>';
-				} else {
-					$gString .= $artist;
-				}
-
-				$gString .= '</span><span style="float:right;">'.$elem['role'].'</span></div>';
-			}
+		if (!empty($output)) {
+			echo '<div id="epActor" class="padbot15" onclick="episodeActors(); return false;"><i><b>Actors:</b></i> <span style="color:red; cursor:pointer; float:right;">show actors!</span></div>';
+			echo '<div id="epActors" class="padbot15" style="display:none;"><i><b>Actors:</b></i><br />'.$output.'</div>';
 		}
-
-		echo '<div id="epGuest" class="padbot15" onclick="showGuests(); return false;"><i><b>Actors:</b></i> <span style="color:red; cursor:pointer; float:right;">show actors!</span></div>';
-		echo '<div id="epGuests" class="padbot15" style="display:none;"><i><b>Actors:</b></i><br />'.$gString.'</div>';
 	}
 
 	$rating = formatRating($epRating);
@@ -395,23 +379,6 @@ function getThumbImg(int $idFile, $idEpisode, $path, string $filename, string $c
 		wrapItUp('file', $idFile, $sessionImg);
 	}
 	return $thumbImg;
-}
-
-function getActorImg($existArtTable, $covers, $actorId, $artist, $dbh = null) {
-	$actorImg = null;
-	if (isset($covers)) {
-		$actorImg = getActorThumb($artist, $covers['image'], false);
-		if ($existArtTable && !empty($actorId) && !isFile($actorImg)) {
-			$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$actorId."';";
-			$res3 = querySQL($SQL_, false, $dbh);
-			$row3 = !empty($res3) ? $res3->fetch() : null;
-			$url  = !empty($row3) && isset($row3['url']) ? $row3['url'] : null;
-			if (!empty($url)) {
-				$actorImg = getActorThumb($url, $url, true);
-			}
-		}
-	}
-	return $actorImg;
 }
 
 function getLanguage($countryMap, $languages, $i, $trenner = true) {

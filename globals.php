@@ -37,6 +37,7 @@
 	}
 
 	const GUEST_STAR_ID = 1337;
+	const EMPTY_IMG_CRC = 'f87cb8a0';
 
 	const COUNTRY_MAP =	array(
 		'DE' => array(
@@ -189,7 +190,7 @@ function mergeMapping($dbVer) {
 }
 
 function mapDBC($str) {
-	$dbVer = $GLOBALS['db_ver'];
+	$dbVer = fetchDbVer();
 	if ($dbVer >= 93) {
 		$map = mergeMapping($dbVer);
 		return isset($map[$str]) ? $map[$str] : $str;
@@ -197,9 +198,6 @@ function mapDBC($str) {
 
 	return $str;
 }
-
-$db_ver  = fetchDbVer();
-$db_name = fetchDbName();
 
 function fetchDbVer() {
 	if (!isset($_SESSION)) { session_start(); }
@@ -221,7 +219,6 @@ function fetchDbName() {
 		if (empty($ver_)) { continue; }
 
 		$ver[$counter][0] = intval($ver_);
-		#$ver[$counter][0] = intval(substr($entry, 8, 2));
 		$ver[$counter++][1] = $entry;
 	}
 	$d->close();

@@ -44,6 +44,17 @@ include_once "./template/Series/_SERIEN.php";
 		return;
 	}
 
+?>
+<head>
+	<?php if (isAdmin()) { ?>
+		<script type="text/javascript" src="./template/js/hoverpic.js"></script>
+	<?php } else { ?>
+		<script type="text/javascript" src="./template/js/hoverpic.min.js"></script>
+	<?php }
+?>
+</head>
+<?php
+
 	echo '<table class="film tableDesc">';
 	echo '<tr class="showDesc">';
 	echo '<td class="showDescTD">';
@@ -51,8 +62,9 @@ include_once "./template/Series/_SERIEN.php";
 		$imgFile = './img/banners/'.$idTvdb.'.jpg';
 		$ok1 = loadImage($imgURL,  $imgFile) != -1;
 		$ok2 = loadImage($imgURL2, $imgFile) != -1;
-		if (!$ok1 && !$ok2)
+		if (!$ok1 && !$ok2) {
 			$imgFile = null;
+		}
 		wrapItUp('banner', $idTvdb, $imgFile);
 		$banner = empty($imgFile) ? ($ok1 ? $imgURL : $imgURL2) : getImageWrap($imgFile, $idTvdb, 'banner', 0);
 		echo '<a target="_blank" href="'.$tvdbURL.'"><img id="tvBanner" src="'.$banner.'" /></a>';
@@ -158,7 +170,9 @@ include_once "./template/Series/_SERIEN.php";
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			$info      = $info1.$info2;
 
-			echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2.'<br /><br />';
+			echo '<div class="padbot15" >';
+			echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2;
+			echo '</div>';
 
 			if (!empty($nextEpisode) && compareDates($nextAirDate, $dbDate)) {
 				updateAirdateInDb($id, $season, $episode, $dbDate, $lastEpisode);
@@ -167,12 +181,26 @@ include_once "./template/Series/_SERIEN.php";
 		}
 	}
 
+	$covers = fetchActorCovers($idShow);
+	if (!empty($covers)) {
+		$output = createActorsDiv($covers);
+
+		if (!empty($output)) {
+			echo '<div class="padbot15" >';
+			echo '<div id="shActor" onclick="showActors(); return false;"><i><b>Actors:</b></i> <span style="color:red; cursor:pointer; float:right;">show actors!</span></div>';
+			echo '<div id="shActors" style="display:none;"><i><b>Actors:</b></i><br />'.$output.'</div>';
+			echo '</div>';
+		}
+	}
+
 	echo $desc;
+
 	echo '</div>';
 	echo '</td>';
 	echo '</tr>';
 	echo '</table>';
 
+//- FUNCTIONS -//
 function genJsonData($codecs, $sum) {
 	$labels  = '"labels": ['."\n\t\t";
 	$data    = '"data": ['."\n\t\t\t";
@@ -230,4 +258,5 @@ function getDuration($epFirst, $epLast) {
 function diffToString($val) {
 	return ' ('.pluralize('year', $val).')';
 }
+//- FUNCTIONS -//
 ?>

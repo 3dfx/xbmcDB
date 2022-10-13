@@ -35,6 +35,11 @@
 <?php } else { ?>
 	<script type="text/javascript" src="./template/js/myfancy.min.js"></script>
 <?php } ?>
+<?php if(isAdmin()) { ?>
+	<script type="text/javascript" src="./template/js/hoverpic.js"></script>
+<?php } else { ?>
+	<script type="text/javascript" src="./template/js/hoverpic.min.js"></script>
+<?php } ?>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./template/js/bootstrap/js/bootstrap-dropdown.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.marquee.min.js"></script>

@@ -192,9 +192,15 @@ function spoilIt() {
 	$( '#epDescr' ).show();
 }
 
-function showGuests() {
-	$( '#epGuest' ).hide();
-	$( '#epGuests' ).show();
+function showActors() {
+	$( '#shActor' ).hide();
+	$( '#shActors' ).show();
+	moveDivEpDesc( -$('#showDesc').width() );
+}
+
+function episodeActors() {
+	$( '#epActor' ).hide();
+	$( '#epActors' ).show();
 }
 
 function setFlagsBack(objId) {

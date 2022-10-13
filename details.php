@@ -15,9 +15,11 @@ include_once "./template/functions.php";
 	<script type="text/javascript" src="./template/js/fancybox/jquery.fancybox.pack.js"></script>
 <?php if (isAdmin()) { ?>
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
+	<script type="text/javascript" src="./template/js/hoverpic.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
 <?php } else { ?>
 	<script type="text/javascript" src="./template/js/myfancy.min.js"></script>
+	<script type="text/javascript" src="./template/js/hoverpic.min.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
 <?php } ?>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />

@@ -1,6 +1,4 @@
 <?php
-//include_once "functions.php";
-
 /*
 * File: SimpleImage.php
 * Author: Simon Jarvis
@@ -21,21 +19,31 @@
 *
 */
 
+/** @noinspection PhpParamsInspection */
 class SimpleImage {
-	var $image;
-	var $image_type;
-	
-	function load($filename) {
-		if (substr_count($filename, 'actors') > 0) {
-			return null;
-		}
+	private $image	  = null;
+	private $image_type = null;
+	private bool $emptyImage = false;
 
-		if (empty($filename)) { return; }
+	function load($filename, $DST = null) {
+//		if (substr_count($filename, 'actors') > 0) {
+//			return null;
+//		}
+
+		if (empty($filename)) { return null; }
 		$image_info = null;
 		try { $image_info = getimagesize($filename); }
-		catch (Throwable $e) { }
+		catch (Exception $e) { return false; }
+		catch (Throwable $e) { return false; }
 
-		if (empty($image_info)) { return; }
+		if (empty($image_info)) {
+			$img = imagecreatetruecolor(2, 1);
+			imagejpeg($img, $DST, 1);
+			$this->image = $img;
+			$this->emptyImage = true;
+
+			return false;
+		}
 		
 		$this->image_type = $image_info[2];
 		if ($this->image_type == IMAGETYPE_JPEG) {
@@ -45,6 +53,8 @@ class SimpleImage {
 		} elseif ($this->image_type == IMAGETYPE_PNG) {
 			$this->image = imagecreatefrompng($filename);
 		}
+
+		return true;
 	}
 	
 	function save($filename, $image_type = IMAGETYPE_JPEG, $compression = 75, $permissions = null) {
@@ -73,7 +83,7 @@ class SimpleImage {
 	}
 	
 	function isEmpty() {
-		return empty($this->image);
+		return $this->emptyImage || empty($this->image);
 	}
 	
 	function getWidth() {
@@ -82,6 +92,10 @@ class SimpleImage {
 	
 	function getHeight() {
 		return imagesy($this->image);
+	}
+
+	function isEmptyGenerated() {
+		return $this->getWidth() == 2 && $this->getHeight() == 1;
 	}
 	
 	function resizeToHeight($height) {
@@ -102,9 +116,9 @@ class SimpleImage {
 		$this->resize($width,$height);
 	}
 	
-	function resize($width,$height) {
-		$new_image = imagecreatetruecolor($width, $height);
-		imagecopyresampled($new_image, $this->image, 0, 0, 0, 0, $width, $height, $this->getWidth(), $this->getHeight());
+	function resize($width, $height) {
+		$new_image = imagecreatetruecolor((int) $width, (int) $height);
+		imagecopyresampled($new_image, $this->image, 0, 0, 0, 0, (int) $width, (int) $height, (int) $this->getWidth(), (int) $this->getHeight());
 		$this->image = $new_image;
 	}
 }

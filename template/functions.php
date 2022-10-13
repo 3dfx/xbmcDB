@@ -4,7 +4,6 @@ include_once "./globals.php";
 include_once "./template/config.php";
 include_once "./template/SimpleImage.php";
 include_once "./template/Series/_SERIEN.php";
-require_once "./rss_php.php";
 
 function startSession()   { if (!isset($_SESSION)) { session_start(); } }
 function allowedRequest($reffer = null) {
@@ -227,10 +226,15 @@ function wrapItUp($type, $id, $strFname) {
 function getImageWrap($strFname, $id, $type, $size, $dlvry = null) {
 	if (empty($dlvry)) { $dlvry = getWrapper(); }
 	if ($dlvry == 'encoded') {
-		if (isFile($strFname)) { return base64_encode_image($strFname); }
+		if (isFile($strFname)) {
+			return base64_encode_image($strFname);
+		}
+
 		$dlvry = 'wrapped';
 	}
-	if ($dlvry == 'wrapped') { return './?img='.$id.'&'.$type.(!empty($size) ? '='.$size : ''); }
+	if ($dlvry == 'wrapped') {
+		$strFname = './?img='.$id.'&'.$type.(!empty($size) ? '='.$size : '');
+	}
 
 	return $strFname;
 }
@@ -894,24 +898,31 @@ function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( starts
 function startsWith($haystack, $needle) { return !strncmp($haystack, $needle, strlen($needle)); }
 
 function resizeImg($SRC, $DST, $w, $h) {
-	if (empty($SRC) && empty($orSRC)) { return; }
+	if (empty($SRC)) { return; }
 	if (substr($SRC, 0, strlen('image://')) == 'image://') { return; }
 
+	$load  = null;
 	$image = new SimpleImage();
 	try {
-		$image->load($SRC);
+		$load = $image->load($SRC, $DST);
 	} catch (Throwable $e) { }
+
+	if ($load === false) {
+		return;
+	}
 
 	if ($image->isEmpty()) { return; }
 
-	if ($w != null && $h != null) {
-		$image->resize($w, $h);
+	if ($w != null || $h != null) {
+		if ($w != null && $h != null) {
+			$image->resize($w, $h);
 
-	} else if ($w == null) {
-		$image->resizeToHeight($h);
+		} else if ($w == null) {
+			$image->resizeToHeight($h);
 
-	} else if ($h == null) {
-		$image->resizeToWidth($w);
+		} else if ($h == null) {
+			$image->resizeToWidth($w);
+		}
 	}
 
 	$image->save($DST);
@@ -924,7 +935,7 @@ function generateImg($SRC, $DST, $orSRC, $w, $h) {
 	$resizedImgExist = isFile($DST);
 
 	if ($resizedImgExist) {
-		return $DST;
+		return (EMPTY_IMG_CRC == hash_file('crc32b', $DST)) ? null : $DST;
 	}
 
 	if ($cachedImgExist) {
@@ -934,8 +945,10 @@ function generateImg($SRC, $DST, $orSRC, $w, $h) {
 		if (!empty($DST) && strlen($DST) > 0 && !empty($orSRC)) {
 			$orSRC = str_replace('<thumb>',  '', $orSRC);
 			$orSRC = str_replace('</thumb>', '', $orSRC);
-			resizeImg($orSRC, $DST, $w, $h);
-			$pic = true;
+			if (!empty($orSRC)) {
+				resizeImg($orSRC, $DST, $w, $h);
+				$pic = true;
+			}
 		}
 	}
 
@@ -952,6 +965,23 @@ function getTvShowThumb($file) {
 	$cachedimg = getThumbnailDir().substr($crc, 0, 1)."/".$crc.".jpg";
 
 	return isFile($cachedimg) ? $cachedimg : null;
+}
+
+function getActorImg($existArtTable, $covers, $actorId, $artist, $dbh = null) {
+	$actorImg = null;
+	if (!empty($covers)) {
+		$actorImg = getActorThumb($artist, $covers['image'], false);
+		if ($existArtTable && !empty($actorId) && !isFile($actorImg)) {
+			$SQL_ = "SELECT url FROM art WHERE media_type = 'actor' AND type = 'thumb' AND media_id = '".$actorId."';";
+			$res3 = querySQL($SQL_, false, $dbh);
+			$row3 = !empty($res3) ? $res3->fetch() : null;
+			$url  = !empty($row3) && isset($row3['url']) ? $row3['url'] : null;
+			if (!empty($url)) {
+				$actorImg = getActorThumb($url, $url, true);
+			}
+		}
+	}
+	return $actorImg;
 }
 
 function getActorThumb($actor, $URL, $newmode) {
@@ -1045,54 +1075,81 @@ function fetchArtCovers($existArtTable, $dbh = null) {
 	return $result;
 }
 
-function fetchActorCovers($dbh = null) {
-	if (!hasPowerfulCpu()) { return null; }
+function fetchActorCovers($mediaId, $mediaType = 'tvshow', $guestStars = false, $dbh = null) {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if ($overrideFetch == 0 && isset($_SESSION['covers']['actors'])) { return $_SESSION['covers']['actors']; }
+	if ($overrideFetch == 0 && isset($_SESSION['covers'][$mediaType][$mediaId]['actors'])) { return $_SESSION['covers'][$mediaType][$mediaId]['actors']; }
+
+	$SQL =
+		"SELECT ".
+			"A.".mapDBC('iOrder')."   AS cOrder, ".
+			"A.".mapDBC('idActor')."  AS idActor, ".
+			"B.".mapDBC('strActor')." AS strActor, ".
+			"A.".mapDBC('strRole')."  AS role, ".
+			"B.".mapDBC('strThumb')." AS actorimage ".
+		"FROM ".
+			mapDBC("actorlinkepisode")." A, ".
+			mapDBC("actors")." B ".
+		"WHERE ".
+			($guestStars ? "" : "A.".mapDBC('iOrder')." != ".GUEST_STAR_ID." AND ").
+			"A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND ".
+			"B.".mapDBC('strActor')." != 'DELETE' AND ".
+			"A.media_type='".$mediaType."' AND ".
+			"A.".mapDBC('idEpisode')." = '".$mediaId."' ".
+		"ORDER BY A.".mapDBC('iOrder').";";
 
 	$result = array();
-	$SQL    = "SELECT B.".mapDBC('idMovie')." AS idMovie, A.".mapDBC('strActor')." AS strActor, B.".mapDBC('idActor')." AS idActor, A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.".mapDBC('iOrder')." = 0;";
 	$res    = querySQL($SQL, false, $dbh);
-
 	foreach($res as $row) {
-		$idMovie = $row['idMovie'];
 		$idActor = $row['idActor'];
 		$artist  = $row['strActor'];
+		$cOrder  = $row['cOrder'];
 		$image   = $row['actorimage'];
+		$role    = $row['role'];
+		$role    = str_replace(' / ', '|', $role);
+		$role 	 = str_replace('/',   '|', $role);
+		$role 	 = str_replace(' | ', '|', $role);
+		$role 	 = explode('|', $role);
 
-		if (isset($result[$idMovie]['artist'])) { continue; }
-		$result[$idMovie]['id']     = $idActor;
-		$result[$idMovie]['artist'] = $artist;
-		$result[$idMovie]['image']  = $image;
+		if (isset($result[$cOrder][$artist])) { continue; }
+		$result[$cOrder][$artist]['id']     = $idActor;
+
+		$result[$cOrder][$artist]['cOrder'] = $cOrder;
+		$result[$cOrder][$artist]['image']  = $image;
+		$result[$cOrder][$artist]['role']   = $role;
 	}
 
-	$_SESSION['covers']['actors'] = $result;
+	$_SESSION['covers'][$mediaType][$mediaId]['actors'] = $result;
 	return $result;
 }
 
-function fetchDirectorCovers($dbh = null) {
-	if (!hasPowerfulCpu()) { return null; }
-	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if ($overrideFetch == 0 && isset($_SESSION['covers']['directors'])) { return $_SESSION['covers']['directors']; }
+function createActorsDiv($covers, $dbh = null) {
+	$existArtTable = existsArtTable($dbh);
 
-	$result = array();
-	$SQL    = "SELECT B.".mapDBC('idMovie')." AS idMovie, A.".mapDBC('strActor')." AS strActor, B.".mapDBC('idDirector')." AS idDirector, A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor').";";
-	$res    = querySQL($SQL, false, $dbh);
+	$output  = '';
+	foreach ($covers as $item) {
+		foreach ($item as $artist => $elem) {
+			$actorId = $elem['id'];
 
-	foreach($res as $row) {
-		$idMovie     = $row['idMovie'];
-		$idDirector  = $row['idDirector'];
-		$artist      = $row['strActor'];
-		$image       = $row['actorimage'];
+			$height = (count($elem['role']) * 13);
+			$output .= '<div'.($height > 13 ? ' style="height:'.$height.'px"' : '').'><span style="max-width:150px;">';
 
-		if (isset($result[$idMovie]['artist'])) { continue; }
-		$result[$idMovie]['id']     = $idDirector;
-		$result[$idMovie]['artist'] = $artist;
-		$result[$idMovie]['image']  = $image;
+			$actorimg = getActorImg($existArtTable, $elem, $actorId, $artist, $dbh);
+			if (isFile($actorimg)) {
+				wrapItUp('actor', $actorId, $actorimg);
+				$output .= '<a tabindex="-1" class="hoverpic" style="font-size:11px;" rel="'.getImageWrap($actorimg, $actorId, 'actor', 0).'" title="'.$artist.'">'.$artist.'</a>';
+			} else {
+				$output .= $artist;
+			}
+
+			$output .= '</span><span style="float:right; text-align:right;'.(' height:'.$height.'px"').'>';
+			foreach ($elem['role'] as $role) {
+				$output .= '<div'.(strlen($role) > 15 ? ' style="overflow:hidden; max-width:150px; height:13px;"' : '').'>'.$role.'</div>';
+			}
+			$output .= '</span></div>';
+		}
 	}
 
-	$_SESSION['covers']['directors'] = $result;
-	return $result;
+	return $output;
 }
 
 function hasPowerfulCpu() {
@@ -1389,21 +1446,6 @@ function postNavBar_($isMain) {
 		$res .= '</li>';
 	} //$isMain
 
-/*
-	if ($isMain || ($isTvshow && $TVSHOW_GAL_ENABLED)) {
-		$res .= '<li class="dropdown" id="dropViewmode" onmouseover="openNav(\'#dropViewmode\');"><a href="#" class="dropdown-toggle" data-toggle="dropdown" onclick="this.blur();" style="font-weight:bold;'.($bs211).'">'.(!$gallerymode ? 'list' : 'gallery').' <b class="caret"></b></a>';
-		$res .= '<ul class="dropdown-menu'.($INVERSE ? ' navbar-inverse' : '').'">';
-		$res .= '<li><a href="?show='.$show.'&gallerymode=0" onclick="return checkForCheck();"'.($gallerymode ? '' : ' class="selectedItem"').'>list</a></li>';
-		$res .= '<li><a href="?show='.$show.'&gallerymode=1" onclick="return checkForCheck();"'.($gallerymode ? ' class="selectedItem"' : '').'>gallery</a></li>';
-		$res .= '</ul>';
-		$res .= '</li>';
-	}
-
-	if ($SEARCH_ENABLED && $isMain) {
-		$res .= createSearchSubmenu($isMain, $isTvshow, $gallerymode, $saferSearch, $bs211);
-	}
-*/
-
 	if ($countTVshows > 0) {
 		$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 		if ($isTvshow) {
@@ -1505,13 +1547,6 @@ function postNavBar_($isMain) {
 		$res .= '<li><a class="nopo fancy_blocks" href="./blacklistControl.php">Blacklist Control</a></li>';
 		$res .= '<li><a class="nopo fancy_logs" href="./_hash.php">Pass Generator</a></li>';
 
-		/*
-		$res .= '<li class="divider"></li>';
-		$res .= '<li><a href="?show=export">DB-Export</a></li>';
-		$res .= '<li><a href="?show=import">DB-Import</a></li>';
-		$res .= '</li>';
-		*/
-
 		$NAS_CONTROL   = isset($GLOBALS['NAS_CONTROL'])    ? $GLOBALS['NAS_CONTROL']    : false;
 		$MP3_EXPLORER  = isset($GLOBALS['MP3_EXPLORER'])   ? $GLOBALS['MP3_EXPLORER']   : false;
 		$privateFolder = isset($GLOBALS['PRIVATE_FOLDER']) ? $GLOBALS['PRIVATE_FOLDER'] : null;
@@ -1543,7 +1578,6 @@ function postNavBar_($isMain) {
 	$res .= '</ul>';
 	$res .= '</div>';
 	$res .= '</div></div>';
-	//--$res .= '</div>'."\r\n\r\n";
 
 	return $res;
 } //navbar_
@@ -1875,7 +1909,7 @@ function storeSession() {
 	       $_SESSION['dbName'],     $_SESSION['dbVer']
 
 	     ); //remove values that should be determined at login
-//	if (isset($_SESSION['show']) && ($_SESSION['show'] == 'airdate' || $_SESSION['show'] == 'details')) { unset($_SESSION['show']); }
+
 	if (isset($_SESSION['show']) && ($_SESSION['show'] != 'filme' && $_SESSION['show'] != 'serien')) { unset($_SESSION['show']); }
 
 	$sessionfile = fopen('./sessions/'.$user.'.log', 'w');
@@ -2408,31 +2442,34 @@ function getLastEpisodeInfo($episodes, $lastStaffel = null) {
 	$epis = null;
 	if ($lastStaffel != null) {
 		for ($i = intval($seas); $i >= 0; $i--) {
-			if (!isset($episodes[$i]))
+			if (!isset($episodes[$i])) {
 				continue;
+			}
 
 			$epis = count($episodes[$i]);
 			if (!isset($episodes[$i][$epis])) {
 				$epis--;
-				if (!isset($episodes[$i][$epis]))
+				if (!isset($episodes[$i][$epis])) {
 					continue;
+				}
 			}
 
-			$airedSeason = isset($episodes[$i][$epis]['airedSeason']) ? $airedSeason = $episodes[$i][$epis]['airedSeason'] : null;
+			$airedSeason = isset($episodes[$i][$epis]['airedSeason']) ? $episodes[$i][$epis]['airedSeason'] : null;
 			if (!empty($airedSeason) && intval($lastStaffel) == intval($airedSeason)) {
-				#$seas = intval($episodes[$i][$epis]['airedSeason']);
 				$seas = $i;
 				break;
 			}
 		}
 	}
 
-	if ($epis == null)
+	if ($epis == null) {
 		return null;
+	}
 
-	#$epis = count($episodes[$seas])-1;
-	if (isset($episodes[$seas]) && isset($episodes[$seas][$epis]))
+	if (isset($episodes[$seas]) && isset($episodes[$seas][$epis])) {
 		return array('ms' => $episodes[$seas][$epis]['airedSeason'], 'me' => $episodes[$seas][$epis]['airedEpisodeNumber']);
+	}
+
 	return null;
 }
 
@@ -2591,45 +2628,6 @@ function getGuests($guests) {
 	return $gs;
 }
 
-function fetchActorCoversEpisode($idEpisode, $dbh = null) {
-	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if ($overrideFetch == 0 && isset($_SESSION['covers']['episodes'][$idEpisode]['actors'])) { return $_SESSION['covers']['episodes'][$idEpisode]['actors']; }
-
-	$SQL = "SELECT ".
-				"A.".mapDBC('iOrder')."   AS cOrder, ".
-				"A.".mapDBC('idActor')."  AS idActor, ".
-				"B.".mapDBC('strActor')." AS strActor, ".
-				"A.".mapDBC('strRole')."  AS role, ".
-				"B.".mapDBC('strThumb')." AS actorimage ".
-			"FROM ".
-					mapDBC("actorlinkepisode")." A, ".
-					mapDBC("actors")." B ".
-			"WHERE ".
-				"A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND ".
-				"A.media_type='episode' AND ".
-				"A.".mapDBC('idEpisode')." = '".$idEpisode."' ".
-			"ORDER BY A.".mapDBC('iOrder').";";
-
-	$result = array();
-	$res    = querySQL($SQL, false, $dbh);
-	foreach($res as $row) {
-		$idActor = $row['idActor'];
-		$artist  = $row['strActor'];
-		$role    = $row['role'];
-		$cOrder  = $row['cOrder'];
-		$image   = $row['actorimage'];
-
-		if (isset($result[$cOrder][$artist])) { continue; }
-		$result[$cOrder][$artist]['id']     = $idActor;
-		$result[$cOrder][$artist]['role']   = $role;
-		$result[$cOrder][$artist]['cOrder'] = $cOrder;
-		$result[$cOrder][$artist]['image']  = $image;
-	}
-
-	$_SESSION['covers']['episodes'][$idEpisode]['actors'] = $result;
-	return $result;
-}
-
 function getDateColor($airDate, $daysLeft) {
 	$color = 'silver';
 	if (isAdmin() && !empty($airDate)) {
@@ -2663,12 +2661,14 @@ function dateMissed($given) {
 }
 
 function daysLeft($given) {
-	if (empty($given))
+	if (empty($given)) {
 		return 0;
+	}
 
 	$oneDay = $GLOBALS['DAY_IN_SECONDS'];
-	if (checkIfDateIsString($given))
+	if (checkIfDateIsString($given)) {
 		$given = strtotime($given);
+	}
 	return round(($given - getToday()) / $oneDay);
 }
 
@@ -2704,16 +2704,18 @@ function addRlsDiffToDate($given) {
 	$rlsDiff = isset($GLOBALS['RLS_OFFSET_IN_DAYS']) ? $GLOBALS['RLS_OFFSET_IN_DAYS'] : 1;
 	$oneDay  = $GLOBALS['DAY_IN_SECONDS'];
 	$diff    = $rlsDiff * $oneDay;
-	if (checkIfDateIsString($given))
+	if (checkIfDateIsString($given)) {
 		return date('Y-m-d', strtotime($given) + $diff);
+	}
 	return $given + $diff;
 }
 
 function compareDates($given1, $given2) {
 	if (empty($given1)) { return true; }
 	if (empty($given2)) { return false;  }
-	if (checkIfDateIsString($given1) && checkIfDateIsString($given2))
+	if (checkIfDateIsString($given1) && checkIfDateIsString($given2)) {
 		return strtotime($given1) < strtotime($given2);
+	}
 	return $given1 < $given2;
 }
 
@@ -2769,7 +2771,7 @@ function workaroundMTime($img) {
 	return $output != null && count($output) > 0 ? $output[0] : null;
 }
 
-function handleError($errno, $errstr, $errfile, $errline, array $errcontext) {
+function handleError($errno, $errstr, $errfile, $errline) {
 	// error was suppressed with the @-operator
 	/** @noinspection PhpUnhandledExceptionInspection */
 	throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
@@ -2882,17 +2884,21 @@ function postEditVCodec($str) {
 function decodingPerf($str, $bit10 = false) {
 	$str = strtoupper($str);
 
-	if ($str == 'MPEG-1' || $str == 'MPEG-2' || $str == 'MPEG-4')
+	if ($str == 'MPEG-1' || $str == 'MPEG-2' || $str == 'MPEG-4') {
 		return 1;
+	}
 
-	if ($str == 'XVID' || $str == 'DIVX' || $str == 'WMV3')
+	if ($str == 'XVID' || $str == 'DIVX' || $str == 'WMV3') {
 		return 2;
+	}
 
-	if ($str == 'X264' || $str == 'VC-1' || $str == 'VP8')
+	if ($str == 'X264' || $str == 'VC-1' || $str == 'VP8') {
 		return 3;
+	}
 
-	if ($str == 'X265')
+	if ($str == 'X265') {
 		return $bit10 ? 5 : 4;
+	}
 
 	return 0;
 }
@@ -3062,7 +3068,6 @@ function correctFilename($file) {
 
 function encodeString($text, $plain = false) {
 	$text = str_replace("''", "'", $text);
-	//return htmlspecialchars($text, ENT_QUOTES);
 
 	if (!$plain) {
 		$text = str_replace ("ä",  "&auml;",  $text);
@@ -3092,7 +3097,6 @@ function encodeString($text, $plain = false) {
 
 function decodeString($text) {
 	$text = str_replace("&#039;", "'", $text);
-	//return htmlspecialchars_decode($text, ENT_QUOTES);
 
  	$text = str_replace ("&amp;",   "&", $text);
 	$text = str_replace ("&auml;",  "ä", $text);
@@ -3384,7 +3388,7 @@ function findUserOrder() {
 $dbConnection = getPD0();
 function getPDO() { return $GLOBALS['dbConnection']; /* return DB_CONN::getConnection(); */ }
 function getPD0() {
-	$dbh = new PDO($GLOBALS['db_name']);
+	$dbh = new PDO(fetchDbName());
 	try {
 		/*** make it or break it ***/
 		error_reporting(E_ALL);
