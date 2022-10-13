@@ -14,23 +14,10 @@ include_once "globals.php";
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <?php
 	$closeFrame = getEscGPost('closeFrame', 0);
-$idFile     = getEscGPost('idFile', -1);
+	$idFile     = getEscGPost('idFile', -1);
 
-	$row    = fetchFromDB('SELECT src as source FROM fileinfo WHERE idFile = '.$idFile.';');
+	$row     = fetchFromDB('SELECT src as source FROM fileinfo WHERE idFile = '.$idFile.';');
 	$source  = $row['source'];
-
-/*	FUNCTIONS	*/
-function postSources($actual) {
-	foreach(SOURCE as $value => $name) {
-        if ($value == null) { continue; }
-		postSource($actual, $value < 0 ? '-1' : $value, $name);
-	}
-}
-
-function postSource($actual, $value, $name) {
-	echo "\t\t\t".'<option value="'.$value.'"'.($actual == $value ? ' SELECTED' : '').'>'.$name.'</option>';
-	echo "\r\n";
-}
 ?>
     <script type="text/javascript" src="./template/js/jquery.min.js"></script>
 	<script type="text/javascript" src="./template/js/customSelect.jquery.js"></script>

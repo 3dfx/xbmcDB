@@ -1227,6 +1227,18 @@ function getSrcMarker($source) {
 	return '<span class="source '.$res.'">|</span>';
 }
 
+function postSources($actual) {
+	foreach(SOURCE as $value => $name) {
+		if ($value == null) { continue; }
+		postSource($actual, $value < 0 ? '-1' : $value, $name);
+	}
+}
+
+function postSource($actual, $value, $name) {
+	echo "\t\t\t".'<option value="'.$value.'"'.($actual == $value ? ' SELECTED' : '').'>'.$name.'</option>';
+	echo "\r\n";
+}
+
 function postNavBar() {
 	fetchMediaCounts();
 	$INVERSE = isset($GLOBALS['NAVBAR_INVERSE']) ? $GLOBALS['NAVBAR_INVERSE'] : false;

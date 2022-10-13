@@ -329,12 +329,7 @@ include_once "./template/Series/_SERIEN.php";
 			<div style="float:left; zwidth:450px; padding:2px 0px 0px 0px;">
 			<select id="source" name="source" class="styled-select" style="position:absolute; opacity:0; font-size:10px !important; width:435px !important; height:18px !important;" size="1">
 				<option value="-1"> </option>
-<?php
-				$i = 0;
-				for ($i = 1; $i < count(SOURCE); ++$i) {
-					echo "\t\t\t\t".'<option value="'.$i.'"'.($source == $i ? ' SELECTED' : '').'>'.SOURCE[$i].'</option>'."\r\n";
-				}
-?>
+<?php postSources($source); ?>
 			</select>
 			</div>
 		</td>
@@ -395,7 +390,7 @@ include_once "./template/Series/_SERIEN.php";
 	</body>
 </html>
 <?php
-/*	FUNCTIONS	*/
+/*	FUNCTIONS */
 function postSerien() {
 	$serie = $GLOBALS['serie'];
 	postSerie($serie->getIdTvdb(), $serie->getName());
