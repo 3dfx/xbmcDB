@@ -1133,10 +1133,10 @@ function createActorsDiv($covers, $dbh = null) {
 			$height = (count($elem['role']) * 13);
 			$output .= '<div'.($height > 13 ? ' style="height:'.$height.'px"' : '').'><span style="max-width:150px;">';
 
-			$actorimg = getActorImg($existArtTable, $elem, $actorId, $artist, $dbh);
-			if (isFile($actorimg)) {
-				wrapItUp('actor', $actorId, $actorimg);
-				$output .= '<a tabindex="-1" class="hoverpic" style="font-size:11px;" rel="'.getImageWrap($actorimg, $actorId, 'actor', 0).'" title="'.$artist.'">'.$artist.'</a>';
+			$actorImg = getActorImg($existArtTable, $elem, $actorId, $artist, $dbh);
+			if (isFile($actorImg)) {
+				wrapItUp('actor', $actorId, $actorImg);
+				$output .= '<a tabindex="-1" class="hoverpic" style="font-size:11px;" rel="'.getImageWrap($actorImg, $actorId, 'actor', 0).'" title="'.$artist.'">'.$artist.'</a>';
 			} else {
 				$output .= $artist;
 			}
