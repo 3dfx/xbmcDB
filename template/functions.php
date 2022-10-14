@@ -1125,9 +1125,15 @@ function fetchActorCovers($mediaId, $mediaType = 'tvshow', $guestStars = false, 
 function createActorsDiv($covers, $dbh = null) {
 	$existArtTable = existsArtTable($dbh);
 
+	$done = array();
 	$output  = '';
 	foreach ($covers as $item) {
 		foreach ($item as $artist => $elem) {
+			if (isset($done[$artist])) {
+				continue;
+			}
+
+			$done[$artist] = true;
 			$actorId = $elem['id'];
 
 			$height = (count($elem['role']) * 13);
@@ -1149,6 +1155,7 @@ function createActorsDiv($covers, $dbh = null) {
 		}
 	}
 
+	unset($done);
 	return $output;
 }
 
