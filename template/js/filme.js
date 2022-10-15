@@ -122,6 +122,14 @@ function newlyChange() {
 	moviefrm.submit();
 }
 
+function showCheckBoxes() {
+	if ( $('.tHidden').length > 0) {
+		$('.tHidden').removeClass('tHidden').addClass('tHidden_');
+	} else {
+		$('.tHidden_').removeClass('tHidden_').addClass('tHidden');
+	}
+}
+
 function searchForString(obj, event) {
 	var search = ( obj == null ? '' : $.trim(obj.value).toLowerCase() );
 

@@ -190,15 +190,13 @@ TD.highLighTR { border-bottom:1px dotted #93B7E3 !important; }
 .tabDiv_ {
 	clear: both;
 	display: inline-block;
-	padding: 15px 0px 0px 0px;
+	padding: 15px 0 0 0;
 	z-index: 10;
 	position: relative;
 	min-width: 1200px;
 	max-width: 1200px;
 	overflow: hidden;
 
-//	width:550px;
-//	margin-top: 0px;
 	margin-bottom: 25px;
 	margin-left: auto;
 	margin-right: auto;
@@ -206,7 +204,7 @@ TD.highLighTR { border-bottom:1px dotted #93B7E3 !important; }
 
 .optTD {
 	text-align:center;
-	padding:5px 3px 5px 0px !important;
+	padding:5px 3px 5px 0 !important;
 	background:#FAFAFA;
 }
 
@@ -308,12 +306,15 @@ table.film td {
 	padding:10px;
 }
 
-.th0, .th02 { text-align:left; padding-top:5px; padding-bottom:5px; padding-left:10px; }
+.th0, .th02 { padding-top:5px; padding-bottom:5px; padding-left:10px; }
+.th02 { text-align:left; }
+.th0 { text-align:right !important; cursor: default; }
 .th1 { text-align:left; padding-top:5px; padding-bottom:5px; }
 .th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:175px; }
 .th3 { text-align:left; padding-top:5px; padding-bottom:5px; width:100px; padding-left:10px; }
 .th4 { text-align:left; padding-top:5px; padding-bottom:5px; width:400px; }
 .th5, .th6 { text-align:right !important; padding-right:10px; }
+.tHidden { display: none; }
 
 .countTD {
 	padding-left:10px;
@@ -1054,9 +1055,8 @@ a.showlink {
 	color:            #6DA0E7;
 	font-size:        12px;
 	font-style:       normal;
-	padding:          0px;
-	margin:           3 0px;
-	zwidth:            275px;
+	padding:          0;
+	margin:           3px 0;
 	border:           1px solid #6DA0E7;
 	-moz-border-radius:3px;
 	-webkit-border-radius:3px;
@@ -1065,7 +1065,7 @@ a.showlink {
 
 .labelHack {
 	float:right;
-	padding:0px 5px;
+	padding:0 5px;
 }
 
 .checkHack {
@@ -1076,7 +1076,7 @@ a.showlink {
 
 .labelHack2 {
 	float:left;
-	padding:0px 5px;
+	padding:0 5px;
 }
 
 .checkHack2 {

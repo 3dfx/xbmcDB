@@ -62,7 +62,7 @@ include_once "globals.php";
 	if ($newsort == 2 && !$gallerymode) { $_SESSION['lastMovie']['seen'] = true; }
 	if ($isAdmin && !$gallerymode) {
 		echo "\t\t\t\t";
-		echo '<tr><td colspan="'.getColSpan().'" class="optTD">';
+		echo '<tr><td colspan="'.getColSpan().'" class="optTD tHidden">';
 		echo '<div style="float:right; padding:4px 5px;">';
 		echo '<input tabindex="-1" type="submit" value="Ok" name="submit" class="okButton">';
 		echo '</div>';
@@ -283,7 +283,7 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 #checkbox
 			$spalTmp = '<td class="titleTD'.$higlight.'"'.($isNew ? ' style="font-weight:bold;"' : '').'>';
 			if (!$isDemo) {
-			$spalTmp .= '<input tabindex="-1" type="checkbox" class="checka" name="checkFilme[]" id="opt_'.$idMovie.'" value="'.$idMovie.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
+			$spalTmp .= '<input tabindex="-1" type="checkbox" class="checka'.(isAdmin() ? ' tHidden' : '').'" name="checkFilme[]" id="opt_'.$idMovie.'" value="'.$idMovie.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
 			}
 
 #seen
@@ -570,10 +570,10 @@ function postTableRows($zeilen, $sort, $SkQL, $dirActorEnabled = true): void {
 		$saferSearch = '&dbSearch='.$saferSearch;
 	}
 	echo "\t\t\t";
-	echo '<tr><th class="th0"> </th>';
+	echo '<tr><th class="th0" onclick="showCheckBoxes(); return true;">#</th>';
 	echo '<th class="th4">';
 	if (!$isDemo) {
-		echo '<input tabindex="-1" type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
+		echo '<input tabindex="-1"'.(isAdmin() ? ' class="tHidden"' : '').'type="checkbox" id="clearSelectAll" name="clearSelectAll" title="clear/select all" onClick="clearSelectBoxes(this); return true;">';
 	}
 
 	if (empty($sort)) {
