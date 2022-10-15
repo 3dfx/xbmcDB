@@ -124,7 +124,7 @@ include_once "./template/Series/_SERIEN.php";
 		function fetchEpisodeInfo(idEp, returnResult) {
 			var regieField  = document.getElementById('regie');
 			var guestField  = document.getElementById('gast_autor');
-			var ratingField = document.getElementById('rating');
+			// var ratingField = document.getElementById('rating');
 
 			var result = null;
 			$.ajax({
@@ -137,13 +137,13 @@ include_once "./template/Series/_SERIEN.php";
 					var obj = JSON.parse(json);
 					if (obj == null) { return null; }
 
-					ratingField.value = '';
+					// ratingField.value = '';
 					guestField.value  = '';
 					regieField.value  = '';
 
-					if (obj.data.siteRating !== rating.value && obj.data.siteRating !== 0) {
-						rating.value = obj.data.siteRating;
-					}
+					// if (obj.data.siteRating !== rating.value && obj.data.siteRating !== 0) {
+					// 	rating.value = obj.data.siteRating;
+					// }
 
 					guests  = obj.data.guestStars;
 					guests_ = '';
@@ -363,10 +363,10 @@ include_once "./template/Series/_SERIEN.php";
 		<td style="padding-left:5px; width:100px;">Gast:</td>
 		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="gast_autor" name="gast_autor" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo $guests; ?>" /></td>
 		</tr>
-		<tr>
-		<td style="padding-left:5px; width:100px;">Rating:</td>
-		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="rating" name="rating" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="<?php echo $update ? trimDoubles(trim($episodeToUp->getRating())) : ''; ?>" /></td>
-		</tr>
+<!--		<tr>-->
+<!--		<td style="padding-left:5px; width:100px;">Rating:</td>-->
+<!--		<td style="padding-left:5px; zwidth:450px;"><input type="text" id="rating" name="rating" class="key inputbox" style="width:450px;" onfocus="this.select();" onclick="this.select();" value="--><?php //echo $update ? trimDoubles(trim($episodeToUp->getRating())) : ''; ?><!--" /></td>-->
+<!--		</tr>-->
 		<tr>
 		<td style="padding-left:5px; width:100px;">Desc:</td>
 		<td style="padding-left:5px; zwidth:450px;"><textarea id="desc" name="desc" class="key inputbox" style="width:450px; height:150px;" onfocus="this.select();" onclick="this.select();"><?php echo $epDesc; ?></textarea></td>

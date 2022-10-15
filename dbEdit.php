@@ -98,6 +98,7 @@ include_once "globals.php";
 			$SQLfile = str_replace('[FILENAME]', $file, $SQLfile);
 			$dbh->exec($SQLfile);
 
+			$rating   = null;
 			$idRating = null;
 			if (!emptyRating($rating) || intval($rating) == 0) {
 				$GETID_SQL = "SELECT c03 FROM episode WHERE idEpisode=".$idEpisode.";";
@@ -175,8 +176,9 @@ include_once "globals.php";
 			$dbh->exec($SQLfile);
 
 			$idEpisode = getNextId('episode', 'idEpisode', $dbh);
-			$idRating  = null;
 
+			$rating   = null;
+			$idRating = null;
 			if (!emptyRating($rating)) {
 				$idRating  = getNextId('rating',  'rating_id', $dbh);
 
