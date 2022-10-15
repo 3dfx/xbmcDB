@@ -555,12 +555,15 @@ include_once "./template/functions.php";
 			echo '<tr>';
 			echo '<th>Duration</th><th>Rating</th><th>Year</th><th class="streaminfoGenreTH">Genre</th>';
 			echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '2').'" colspan="2">Video</th>';
+
 			if (!empty($aCodec)) {
 				echo '<th class="streaminfoAV'.(count($aLang) > 0 ? '' : '3').'" colspan="3">Audio</th>';
 			} else { $spalten--; }
+
 			if (!empty($sLang)) {
 				echo '<th class="streaminfoLasTD streaminfoBorderTH">Sub</th>';
 			} else { $spalten--; }
+
 			echo '</tr>';
 			echo "\r\n";
 			echo '<tr class="abstand"><td colspan="'.count(DETAIL_COLS).'"></td></tr>';
@@ -599,7 +602,7 @@ include_once "./template/functions.php";
 							break;
 
 						case DETAIL_COLS['SUB']:
-							$tdClass = ' class="streaminfoLasTD streaminfoBorder"';
+							$tdClass = ' class="streaminfoLasTD'.(!empty($val) ? ' streaminfoBorder' : '').'"';
 							break;
 
 						case DETAIL_COLS['GENRE']:

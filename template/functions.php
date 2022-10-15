@@ -2984,6 +2984,11 @@ function postEditACodec($codec, $atmosx = null) {
 	$tipp = null;
 	if (!empty($atmosx)) {
 		switch ($codec) {
+			case 'AC3':
+				$tipp = 'AC3 with Dolby Atmos';
+				$codec = 'Atmos';
+				break;
+
 			case 'EAC3':
 			case 'A_EAC3':
 			case 'TRUEHD':
