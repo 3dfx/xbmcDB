@@ -167,7 +167,7 @@ include_once "./template/Series/StreamDetails.php";
 		}
 	}
 
-	$rating = formatRating($epRating);
+	$rating = null; //DISABLED: formatRating($epRating);
 	if (!emptyRating($rating)) {
 		echo '<div'.(empty($streamDetails->getDuration()) ? ' class="padbot15"' : '').'><span><i><b>Rating:</b></i></span><span class="flalright">'.$rating.'</span></div>';
 	}

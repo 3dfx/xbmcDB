@@ -47,8 +47,7 @@ function postSerie($serie) {
 	echo '<th class="descTRd1">'.pluralize('Season', $stCount).'</th>';
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
 	echo '<th class="lefto"> Episode'.($allEpsCount > 1 ? 's' : '').'</th>';
-	echo '<th class="righto">'.$serie->getRating().'</th>';
-	#echo '<th class="righto">'.($isDemo ? '' : _format_bytes($serie->getSize())).'</th>';
+	echo '<th class="righto"> </th>'; // DISABLED: $serie->getRating()
 	echo '<th class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSizes&idFiles='.$serie->getIdFiles().'">' : '')._format_bytes($serie->getSize())).($isAdmin ? '</a>' : '').'</th>';
 	echo '<th class="righto" colspan="2">';
 	if ($isAdmin) {
@@ -103,7 +102,7 @@ function postStaffel($staffel, $last = null) {
 	$mCountCol = $isAdmin && $missCount != 0 ? ' style="color:#FF0000;"' : '';
 	echo '<td class="seasonTRd2 righto"'.$mCountCol.$missTitle.$onClick.'>'.$strAllEps.'</td>';
 	echo '<td class="lefto"'.$onClick.'>'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
-	echo '<td class="righto padTD"'.$onClick.'>'.$staffel->getRating().'</td>';
+	echo '<td class="righto padTD"'.$onClick.'> </td>'; //DISABLED $staffel->getRating()
 	echo '<td class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($isAdmin) {
@@ -164,7 +163,7 @@ function postStaffel($staffel, $last = null) {
 
 		$path      = $epi->getPath();
 		$filename  = $epi->getFilename();
-		$fRating   = (floatval($epi->getRating()) > 0 ? $epi->getRating() : '');
+		//$fRating   = (floatval($epi->getRating()) > 0 ? $epi->getRating() : '');
 		$fRating   = !empty($fRating) ? $fRating : '&nbsp;&nbsp;&nbsp;&nbsp;';
 		$fSize     = _format_bytes($epi->getSize());
 		$playItem  = $isAdmin && !empty($path) && !empty($filename) && $xbmcRunning ? '<a tabindex="-1" class="showPlayItem" href="#" onclick="playItem(\''.encodeString($path.$filename).'\'); return false;">'.$fRating.'</a>' : '<span class="showPlayItem">'.$fRating.'</span>';

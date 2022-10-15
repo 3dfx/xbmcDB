@@ -193,7 +193,7 @@ function fillTable($serien, $dbh) {
 	}
 	echo '</th>';
 
-	echo '<th colspan="'.(4 + $colspan2).'" style="cursor:default;"><span id="missEps" class="sInfoSize" onclick="toggleAirdates();" style="padding-top:1px; float:left;"></span></th>';
+	echo '<th colspan="'.(3 + $colspan2).'" style="cursor:default;"><span id="missEps" class="sInfoSize" onclick="toggleAirdates();" style="padding-top:1px; float:left;"></span></th>';
 	echo '</tr>'."\r\n";
 
 	$res = postSerien($serien);
@@ -306,7 +306,7 @@ function postSerie($serie, $counter, $runningItalic = false) {
 		echo '</td>';
 	}
 
-	echo '<td class="showRating'.$higlight.'"><span class="hideMobile sInfoRating">'.$serie->getRating().'</span></td>';
+	//echo '<td class="showRating'.$higlight.'"><span class="hideMobile sInfoRating">'.$serie->getRating().'</span></td>';
 
 	$stCount  = $serie->getStaffelCount();
 	echo '<td class="showSeasons'.$higlight.'"><span class="hideMobile">'.pluralize('Season', $stCount, 's', "%02d").'</span></td>';
