@@ -281,9 +281,11 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
 
 #checkbox
+			$isWatched = $isAdmin && $playCount >= 1;
+
 			$spalTmp = '<td class="titleTD'.$higlight.'"'.($isNew ? ' style="font-weight:bold;"' : '').'>';
 			if (!$isDemo) {
-			$spalTmp .= '<input tabindex="-1" type="checkbox" class="checka'.(isAdmin() ? ' tHidden' : '').'" name="checkFilme[]" id="opt_'.$idMovie.'" value="'.$idMovie.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
+				$spalTmp .= '<input tabindex="-1" type="checkbox"'.(!$isWatched ? ' style="margin-right:2px;"' : '').' class="checka'.($isAdmin ? ' tHidden' : '').'" name="checkFilme[]" id="opt_'.$idMovie.'" value="'.$idMovie.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
 			}
 
 #seen
@@ -292,9 +294,9 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 				if ($playCount > 1) {
 					$when = $playCount.'x: '.$when;
 				}
-				$chk      = $playCount >= 1;
-				$spalTmp .= '<span'.(!$chk ? ' style="padding-right:10px;"' : '').'>';
-				$spalTmp .= $chk ? '<img src="img/check.png" class="check10v1" title="'.$when.'">' : ' ';
+
+				$spalTmp .= '<span'.(!$isWatched ? ' style="padding-right:13px;"' : '').'>';
+				$spalTmp .= $isWatched ? '<img src="img/check.png" class="check10v1" title="'.$when.'">' : '';
 				$spalTmp .= '</span> ';
 			}
 
