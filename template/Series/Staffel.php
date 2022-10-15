@@ -103,6 +103,8 @@ class Staffel {
 	}
 
 	public function getRatingVal() {
+		if (true) { return 0.0; }
+
 		if ($this->ratingEps == 0) { return 0.0; }
 
 		$rating = doubleval($this->rating / $this->ratingEps);

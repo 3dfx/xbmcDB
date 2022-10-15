@@ -71,7 +71,8 @@ class Serien {
 	}
 
 	public function fetchRating() {
-		$size = 0;
+		if (true) { return; }
+
 		foreach ($this->getSerien() as $serie) {
 			if (!is_object($serie)) { continue; }
 			$serie->getRatingVal();

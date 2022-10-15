@@ -75,6 +75,8 @@ class Serie {
 	}
 
 	public function getRatingVal() {
+		if (true) { return 0; }
+
 		if (!empty($this->rating)) { return $this->rating; }
 
 		$rating    = 0;

@@ -2,7 +2,7 @@
 include_once "./template/functions.php";
 
 	startSession();
-	if (!isLogedIn()) {
+	if (!isLoggedIn()) {
 		header("HTTP/1.1 304 Not Modified");
 		shoutImage();
 	}

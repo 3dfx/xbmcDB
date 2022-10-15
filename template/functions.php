@@ -2139,7 +2139,6 @@ function isDemo() {
 	return (isset($_SESSION['demo']) && $_SESSION['demo'] == true) ? 1 : 0;
 }
 
-function isLogedIn() { return isLoggedIn(); }
 function isLoggedIn() { return (isAdmin() || isGast() || isDemo() ? true : false); }
 
 function checkOpenGuest() {

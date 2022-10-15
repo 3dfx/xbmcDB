@@ -31,7 +31,7 @@ class Episode {
 		$this->idShow      = $idShow;
 		$this->idSeason    = $idSeason;
 		$this->idTvdb      = $idTvdb;
-		$this->rating      = doubleval($rating);
+		$this->rating      = 0.0; //doubleval($rating);
 		$this->idEpisode   = $idEpisode;
 		$this->idFile      = $idFile;
 		$this->idPath      = $idPath;

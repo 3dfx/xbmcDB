@@ -13,7 +13,7 @@
 			The page you requested doesn't exist!<br />
 <?php
 			echo "\t\t\t";
-			if (isLogedIn()) {
+			if (isLoggedIn()) {
 				echo 'But you can go <a href="./index.php" style="font-weight:bold;">BACK</a>.';
 			} else {
 				echo 'But you can login <a href="./login.php" style="font-weight:bold;">HERE</a>.';
