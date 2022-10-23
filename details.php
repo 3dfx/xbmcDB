@@ -602,7 +602,7 @@ include_once "./template/functions.php";
 							break;
 
 						case DETAIL_COLS['SUB']:
-							$tdClass = ' class="streaminfoLasTD'.(!empty($val) ? ' streaminfoBorder' : '').'"';
+							$tdClass = ' class="streaminfoLasTD'.(!empty($sLang) ? ' streaminfoBorder' : '').'"';
 							break;
 
 						case DETAIL_COLS['GENRE']:

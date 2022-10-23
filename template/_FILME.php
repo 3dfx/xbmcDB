@@ -42,6 +42,7 @@ function getSessionKeySQL($newAddedCount = 0) {
 			" lower(A.c00) LIKE lower('%".$saferSearch."%') OR".
 			" lower(A.c01) LIKE lower('%".$saferSearch."%') OR".
 			" lower(A.c03) LIKE lower('%".$saferSearch."%') OR".
+			" lower( ".mapDBC('A.c09').") LIKE lower('%".$saferSearch."%') OR".
 			" lower(A.c14) LIKE lower('%".$saferSearch."%') OR".
 			" lower(A.c15) LIKE lower('%".$saferSearch."%') OR".
 			" lower(A.c16) LIKE lower('%".$saferSearch."%')".
