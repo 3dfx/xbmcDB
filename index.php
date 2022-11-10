@@ -27,8 +27,11 @@ include_once "./template/functions.php";
 	$idMovie = isset($_SESSION['idMovie']) && empty($idShow) ? $_SESSION['idMovie'] : null;
 
 	if ( !empty($_GET) || !empty($_POST) ) { redirectPage('', true); } //breaks the browsers back button, who gives a fuck??
-?>
-<html lang="de"><?php
+
+	if ( isLoggedIn() ) {
+		echo '<html lang="EN">';
+	}
+
 	if (empty($show)) { $show = 'filme'; }
 
 	     if ($show == 'logout')                           { include "./logout.php";    }
