@@ -98,9 +98,6 @@ if (!isAdmin()) { return; }
 				</td>
 			</tr>
 		</table>
-<?php
-?>
-	</table>
 	</form>
 <?php
 	
