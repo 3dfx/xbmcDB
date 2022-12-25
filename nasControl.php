@@ -22,7 +22,7 @@ if (!isAdmin()) { return; }
 	</script>
 </head>
 <html>
-<body style="padding:0px;">
+<body style="padding:0;">
 <?php
 	$res = null;
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -67,7 +67,7 @@ if (!isAdmin()) { return; }
 			echo '</span>';
 ?>
 			</td></tr>
-			<tr style="height:15px; font:2px"><td colspan="2"></td></tr>
+			<tr style="height:15px; font-size:2px"><td colspan="2"></td></tr>
 			<tr style="height:25px;"><td colspan="2" style="text-align:center;">
 <?php
 			if (!$serverRunning) {
@@ -79,18 +79,19 @@ if (!isAdmin()) { return; }
 				<input type="submit" id="shutdownBtn" name="shutdownBtn" value="shutdown NAS" class="okButton" onclick="return confirm();" />
 <?php
 			}
+			$folder = isset($GLOBALS['ANC_WWW_FOLDER']) ? $GLOBALS['ANC_WWW_FOLDER'] : null;
 ?>
 			</td></tr>
-			<tr style="height:15px; font:2px"><td colspan="2"></td></tr>
+			<tr style="height:15px; font-size:2px"><td colspan="2"></td></tr>
 			<tr>
-				<td style="width:70%;">Delay restart<?php $res = getDelay('myScripts/.NAS_RESTART_OFF'); echo ($res > 0 ? ' ('.$res.')' : ($res < 0 ? ' (disabled)' : '')); ?>:</td>
+				<td style="width:70%;">Delay restart<?php $res = getDelay($folder.'.NAS_RESTART_OFF'); echo ($res > 0 ? ' ('.$res.')' : ($res < 0 ? ' (disabled)' : '')); ?>:</td>
 				<td style="width:30%; text-align:right;">
 					<input type="text" id="delay_restart" name="delay_restart" style="width:35px;" class="inputbox" />
 					<input type="submit" id="delay_restart_btn" name="delay_restart_btn" value="Ok" class="okButton" />
 				</td>
 			</tr>
 			<tr>
-				<td style="width:70%;">Delay shutdown<?php $res = getDelay('myScripts/.NAS_SHUTDOWN_OFF'); echo ($res > 0 ? ' ('.$res.')' : ($res < 0 ? ' (disabled)' : '')); ?>: </td>
+				<td style="width:70%;">Delay shutdown<?php $res = getDelay($folder.'.NAS_SHUTDOWN_OFF'); echo ($res > 0 ? ' ('.$res.')' : ($res < 0 ? ' (disabled)' : '')); ?>: </td>
 				<td style="width:30%; text-align:right;">
 					<input type="text" id="delay_shutdown" name="delay_shutdown" style="width:35px;" class="inputbox" />
 					<input type="submit" id="delay_shutdown_btn" name="delay_shutdown_btn" value="Ok" class="okButton" />
@@ -108,7 +109,7 @@ if (!isAdmin()) { return; }
 		exec('ping '.$IP.' -c 1 -W 1 | grep -o \'time=\' | wc -l', $output);
 		return $output[0];
 	}
-	
+
 	function getDelay($filename) {
 		if (!isAdmin()) { return 0; }
 		if (!isFile($filename)) {
@@ -120,13 +121,13 @@ if (!isAdmin()) { return; }
 		if ($timestamp < 0) { return -1; }
 		return date("d.m.Y", $timestamp);
 	}
-	
+
 	function shutdownNAS() {
 		if (!isAdmin()) { return 0; }
 		exec('/sbin/nas_shutdown 1', $output);
 		return $output;
 	}
-	
+
 	function startNAS() {
 		if (!isAdmin()) { return 0; }
 		exec('/sbin/nas_start 1', $output);

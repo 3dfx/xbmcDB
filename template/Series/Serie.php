@@ -66,7 +66,7 @@ class Serie {
 	}
 
 	public function getNextAirDate() {
-		return $this->nextAirDate;
+		return is_string($this->nextAirDate) ? null : $this->nextAirDate;
 	}
 
 	public function getNextAirDateStr() {

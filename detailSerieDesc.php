@@ -143,41 +143,43 @@ include_once "./template/Series/_SERIEN.php";
 			$airDate = $nextAirDate;
 		}
 
+		$season  = -1;
+		$episode = -1;
+
+		if (!empty($nextEpisode)) {
+			//tvdb
+			$season  = $nextEpisode['airedSeason'];
+			$episode = $nextEpisode['airedEpisodeNumber'];
+		} else {
+			$st      = !empty($serie) && is_object($serie) ? $serie->getLastStaffel() : null;
+			$ep      = !empty($st) && is_object($st)       ? $st->getLastEpisode()    : null;
+			$season  = !empty($st) && is_object($st)       ? $st->getStaffelNum()     : null;
+			$episode = !empty($ep) && is_object($ep)       ? $ep->getEpNum()          : null;
+		}
+
+		$info = "";
+		$dbDate = empty($airDate) ? null : $airDate;
 		if (!empty($airDate)) {
-			$season  = -1;
-			$episode = -1;
-
-			if (!empty($nextEpisode)) {
-				//tvdb
-				$season  = $nextEpisode['airedSeason'];
-				$episode = $nextEpisode['airedEpisodeNumber'];
-			} else {
-				$st      = !empty($serie) && is_object($serie) ? $serie->getLastStaffel() : null;
-				$ep      = !empty($st) && is_object($st)       ? $st->getLastEpisode()    : null;
-				$season  = !empty($st) && is_object($st)       ? $st->getStaffelNum()     : null;
-				$episode = !empty($ep) && is_object($ep)       ? $ep->getEpNum()          : null;
-			}
-
-			$dbDate    = $airDate;
-			$airDate   = addRlsDiffToDate($airDate);
+			$airDate = addRlsDiffToDate($airDate);
 			$dayOfWeek = dayOfWeek($airDate);
-			$daysLeft  = daysLeft($airDate);
-			$missed    = dateMissed($airDate);
-			$info1     = $daysLeft > 0 ?
-					(($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days').' on '.$dayOfWeek) :
-					($isAdmin ? ($missed ? 'Missed episode' : 'Today') : '');
+			$daysLeft = daysLeft($airDate);
+			$missed = dateMissed($airDate);
+			$info1 = $daysLeft > 0 ?
+				(($daysLeft == 1 ? 'Tomorrow' : 'In '.$daysLeft.' days').' on '.$dayOfWeek) :
+				($isAdmin ? ($missed ? 'Missed episode' : 'Today') : '');
 
 			$info2     = ' [ <b style="color:'.($missed && $isAdmin ? 'red' : 'silver').';">'.toEuropeanDateFormat($airDate).'</b> ]';
 			$info      = $info1.$info2;
+		}
 
-			echo '<div class="padbot15" >';
-			echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2;
-			echo '</div>';
 
-			if (!empty($nextEpisode) && compareDates($nextAirDate, $dbDate)) {
-				updateAirdateInDb($id, $season, $episode, $dbDate, $lastEpisode);
-				clearMediaCache();
-			}
+		echo '<div class="padbot15" >';
+		echo '<i><b>Next airdate:</b></i><br />'.$clear1.$info.$clear2;
+		echo '</div>';
+
+		if (!empty($nextEpisode) && compareDates($nextAirDate, $dbDate)) {
+			updateAirdateInDb($id, $season, $episode, $dbDate, $lastEpisode);
+			clearMediaCache();
 		}
 	}
 

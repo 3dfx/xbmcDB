@@ -272,9 +272,11 @@ include_once "./template/Series/StreamDetails.php";
 			$codecs = '';
 			$atmosFound      = false;
 			$eventuallyAtmos = false;
-			$atmosx = explode(',', $atmosx);
-			if (count($atmosx) < count($streamDetails->getACodec())) {
-				$atmosx = null;
+			if (!empty($atmosx)) {
+				$atmosx = explode(',', $atmosx);
+				if (count($atmosx) < count($streamDetails->getACodec())) {
+					$atmosx = null;
+				}
 			}
 
 			for ($i = 0; $i < count($streamDetails->getACodec()); $i++) {
