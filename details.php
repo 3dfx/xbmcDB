@@ -17,10 +17,12 @@ include_once "./template/functions.php";
 	<script type="text/javascript" src="./template/js/myfancy.js"></script>
 	<script type="text/javascript" src="./template/js/hoverpic.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.js"></script>
+	<script type="text/javascript" src="./template/js/general.js"></script>
 <?php } else { ?>
 	<script type="text/javascript" src="./template/js/myfancy.min.js"></script>
 	<script type="text/javascript" src="./template/js/hoverpic.min.js"></script>
 	<script type="text/javascript" src="./template/js/jquery.knob.min.js"></script>
+	<script type="text/javascript" src="./template/js/general.min.js"></script>
 <?php } ?>
 	<link rel="stylesheet" type="text/css" href="./template/js/fancybox/jquery.fancybox.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="class.css" />
@@ -256,7 +258,8 @@ include_once "./template/functions.php";
 		if (!empty($cmpOrTit) && $cmpTitel != $cmpOrTit) {
 			echo "\r\n";
 			echo '<div class="originalTitle" style="top:8px;">';
-			echo '<b style="color:dimgray;">Original title</b>: '.$orTitel;
+			echo '<b style="color:dimgray;">Original title</b>: ';
+			echo '<span  onclick="selSpanText(this);">'.$orTitel.'</span>';
 			echo '</div>';
 			echo "\r\n";
 		}

@@ -25,6 +25,22 @@ function getKeyCode(event) {
 	return event.keyCode;
 }
 
+function selSpanText(obj) {
+	var range, selection;
+
+	if (window.getSelection && document.createRange) {
+		selection = window.getSelection();
+		range = document.createRange();
+		range.selectNodeContents($(obj)[0]);
+		selection.removeAllRanges();
+		selection.addRange(range);
+	} else if (document.selection && document.body.createTextRange) {
+		range = document.body.createTextRange();
+		range.moveToElementText($(obj)[0]);
+		range.select();
+	}
+}
+
 function newMoviesAvailable() {
 	if (!gotoConfirmation()) { return; }
 
