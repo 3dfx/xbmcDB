@@ -175,7 +175,10 @@ function fetchInfos() {
 	
 	if ($change == 'movie') {
 		$SQL = "SELECT F.idFile, A.c00 AS title, ".mapDBC('A.c05')." AS rating, ".mapDBC('A.c07')." AS jahr, A.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded ".
-		"FROM movie A, filemap FM, files F ".mapDBC('joinRatingMovie')." WHERE FM.idFile = F.idFile AND A.idFile = F.idFile AND A.idMovie = ".$idMovie.";";
+		"FROM movie A, files F ".
+		"LEFT JOIN filemap FM ON FM.idFile = F.idFile ".
+		mapDBC('joinRatingMovie').
+		" WHERE A.idFile = F.idFile AND A.idMovie = ".$idMovie.";";
 		$result = querySQL($SQL);
 		$res = array();
 		$i = 0;
