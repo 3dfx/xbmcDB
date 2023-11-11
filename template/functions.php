@@ -2742,8 +2742,7 @@ function formatToDeNotation($str) {
 function getPausedAt($timeAt) {
 	$sec = $timeAt % 60;
 	$min = $timeAt / 60 % 60;
-	$hrs = floor($min/60);
-	$hrs = round($hrs);
+	$hrs = floor($timeAt/60/60);
 	return sprintf('%02d:%02d:%02d', $hrs, $min, $sec);
 }
 

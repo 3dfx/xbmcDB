@@ -186,7 +186,7 @@ include_once "./template/functions.php";
 				$timeAt    = intval($timeAt);
 				$timeTotal = intval($timeTotal);
 				$percent   = round($timeAt / $timeTotal * 100);
-				$pausedAt  = getPausedAt(round($percent * $timeTotal / 100));
+				$pausedAt  = getPausedAt($timeAt);
 			}
 		}
 
