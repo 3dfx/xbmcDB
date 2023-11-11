@@ -1648,8 +1648,8 @@ function createEpisodeSubmenu($result) {
 			$season   = sprintf("%02d", $season);
 			$episode  = sprintf("%02d", $episode);
 			$epTrId   = 'iD'.$idShow.'.S'.$season;
-			$noRating = emptyRating($rating);
-			$noRating = $noRating && emptyRating($rating_);
+			//override as we don't really get ratings anymore from TVDB
+			$noRating = false; //emptyRating($rating) && emptyRating($rating_);
 
 			$SE = '<span class="dropdown-menu_epTitle"><b><sub>S'.$season.'.E'.$episode.$srCol.'</sub></b></span> ';
 			$showTitle = '<span class="nOverflow flalleft" style="position:relative; left:-15px;'.($noRating ? ' font-style:italic;' : '').'">'.$SE.trimDoubles($title).'</span>';

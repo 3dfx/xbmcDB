@@ -29,6 +29,7 @@ include_once "./template/functions.php";
 	<style> body {background-color:#<?php echo ($DETAILFANART) ? 'FFFFFF' : 'D9E8FA'; ?>;} </style>
 	<script type="text/javascript">
 		var flag = true;
+		var newMovies = false;
 
 		function spoilIt() {
 			$( '#spoiler' ).hide();

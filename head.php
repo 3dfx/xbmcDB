@@ -1,6 +1,6 @@
 <?php
 	include_once "./template/config.php";
-	
+
 	$TITLE      = getHtmlTitle();
 	$XBMCONTROL = isset($GLOBALS['XBMCCONTROL_ENABLED']) ? $GLOBALS['XBMCCONTROL_ENABLED'] : false;
 	$show       = isset($_SESSION['show']) ? $_SESSION['show'] : 'filme';
