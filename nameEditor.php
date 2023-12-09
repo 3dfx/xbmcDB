@@ -7,9 +7,10 @@
 
 	if (!isAdmin()) { return; }
 	
-	$idMovie = getEscGPost('idMovie', -1);
+	$idMovie = getEscGPost('idMovie', 0);
+	$idFile  = getEscGPost('idFile',  0);
 	$idGenre = -1;
-	if ($idMovie == -1 && $idGenre == -1) { return; }
+	if (empty($idMovie) && $idGenre == -1) { return; }
 	$change     = getEscGPost('change');
 	$closeFrame = getEscGPost('closeFrame', 0);
 	
@@ -170,15 +171,17 @@ if (empty($change) || $change == 'movie') {
 /*	FUNCTIONS	*/
 function fetchInfos() {
 	$idMovie = $GLOBALS['idMovie'];
+	$idFile  = $GLOBALS['idFile'];
 	$idGenre = $GLOBALS['idGenre'];
 	$change  = $GLOBALS['change'];
-	
+
 	if ($change == 'movie') {
 		$SQL = "SELECT F.idFile, A.c00 AS title, ".mapDBC('A.c05')." AS rating, ".mapDBC('A.c07')." AS jahr, A.c14 AS genre, F.strFilename AS filename, FM.dateAdded AS dateAdded ".
 		"FROM movie A, files F ".
 		"LEFT JOIN filemap FM ON FM.idFile = F.idFile ".
 		mapDBC('joinRatingMovie').
-		" WHERE A.idFile = F.idFile AND A.idMovie = ".$idMovie.";";
+		(empty($idFile) ? " WHERE A.idFile = F.idFile" : " WHERE F.idFile = ".$idFile).
+		" AND A.idMovie = ".$idMovie.";";
 		$result = querySQL($SQL);
 		$res = array();
 		$i = 0;

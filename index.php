@@ -23,6 +23,8 @@ include_once "./template/functions.php";
 
 	$show    = getEscGPost('show');
 	$show    = isset($_SESSION['show'])    && empty($show)   ? $_SESSION['show']    : $show;
+	$idFile  = getEscGPost('idFile');
+	$idFile  = isset($_SESSION['idFile'])  && empty($idShow) ? $_SESSION['idFile']  : null;
 	$idMovie = getEscGPost('idMovie');
 	$idMovie = isset($_SESSION['idMovie']) && empty($idShow) ? $_SESSION['idMovie'] : null;
 

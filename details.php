@@ -7,6 +7,8 @@ include_once "./template/functions.php";
 	$id = isset($_SESSION['idMovie']) ? $_SESSION['idMovie'] : null;
 	if (empty($id)) { die('<br/>no param!<br/>'); }
 
+	$idFile = isset($_SESSION['idFile']) ? $_SESSION['idFile'] : null;
+
 	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
 ?>
 
@@ -110,8 +112,8 @@ include_once "./template/functions.php";
 			"FROM movie A, files B, path C ".
 			mapDBC('joinIdMovie').
 			mapDBC('joinRatingMovie').
-			"LEFT JOIN fileinfo D ON A.idFile = D.idFile ".
-			"WHERE idMovie = '".$id."' AND A.idFile = B.idFile AND C.idPath = B.idPath;",
+			"LEFT JOIN fileinfo D ON B.idFile = D.idFile ".
+			"WHERE idMovie = '".$id."' AND B.idFile = ".(empty($idFile) ? "A.idFile" : $idFile)." AND C.idPath = B.idPath;",
 		false, $dbh);
 
 		if (empty($row)) { die('not found...'); }
@@ -125,7 +127,7 @@ include_once "./template/functions.php";
 		$existArtTable = existsArtTable();
 
 		$SHOW_TRAILER = isset($GLOBALS['SHOW_TRAILER']) ? $GLOBALS['SHOW_TRAILER'] : false;
-		$idFile       = $row['idFile'];
+		$idFile       = empty($idFile) ? $row['idFile'] : $idFile;
 		$size         = $row['filesize'];
 		$bit          = isset($row['bit']) ? $row['bit'] : 0;
 		$fps          = $row['fps'];
@@ -693,7 +695,7 @@ include_once "./template/functions.php";
 			echo "\r\n";
 		}
 
-	unset( $_SESSION['show'], $_SESSION['idMovie'] );
+	unset( $_SESSION['show'], $_SESSION['idMovie'], $_SESSION['idFile'] );
 
 
 //- FUNCTIONS -//

@@ -175,19 +175,16 @@ function getToneMapping($idFile, $dbh = null) {
 	);
 }
 
-function getResolution($SkQL, $isMovie, $dbh = null) {
+function getResolution($sessionKey, $isMovie, $dbh = null) {
 	$idStream   = array();
 	$movKey     = $isMovie ? "movie" : "episode";
-	$sessionKey = $SkQL['sessionKey'];
 
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	if (isset($_SESSION['idStream'][$movKey][$sessionKey]) && $overrideFetch == 0) {
 		$idStream = unserialize($_SESSION['idStream'][$movKey][$sessionKey]);
 
 	} else {
-		$SQL = "SELECT streamdetails.*, ".$movKey.".idFile FROM streamdetails ".
-			"LEFT JOIN ".$movKey." ON ".$movKey.".idFile = streamdetails.idFile ".
-			"WHERE streamdetails.iVideoWidth IS NOT NULL";
+		$SQL = "SELECT streamdetails.* FROM streamdetails WHERE streamdetails.iVideoWidth IS NOT NULL";
 
 		if (isset($_SESSION['movies'][$sessionKey]['ids'])) {
 			$ids = unserialize($_SESSION['movies'][$sessionKey]['ids']);
@@ -848,39 +845,29 @@ function mapSambaDirs($path, $DIRMAP = null) {
 
 function setSeenDelMovie($what, $checkFilme) {
 	if (empty($what) || empty($checkFilme)) { return; }
-
-	$dbh = getPDO();
+	$idFiles = implode(',', $checkFilme);
 	try {
+		$dbh = getPDO();
 		if (!$dbh->inTransaction()) { $dbh->beginTransaction(); }
-		$SQL     = "SELECT idFile FROM movie WHERE idMovie IN (".implode(',', $checkFilme).")";
-
-		$qryRes  = $dbh->query($SQL);
-		$result  = $qryRes->fetchAll();
-		$idFiles = array();
-		for ($i = 0; $i < count($result); $i++) {
-			if (!empty($result[$i]['idFile'])) {
-				$idFiles[] = $result[$i]['idFile'];
-			}
-		}
 
 		if (!empty($idFiles)) {
 			switch ($what) {
 				case 1: // unseen
-					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile IN (".implode(',', $idFiles).");");
+					$dbh->exec("UPDATE files SET playcount=0 WHERE idFile IN (".$idFiles.");");
 					break;
 
 				case 2: // seen
-					$dbh->exec("UPDATE files SET playcount=1 WHERE idFile IN (".implode(',', $idFiles).");");
+					$dbh->exec("UPDATE files SET playcount=1 WHERE idFile IN (".$idFiles.");");
 					break;
 
 				case 3: // delete
-					$dbh->exec("DELETE FROM movie WHERE idFile IN (".implode(',', $idFiles).");");
-					$dbh->exec("DELETE FROM fileinfo WHERE idFile IN (".implode(',', $idFiles).");");
-					$dbh->exec("DELETE FROM files WHERE idFile IN (".implode(',', $idFiles).");");
+					$dbh->exec("DELETE FROM movie WHERE idFile IN (".$idFiles.");");
+					$dbh->exec("DELETE FROM fileinfo WHERE idFile IN (".$idFiles.");");
+					$dbh->exec("DELETE FROM files WHERE idFile IN (".$idFiles.");");
 					break;
 
 				case 4: // clear streamdetails
-					$dbh->exec("DELETE FROM streamdetails WHERE idFile IN (".implode(',', $idFiles).");");
+					$dbh->exec("DELETE FROM streamdetails WHERE idFile IN (".$idFiles.");");
 					break;
 			}
 
@@ -895,7 +882,7 @@ function setSeenDelMovie($what, $checkFilme) {
 	}
 }
 
-function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies') || startsWith($key, 'episodes') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') || startsWith($key, 'covers') || startsWith($key, 'thumbs') || startsWith($key, 'lastMovie') || startsWith($key, 'paths') || startsWith($key, 'TvDbCache') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
+function clearMediaCache() { foreach ($_SESSION as $key => $value) { if ( startsWith($key, 'movies') || startsWith($key, 'variants') || startsWith($key, 'episodes') || startsWith($key, 'param_') || startsWith($key, 'SSerien') || startsWith($key, 'LSerien') || startsWith($key, 'FSerien') || startsWith($key, 'idStream') || startsWith($key, 'MVid') || startsWith($key, 'covers') || startsWith($key, 'thumbs') || startsWith($key, 'lastMovie') || startsWith($key, 'paths') || startsWith($key, 'TvDbCache') ) { unset( $_SESSION[$key] ); } } $_SESSION['overrideFetch'] = 1; }
 function startsWith($haystack, $needle) { return !strncmp($haystack, $needle, strlen($needle)); }
 
 function resizeImg($SRC, $DST, $w, $h) {
@@ -1228,6 +1215,19 @@ function getSrcMarker($source) {
 	}
 
 	return '<span class="source '.$res.'">|</span>';
+}
+
+function fetchVideoVersionTypes() {
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	$types = $overrideFetch == 0 && isset($_SESSION['versiontypes']) ? unserialize($_SESSION['versiontypes']) : array();
+	if (empty($types)) {
+		$typRows = querySQL('SELECT * FROM videoversiontype WHERE name != "";');
+		foreach ($typRows as $type) {
+			$types[$type[0]] = $type[1];
+		}
+		$_SESSION['versiontypes'] = empty($types) ? null : serialize($types);
+	}
+	return $types;
 }
 
 function postSources($actual) {
@@ -3239,8 +3239,8 @@ function getItemsForRequest($ids, $isShow) {
 	if ($isShow) {
 		$SQL = "SELECT strPath, c00 AS name FROM ".mapDBC('tvshowview')." WHERE idShow IN (".$ids.") ORDER BY name;";
 	} else {
-		$SQL = "SELECT c00 AS filmname, B.strFilename AS filename, c.strPath AS path, d.filesize FROM movie a, files b, path c, fileinfo d ".
-			"WHERE idMovie IN (".$ids.") AND A.idFile = B.idFile AND c.idPath = b.idPath AND a.idFile = d.idFile ".
+		$SQL = "SELECT B.idFile, B.strFilename AS filename, c.strPath AS path, d.filesize FROM files b, path c, fileinfo d ".
+			"WHERE b.idFile IN (".$ids.") AND c.idPath = b.idPath AND b.idFile = d.idFile ".
 			"ORDER BY filename;";
 	}
 	return querySQL($SQL, false);
@@ -3305,18 +3305,22 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 	$scriptCopyFrom = $srcLetter.$scriptCopyFrom;
 	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
 
+	$variantIds = isset($_SESSION['movies']['variantIds']) ? unserialize($_SESSION['movies']['variantIds']) : array();
+
 	$newLine = $forOrder ? "\n" : '<br />';
 	$oldPath   = '';
 	$totalsize = 0;
 	$res = '';
 	foreach($result as $row) {
+		$idFile     = $row['idFile'];
 		$path       = $row['path'];
 		$filename   = $row['filename'];
-		$filmname   = $row['filmname'];
 		$size       = $row['filesize'];
 		$totalsize += $size;
 
-		$name = $forOrder ? decodeString(encodeString($filename)) : $filmname;
+		$filmname = fetchFilmname($idFile, $variantIds);
+
+		$name = $forOrder || empty($filmname) ? decodeString(encodeString($filename)) : $filmname;
 
 		$pos1 = strpos($name, 'smb://');
 		$pos2 = strpos($name, 'stack:');
@@ -3360,6 +3364,20 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 	}
 
 	return $res;
+}
+
+function fetchFilmname($idFile, $variantIds = null) {
+	//TODO: test
+	if (empty($variantIds)) {
+		$variantIds = isset($_SESSION['movies']['variantIds']) ? unserialize($_SESSION['movies']['variantIds']) : array();
+	}
+
+	if (!isset($variantIds[$idFile])) {
+		$qres = fetchFromDB("SELECT c00 AS filmname FROM movie WHERE idFile = ".$idFile, false);
+	} else {
+		$qres = fetchFromDB("SELECT c00 AS filmname FROM movie WHERE idMovie = ".$variantIds[$idFile], false);
+	}
+	return !empty($qres) ? $qres['filmname'] : null;
 }
 
 function getIdOrder($dbh = null) {

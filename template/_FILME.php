@@ -214,6 +214,67 @@ function getSessionKeySQL($newAddedCount = 0) {
 	return $res;
 } //getSessionKeySQL
 
+function fetchVariants($sessionKey = null, $dbh = null) {
+	$dbh = empty($dbh) ? getPDO() : $dbh;
+	$varIds = array();
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	if (isset($_SESSION['movies']['variants']) && $overrideFetch == 0) {
+		$result = unserialize($_SESSION['movies']['variants']);
+		foreach ($result as $media) {
+			foreach ($media as $type) {
+				$varIds[] = $type['idFile'];
+			}
+		}
+		if (!empty($sessionKey) && isset($_SESSION['movies'][$sessionKey]['ids'])) {
+			$orIds = unserialize($_SESSION['movies'][$sessionKey]['ids']);
+			$ids = array_unique(array_merge($orIds, $varIds));
+			$_SESSION['movies'][$sessionKey]['ids'] = serialize($ids);
+		}
+		return $result;
+	}
+
+	$SQLf = "SELECT A.idFile, A.strFilename, F.filesize, F.fps, F.bit FROM files A LEFT JOIN fileinfo F ON A.idFile = F.idFile WHERE A.idFile IN (SELECT idFile FROM videoversion WHERE idType != 40400);";
+	$rows = querySQL($SQLf, true, $dbh);
+	$fNames = array();
+	foreach($rows as $row) {
+		$fNames[$row['idFile']]['strFilename'] = $row['strFilename'];
+		$fNames[$row['idFile']]['filesize']    = $row['filesize'];
+		$fNames[$row['idFile']]['fps']         = $row['fps'];
+		$fNames[$row['idFile']]['bit']         = $row['bit'];
+	}
+
+	$SQL = "SELECT * FROM videoversion WHERE idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400) ORDER BY idMedia;";
+	$rows = querySQL($SQL);
+
+	$variantIds = array();
+	$result = array();
+	foreach($rows as $row) {
+		$idType  = $row['idType'];
+		if ($idType === 40400) { continue; }
+
+		$idFile  = $row['idFile'];
+		$idMedia = $row['idMedia'];
+		$variantIds[$idFile] = $idMedia;
+
+		$varIds[] = $idFile;
+		$fileName = isset($fNames[$idFile]) && isset($fNames[$idFile]['strFilename']) ? $fNames[$idFile]['strFilename'] : null;
+		$filesize = isset($fNames[$idFile]) && isset($fNames[$idFile]['filesize'])    ? $fNames[$idFile]['filesize']    : null;
+		$fps      = isset($fNames[$idFile]) && isset($fNames[$idFile]['fps'])         ? $fNames[$idFile]['fps']         : null;
+		$bit      = isset($fNames[$idFile]) && isset($fNames[$idFile]['bit'])         ? $fNames[$idFile]['bit']         : null;
+		$val = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
+		$result[$idMedia][$idType] = $val;
+	}
+
+	if (!empty($sessionKey) && isset($_SESSION['movies'][$sessionKey]['ids'])) {
+		$orIds = unserialize($_SESSION['movies'][$sessionKey]['ids']);
+		$ids = array_unique(array_merge($orIds, $varIds));
+		$_SESSION['movies'][$sessionKey]['ids'] = serialize($ids);
+	}
+
+	$_SESSION['movies']['variantIds'] = serialize($variantIds);
+	$_SESSION['movies']['variants']   = serialize($result);
+	return $result;
+}
 
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection */
 function fetchMovies($SkQL, $dbh = null) {
@@ -222,43 +283,43 @@ function fetchMovies($SkQL, $dbh = null) {
 
 	$sessionKey = $SkQL['sessionKey'];
 
-	$res = array();
+	$result = array();
 	$ids = array();
 	if (isset($_SESSION['movies'][$sessionKey]['items']) && $overrideFetch == 0) {
-		$res = unserialize($_SESSION['movies'][$sessionKey]['items']);
+		$result = unserialize($_SESSION['movies'][$sessionKey]['items']);
 
 	} else {
 		$SQL = $SkQL['SQL'];
-		$result = querySQL($SQL, false, $dbh);
+		$rows = querySQL($SQL, false, $dbh);
 		$count = 0;
-		foreach($result as $row) {
-			$res[$count]['idFile']     = isset($row['idFile'])     ? $row['idFile']     : -1;
-			$ids[] = $res[$count]['idFile'];
-			$res[$count]['idMovie']    = isset($row['idMovie'])    ? $row['idMovie']    : -1;
-			$res[$count]['movieName']  = isset($row['movieName'])  ? $row['movieName']  : '';
-			$res[$count]['playCount']  = isset($row['playCount'])  ? $row['playCount']  : '';
-			$res[$count]['lastPlayed'] = isset($row['lastPlayed']) ? $row['lastPlayed'] : '';
-			$res[$count]['filename']   = isset($row['filename'])   ? $row['filename']   : '';
-			$res[$count]['fps']        = isset($row['fps'])        ? $row['fps']  	    : '';
-			$res[$count]['bits']       = isset($row['bit'])        ? $row['bit']        : '';
-			$res[$count]['dateAdded']  = isset($row['dateAdded'])  ? $row['dateAdded']  : '';
-			$res[$count]['path']       = isset($row['path'])       ? $row['path']       : '';
-			$res[$count]['jahr']       = isset($row['jahr'])       ? $row['jahr']       : '';
-			$res[$count]['filesize']   = isset($row['filesize'])   ? $row['filesize']   : '';
-			$res[$count]['playCount']  = isset($row['playCount'])  ? $row['playCount']  : '';
-			$res[$count]['trailer']    = isset($row['trailer'])    ? $row['trailer']    : '';
-			$res[$count]['rating']     = isset($row['rating'])     ? $row['rating']     : '';
-			$res[$count]['imdbId']     = isset($row['imdbId'])     ? $row['imdbId']     : '';
-			$res[$count]['genres']     = isset($row['genres'])     ? $row['genres']     : '';
-			$res[$count]['filename']   = isset($row['filename'])   ? $row['filename']   : '';
+		foreach($rows as $row) {
+			$result[$count]['idFile']     = isset($row['idFile'])     ? $row['idFile']     : -1;
+			$ids[] = $result[$count]['idFile'];
+			$result[$count]['idMovie']    = isset($row['idMovie'])    ? $row['idMovie']    : -1;
+			$result[$count]['movieName']  = isset($row['movieName'])  ? $row['movieName']  : '';
+			$result[$count]['playCount']  = isset($row['playCount'])  ? $row['playCount']  : '';
+			$result[$count]['lastPlayed'] = isset($row['lastPlayed']) ? $row['lastPlayed'] : '';
+			$result[$count]['filename']   = isset($row['filename'])   ? $row['filename']   : '';
+			$result[$count]['fps']        = isset($row['fps'])        ? $row['fps']  	    : '';
+			$result[$count]['bits']       = isset($row['bit'])        ? $row['bit']        : '';
+			$result[$count]['dateAdded']  = isset($row['dateAdded'])  ? $row['dateAdded']  : '';
+			$result[$count]['path']       = isset($row['path'])       ? $row['path']       : '';
+			$result[$count]['jahr']       = isset($row['jahr'])       ? $row['jahr']       : '';
+			$result[$count]['filesize']   = isset($row['filesize'])   ? $row['filesize']   : '';
+			$result[$count]['playCount']  = isset($row['playCount'])  ? $row['playCount']  : '';
+			$result[$count]['trailer']    = isset($row['trailer'])    ? $row['trailer']    : '';
+			$result[$count]['rating']     = isset($row['rating'])     ? $row['rating']     : '';
+			$result[$count]['imdbId']     = isset($row['imdbId'])     ? $row['imdbId']     : '';
+			$result[$count]['genres']     = isset($row['genres'])     ? $row['genres']     : '';
+			$result[$count]['filename']   = isset($row['filename'])   ? $row['filename']   : '';
 			$count++;
 		}
 
-		$_SESSION['movies'][$sessionKey]['items'] = serialize($res);
+		$_SESSION['movies'][$sessionKey]['items'] = serialize($result);
 		$_SESSION['movies'][$sessionKey]['ids']   = serialize($ids);
 		unset( $_SESSION['movies']['overrideFetch'] );
 	}
-	return $res;
+	return $result;
 }
 
 ?>

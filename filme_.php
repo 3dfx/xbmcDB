@@ -137,7 +137,6 @@ function checkTables($dbh) {
 }
 
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection
- * @noinspection PhpTernaryExpressionCanBeReplacedWithConditionInspection
  */
 function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 	$dirActorEnabled  = true;
@@ -167,201 +166,275 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 	$existArtTable = existsArtTable($dbh);
 	$artCovers     = fetchArtCovers($existArtTable, $dbh);
 	$genreIDs      = fetchGenreIDs($dbh);
-	$result        = fetchMovies($SkQL, $dbh);
-	$idStream      = getResolution($SkQL, true, $dbh);
+	$movieRows     = fetchMovies($SkQL, $dbh);
+	$variants      = fetchVariants($SkQL['sessionKey'], $dbh);
+	$varkeys       = array_keys($variants);
+	$idStream      = getResolution($SkQL['sessionKey'], true, $dbh);
 
 	$counter  = 0;
 	$counter2 = 0;
 	$zeile    = 0;
 	$zeilen = array();
-	for ($rCnt = 0; $rCnt < count($result); $rCnt++) {
+	for ($rCnt = 0; $rCnt < count($movieRows); $rCnt++) {
 		$zeilenSpalte = 0;
-		$row        = $result[$rCnt];
-		$idFile     = $row['idFile'];
-		if ($idFile < 0) { continue; }
-		$idMovie    = $row['idMovie'];
-		$filmname   = $row['movieName'];
-		//$thumb    = $row['thumb'];
-		$filename   = $row['filename'];
-		$dateAdded  = $row['dateAdded'];
-		$path       = $row['path'];
-		$jahr       = substr($row['jahr'], 0, 4);
-		$filesize   = $row['filesize'];
-		$fps        = $row['fps'];
-		$bits       = $row['bits'];
-		$playCount  = $row['playCount'];
-		$lastPlayed = $row['lastPlayed'];
-		$trailer    = $row['trailer'];
-		$rating     = $row['rating'];
-		$imdbId     = $row['imdbId'];
-		$genres     = $row['genres'];
-		$vRes       = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
-		$fnam       = $path.$filename;
-		$cover      = null;
-		$isNew      = !empty($lastHighest) && $idMovie > $lastHighest;
-
-		$f4Ke       = isFake4K($filename);
-		$scaled     = isUpscaled($filename);
-		$is3D       = is3d($filename);
-
-		$filmname0  = $filmname;
-		$titel      = $filmname;
-
-		$path = mapSambaDirs($path);
-		if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { continue; }
-
-		$fsize     = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
-		$moviesize = _format_bytes($fsize);
-
-		$wasCutoff = false;
-		$cutoff    = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
-		if (strlen($filmname) >= $cutoff && $cutoff > 0) {
-			$filmname = substr($filmname, 0, $cutoff).'...';
-			$wasCutoff = true;
+		$row        = $movieRows[$rCnt];
+		$line       = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
+						$row, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
+						$zeilenSpalte, $zeile, $isAdmin, $isDemo, $genreIDs, $_just, $_which, $filter_name, $xbmcRunning,
+						$dbh, $orderz, $dirActorEnabled, false
+		);
+		if (!empty($line)) {
+			$zeilen[] = $line;
 		}
-		$filmname = switchPronoms($filmname, $PRONOMS);
+		$zeile++;
+		$counter++;
 
-		if (empty($dateAdded)) {
-			$dateAdded = getCreation($fnam);
-			$dateAdded = isset($dateAdded) ? $dateAdded : '2001-01-01 12:00:00';
-			$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".strtotime($dateAdded)."');";
-			execSQL_($SQL_, false, true, $dbh);
+		if (in_array($row['idMovie'], $varkeys)) {
+			$vars = $variants[$row['idMovie']];
+			foreach ($vars as $idType => $var) {
+				if ($idType == 40400) { continue; }
+				$cloned = unserialize(serialize($row));
+				$cloned['idFile']   = $var['idFile'];
+				$cloned['fps'   ]   = $var['fps'];
+				$cloned['bit']      = $var['bit'];
+				$cloned['filename'] = $var['strFilename'];
+				$cloned['filesize'] = $var['filesize'];
+
+				$line = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
+					$cloned, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
+					$zeilenSpalte, $zeile, $isAdmin, $isDemo, $genreIDs, $_just, $_which, $filter_name, $xbmcRunning,
+					$dbh, $orderz, $dirActorEnabled, true
+				);
+				if (!empty($line)) {
+					$zeilen[] = $line;
+				}
+				$zeile++;
+				$counter++;
+			}
 		}
+
+		if ($newmode && ++$counter2 >= $newAddedCount) { break; }
+	} //foreach
+
+	return $zeilen;
+}
+
+function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
+					 $row, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
+					 $zeilenSpalte, $zeile, $isAdmin, $isDemo, $genreIDs, $_just, $_which,
+					 $filter_name, $xbmcRunning, $dbh, $orderz, $dirActorEnabled, $isVariant) {
+	$result = array();
+
+	$idFile     = $row['idFile'];
+	if ($idFile < 0) { return null; }
+	$idMovie    = $row['idMovie'];
+	$filmname   = $row['movieName'];
+	//$thumb    = $row['thumb'];
+	$filename   = $row['filename'];
+	$dateAdded  = $row['dateAdded'];
+	$path       = $row['path'];
+	$jahr       = substr($row['jahr'], 0, 4);
+	$filesize   = $row['filesize'];
+	$fps        = $row['fps'];
+	$bits       = $row['bits'];
+	$playCount  = $row['playCount'];
+	$lastPlayed = $row['lastPlayed'];
+	$trailer    = $row['trailer'];
+	$rating     = $row['rating'];
+	$imdbId     = $row['imdbId'];
+	$genres     = $row['genres'];
+	$vRes       = isset($idStream[$idFile]) ? $idStream[$idFile] : array();
+	$fnam       = $path.$filename;
+	$cover      = null;
+	$isNew      = !empty($lastHighest) && $idMovie > $lastHighest;
+
+	$f4Ke       = isFake4K($filename);
+	$scaled     = isUpscaled($filename);
+	$is3D       = is3d($filename);
+
+	$filmname0  = $filmname;
+	$titel      = $filmname;
+
+	$path = mapSambaDirs($path);
+	if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { return null; }
+
+	$fsize     = fetchFileSize($idFile, $path, $filename, $filesize, $dbh);
+	$moviesize = _format_bytes($fsize);
+
+	$wasCutoff = false;
+	$cutoff    = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
+	if (strlen($filmname) >= $cutoff && $cutoff > 0) {
+		$filmname = substr($filmname, 0, $cutoff).'...';
+		$wasCutoff = true;
+	}
+	$filmname = switchPronoms($filmname, $PRONOMS);
+
+	if (empty($dateAdded)) {
+		$dateAdded = getCreation($fnam);
+		$dateAdded = isset($dateAdded) ? $dateAdded : '2001-01-01 12:00:00';
+		$SQL_ = "REPLACE INTO filemap(idFile, strFilename, dateAdded, value) VALUES(".$idFile.", '".$filename."', '".$dateAdded."', '".strtotime($dateAdded)."');";
+		execSQL_($SQL_, false, true, $dbh);
+	}
 
 #covers
-		if ($gallerymode || $COVER_OVER_TITLE) {
-			if (!empty($artCovers)) {
-				$cover_ = getCoverThumb($fnam, $cover, false);
-				if (isFile($cover_)) {
-					$cover = $cover_;
-				} else if ($existArtTable && isset($artCovers['movie'][$idMovie])) {
+	if ($gallerymode || $COVER_OVER_TITLE) {
+		if (!empty($artCovers)) {
+			$cover_ = getCoverThumb($fnam, $cover, false);
+			if (isFile($cover_)) {
+				$cover = $cover_;
+			} else {
+				if ($existArtTable && isset($artCovers['movie'][$idMovie])) {
 					$cover = $artCovers['movie'][$idMovie]['cover'];
 				}
-			} else {
-				if ($existArtTable) {
-					$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
-					$res2 = querySQL($SQL_, false, $dbh);
-					foreach($res2 as $row2) {
-						$type = isset($row2['type']) ? $row2['type'] : null;
-						$url  = isset($row2['url'])  ? $row2['url']  : null;
-						if (!empty($url)) { $cover = getCoverThumb($url, $url, true); }
-						if ($type == 'poster') { break; }
+			}
+		} else {
+			if ($existArtTable) {
+				$SQL_ = "SELECT url,type FROM art WHERE media_type = 'movie' AND (type = 'poster' OR type = 'thumb') AND media_id = '".$idMovie."';";
+				$res2 = querySQL($SQL_, false, $dbh);
+				foreach ($res2 as $row2) {
+					$type = isset($row2['type']) ? $row2['type'] : null;
+					$url = isset($row2['url']) ? $row2['url'] : null;
+					if (!empty($url)) {
+						$cover = getCoverThumb($url, $url, true);
 					}
-				} else if (isFile(getCoverThumb($fnam, $cover, false))) {
+					if ($type == 'poster') {
+						break;
+					}
+				}
+			} else {
+				if (isFile(getCoverThumb($fnam, $cover, false))) {
 					$cover = getCoverThumb($fnam, $cover, false);
 				}
-			} //POWERFUL_CPU
-		}
+			}
+		} //POWERFUL_CPU
+	}
 
-		wrapItUp('cover', $idMovie, $cover);
+	wrapItUp('cover', $idMovie, $cover);
 
-		if ($gallerymode) {
-				$zeilen[$counter][0] = $filmname.($jahr != 0 ? ' ('.$jahr.')' : '');
-				$zeilen[$counter][1] = 'show=details&idMovie='.$idMovie;
-				$zeilen[$counter][2] = $playCount;
-				$zeilen[$counter][3] = getImageWrap($cover, $idMovie, 'movie', 0);
-				$zeilen[$counter][4] = $is3D;
-				$zeilen[$counter][5] = $path;
-				$zeilen[$counter][6] = $filename;
-				$counter++;
+	if ($gallerymode) {
+		$result[0] = $filmname.($jahr != 0 ? ' ('.$jahr.')' : '');
+		$result[1] = 'show=details&idMovie='.$idMovie;
+		$result[2] = $playCount;
+		$result[3] = getImageWrap($cover, $idMovie, 'movie', 0);
+		$result[4] = $is3D;
+		$result[5] = $path;
+		$result[6] = $filename;
 
-		} else {
-			$zeilen[$zeile][$zeilenSpalte++] = $filmname;
-			$checked  = isset($orderz[$idMovie]);
-			$higlight = $checked ? ' highLighTR' : '';
+	} else {
+		$result[$zeilenSpalte++] = $filmname;
+		$checked = isset($orderz[$idMovie]);
+		$higlight = $checked ? ' highLighTR' : '';
 
 #counter
-			$spalTmp = '<td class="countTD'.$higlight.'">';
-			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'">'; }
-			if ($isAdmin) { $spalTmp .= '<span class="fancy_movieEdit" href="./nameEditor.php?change=movie&idMovie='.$idMovie.'">'; }
-			$spalTmp .= '_C0UNTER_';
-			if ($isAdmin) { $spalTmp .= '</span>'; }
-			if ($COVER_OVER_TITLE && !empty($cover)) { $spalTmp .= '</a>'; }
-			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+		$spalTmp = '<td class="countTD'.$higlight.'">';
+		if ($COVER_OVER_TITLE && !empty($cover)) {
+			$spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'">';
+		}
+		if ($isAdmin) {
+				$idParam = '&idMovie='.$idMovie;
+			if ($isVariant) {
+				$idParam .= '&idFile='.$idFile;
+			}
+			$spalTmp .= '<span class="fancy_movieEdit" href="./nameEditor.php?change=movie'.$idParam.'">';
+		}
+		$spalTmp .= '_C0UNTER_';
+		if ($isAdmin) {
+			$spalTmp .= '</span>';
+		}
+		if ($COVER_OVER_TITLE && !empty($cover)) {
+			$spalTmp .= '</a>';
+		}
+		$spalTmp .= '</td>';
+		$result[$zeilenSpalte++] = $spalTmp;
 
 #checkbox
-			$isWatched = $isAdmin && $playCount >= 1;
+		$isWatched = $isAdmin && $playCount >= 1;
 
-			$spalTmp = '<td class="titleTD'.$higlight.'"'.($isNew ? ' style="font-weight:bold;"' : '').'>';
-			if (!$isDemo) {
-				$spalTmp .= '<input tabindex="-1" type="checkbox"'.(!$isWatched ? ' style="margin-right:2px;"' : '').' class="checka'.($isAdmin ? ' tHidden' : '').'" name="checkFilme[]" id="opt_'.$idMovie.'" value="'.$idMovie.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
-			}
+		$spalTmp = '<td class="titleTD'.$higlight.'"'.($isNew ? ' style="font-weight:bold;"' : '').'>';
+		if (!$isDemo) {
+			$spalTmp .= '<input tabindex="-1" type="checkbox"'.(!$isWatched ? ' style="margin-right:2px;"' : '').' class="checka'.($isAdmin ? ' tHidden' : '').'" name="checkFilme[]" id="opt_'.$idFile.'" value="'.$idFile.'"'.($checked ? ' checked="checked" selected="selected"' : '').' onClick="selected(this, true, true, '.$isAdmin.'); return true;">';
+		}
 
 #seen
-			if ($isAdmin) {
-				$when = toEuropeanDateFormat($lastPlayed, false);
-				if ($playCount > 1) {
-					$when = $playCount.'x: '.$when;
-				}
-
-				$spalTmp .= '<span'.(!$isWatched ? ' style="padding-right:13px;"' : '').'>';
-				$spalTmp .= $isWatched ? '<img src="img/check.png" class="check10v1" title="'.$when.'">' : '';
-				$spalTmp .= '</span> ';
+		if ($isAdmin) {
+			$when = toEuropeanDateFormat($lastPlayed, false);
+			if ($playCount > 1) {
+				$when = $playCount.'x: '.$when;
 			}
+
+			$spalTmp .= '<span'.(!$isWatched ? ' style="padding-right:13px;"' : '').'>';
+			$spalTmp .= $isWatched ? '<img src="img/check.png" class="check10v1" title="'.$when.'">' : '';
+			$spalTmp .= '</span> ';
+		}
 
 #title
-			$suffix = '';
-			if ($is3D) { $suffix = ' (3D)'; }
-			if ($wasCutoff) { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idMovie='.$idMovie.'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>'; }
-			else { $spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idMovie='.$idMovie.'"><span class="searchField">'.$filmname.$suffix.'</span></a>'; }
+		$suffix = '';
+		if ($is3D) {
+			$suffix = ' (3D)';
+		}
+		if ($wasCutoff) {
+			$spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idMovie='.$idMovie.($isVariant ? '&idFile='.$idFile : '').'">'.$filmname.$suffix.'<span class="searchField" style="display:none;">'.$filmname0.'</span></a>';
+		} else {
+			$spalTmp .= '<a tabindex="-1" class="fancy_iframe" href="./?show=details&idMovie='.$idMovie.($isVariant ? '&idFile='.$idFile : '').'"><span class="searchField">'.$filmname.$suffix.'</span></a>';
+		}
 
 #trailer
-			if ($SHOW_TRAILER && !empty($trailer)) {
-				$spalTmp .= '<a tabindex="-1" class="fancy_iframe2" href="'.$ANONYMIZER.$trailer.'"> <img src="img/filmrolle.jpg" width=15px; border=0px;></a>';
-			}
-			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+		if ($SHOW_TRAILER && !empty($trailer)) {
+			$spalTmp .= '<a tabindex="-1" class="fancy_iframe2" href="'.$ANONYMIZER.$trailer.'"> <img src="img/filmrolle.jpg" width=15px; border=0px;></a>';
+		}
+		$spalTmp .= '</td>';
+		$result[$zeilenSpalte++] = $spalTmp;
 
 #year
-			$spalTmp = '<td class="yearTD'.$higlight;
-			$spalTmp .= !empty($jahr) ? '"><a tabindex="-1" href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" title="filter"><span class="searchField">'.$jahr.'</span></a>' : ' centro">-';
-			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+		$spalTmp = '<td class="yearTD'.$higlight;
+		$spalTmp .= !empty($jahr) ? '"><a tabindex="-1" href="?show=filme&country=&mode=1&which=year&just='.$jahr.'&name='.$jahr.'" title="filter"><span class="searchField">'.$jahr.'</span></a>' : ' centro">-';
+		$spalTmp .= '</td>';
+		$result[$zeilenSpalte++] = $spalTmp;
 
 #rating
 
-			$spalTmp = '<td class="ratingTD righto'.$higlight.'">';
-			if (!empty($imdbId)) {
-				$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
-			} else {
-				$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';
-			}
+		$spalTmp = '<td class="ratingTD righto'.$higlight.'">';
+		if (!empty($imdbId)) {
+			$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
+		} else {
+			$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';
+		}
 
-			$spalTmp .= (empty($rating) ? '-&nbsp;&nbsp;' : sprintf("%02.1f", round($rating, 1)));
-			$spalTmp .= '</a>';
-			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+		$spalTmp .= (empty($rating) ? '-&nbsp;&nbsp;' : sprintf("%02.1f", round($rating, 1)));
+		$spalTmp .= '</a>';
+		$spalTmp .= '</td>';
+		$result[$zeilenSpalte++] = $spalTmp;
 
 #genre
-			$spalTmp = '<td class="genreTD hideMobile'.$higlight.'"';
-			$genres = explode("/", $genres);
-			$genre = count($genres) > 0 ? trim($genres[0]) : '';
-			$genreId = -1;
+		$spalTmp = '<td class="genreTD hideMobile'.$higlight.'"';
+		$genres  = explode("/", $genres);
+		$genre   = count($genres) > 0 ? trim($genres[0]) : '';
+		$genreId = -1;
 
-			if (!empty($genre)) {
-				$spalTmp .= '>';
-				$genre = ucwords(strtolower($genre));
-				if (isset($genreIDs[$genre])) {
-					$genreId = $genreIDs[$genre];
-				}
+		if (!empty($genre)) {
+			$spalTmp .= '>';
+			$genre = ucwords(strtolower($genre));
+			if (isset($genreIDs[$genre])) {
+				$genreId = $genreIDs[$genre];
+			}
 
-				if (isset($_just) && !empty($_just) && $_which == 'genre' && !empty($filter_name)) {
-					$spalTmp .= '<span class="searchField">'.$filter_name.'</span>';
-				}
-				else if (($genreId != -1) && (!isset($_just) || empty($_just) || $_which != 'genre' || $_just != $genreId)) {
+			if (isset($_just) && !empty($_just) && $_which == 'genre' && !empty($filter_name)) {
+				$spalTmp .= '<span class="searchField">'.$filter_name.'</span>';
+			} else {
+				if (($genreId != -1) && (!isset($_just) || empty($_just) || $_which != 'genre' || $_just != $genreId)) {
 					$spalTmp .= '<a tabindex="-1" href="?show=filme&country=&mode=1&which=genre&just='.$genreId.'&name='.$genre.'" title="filter"><span class="searchField">'.$genre.'</span></a>';
 				} else {
 					$spalTmp .= '<span class="searchField">'.$genre.'</span>';
 				}
-			} else {
-				$spalTmp .= ' style="padding-left:20px;">-';
 			}
-			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+		} else {
+			$spalTmp .= ' style="padding-left:20px;">-';
+		}
+		$spalTmp .= '</td>';
+		$result[$zeilenSpalte++] = $spalTmp;
 
 #artist
-if ($dirActorEnabled) {
+		if ($dirActorEnabled) {
 			$spalTmp = '<td class="actorTD hideMobile'.$higlight.'"';
 			$firstId     = '';
 			$firstartist = '';
@@ -369,7 +442,7 @@ if ($dirActorEnabled) {
 
 			$SQL_ = "SELECT A.".mapDBC('strActor').", B.role, B.".mapDBC('idActor').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('actorlinkmovie')." B, ".mapDBC('actors')." A WHERE A.".mapDBC('idActor')." = B.".mapDBC('idActor')." AND B.media_type='movie' AND B.".mapDBC('idMovie')." = ".$idMovie." ORDER BY B.".mapDBC('iOrder').";";
 			$result2 = querySQL($SQL_, false, $dbh);
-			foreach($result2 as $row2) {
+			foreach ($result2 as $row2) {
 				$artist      = $row2[mapDBC('strActor')];
 				$idActor     = $row2[mapDBC('idActor')];
 				$actorpicURL = $row2['actorimage'];
@@ -418,9 +491,9 @@ if ($dirActorEnabled) {
 				$spalTmp .= ' style="padding-left:40px;">-';
 			}
 			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
+			$result[$zeilenSpalte++] = $spalTmp;
 
-#director
+			#director
 			$spalTmp = '<td class="direcTD hideMobile'.$higlight.'"';
 			$firstId       = '';
 			$firstdirector = '';
@@ -428,7 +501,7 @@ if ($dirActorEnabled) {
 
 			$SQL_ = "SELECT A.".mapDBC('strActor').", B.".mapDBC('idDirector').", A.".mapDBC('strThumb')." AS actorimage FROM ".mapDBC('directorlinkmovie')." B, ".mapDBC('actors')." A WHERE B.".mapDBC('idDirector')." = A.".mapDBC('idActor')." AND B.media_type = 'movie' AND B.".mapDBC('idMovie')." = ".$idMovie.";";
 			$result3 = querySQL($SQL_, false, $dbh);
-			foreach($result3 as $row3) {
+			foreach ($result3 as $row3) {
 				$artist      = $row3[mapDBC('strActor')];
 				$idActor     = $row3[mapDBC('idDirector')];
 				$actorpicURL = $row3['actorimage'];
@@ -474,78 +547,72 @@ if ($dirActorEnabled) {
 				$spalTmp .= ' style="padding-left:40px;">-';
 			}
 			$spalTmp .= '</td>';
-			$zeilen[$zeile][$zeilenSpalte++] = $spalTmp;
-} //$dirActorEnabled
+			$result[$zeilenSpalte++] = $spalTmp;
+		} //$dirActorEnabled
 
 #resolution/codec/10bit/fps/hdr
-			if (!$isDemo) {
-				$hdrType   = postEditHdrType($vRes[3]);
-				$hdr       = isHDR($filename, $hdrType);
-				if ($hdr && empty($hdrType)) {
-					$hdrType = 'HDR';
-				}
-
-				$resInfo   = getResDesc($vRes);
-				$resPerf   = getResPerf($vRes, $hdr);
-				$resColor  = ($resPerf < 4 ? null : CODEC_COLORS[$resPerf]);
-				$resStyle  = '';
-				$arOR = getOverrideAR($idFile, $idMovie, $dbh);
-
-				if ($f4Ke || $scaled || !empty($resColor) || !empty($arOR)) {
-				    if ($f4Ke || $scaled) {
-						$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,0.75);';
-					}
-					if (!empty($resColor)) {
-						$resStyle .= (!empty($resStyle) ? ' ' : '').'color:'.$resColor.';';
-					}
-					if (!empty($arOR)) {
-						$resStyle .= (!empty($resStyle) ? ' ' : '').'font-style:italic;';
-					}
-					if (!empty($resStyle)) {
-						$resStyle = ' style="'.$resStyle.'"';
-					}
-				}
-
-				$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resStyle) ? '' : $resStyle).'>'.$resInfo.'</span>');
-				$tipSuffix = $f4Ke   ? ' | Fake 4K' : '';
-				$tipSuffix = $scaled ? ' | Upscaled 4K' : $tipSuffix;
-
-				if (!empty($arOR)) {
-					$vRes[1] = intval($vRes[0] / $arOR);
-				}
-
-				$resTip    = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).(!empty($arOR) ? ' // overridden' : '').$tipSuffix;
-				$codec     = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
-				$fps       = array($bits, formatFps($fps));
-				$bit10     = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;
-				$perf      = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
-				$color     = ($perf < 4 ? null : CODEC_COLORS[$perf]);
-				$codecST   = (empty($color) ? '' : ' style="color:'.$color.';"');
-				if (isAdmin()) {
-					$codec = '<a tabindex="-1" class="fancy_msgbox clearFileSize"'.$codecST.' href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$idFile.'">'.$codec.'</a>';
-					$codecST = '';
-				}
-				$codecTD   = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" title="'.$resTip.'">'.$resTD.'</td>';
-				$fpsTitle  = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
-				$fpsTitle  = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
-				$fpsTitle  = ($hdr   ? $hdrType : '').($hdr && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
-				$fpsTitle  = 'title="'.$fpsTitle.'"';
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" '.$fpsTitle.'>'.$codecTD.'</td>';
-
-#filesize
-				$filename = prepPlayFilename($path.$filename);
-				$playItem = $isAdmin && $xbmcRunning && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;"' : null;
-				$zeilen[$zeile][$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.'" '.$playItem.'>'.$moviesize.'</td>';
+		if (!$isDemo) {
+			$hdrType = postEditHdrType($vRes[3]);
+			$hdr     = isHDR($filename, $hdrType);
+			if ($hdr && empty($hdrType)) {
+				$hdrType = 'HDR';
 			}
 
-			$zeile++;
-		} // else gallerymode == 1
+			$resInfo  = getResDesc($vRes);
+			$resPerf  = getResPerf($vRes, $hdr);
+			$resColor = ($resPerf < 4 ? null : CODEC_COLORS[$resPerf]);
+			$resStyle = '';
+			$arOR     = getOverrideAR($idFile, $idMovie, $dbh);
 
-		if ($newmode && ++$counter2 >= $newAddedCount) { break; }
-	} //foreach
+			if ($f4Ke || $scaled || !empty($resColor) || !empty($arOR)) {
+				if ($f4Ke || $scaled) {
+					$resStyle .= 'text-shadow: 0 0 2px rgba(222,0,0,0.75);';
+				}
+				if (!empty($resColor)) {
+					$resStyle .= (!empty($resStyle) ? ' ' : '').'color:'.$resColor.';';
+				}
+				if (!empty($arOR)) {
+					$resStyle .= (!empty($resStyle) ? ' ' : '').'font-style:italic;';
+				}
+				if (!empty($resStyle)) {
+					$resStyle = ' style="'.$resStyle.'"';
+				}
+			}
 
-	return $zeilen;
+			$resTD     = (empty($resInfo) ? '' : '<span class="searchField"'.(empty($resStyle) ? '' : $resStyle).'>'.$resInfo.'</span>');
+			$tipSuffix = $f4Ke ? ' | Fake 4K' : '';
+			$tipSuffix = $scaled ? ' | Upscaled 4K' : $tipSuffix;
+
+			if (!empty($arOR)) {
+				$vRes[1] = intval($vRes[0] / $arOR);
+			}
+
+			$resTip  = (empty($vRes) ? '' : $vRes[0].'x'.$vRes[1]).(!empty($arOR) ? ' // overridden' : '').$tipSuffix;
+			$codec   = (empty($vRes) ? '' : postEditVCodec($vRes[2]));
+			$fps     = array($bits, formatFps($fps));
+			$bit10   = (!empty($fps) ? $fps[0] >= 10 : preg_match_all('/\b1(0|2)bit\b/', $filename) > 0) ? true : false;
+			$perf    = (empty($codec) ? 0 : decodingPerf($codec, $bit10));
+			$color   = ($perf < 4 ? null : CODEC_COLORS[$perf]);
+			$codecST = (empty($color) ? '' : ' style="color:'.$color.';"');
+			if (isAdmin()) {
+				$codec = '<a tabindex="-1" class="fancy_msgbox clearFileSize"'.$codecST.' href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$idFile.'">'.$codec.'</a>';
+				$codecST = '';
+			}
+			$codecTD  = (empty($codec) ? '' : '<span class="searchField"'.$codecST.'>'.$codec.'</span>');
+			$result[$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" title="'.$resTip.'">'.$resTD.'</td>';
+			$fpsTitle = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
+			$fpsTitle = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
+			$fpsTitle = ($hdr ? $hdrType : '').($hdr && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
+			$fpsTitle = 'title="'.$fpsTitle.'"';
+			$result[$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" '.$fpsTitle.'>'.$codecTD.'</td>';
+
+#filesize
+			$filename = prepPlayFilename($path.$filename);
+			$playItem = $isAdmin && $xbmcRunning && !empty($filename) ? ' onclick="playItem(\''.$filename.'\'); return false;"' : null;
+			$result[$zeilenSpalte++] = '<td class="fsizeTD'.$higlight.'" '.$playItem.'>'.$moviesize.'</td>';
+		}
+	}
+	return $result; // else gallerymode == 1
 } //generateRows
 
 /** @noinspection PhpIssetCanBeReplacedWithCoalesceInspection */
