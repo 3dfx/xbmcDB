@@ -194,11 +194,12 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 			foreach ($vars as $idType => $var) {
 				if ($idType == 40400) { continue; }
 				$cloned = unserialize(serialize($row));
-				$cloned['idFile']   = $var['idFile'];
-				$cloned['fps'   ]   = $var['fps'];
-				$cloned['bit']      = $var['bit'];
-				$cloned['filename'] = $var['strFilename'];
-				$cloned['filesize'] = $var['filesize'];
+				$cloned['idFile']    = $var['idFile'];
+				$cloned['fps'   ]    = $var['fps'];
+				$cloned['bit']       = $var['bit'];
+				$cloned['filename']  = $var['strFilename'];
+				$cloned['filesize']  = $var['filesize'];
+				$cloned['movietype'] = $var['movietype'];
 
 				$line = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
 					$cloned, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
@@ -228,7 +229,7 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 	$idFile     = $row['idFile'];
 	if ($idFile < 0) { return null; }
 	$idMovie    = $row['idMovie'];
-	$filmname   = $row['movieName'];
+	$filmname   = !$isVariant ? $row['movieName'] : addVersionType($row['movieName'], $row['movietype']);
 	//$thumb    = $row['thumb'];
 	$filename   = $row['filename'];
 	$dateAdded  = $row['dateAdded'];
@@ -331,10 +332,7 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 			$spalTmp .= '<a tabindex="-1" class="hoverpic" rel="'.getImageWrap($cover, $idMovie, 'movie', 0).'">';
 		}
 		if ($isAdmin) {
-				$idParam = '&idMovie='.$idMovie;
-			if ($isVariant) {
-				$idParam .= '&idFile='.$idFile;
-			}
+			$idParam = '&idMovie='.$idMovie.($isVariant ? '&idFile='.$idFile : '');
 			$spalTmp .= '<span class="fancy_movieEdit" href="./nameEditor.php?change=movie'.$idParam.'">';
 		}
 		$spalTmp .= '_C0UNTER_';
@@ -603,7 +601,7 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 			$fpsTitle = (empty($fps) || !is_array($fps) || empty($fps[1]) ? '' : $fps[1].' fps');
 			$fpsTitle = ($bit10 ? '10bit' : '').($bit10 && !empty($fps) ? ' | ' : '').$fpsTitle;
 			$fpsTitle = ($hdr ? $hdrType : '').($hdr && !empty($fpsTitle) ? ' | ' : '').$fpsTitle;
-			$fpsTitle = 'title="'.$fpsTitle.'"';
+			$fpsTitle = 'title="CLEAR FILESIZE'.(!empty($fpsTitle) ? ' | ' : '').$fpsTitle.'"';
 			$result[$zeilenSpalte++] = '<td class="resCodecTD'.$higlight.'" '.$fpsTitle.'>'.$codecTD.'</td>';
 
 #filesize

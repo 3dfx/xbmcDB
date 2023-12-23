@@ -48,7 +48,7 @@ function postSerie($serie) {
 	echo '<th class="righto" style="padding-right:2px;">'.$allEpsCount.'</th>';
 	echo '<th class="lefto"> Episode'.($allEpsCount > 1 ? 's' : '').'</th>';
 	echo '<th class="righto"> </th>'; // DISABLED: $serie->getRating()
-	echo '<th class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSizes&idFiles='.$serie->getIdFiles().'">' : '')._format_bytes($serie->getSize())).($isAdmin ? '</a>' : '').'</th>';
+	echo '<th class="righto vSpan" title="Clear Filesizes">'.($isDemo ? '' : ($isAdmin ? '<a class="fancy_msgbox clearFileSize" href="./dbEdit.php?act=clearFileSizes&idFiles='.$serie->getIdFiles().'">' : '')._format_bytes($serie->getSize())).($isAdmin ? '</a>' : '').'</th>';
 	echo '<th class="righto" colspan="2">';
 	if ($isAdmin) {
 		$showEmpty = false;
@@ -103,7 +103,7 @@ function postStaffel($staffel, $last = null) {
 	echo '<td class="seasonTRd2 righto"'.$mCountCol.$missTitle.$onClick.'>'.$strAllEps.'</td>';
 	echo '<td class="lefto"'.$onClick.'>'.' Episode'.($eps > 1 ? 's' : '&nbsp;').'</td>';
 	echo '<td class="righto padTD"'.$onClick.'> </td>'; //DISABLED $staffel->getRating()
-	echo '<td class="righto vSpan">'.($isDemo ? '' : ($isAdmin ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
+	echo '<td class="righto vSpan" title="Clear Filesizes">'.($isDemo ? '' : ($isAdmin ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSizes&idFiles='.$staffel->getIdFiles().'">' : '')._format_bytes($staffel->getSize())).($isAdmin ? '</a>' : '').'</td>';
 	echo '<td class="righto" colspan="2">';
 	if ($isAdmin) {
 		$showEmpty = false;
@@ -170,13 +170,14 @@ function postStaffel($staffel, $last = null) {
 		$clearSize = $isAdmin && !empty($path) && !empty($filename) ? '<a tabindex="-1" class="fancy_msgbox clearFileSize" href="./dbEdit.php?clrStream=1&act=clearFileSize&idFile='.$epi->getIdFile().'">'.($isDemo ? '' : $fSize).'</a>' : '<span class="clearFileSize">'.($isDemo ? '' : $fSize).'</span>';
 
 		$srCol     = getSrcMarker($source);
-		if ($source >= 3)
+		if ($source >= 3) {
 			$srCol = generateDLink($staffel, $sNum_, $epNum_, $srCol);
+		}
 
 		echo '<tr class="epTR '.$seasonId.'" id="'.$idEpisode.'" _href="./detailEpisode.php?id='.$idEpisode.'&idSeason='.$seasonId.'" style="display:none;" onclick="loadEpDetails(this, '.$idEpisode.');">';
 		echo '<td class="epTRd1'.(empty($epDlt) ? '' : ' epTRd2').'" colspan="3"'.$hover.'><span class="vSpan">'.$epNum.$srCol.'  </span><span class="searchField">'.$epTitle.'</span></td>';
 		echo '<td class="righto padTD">'.$playItem.'</td>';
-		echo '<td class="righto padTD">'.$clearSize.'</td>';
+		echo '<td class="righto padTD" title="Clear Filesize">'.$clearSize.'</td>';
 		echo '<td class="righto">';
 		if ($isAdmin) {
 			$source = $source != null ? '&source='.$source : '';
@@ -218,8 +219,9 @@ function postStaffel($staffel, $last = null) {
 
 function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
 	$isAdmin = $GLOBALS['isAdmin'];
-	if (!$isAdmin)
+	if (!$isAdmin) {
 		return $linkText;
+	}
 
 	$ANONYMIZER = $GLOBALS['ANONYMIZER'];
 	$EP_SEARCH  = isset($GLOBALS['EP_SEARCH']) ? $GLOBALS['EP_SEARCH'] : null;
@@ -229,7 +231,7 @@ function generateDLink($staffel, $sNum_, $epNum_, $linkText) {
 		$epSearch = !empty($enNum) ? $ANONYMIZER.$EP_SEARCH.$name.' '.$enNum : null;
 		return '<a tabindex="-1" class="fancy_iframe4" onfocus="blur();" href="'.$epSearch.'">'.$linkText.'</a>';
 	}
-	return '';
+	return $linkText;
 }
 
 function postMissingRow($staffel, $seasonId, $idEpisode, $sNum_, $epNum_, $missing = true, $airdate = null) {

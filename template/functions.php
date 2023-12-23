@@ -469,10 +469,8 @@ function fetchSeasonIds($idShow) {
 	} else {
 		$SQL = "SELECT idSeason,season FROM seasons WHERE idShow = ".$idShow.";";
 
-		$dbh = getPDO();
-		$res = querySQL($SQL, false, $dbh);
-
 		$index = 0;
+		$res = querySQL($SQL, false);
 		foreach($res as $row) {
 			$ids[$index][0] = $row['idSeason'];
 			$ids[$index][1] = $row['season'];
@@ -497,10 +495,8 @@ function fetchPaths() {
 		// $TVSHOWDIR = isset($GLOBALS['TVSHOWDIR']) ? $GLOBALS['TVSHOWDIR'] : '';
 		$SQL = "SELECT idPath,strPath FROM path WHERE strPath IN (SELECT DISTINCT(strPath) FROM ".mapDBC('episodeview').");";
 
-		$dbh = getPDO();
-		$res = querySQL($SQL, false, $dbh);
-
 		$index = 0;
+		$res = querySQL($SQL, false);
 		foreach($res as $row) {
 			$paths[$index][0] = $row['idPath'];
 			$paths[$index][1] = $row['strPath'];
@@ -1228,6 +1224,10 @@ function fetchVideoVersionTypes() {
 		$_SESSION['versiontypes'] = empty($types) ? null : serialize($types);
 	}
 	return $types;
+}
+
+function addVersionType($name, $type) {
+	return $name.' <i style="color:silver;">('.$type.')</i>';
 }
 
 function postSources($actual) {

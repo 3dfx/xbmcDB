@@ -8,6 +8,7 @@ include_once "./template/functions.php";
 	if (empty($id)) { die('<br/>no param!<br/>'); }
 
 	$idFile = isset($_SESSION['idFile']) ? $_SESSION['idFile'] : null;
+	$isVariant = !empty($idFile);
 
 	$DETAILFANART = isset($GLOBALS['DETAILFANART']) ? $GLOBALS['DETAILFANART'] : true;
 ?>
@@ -213,8 +214,15 @@ include_once "./template/functions.php";
 
 		$scaled = isUpscaled($filename);
 		$f4Ke   = isFake4K($filename);
+		if ($isVariant) {
+			$typeSQL = "SELECT name FROM videoversiontype VT LEFT JOIN videoversion VV ON VV.idFile = ".$idFile."  WHERE VT.id = VV.idType;";
+			$movietype = fetchFromDB($typeSQL, false, $dbh);
+			if (!empty($movietype)) {
+				$titel = addVersionType($titel, $movietype['name']);
+			}
+		}
 		if (is3d($filename)) {
-			$titel .= ' (3D)';
+			$titel = addVersionType($titel, '3D');
 		}
 
 		if (!empty($cover)) {

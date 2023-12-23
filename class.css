@@ -220,6 +220,7 @@ table.film {
 	margin-bottom: 25px;
 	margin-left: auto;
 	margin-right: auto;
+    max-width: 1400px;
 }
 
 table.film td.servHd {
@@ -309,7 +310,7 @@ table.film td {
 .th0, .th02 { padding-top:5px; padding-bottom:5px; padding-left:10px; }
 .th02 { text-align:left; }
 .th0 { text-align:right !important; cursor: default; }
-.th1 { text-align:left; padding-top:5px; padding-bottom:5px; }
+.th1 { text-align:right !important; padding-top:5px; padding-bottom:5px; }
 .th2 { text-align:left; padding-top:5px; padding-bottom:5px; width:175px; }
 .th3 { text-align:left; padding-top:5px; padding-bottom:5px; width:100px; padding-left:10px; }
 .th4 { text-align:left; padding-top:5px; padding-bottom:5px; width:400px; }
@@ -325,7 +326,7 @@ table.film td {
 
 .titleTD {
 	padding-right:15px !important;
-	max-width: 250px;
+	max-width: 500px;
 	overflow: hidden;
 }
 

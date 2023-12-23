@@ -233,9 +233,18 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 		return $result;
 	}
 
-	$SQLf = "SELECT A.idFile, A.strFilename, F.filesize, F.fps, F.bit FROM files A LEFT JOIN fileinfo F ON A.idFile = F.idFile WHERE A.idFile IN (SELECT idFile FROM videoversion WHERE idType != 40400);";
-	$rows = querySQL($SQLf, true, $dbh);
-	$fNames = array();
+	$movieIdFilter = "";
+	if (isset($_SESSION['movies'][$sessionKey]['movieIds'])) {
+		$movieIds = unserialize($_SESSION['movies'][$sessionKey]['movieIds']);
+		$movieIdFilter = " WHERE VV.idMedia IN (".implode(",", $movieIds).")";
+	}
+
+	$fNames = $result = $variantIds = array();
+
+	$rows = querySQL(
+		"SELECT F.idFile, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile LEFT JOIN videoversion VV ON F.idFile = VV.idFile AND VV.mediaType = 'movie' AND VV.idType != 40400".$movieIdFilter.";",
+		true, $dbh
+	);
 	foreach($rows as $row) {
 		$fNames[$row['idFile']]['strFilename'] = $row['strFilename'];
 		$fNames[$row['idFile']]['filesize']    = $row['filesize'];
@@ -243,26 +252,33 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 		$fNames[$row['idFile']]['bit']         = $row['bit'];
 	}
 
-	$SQL = "SELECT * FROM videoversion WHERE idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400) ORDER BY idMedia;";
-	$rows = querySQL($SQL);
+	if (!empty($movieIdFilter)) {
+		$movieIdFilter = $movieIdFilter." AND VV.idType != 40400";
+	} else {
+		$movieIdFilter = " WHERE VV.idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400)";
+	}
 
-	$variantIds = array();
-	$result = array();
+	$rows = querySQL(
+		"SELECT VV.*, VT.name AS movietype FROM videoversion VV LEFT JOIN videoversiontype VT ON VV.idType = VT.id".$movieIdFilter." ORDER BY VV.idMedia;",
+		false, $dbh
+	);
+
 	foreach($rows as $row) {
 		$idType  = $row['idType'];
 		if ($idType === 40400) { continue; }
 
-		$idFile  = $row['idFile'];
-		$idMedia = $row['idMedia'];
+		$idFile    = $row['idFile'];
+		$idMedia   = $row['idMedia'];
+		$movietype = $row['movietype'];
 		$variantIds[$idFile] = $idMedia;
 
 		$varIds[] = $idFile;
-		$fileName = isset($fNames[$idFile]) && isset($fNames[$idFile]['strFilename']) ? $fNames[$idFile]['strFilename'] : null;
-		$filesize = isset($fNames[$idFile]) && isset($fNames[$idFile]['filesize'])    ? $fNames[$idFile]['filesize']    : null;
-		$fps      = isset($fNames[$idFile]) && isset($fNames[$idFile]['fps'])         ? $fNames[$idFile]['fps']         : null;
-		$bit      = isset($fNames[$idFile]) && isset($fNames[$idFile]['bit'])         ? $fNames[$idFile]['bit']         : null;
-		$val = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
-		$result[$idMedia][$idType] = $val;
+		$fileName  = isset($fNames[$idFile]) && isset($fNames[$idFile]['strFilename']) ? $fNames[$idFile]['strFilename'] : null;
+		$filesize  = isset($fNames[$idFile]) && isset($fNames[$idFile]['filesize'])    ? $fNames[$idFile]['filesize']    : null;
+		$fps       = isset($fNames[$idFile]) && isset($fNames[$idFile]['fps'])         ? $fNames[$idFile]['fps']         : null;
+		$bit       = isset($fNames[$idFile]) && isset($fNames[$idFile]['bit'])         ? $fNames[$idFile]['bit']         : null;
+		$res = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'movietype' => $movietype, 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
+		$result[$idMedia][$idType] = $res;
 	}
 
 	if (!empty($sessionKey) && isset($_SESSION['movies'][$sessionKey]['ids'])) {
@@ -280,11 +296,9 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 function fetchMovies($SkQL, $dbh = null) {
 	$dbh = empty($dbh) ? getPDO() : $dbh;
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-
 	$sessionKey = $SkQL['sessionKey'];
 
-	$result = array();
-	$ids = array();
+	$result = $fileIds = $movieIds = array();
 	if (isset($_SESSION['movies'][$sessionKey]['items']) && $overrideFetch == 0) {
 		$result = unserialize($_SESSION['movies'][$sessionKey]['items']);
 
@@ -294,8 +308,9 @@ function fetchMovies($SkQL, $dbh = null) {
 		$count = 0;
 		foreach($rows as $row) {
 			$result[$count]['idFile']     = isset($row['idFile'])     ? $row['idFile']     : -1;
-			$ids[] = $result[$count]['idFile'];
+			$fileIds[]  = $result[$count]['idFile'];
 			$result[$count]['idMovie']    = isset($row['idMovie'])    ? $row['idMovie']    : -1;
+			$movieIds[] = $result[$count]['idMovie'];
 			$result[$count]['movieName']  = isset($row['movieName'])  ? $row['movieName']  : '';
 			$result[$count]['playCount']  = isset($row['playCount'])  ? $row['playCount']  : '';
 			$result[$count]['lastPlayed'] = isset($row['lastPlayed']) ? $row['lastPlayed'] : '';
@@ -315,8 +330,9 @@ function fetchMovies($SkQL, $dbh = null) {
 			$count++;
 		}
 
-		$_SESSION['movies'][$sessionKey]['items'] = serialize($result);
-		$_SESSION['movies'][$sessionKey]['ids']   = serialize($ids);
+		$_SESSION['movies'][$sessionKey]['items']    = serialize($result);
+		$_SESSION['movies'][$sessionKey]['ids']      = serialize($fileIds);
+		$_SESSION['movies'][$sessionKey]['movieIds'] = serialize($movieIds);
 		unset( $_SESSION['movies']['overrideFetch'] );
 	}
 	return $result;
