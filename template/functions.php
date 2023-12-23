@@ -3197,6 +3197,19 @@ function escapeArray($val) {
 	else { for ($i = 0; $i < count($val); $i++) { $val[$i] = escapeArray($val[$i]); } return $val; }
 }
 
+function fetchVariantIds() {
+	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
+	$variantIds = isset($_SESSION['movies']['variantIds']) && $overrideFetch == 0 ? unserialize($_SESSION['movies']['variantIds']) : array();
+	if (empty($variantIds)) {
+		$rows = querySQL("SELECT idFile,idMedia FROM videoversion WHERE idType != 40400 ORDER BY idMedia;", false);
+		foreach ($rows as $row) {
+			$variantIds[$row['idFile']] = $row['idMedia'];
+		}
+		$_SESSION['movies']['variantIds'] = serialize($variantIds);
+	}
+	return $variantIds;
+}
+
 function generateOnDemandCopyScript($idOrder) {
 	$newLine   = isset($GLOBALS['newLine'])  ? $GLOBALS['newLine']  : '';
 	$srcLetter = isset($GLOBALS['srcDrive']) ? $GLOBALS['srcDrive'] : '';
@@ -3221,13 +3234,15 @@ function generateOnDemandCopyScript($idOrder) {
 	$shows  = empty($idShows)  ? null : getItemsForRequest($idShows,   true);
 	$movies = empty($idMovies) ? null : getItemsForRequest($idMovies, false);
 
+	$variantIds = fetchVariantIds();
+
 	$res  = $scriptCopyWin ? 'chcp 1252'.$newLine."\n" : '';
 	$res .= 'rem for: '.$user['user']."\n\n";
 	if (!empty($shows)) {
-		$res .= doTheStuffTvShow($shows, true, false, $srcLetter, $dstLetter);
+		$res .= doTheStuffTvShow($shows, $variantIds, true, false, $srcLetter, $dstLetter);
 	}
 	if (!empty($movies)) {
-		$res .= doTheStuffMovie($movies, true, true, $srcLetter, $dstLetter);
+		$res .= doTheStuffMovie($movies, $variantIds, true, true, $srcLetter, $dstLetter);
 	}
 
 	$res .= "\n";
@@ -3235,7 +3250,6 @@ function generateOnDemandCopyScript($idOrder) {
 }
 
 function getItemsForRequest($ids, $isShow) {
-	$SQL = '';
 	if ($isShow) {
 		$SQL = "SELECT strPath, c00 AS name FROM ".mapDBC('tvshowview')." WHERE idShow IN (".$ids.") ORDER BY name;";
 	} else {
@@ -3295,7 +3309,7 @@ function doTheStuffTvShow($result, $forOrder = false, $append = false, $srcLette
 	return $res;
 }
 
-function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter = '', $dstLetter = '') {
+function doTheStuffMovie($result, $variantIds, $forOrder = false, $append = false, $srcLetter = '', $dstLetter = '') {
 	$copyAsScriptEnabled = isset($GLOBALS['COPYASSCRIPT_ENABLED'])   ? $GLOBALS['COPYASSCRIPT_ENABLED']   : false;
 	$copyAsScript        = isset($GLOBALS['copyAsScript'])           ? $GLOBALS['copyAsScript']           : false;
 	$scriptCopyWin       = isset($GLOBALS['COPYASSCRIPT_COPY_WIN'])  ? $GLOBALS['COPYASSCRIPT_COPY_WIN']  : false;
@@ -3304,8 +3318,6 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 
 	$scriptCopyFrom = $srcLetter.$scriptCopyFrom;
 	$scriptCopyTo   = $dstLetter.$scriptCopyTo;
-
-	$variantIds = isset($_SESSION['movies']['variantIds']) ? unserialize($_SESSION['movies']['variantIds']) : array();
 
 	$newLine = $forOrder ? "\n" : '<br />';
 	$oldPath   = '';
@@ -3366,12 +3378,8 @@ function doTheStuffMovie($result, $forOrder = false, $append = false, $srcLetter
 	return $res;
 }
 
-function fetchFilmname($idFile, $variantIds = null) {
+function fetchFilmname($idFile, $variantIds) {
 	//TODO: test
-	if (empty($variantIds)) {
-		$variantIds = isset($_SESSION['movies']['variantIds']) ? unserialize($_SESSION['movies']['variantIds']) : array();
-	}
-
 	if (!isset($variantIds[$idFile])) {
 		$qres = fetchFromDB("SELECT c00 AS filmname FROM movie WHERE idFile = ".$idFile, false);
 	} else {

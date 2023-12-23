@@ -22,7 +22,7 @@ include_once "globals.php";
 	}
 
 	if ($forOrder == 0) {
-		echo $isShow ? doTheStuffTvShow($res) : doTheStuffMovie($res);
+		echo $isShow ? doTheStuffTvShow($res) : doTheStuffMovie($res, fetchVariantIds());
 		return;
 	}
 

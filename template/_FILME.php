@@ -218,8 +218,8 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 	$dbh = empty($dbh) ? getPDO() : $dbh;
 	$varIds = array();
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
-	if (isset($_SESSION['movies']['variants']) && $overrideFetch == 0) {
-		$result = unserialize($_SESSION['movies']['variants']);
+	if (isset($_SESSION['movies'][$sessionKey]['variants']) && $overrideFetch == 0) {
+		$result = unserialize($_SESSION['movies'][$sessionKey]['variants']);
 		foreach ($result as $media) {
 			foreach ($media as $type) {
 				$varIds[] = $type['idFile'];
@@ -236,33 +236,24 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 	$movieIdFilter = "";
 	if (isset($_SESSION['movies'][$sessionKey]['movieIds'])) {
 		$movieIds = unserialize($_SESSION['movies'][$sessionKey]['movieIds']);
-		$movieIdFilter = " WHERE VV.idMedia IN (".implode(",", $movieIds).")";
+		$movieIdFilter = "WHERE VV.idMedia IN (".implode(",", $movieIds).")";
 	}
-
-	$fNames = $result = $variantIds = array();
-
-	$rows = querySQL(
-		"SELECT F.idFile, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile LEFT JOIN videoversion VV ON F.idFile = VV.idFile AND VV.mediaType = 'movie' AND VV.idType != 40400".$movieIdFilter.";",
-		true, $dbh
-	);
-	foreach($rows as $row) {
-		$fNames[$row['idFile']]['strFilename'] = $row['strFilename'];
-		$fNames[$row['idFile']]['filesize']    = $row['filesize'];
-		$fNames[$row['idFile']]['fps']         = $row['fps'];
-		$fNames[$row['idFile']]['bit']         = $row['bit'];
-	}
-
 	if (!empty($movieIdFilter)) {
 		$movieIdFilter = $movieIdFilter." AND VV.idType != 40400";
 	} else {
-		$movieIdFilter = " WHERE VV.idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400)";
+		$movieIdFilter = "WHERE VV.idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400)";
 	}
 
-	$rows = querySQL(
-		"SELECT VV.*, VT.name AS movietype FROM videoversion VV LEFT JOIN videoversiontype VT ON VV.idType = VT.id".$movieIdFilter." ORDER BY VV.idMedia;",
-		false, $dbh
-	);
+	$fNames = $result = array();
 
+	$SQLv = "SELECT VV.*, VT.name AS movietype, F.idFile, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile ".
+    "LEFT JOIN videoversion VV ON F.idFile = VV.idFile AND VV.mediaType = 'movie' AND VV.idType != 40400 ".
+    "LEFT JOIN videoversiontype VT ON VV.idType = VT.id ".
+	$movieIdFilter." ORDER BY VV.idMedia;";
+	$rows = querySQL(
+		$SQLv,
+		true, $dbh
+	);
 	foreach($rows as $row) {
 		$idType  = $row['idType'];
 		if ($idType === 40400) { continue; }
@@ -270,13 +261,12 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 		$idFile    = $row['idFile'];
 		$idMedia   = $row['idMedia'];
 		$movietype = $row['movietype'];
-		$variantIds[$idFile] = $idMedia;
 
 		$varIds[] = $idFile;
-		$fileName  = isset($fNames[$idFile]) && isset($fNames[$idFile]['strFilename']) ? $fNames[$idFile]['strFilename'] : null;
-		$filesize  = isset($fNames[$idFile]) && isset($fNames[$idFile]['filesize'])    ? $fNames[$idFile]['filesize']    : null;
-		$fps       = isset($fNames[$idFile]) && isset($fNames[$idFile]['fps'])         ? $fNames[$idFile]['fps']         : null;
-		$bit       = isset($fNames[$idFile]) && isset($fNames[$idFile]['bit'])         ? $fNames[$idFile]['bit']         : null;
+		$fileName  = isset($row['strFilename']) ? $row['strFilename'] : null;
+		$filesize  = isset($row['filesize'])    ? $row['filesize']    : null;
+		$fps       = isset($row['fps'])         ? $row['fps']         : null;
+		$bit       = isset($row['bit'])         ? $row['bit']         : null;
 		$res = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'movietype' => $movietype, 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
 		$result[$idMedia][$idType] = $res;
 	}
@@ -287,8 +277,7 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 		$_SESSION['movies'][$sessionKey]['ids'] = serialize($ids);
 	}
 
-	$_SESSION['movies']['variantIds'] = serialize($variantIds);
-	$_SESSION['movies']['variants']   = serialize($result);
+	$_SESSION['movies'][$sessionKey]['variants']   = serialize($result);
 	return $result;
 }
 
