@@ -244,9 +244,9 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 		$movieIdFilter = "WHERE VV.idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400)";
 	}
 
-	$fNames = $result = array();
+	$result = array();
 
-	$SQLv = "SELECT VV.*, VT.name AS movietype, F.idFile, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile ".
+	$SQLv = "SELECT VV.*, VT.name AS movietype, F.idFile, F.playCount, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile ".
     "LEFT JOIN videoversion VV ON F.idFile = VV.idFile AND VV.mediaType = 'movie' AND VV.idType != 40400 ".
     "LEFT JOIN videoversiontype VT ON VV.idType = VT.id ".
 	$movieIdFilter." ORDER BY VV.idMedia;";
@@ -260,14 +260,13 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 
 		$idFile    = $row['idFile'];
 		$idMedia   = $row['idMedia'];
-		$movietype = $row['movietype'];
 
 		$varIds[] = $idFile;
 		$fileName  = isset($row['strFilename']) ? $row['strFilename'] : null;
 		$filesize  = isset($row['filesize'])    ? $row['filesize']    : null;
 		$fps       = isset($row['fps'])         ? $row['fps']         : null;
 		$bit       = isset($row['bit'])         ? $row['bit']         : null;
-		$res = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'movietype' => $movietype, 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
+		$res = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'movietype' => $row['movietype'], 'playCount' => $row['playCount'], 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
 		$result[$idMedia][$idType] = $res;
 	}
 

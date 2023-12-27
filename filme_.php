@@ -199,6 +199,7 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 				$cloned['bit']       = $var['bit'];
 				$cloned['filename']  = $var['strFilename'];
 				$cloned['filesize']  = $var['filesize'];
+				$cloned['playCount'] = $var['playCount'];
 				$cloned['movietype'] = $var['movietype'];
 
 				$line = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
