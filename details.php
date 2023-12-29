@@ -228,21 +228,22 @@ include_once "./template/functions.php";
 			echo "\r\n";
 		}
 
+		$type = "";
 		if ($isVariant) {
 			$typeSQL = "SELECT name FROM videoversiontype VT LEFT JOIN videoversion VV ON VV.idFile = ".$idFile."  WHERE VT.id = VV.idType;";
 			$movietype = fetchFromDB($typeSQL, false, $dbh);
 			if (!empty($movietype)) {
-				$titel = addVersionType($titel, $movietype['name']);
+				$type = addVersionType($movietype['name']);
 			}
 		}
 		if (is3d($filename)) {
-			$titel = addVersionType($titel, '3D');
+			$titel = addVersionType('3D', $titel);
 		}
 
 		echo '<div class="moviebox2">';
 		echo '<div class="movieTitle">';
 
-		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$imdbLink.'">'.$titel.' ('.$jahr.')'.'</a>';
+		echo '<a style="font-size:26px; font-weight:bold;" class="openImdbDetail" href="'.$imdbLink.'">'.$titel.' ('.$jahr.')'.$type.'</a>';
 		if ($SHOW_TRAILER && !empty($trailer)) {
 			echo ' <sup><a class="fancy_iframe3" href="'.$ANONYMIZER.$trailer.'"><img src="img/filmrolle.png" style="height:22px; border:0px; vertical-align:middle;"></a></sup>'."\r\n";
 		}

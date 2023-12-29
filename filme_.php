@@ -230,7 +230,7 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 	$idFile     = $row['idFile'];
 	if ($idFile < 0) { return null; }
 	$idMovie    = $row['idMovie'];
-	$filmname   = !$isVariant ? $row['movieName'] : addVersionType($row['movieName'], $row['movietype']);
+	$filmname   = !$isVariant ? $row['movieName'] : addVersionType($row['movietype'], $row['movieName']);
 	//$thumb    = $row['thumb'];
 	$filename   = $row['filename'];
 	$dateAdded  = $row['dateAdded'];
