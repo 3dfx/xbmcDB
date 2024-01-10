@@ -1226,8 +1226,8 @@ function fetchVideoVersionTypes() {
 	return $types;
 }
 
-function addVersionType($type, $name = "") {
-	return $name.' <i style="color:silver; font-size:'.(empty($name) ? 12 : 8).'px;">('.$type.')</i>';
+function addVersionType($type, $name = "", $isDefaultVersion = false) {
+	return $name.' <i style="color:'.($isDefaultVersion ? 'black' : 'silver').'; font-size:'.(empty($name) ? 12 : 8).'px;">('.$type.')</i>';
 }
 
 function postSources($actual) {

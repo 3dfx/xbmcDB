@@ -168,69 +168,81 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 	$genreIDs      = fetchGenreIDs($dbh);
 	$movieRows     = fetchMovies($SkQL, $dbh);
 	$variants      = fetchVariants($SkQL['sessionKey'], $dbh);
-	$varkeys       = array_keys($variants);
 	$idStream      = getResolution($SkQL['sessionKey'], true, $dbh);
 
-	$counter  = 0;
-	$counter2 = 0;
-	$zeile    = 0;
+	$counter = 0;
 	$zeilen = array();
 	for ($rCnt = 0; $rCnt < count($movieRows); $rCnt++) {
-		$zeilenSpalte = 0;
-		$row        = $movieRows[$rCnt];
-		$line       = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
-						$row, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
-						$zeilenSpalte, $zeile, $isAdmin, $isDemo, $genreIDs, $_just, $_which, $filter_name, $xbmcRunning,
-						$dbh, $orderz, $dirActorEnabled, false
+		$row = $movieRows[$rCnt];
+
+		$isDefaultVersion = null;
+		$idDefaultVersion = null;
+		$vars = null;
+		if (isset($variants[$row['idMovie']]) && count($variants[$row['idMovie']]) > 1) {
+			$vars = $variants[$row['idMovie']];
+			$var  = $vars[$row['idFile']];
+			$isDefaultVersion = ($var['idFile'] == $row['idFile']);
+			if ($isDefaultVersion) {
+				$idDefaultVersion = $row['idFile'];
+				if ($var['idType'] != 40400) {
+					$row['movietype'] = $var['movietype'];
+				}
+			}
+		}
+
+		$line = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
+							$row, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $mode,
+							$isAdmin, $isDemo, $genreIDs, $_just, $_which, $filter_name, $xbmcRunning,
+							$dbh, $orderz, $dirActorEnabled, false, $isDefaultVersion
 		);
 		if (!empty($line)) {
 			$zeilen[] = $line;
 		}
-		$zeile++;
-		$counter++;
 
-		if (in_array($row['idMovie'], $varkeys)) {
+		if (isset($variants[$row['idMovie']]) && count($variants[$row['idMovie']]) > 1) {
 			$vars = $variants[$row['idMovie']];
-			foreach ($vars as $idType => $var) {
-				if ($idType == 40400) { continue; }
+			foreach ($vars as $idFile => $var) {
+				if ($idFile == $idDefaultVersion) { continue; }
 				$cloned = unserialize(serialize($row));
-				$cloned['idFile']    = $var['idFile'];
-				$cloned['fps'   ]    = $var['fps'];
-				$cloned['bit']       = $var['bit'];
-				$cloned['filename']  = $var['strFilename'];
-				$cloned['filesize']  = $var['filesize'];
-				$cloned['playCount'] = $var['playCount'];
-				$cloned['movietype'] = $var['movietype'];
+				$cloned['idFile']     = $var['idFile'];
+				$cloned['fps'   ]     = $var['fps'];
+				$cloned['bit']        = $var['bit'];
+				$cloned['filename']   = $var['strFilename'];
+				$cloned['filesize']   = $var['filesize'];
+				$cloned['playCount']  = $var['playCount'];
+				$cloned['lastPlayed'] = $var['lastPlayed'];
+				$cloned['movietype']  = $var['movietype'];
+
+				$isDefaultVersion = ($row['idFile'] == $idFile);
 
 				$line = generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
-					$cloned, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
-					$zeilenSpalte, $zeile, $isAdmin, $isDemo, $genreIDs, $_just, $_which, $filter_name, $xbmcRunning,
-					$dbh, $orderz, $dirActorEnabled, true
+					$cloned, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $mode,
+					$isAdmin, $isDemo, $genreIDs, $_just, $_which, $filter_name, $xbmcRunning,
+					$dbh, $orderz, $dirActorEnabled, true, $isDefaultVersion
 				);
 				if (!empty($line)) {
 					$zeilen[] = $line;
 				}
-				$zeile++;
-				$counter++;
 			}
 		}
 
-		if ($newmode && ++$counter2 >= $newAddedCount) { break; }
+		if ($newmode && ++$counter >= $newAddedCount) { break; }
 	} //foreach
 
 	return $zeilen;
 }
 
 function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $IMDBFILMTITLE, $FILMINFOSEARCH, $EXCLUDEDIRS,
-					 $row, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $counter, $mode,
-					 $zeilenSpalte, $zeile, $isAdmin, $isDemo, $genreIDs, $_just, $_which,
-					 $filter_name, $xbmcRunning, $dbh, $orderz, $dirActorEnabled, $isVariant) {
+					 $row, $idStream, $lastHighest, $gallerymode, $artCovers, $existArtTable, $mode,
+					 $isAdmin, $isDemo, $genreIDs, $_just, $_which,
+					 $filter_name, $xbmcRunning, $dbh, $orderz, $dirActorEnabled, $isVariant, $isDefaultVersion) {
+	$zeilenSpalte = 0;
 	$result = array();
 
 	$idFile     = $row['idFile'];
 	if ($idFile < 0) { return null; }
 	$idMovie    = $row['idMovie'];
-	$filmname   = !$isVariant ? $row['movieName'] : addVersionType($row['movietype'], $row['movieName']);
+	$filmname   = !isset($row['movietype']) ? $row['movieName'] : addVersionType($row['movietype'], $row['movieName'], $isDefaultVersion);
 	//$thumb    = $row['thumb'];
 	$filename   = $row['filename'];
 	$dateAdded  = $row['dateAdded'];

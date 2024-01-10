@@ -238,36 +238,40 @@ function fetchVariants($sessionKey = null, $dbh = null) {
 		$movieIds = unserialize($_SESSION['movies'][$sessionKey]['movieIds']);
 		$movieIdFilter = "WHERE VV.idMedia IN (".implode(",", $movieIds).")";
 	}
-	if (!empty($movieIdFilter)) {
-		$movieIdFilter = $movieIdFilter." AND VV.idType != 40400";
-	} else {
-		$movieIdFilter = "WHERE VV.idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion WHERE idType != 40400)";
+
+	if (empty($movieIdFilter)) {
+		$movieIdFilter = "WHERE VV.idMedia IN (SELECT DISTINCT(idMedia) FROM videoversion)";
 	}
 
 	$result = array();
 
-	$SQLv = "SELECT VV.*, VT.name AS movietype, F.idFile, F.playCount, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile ".
-    "LEFT JOIN videoversion VV ON F.idFile = VV.idFile AND VV.mediaType = 'movie' AND VV.idType != 40400 ".
+	$SQLv = "SELECT VV.*, VT.name AS movietype, F.idFile, F.playCount, F.lastPlayed, F.strFilename, FI.filesize, FI.fps, FI.bit FROM files F LEFT JOIN fileinfo FI ON F.idFile = FI.idFile ".
+    "LEFT JOIN videoversion VV ON F.idFile = VV.idFile AND VV.media_type = 'movie' ".
     "LEFT JOIN videoversiontype VT ON VV.idType = VT.id ".
 	$movieIdFilter." ORDER BY VV.idMedia;";
 	$rows = querySQL(
 		$SQLv,
 		true, $dbh
 	);
-	foreach($rows as $row) {
-		$idType  = $row['idType'];
-		if ($idType === 40400) { continue; }
 
+	foreach($rows as $row) {
 		$idFile    = $row['idFile'];
 		$idMedia   = $row['idMedia'];
 
 		$varIds[] = $idFile;
-		$fileName  = isset($row['strFilename']) ? $row['strFilename'] : null;
-		$filesize  = isset($row['filesize'])    ? $row['filesize']    : null;
-		$fps       = isset($row['fps'])         ? $row['fps']         : null;
-		$bit       = isset($row['bit'])         ? $row['bit']         : null;
-		$res = [ 'idFile' => $idFile, 'strFilename' => $fileName, 'movietype' => $row['movietype'], 'playCount' => $row['playCount'], 'filesize' => $filesize, 'fps' => $fps, 'bit' => $bit ];
-		$result[$idMedia][$idType] = $res;
+		$res = [
+			'idFile'      => $idFile,
+			'idMedia'     => $idMedia,
+			'idType'      => $row['idType'],
+			'movietype'   => $row['movietype'],
+			'playCount'   => $row['playCount'],
+			'lastPlayed'  => $row['lastPlayed'],
+			'strFilename' => isset($row['strFilename']) ? $row['strFilename'] : null,
+			'filesize'    => isset($row['filesize'])    ? $row['filesize']    : null,
+			'fps'         => isset($row['fps'])         ? $row['fps']         : null,
+			'bit'         => isset($row['bit'])         ? $row['bit']         : null,
+		];
+		$result[$idMedia][$idFile] = $res;
 	}
 
 	if (!empty($sessionKey) && isset($_SESSION['movies'][$sessionKey]['ids'])) {
