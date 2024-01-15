@@ -154,6 +154,7 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 	$COVER_OVER_TITLE = isset($GLOBALS['COVER_OVER_TITLE']) ? $GLOBALS['COVER_OVER_TITLE'] : false;
 	$EXCLUDEDIRS      = isset($GLOBALS['EXCLUDEDIRS'])      ? $GLOBALS['EXCLUDEDIRS']      : array();
 	$SHOW_TRAILER     = isset($GLOBALS['SHOW_TRAILER'])     ? $GLOBALS['SHOW_TRAILER']     : false;
+	$STD_ID_TYPE      = standardMovieType();
 
 	//$dbVer         = fetchDbVer();
 	$isAdmin       = isAdmin();
@@ -184,7 +185,7 @@ function generateRows($orderz, $newAddedCount, $SkQL, $dbh = null) {
 			$isDefaultVersion = ($var['idFile'] == $row['idFile']);
 			if ($isDefaultVersion) {
 				$idDefaultVersion = $row['idFile'];
-				if ($var['idType'] != 40400) {
+				if ($var['idType'] != $STD_ID_TYPE) {
 					$row['movietype'] = $var['movietype'];
 				}
 			}

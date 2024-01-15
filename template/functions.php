@@ -3201,7 +3201,7 @@ function fetchVariantIds() {
 	$overrideFetch = isset($_SESSION['overrideFetch']) ? 1 : 0;
 	$variantIds = isset($_SESSION['movies']['variantIds']) && $overrideFetch == 0 ? unserialize($_SESSION['movies']['variantIds']) : array();
 	if (empty($variantIds)) {
-		$rows = querySQL("SELECT idFile,idMedia FROM videoversion WHERE idType != 40400 ORDER BY idMedia;", false);
+		$rows = querySQL("SELECT idFile, idMedia FROM videoversion WHERE media_type = 'movie' AND idFile NOT IN (SELECT idFile FROM movie) ORDER BY idMedia;", false);
 		foreach ($rows as $row) {
 			$variantIds[$row['idFile']] = $row['idMedia'];
 		}

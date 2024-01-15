@@ -174,6 +174,10 @@
 		)
 	);
 
+function standardMovieType() {
+	return 40400;
+}
+
 function mergeMapping($dbVer) {
 	if (isset($_SESSION['DB_MAPPING'])) { return unserialize($_SESSION['DB_MAPPING']); }
 
