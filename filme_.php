@@ -243,7 +243,13 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 	$idFile     = $row['idFile'];
 	if ($idFile < 0) { return null; }
 	$idMovie    = $row['idMovie'];
-	$filmname   = !isset($row['movietype']) ? $row['movieName'] : addVersionType($row['movietype'], $row['movieName'], $isDefaultVersion);
+	$filmname0  = $row['movieName'];
+	$movieType  = null;
+	if (isset($row['movietype'])) {
+		$movieType = $row['movietype'];
+	}
+	$filmname   = empty($movieType) ? $filmname0 : addVersionType($movieType, $filmname0, $isDefaultVersion);
+	$titel      = empty($movieType) ? $filmname0 : addVersionType($movieType, $filmname0, $isDefaultVersion, false);
 	//$thumb    = $row['thumb'];
 	$filename   = $row['filename'];
 	$dateAdded  = $row['dateAdded'];
@@ -267,9 +273,6 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 	$scaled     = isUpscaled($filename);
 	$is3D       = is3d($filename);
 
-	$filmname0  = $filmname;
-	$titel      = $filmname;
-
 	$path = mapSambaDirs($path);
 	if (count($EXCLUDEDIRS) > 0 && isset($EXCLUDEDIRS[$path]) && $EXCLUDEDIRS[$path] != $mode) { return null; }
 
@@ -278,8 +281,8 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 
 	$wasCutoff = false;
 	$cutoff    = isset($GLOBALS['CUT_OFF_MOVIENAMES']) ? $GLOBALS['CUT_OFF_MOVIENAMES'] : -1;
-	if (strlen($filmname) >= $cutoff && $cutoff > 0) {
-		$filmname = substr($filmname, 0, $cutoff).'...';
+	if (strlen($filmname0) >= $cutoff && $cutoff > 0) {
+		$filmname = addVersionType($movieType, substr($filmname0, 0, $cutoff), $isDefaultVersion).'...';
 		$wasCutoff = true;
 	}
 	$filmname = switchPronoms($filmname, $PRONOMS);
@@ -327,8 +330,8 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 	wrapItUp('cover', $idMovie, $cover);
 
 	if ($gallerymode) {
-		$result[0] = $filmname.($jahr != 0 ? ' ('.$jahr.')' : '');
-		$result[1] = 'show=details&idMovie='.$idMovie;
+		$result[0] = $titel.($jahr != 0 ? ' ('.$jahr.')' : '');
+		$result[1] = 'show=details&idMovie='.$idMovie.($isVariant ? '&idFile='.$idFile : '');
 		$result[2] = $playCount;
 		$result[3] = getImageWrap($cover, $idMovie, 'movie', 0);
 		$result[4] = $is3D;
@@ -409,7 +412,7 @@ function generateRow($PRONOMS, $COVER_OVER_TITLE, $SHOW_TRAILER, $ANONYMIZER, $I
 		if (!empty($imdbId)) {
 			$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$IMDBFILMTITLE.$imdbId.'">';
 		} else {
-			$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$titel.'">';
+			$spalTmp .= '<a tabindex="-1" class="openImdb" href="'.$ANONYMIZER.$FILMINFOSEARCH.$filmname0.'">';
 		}
 
 		$spalTmp .= (empty($rating) ? '-&nbsp;&nbsp;' : sprintf("%02.1f", round($rating, 1)));

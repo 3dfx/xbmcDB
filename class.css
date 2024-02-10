@@ -1161,7 +1161,7 @@ a.showlink {
 .lightSide { -webkit-filter:invert(0%);   filter:invert(0%);   }
 .darkSide  { -webkit-filter:invert(100%); filter:invert(100%); }
 
-.source  { font-weight:normal !important; }
+.source  { font-weight:normal !important; padding-left:2px; }
 .unknown { color:RGBA(0,0,0,0); }
 .bdrip   { color:#AFF8BC;       }
 .webrip  { color:#66AACC;       }

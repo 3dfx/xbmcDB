@@ -1226,8 +1226,14 @@ function fetchVideoVersionTypes() {
 	return $types;
 }
 
-function addVersionType($type, $name = "", $isDefaultVersion = false) {
-	return $name.' <i style="color:'.($isDefaultVersion ? 'black' : 'silver').'; font-size:'.(empty($name) ? 12 : 8).'px;">('.$type.')</i>';
+function addVersionType($type, $name = "", $isDefaultVersion = false, $html = true) {
+	if ($html) {
+		$result = $name.' <i style="color:'.($isDefaultVersion ? 'black' : 'silver').'; font-size:'.(empty($name) ? 12 : 8).'px;">('.$type.')</i>';
+	} else {
+		$result = $name.' ('.$type.')';
+	}
+
+	return $result;
 }
 
 function postSources($actual) {
@@ -1686,7 +1692,7 @@ function xbmcGetPlayerId() {
 function cleanedPlaying($playing) {
 	$from = array('.mp3','.aac','.flac','.m4a','.mkv','.avi','.mp4','.flv');
 	$to   = array(''     ,''    ,''    ,''    ,''    ,''    ,''    ,''    );
-	return str_replace($from, $to, $playing);
+	return empty($playing) ? $playing : str_replace($from, $to, $playing);
 }
 
 function xbmcGetNowPlaying() {

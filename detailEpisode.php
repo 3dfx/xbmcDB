@@ -188,7 +188,7 @@ include_once "./template/Series/StreamDetails.php";
 		if (!empty($lastPlayed)) {
 			echo '<div><span><i><b>Watched:</b></i></span>';
 			echo '<span class="flalright" style="width:45px;"><font color="silver">[ </font>'.dayOfWeekShort($lastPlayed).'<font color="silver"> ]</font></span>';
-			echo '<span class="flalright" style="padding-right:5px;">'.toEuropeanDateFormat(substr($lastPlayed, 0, 10)).'</span>';
+			echo '<span class="flalright" style="padding-right:3px;">'.toEuropeanDateFormat(substr($lastPlayed, 0, 10)).'</span>';
 			echo '</div>';
 		}
 
