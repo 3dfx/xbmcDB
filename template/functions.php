@@ -3245,7 +3245,7 @@ function generateOnDemandCopyScript($idOrder) {
 	$res  = $scriptCopyWin ? 'chcp 1252'.$newLine."\n" : '';
 	$res .= 'rem for: '.$user['user']."\n\n";
 	if (!empty($shows)) {
-		$res .= doTheStuffTvShow($shows, $variantIds, true, false, $srcLetter, $dstLetter);
+		$res .= doTheStuffTvShow($shows, true, false, $srcLetter, $dstLetter);
 	}
 	if (!empty($movies)) {
 		$res .= doTheStuffMovie($movies, $variantIds, true, true, $srcLetter, $dstLetter);

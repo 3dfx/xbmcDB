@@ -100,6 +100,7 @@ include_once "globals.php";
 		echo "\r\n";
 		echo "\t".'<div id="movieList" class="lefto" style="padding-left:15px; z-order=1; height:60px; display:none;">'."\r\n";
 		echo "\t\t".'<div>';
+		$COPYASSCRIPT_ENABLED = isset($GLOBALS['COPYASSCRIPT_ENABLED']) ? $GLOBALS['COPYASSCRIPT_ENABLED'] : false;
 		if ($COPYASSCRIPT_ENABLED && !$isAdmin) {
 			echo "<input type='checkbox' id='copyAsScript' onClick='doRequest(".$isAdmin."); return true;' style='float:left;'/><label for='copyAsScript' style='float:left; margin-top:-5px;'>as copy script</label>";
 			echo "<br/>";
@@ -154,9 +155,9 @@ function postSerieImg($serie) {
 	$tvdbURL = $ANONYMIZER.'http://thetvdb.com/?tab=series&id='.$idTvdb;
 	if (!empty($idTvdb) && $idTvdb != -1) {
 		$imgFile = './img/banners/'.$idTvdb.'.jpg';
-		if (loadImage($imgURL, $imgFile) == -1) { $imgFile = null; }
+		if (!empty($imgURL) && loadImage($imgURL, $imgFile) == -1) { $imgFile = null; }
 		wrapItUp('banner', $idTvdb, $imgFile);
-		$banner = empty($imgFile) ? $imgURL : getImageWrap($imgFile, $idTvdb, 'banner', 0);
+		$banner = empty($imgFile) && !empty($imgURL)  ? $imgURL : getImageWrap($imgFile, $idTvdb, 'banner', 0);
 		echo '<img id="tvBanner" class="innerCoverImg" src="'.$banner.'" href="'.$tvdbURL.'" />';
 	}
 }
