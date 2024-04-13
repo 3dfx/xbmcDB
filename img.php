@@ -42,7 +42,12 @@ include_once "./template/functions.php";
 	if (!empty($oldHandler)) { set_error_handler($oldHandler); }
 
 function shoutImage($img = null) {
-	header('Content-Type: image/jpeg');
+	$type = 'Content-Type: image/jpeg';
+	if (!empty($img) && str_ends_with($img, 'png')) {
+		$type = 'Content-Type: image/png';
+	}
+	header($type);
+
 	if (isFile($img)) {
 		if (!setHeaders($img)) { exit; }
 		try {
