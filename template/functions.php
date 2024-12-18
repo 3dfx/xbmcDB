@@ -2890,7 +2890,9 @@ function postEditVCodec($str) {
 
 	$str = str_replace('WVC1',             'VC-1', $str);
 	$str = str_replace('WMV3',             'wmv3', $str);
-	$str = str_replace('VP8',              'vp8',  $str);
+
+	$str = str_replace('V_VP8',            'VP8',  $str);
+	$str = str_replace('V_VP9',            'VP9',  $str);
 
 	return $str;
 }
@@ -2980,6 +2982,11 @@ function postEditACodec($codec, $atmosx = null) {
 	$tipp = null;
 	if (!empty($atmosx)) {
 		switch ($codec) {
+			case 'TRUEHD_ATMOS':
+				$tipp = 'True-HD with Dolby Atmos';
+				$codec = 'Atmos';
+				break;
+
 			case 'AC3':
 				$tipp = 'AC3 with Dolby Atmos';
 				$codec = 'Atmos';
