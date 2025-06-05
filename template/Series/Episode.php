@@ -2,6 +2,7 @@
 class Episode {
 	private $name;
 	private $desc;
+	private $idSeason;
 	private $idFile;
 	private $idShow;
 	private $idTvdb;

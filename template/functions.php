@@ -3007,14 +3007,14 @@ function postEditACodec($codec, $atmosx = null) {
 				$codec = 'DTS:X';
 				break;
 		}
-
 	} else {
-
 		switch ($codec) {
 			case 'MP3FLOAT':
 				$codec = 'MP3';
 				break;
 			case 'AAC':
+			case 'AAC_LC':
+			case 'AAC_LATM':
 				$tipp = 'Advanced Audio Coding';
 				$codec = 'AAC';
 				break;
