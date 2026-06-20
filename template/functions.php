@@ -1516,6 +1516,7 @@ function postNavBar_($isMain) {
 		$res .= '</li>';
 		$res .= '</span>';
 
+		/*
 		$res .= '<li id="plaYTdivide" class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
 		$res .= '<li id="plaYoutube_" style="font-weight:bold;">';
 		$res .= '<span style="position:relative; top:3px;">';
@@ -1523,6 +1524,7 @@ function postNavBar_($isMain) {
 		$res .= '<img id="ytIcon" src="./img/yt.png" style="width:32px; height:32px;" />';
 		$res .= '</span>';
 		$res .= '</li>';
+		*/
 		}
 	}
 	$res .= '<li class="divider-vertical" style="height:36px;" onmouseover="closeNavs();"></li>';
@@ -2989,6 +2991,11 @@ function postEditACodec($codec, $atmosx = null) {
 
 			case 'AC3':
 				$tipp = 'AC3 with Dolby Atmos';
+				$codec = 'Atmos';
+				break;
+
+			case 'EAC3_DDP_ATMOS':
+				$tipp = 'E-AC3 with Dolby Atmos';
 				$codec = 'Atmos';
 				break;
 
