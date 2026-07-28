@@ -2856,7 +2856,13 @@ function makeLangLink($strSource, $strToReplace, $strReplaceToken, $strFilter, $
 }
 
 function postEditHdrType($str) {
-	return empty($str) ? null : str_replace('DOLBYVISION', 'DV', strtoupper($str));
+	if (empty($str)) { return null; }
+	$str = strtoupper($str);
+
+	$str = str_replace('DOLBYVISION', 'DV',     $str);
+	$str = str_replace('HDR10PLUS',   'HDR10+', $str);
+
+	return $str;
 }
 
 /** @noinspection PhpUnnecessaryLocalVariableInspection */
@@ -3019,6 +3025,11 @@ function postEditACodec($codec, $atmosx = null) {
 			case 'MP3FLOAT':
 				$codec = 'MP3';
 				break;
+
+			case 'HE_AAC':
+				$tipp = 'High Efficiency - Advanced Audio Coding';
+				$codec = 'HE-AAC';
+				break;
 			case 'AAC':
 			case 'AAC_LC':
 			case 'AAC_LATM':
@@ -3026,6 +3037,10 @@ function postEditACodec($codec, $atmosx = null) {
 				$codec = 'AAC';
 				break;
 
+			case 'EAC3_DDP_ATMOS':
+				$tipp = 'E-AC3 with Dolby Atmos';
+				$codec = 'Atmos';
+				break;
 			case 'EAC3':
 			case 'A_EAC3':
 				$tipp = 'Enhanced AC3';
